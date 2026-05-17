@@ -1,5 +1,5 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, query, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -24,6 +24,24 @@ const appScreen = document.getElementById('app-screen');
 let globalUser = "";
 let searchTimeout = null;
 
+// OTURUM KONTROLÜ (F5 ATILSA BİLE SİSTEMDE KALMAYI SAĞLAR)
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // Kullanıcı zaten giriş yapmışsa direkt terminali aç
+        loginScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+        appScreen.style.display = 'flex';
+        appScreen.style.flexDirection = 'column';
+        globalUser = user.email.split('@')[0].toUpperCase();
+        loadTerminal();
+    } else {
+        // Kullanıcı giriş yapmamışsa veya çıkış yaptıysa login ekranını göster
+        loginScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
+        appScreen.style.display = 'none';
+    }
+});
+
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const userVal = usernameInput.value.trim().toLowerCase();
@@ -32,13 +50,8 @@ loginForm.addEventListener('submit', async (e) => {
     let finalPass = (userVal === 'test' && passVal === 'test') ? 'testtest' : passVal;
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, finalEmail, finalPass);
-        loginScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
-        appScreen.style.display = 'flex';
-        appScreen.style.flexDirection = 'column';
-        globalUser = userCredential.user.email.split('@')[0].toUpperCase();
-        loadTerminal();
+        await signInWithEmailAndPassword(auth, finalEmail, finalPass);
+        // Başarılı girişte onAuthStateChanged otomatik tetiklenip sayfayı değiştirecektir.
     } catch (error) {
         alert("Giriş Başarısız: Bilgileri kontrol edin.");
     }
@@ -62,7 +75,7 @@ function loadTerminal() {
         </main>
     `;
 
-    document.getElementById('btn-logout').addEventListener('click', () => { signOut(auth); window.location.reload(); });
+    document.getElementById('btn-logout').addEventListener('click', () => { signOut(auth); });
     
     const input = document.getElementById('main-search');
     const dropdown = document.getElementById('dropdown-results');
@@ -171,7 +184,10 @@ function loadTerminal() {
 
             renderCard(mergedData, res);
         } else {
-            res.innerHTML = `<div style="color: #ff0000; font-size: 20px;">KAYIT BULUNAMADI: ${code}</div>`;
+            res.innerHTML = `
+                <div style="color: #ff3333; font-size: 24px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                <div style="color: #666; font-size: 14px; font-family: monospace;">Okutulan Kod: ${code}</div>
+            `;
         }
     }
 }
@@ -181,18 +197,17 @@ function renderCard(data, container) {
     const max = data.max;
 
     const anaContent = data.hasAna 
-        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.anaDepoMiktar <= min ? '#ff0000' : '#fff'};">${data.anaDepoMiktar}</div>
+        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.anaDepoMiktar <= min ? '#ff3333' : '#fff'};">${data.anaDepoMiktar}</div>
            <div style="font-size: 12px; color: #666; margin-top: 10px;">MİN: ${min} | MAX: ${max}</div>`
         : `<div style="font-size: 14px; color: #ffbc00; letter-spacing: 1px;">BU DEPO İÇİN TANIMLI DEĞİL</div>`;
 
     const amContent = data.hasAm 
-        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.ameliyathaneMiktar <= min ? '#ff0000' : '#fff'};">${data.ameliyathaneMiktar}</div>
+        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.ameliyathaneMiktar <= min ? '#ff3333' : '#fff'};">${data.ameliyathaneMiktar}</div>
            <div style="font-size: 12px; color: #666; margin-top: 10px;">MİN: ${min} | MAX: ${max}</div>`
         : `<div style="font-size: 14px; color: #ffbc00; letter-spacing: 1px;">BU DEPO İÇİN TANIMLI DEĞİL</div>`;
 
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px;">
-            
             <div>
                 <div style="margin-bottom: 30px;">
                     <div style="font-size: 11px; color: #666; letter-spacing: 2px; margin-bottom: 5px;">ÜRÜN İSMİ</div>
@@ -226,7 +241,6 @@ function renderCard(data, container) {
                     </div>
                 </div>
             </div>
-
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div style="border: 1px solid #222; padding: 25px; background: #0a0a0a; text-align: center;">
                     <div style="font-size: 12px; color: #888; margin-bottom: 15px; letter-spacing: 1px;">ANA DEPO STOK</div>
