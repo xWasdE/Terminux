@@ -3,172 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Warehouse Management System</title>
+    <title>Terminux | WMS Terminal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; overflow: hidden; }
+        .hidden { display: none !important; }
 
-        body {
-            background-color: #000000;
-            color: #ffffff;
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
+        #loading-screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000; font-size: 24px; font-weight: 800; letter-spacing: 5px; color: #333; position: absolute; z-index: 9999; }
 
-        .split-layout {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
+        .split-layout { display: flex; width: 100%; height: 100%; }
+        .brand-section { flex: 1; background-color: #050505; background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; display: flex; flex-direction: column; justify-content: center; padding: 10%; border-right: 1px solid #1a1a1a; }
+        .brand-title { font-size: 4.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: #ffffff; }
+        .brand-subtitle { font-size: 1rem; font-weight: 500; color: #888888; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2rem; }
+        .brand-website { font-size: 0.875rem; font-weight: 500; color: #444444; letter-spacing: 0.1em; text-decoration: none; transition: color 0.2s; }
+        .brand-website:hover { color: #ffffff; }
 
-        .brand-section {
-            flex: 1;
-            background-color: #050505;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 10%;
-            border-right: 1px solid #1a1a1a;
-            position: relative;
-        }
+        .form-section { width: 500px; background-color: #000000; display: flex; flex-direction: column; justify-content: center; padding: 80px; }
+        .login-header { margin-bottom: 40px; }
+        .login-header h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+        .login-header p { color: #666666; font-size: 0.875rem; }
+        .input-group { margin-bottom: 24px; position: relative; }
+        .input-group input { width: 100%; background: #0a0a0a; border: 1px solid #222222; color: #ffffff; padding: 16px; font-size: 14px; border-radius: 4px; transition: 0.2s; outline: none; }
+        .input-group input:focus { border-color: #ffffff; background: #000000; }
+        .input-group label { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #666666; font-size: 14px; pointer-events: none; transition: 0.2s; }
+        .input-group input:focus ~ label, .input-group input:valid ~ label { top: 0; font-size: 11px; background: #000000; padding: 0 4px; color: #ffffff; }
+        .btn-submit { width: 100%; background: #ffffff; color: #000000; border: none; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 8px; transition: 0.2s; }
+        .btn-submit:hover { opacity: 0.9; }
 
-        .brand-title {
-            font-size: 4.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
-        }
-
-        .brand-subtitle {
-            font-size: 1rem;
-            font-weight: 500;
-            color: #888888;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            margin-bottom: 2rem;
-        }
-        
-        .brand-website {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #444444;
-            letter-spacing: 0.1em;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .brand-website:hover {
-            color: #ffffff;
-        }
-
-        .form-section {
-            width: 500px;
-            background-color: #000000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 80px;
-        }
-
-        .login-header {
-            margin-bottom: 40px;
-        }
-
-        .login-header h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .login-header p {
-            color: #666666;
-            font-size: 0.875rem;
-        }
-
-        .input-group {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        .input-group input {
-            width: 100%;
-            background: #0a0a0a;
-            border: 1px solid #222222;
-            color: #ffffff;
-            padding: 16px;
-            font-size: 14px;
-            border-radius: 4px;
-            transition: border-color 0.2s, background-color 0.2s;
-            outline: none;
-        }
-
-        .input-group input:focus {
-            border-color: #ffffff;
-            background: #000000;
-        }
-
-        .input-group label {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666666;
-            font-size: 14px;
-            pointer-events: none;
-            transition: 0.2s;
-        }
-
-        .input-group input:focus ~ label,
-        .input-group input:valid ~ label {
-            top: 0;
-            font-size: 11px;
-            background: #000000;
-            padding: 0 4px;
-            color: #ffffff;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            padding: 16px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: opacity 0.2s;
-        }
-
-        .btn-submit:hover {
-            opacity: 0.9;
-        }
-
-        .btn-submit:active {
-            opacity: 0.8;
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" class="split-layout">
+    <div id="loading-screen">TERMINUX INITIALIZING...</div>
+
+    <div id="login-screen" class="split-layout hidden">
         <div class="brand-section">
             <h1 class="brand-title">TERMINUX</h1>
             <p class="brand-subtitle">Warehouse Management System</p>
@@ -187,18 +61,30 @@
                     <input type="text" id="username" required autocomplete="off" spellcheck="false">
                     <label>Kullanıcı Adı</label>
                 </div>
-                
                 <div class="input-group">
                     <input type="password" id="password" required>
                     <label>Şifre</label>
                 </div>
-                
                 <button type="submit" class="btn-submit">Giriş Yap</button>
             </form>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden" style="width: 100%; height: 100%;">
+    <div id="app-screen" class="hidden" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+        <header style="padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505;">
+            <div style="font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:14px; font-weight: 600;">WMS TERMINAL</span></div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <span style="font-size: 13px; color: #666; letter-spacing: 1px;">OPERATÖR: <b id="operator-name" style="color: #00ff00;"></b></span>
+                <button id="btn-logout" style="background: #ffffff; color: #000000; border: none; padding: 10px 25px; cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.2s;">GÜVENLİ ÇIKIŞ</button>
+            </div>
+        </header>
+        <main style="flex: 1; padding: 50px; max-width: 1400px; margin: 0 auto; width: 100%; background: #000; overflow-y: auto;">
+            <div style="margin-bottom: 50px; position: relative;">
+                <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autocomplete="off">
+                <div id="dropdown-results" style="display: none; position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 500px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);"></div>
+            </div>
+            <div id="result-container" style="display: none;"></div>
+        </main>
     </div>
 
     <script type="module" src="app.js"></script>
