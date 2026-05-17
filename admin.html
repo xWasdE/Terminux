@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -6,22 +6,25 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; padding: 40px; }
-        .box { max-width: 800px; margin: 0 auto; border: 1px solid #111; background: #050505; padding: 40px; border-radius: 8px; }
+        .box { max-width: 900px; margin: 0 auto; border: 1px solid #111; background: #050505; padding: 40px; border-radius: 8px; }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        input, select { background: #000; border: 1px solid #222; color: #fff; padding: 15px; width: 100%; box-sizing: border-box; }
-        label { font-size: 10px; color: #444; text-transform: uppercase; display: block; margin-bottom: 10px; letter-spacing: 1px; }
-        button { background: #fff; color: #000; border: none; padding: 18px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; }
+        .upload-section { border: 1px solid #222; padding: 25px; background: #0a0a0a; border-radius: 4px; }
+        input { background: #000; border: 1px solid #222; color: #fff; padding: 15px; width: 100%; box-sizing: border-box; }
+        label { font-size: 11px; color: #666; text-transform: uppercase; display: block; margin-bottom: 12px; letter-spacing: 1px; font-weight: bold; }
+        button { background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 15px; }
         button:hover { opacity: 0.8; }
-        .log { margin-top: 30px; font-family: monospace; font-size: 12px; color: #555; border-top: 1px solid #111; padding-top: 20px; height: 200px; overflow-y: auto; }
+        .btn-ana { background: #00ff00; color: #000; }
+        .btn-am { background: #00ccff; color: #000; }
+        .log { margin-top: 30px; font-family: monospace; font-size: 12px; color: #555; border-top: 1px solid #111; padding-top: 20px; height: 250px; overflow-y: auto; }
         h1 { margin-bottom: 40px; font-size: 24px; letter-spacing: -1px; }
-        .sep { height: 1px; background: #111; margin: 50px 0; }
+        .sep { height: 1px; background: #111; margin: 40px 0; }
     </style>
 </head>
 <body>
     <div class="box">
         <h1>TERMINUX ADMIN</h1>
         
-        <label>Manuel Kayıt ve Stok Güncelleme</label>
+        <label>MANUEL KAYIT VE STOK GÜNCELLEME</label>
         <div class="row">
             <input type="text" id="m-kod" placeholder="Ürün Kodu / Barkod">
             <input type="text" id="m-ad" placeholder="Ürün Adı">
@@ -30,19 +33,24 @@
             <input type="number" id="m-ana" placeholder="Ana Depo Stok Miktarı">
             <input type="number" id="m-am" placeholder="Ameliyathane Stok Miktarı">
         </div>
-        <button id="btn-m">Veritabanına Yaz</button>
+        <button id="btn-m">VERİTABANINA YAZ / GÜNCELLE</button>
 
         <div class="sep"></div>
 
-        <label>Excel Aktarım (Sadece Yeni Ürünler Eklenir)</label>
+        <label>EXCEL İLE TOPLU AKTARIM (KOLEKSİYONLARA AYRI AYRI YAZILIR)</label>
         <div class="row">
-            <input type="file" id="f-in" accept=".xlsx">
-            <select id="f-depo">
-                <option value="ANA">LİSTEYİ ANA DEPO OLARAK İŞLE</option>
-                <option value="AM">LİSTEYİ AMELİYATHANE OLARAK İŞLE</option>
-            </select>
+            <div class="upload-section">
+                <label style="color: #00ff00;">ANA DEPO LİSTESİ</label>
+                <input type="file" id="f-ana" accept=".xlsx">
+                <button id="btn-ana" class="btn-ana">ANA DEPO EXCEL YÜKLE</button>
+            </div>
+            
+            <div class="upload-section">
+                <label style="color: #00ccff;">AMELİYATHANE LİSTESİ</label>
+                <input type="file" id="f-am" accept=".xlsx">
+                <button id="btn-am" class="btn-am">AMELİYATHANE EXCEL YÜKLE</button>
+            </div>
         </div>
-        <button id="btn-f" style="background: #00ff00; color: #000;">Excel'i Başlat</button>
 
         <div id="log" class="log">Sistem komut bekliyor...</div>
     </div>
@@ -62,41 +70,63 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const logger = (m) => document.getElementById('log').innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`;
+        
+        const logger = (m) => {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
 
         document.getElementById('btn-m').addEventListener('click', async () => {
             const id = document.getElementById('m-kod').value.trim();
+            const ad = document.getElementById('m-ad').value.trim();
             if(!id) return;
-            const data = {
-                urunKodu: id,
-                urunAdi: document.getElementById('m-ad').value.trim()
-            };
+            
             const anaVal = document.getElementById('m-ana').value;
             const amVal = document.getElementById('m-am').value;
-            if(anaVal !== "") data.anaDepoMiktar = parseInt(anaVal);
-            if(amVal !== "") data.ameliyathaneMiktar = parseInt(amVal);
-
-            await setDoc(doc(db, "urunler", id), data, { merge: true });
-            logger("Kayıt güncellendi: " + id);
+            
+            if(anaVal !== "") {
+                await setDoc(doc(db, "ana_depo", id), {
+                    urunKodu: id, urunAdi: ad, miktar: parseInt(anaVal)
+                }, { merge: true });
+                logger("Ana Depo kaydı eklendi: " + id);
+            }
+            
+            if(amVal !== "") {
+                await setDoc(doc(db, "ameliyathane", id), {
+                    urunKodu: id, urunAdi: ad, miktar: parseInt(amVal)
+                }, { merge: true });
+                logger("Ameliyathane kaydı eklendi: " + id);
+            }
+            
+            document.getElementById('m-kod').value = '';
+            document.getElementById('m-ad').value = '';
+            document.getElementById('m-ana').value = '';
+            document.getElementById('m-am').value = '';
         });
 
-        document.getElementById('btn-f').addEventListener('click', () => {
-            const file = document.getElementById('f-in').files[0];
-            const depo = document.getElementById('f-depo').value;
-            if(!file) return;
+        async function processExcel(inputId, depoType) {
+            const file = document.getElementById(inputId).files[0];
+            if(!file) {
+                logger("Lütfen Excel dosyası seçin.");
+                return;
+            }
 
+            const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
             const reader = new FileReader();
+
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                logger(rows.length + " satır taranıyor...");
+                logger(`(${depoType}) ${rows.length} satır işleniyor...`);
 
                 let addCount = 0, skipCount = 0;
+                
                 for (let r of rows) {
                     const id = r["Ürün Kodu"] ? r["Ürün Kodu"].toString().trim() : null;
                     if(!id) continue;
 
-                    const snap = await getDoc(doc(db, "urunler", id));
+                    const snap = await getDoc(doc(db, collectionName, id));
                     if (snap.exists()) {
                         skipCount++;
                         continue;
@@ -104,23 +134,30 @@
 
                     const data = {
                         urunKodu: id,
+                        barkod: (r["Barkod"] || id).toString(),
                         urunAdi: r["Ürün Adı"] || "",
+                        refNo: (r["Ref No"] || r["REF"] || "").toString(),
+                        classTipi: r["Class"] || r["Sınıf"] || "",
+                        surecTipi: r["Süreç Tipi"] || "",
                         miatTarihi: r["Miat Tarihi"] || "",
-                        minAlert: parseInt(r["Min (Alert)"]) || 0,
-                        durum: r["Durum"] || "",
-                        surecTipi: r["Süreç Tipi"] || ""
+                        minAlert: parseInt(r["Min"]) || parseInt(r["Min (Alert)"]) || 0,
+                        max: parseInt(r["Max"]) || 0,
+                        miktar: parseInt(r["Miktar"]) || 0
                     };
 
-                    if(depo === "ANA") data.anaDepoMiktar = parseInt(r["Miktar"]) || 0;
-                    else data.ameliyathaneMiktar = parseInt(r["Miktar"]) || 0;
-
-                    await setDoc(doc(db, "urunler", id), data);
+                    await setDoc(doc(db, collectionName, id), data);
                     addCount++;
                 }
-                logger("TAMAMLANDI. Yeni Eklenen: " + addCount + " | Atlanan (Mevcut): " + skipCount);
+                
+                logger(`(${depoType}) BİTTİ. Yeni: ${addCount} | Atlanan: ${skipCount}`);
+                document.getElementById(inputId).value = '';
             };
+            
             reader.readAsArrayBuffer(file);
-        });
+        }
+
+        document.getElementById('btn-ana').addEventListener('click', () => processExcel('f-ana', 'ANA'));
+        document.getElementById('btn-am').addEventListener('click', () => processExcel('f-am', 'AMELİYATHANE'));
     </script>
 </body>
 </html>
