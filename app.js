@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -23,19 +23,18 @@ const appScreen = document.getElementById('app-screen');
 
 let globalUser = "";
 let searchTimeout = null;
+let productCatalog = [];
 
-// OTURUM KONTROLÜ (F5 ATILSA BİLE SİSTEMDE KALMAYI SAĞLAR)
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Kullanıcı zaten giriş yapmışsa direkt terminali aç
         loginScreen.classList.add('hidden');
         appScreen.classList.remove('hidden');
         appScreen.style.display = 'flex';
         appScreen.style.flexDirection = 'column';
         globalUser = user.email.split('@')[0].toUpperCase();
+        await buildCatalog();
         loadTerminal();
     } else {
-        // Kullanıcı giriş yapmamışsa veya çıkış yaptıysa login ekranını göster
         loginScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
         appScreen.style.display = 'none';
@@ -51,11 +50,18 @@ loginForm.addEventListener('submit', async (e) => {
 
     try {
         await signInWithEmailAndPassword(auth, finalEmail, finalPass);
-        // Başarılı girişte onAuthStateChanged otomatik tetiklenip sayfayı değiştirecektir.
     } catch (error) {
         alert("Giriş Başarısız: Bilgileri kontrol edin.");
     }
 });
+
+async function buildCatalog() {
+    productCatalog = [];
+    const snap = await getDocs(collection(db, "ana_depo"));
+    snap.forEach(doc => {
+        productCatalog.push({ docId: doc.id, ...doc.data() });
+    });
+}
 
 function loadTerminal() {
     appScreen.innerHTML = `
@@ -90,38 +96,30 @@ function loadTerminal() {
         }
     });
 
-    // Otomatik tamamlama (İsim veya REF ile arama)
     input.addEventListener('input', (e) => {
-        const val = e.target.value.trim();
+        const val = e.target.value.trim().toLowerCase();
         clearTimeout(searchTimeout);
         
-        if (val.length < 3) {
+        if (val.length < 2) {
             dropdown.style.display = 'none';
             return;
         }
 
-        searchTimeout = setTimeout(async () => {
+        searchTimeout = setTimeout(() => {
             dropdown.innerHTML = '<div style="padding: 15px; color: #666;">Aranıyor...</div>';
             dropdown.style.display = 'block';
 
-            const q = query(collection(db, "ana_depo"), limit(10));
-            const querySnapshot = await getDocs(q);
-            
-            let matches = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const ad = (data.urunAdi || "").toLowerCase();
-                const ref = (data.refNo || "").toLowerCase();
-                const kod = (data.urunKodu || "").toLowerCase();
-                
-                if (ad.includes(val.toLowerCase()) || ref.includes(val.toLowerCase()) || kod.includes(val.toLowerCase())) {
-                    matches.push(data);
-                }
-            });
+            let matches = productCatalog.filter(m => {
+                const ad = (m.urunAdi || "").toLowerCase();
+                const ref = (m.refNo || "").toLowerCase();
+                const kod = (m.urunKodu || "").toLowerCase();
+                const barkod = (m.barkod || "").toLowerCase();
+                return ad.includes(val) || ref.includes(val) || kod.includes(val) || barkod.includes(val);
+            }).slice(0, 15);
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
-                    <div class="search-item" data-id="${m.urunKodu}" style="padding: 15px; border-bottom: 1px solid #222; cursor: pointer; color: #fff;">
+                    <div class="search-item" data-id="${m.docId}" style="padding: 15px; border-bottom: 1px solid #222; cursor: pointer; color: #fff;">
                         <span style="color: #00ff00;">[${m.urunKodu}]</span> ${m.urunAdi} ${m.refNo ? `| REF: ${m.refNo}` : ''}
                     </div>
                 `).join('');
@@ -136,11 +134,10 @@ function loadTerminal() {
             } else {
                 dropdown.innerHTML = '<div style="padding: 15px; color: #ff3333;">Eşleşme bulunamadı.</div>';
             }
-        }, 500);
+        }, 200);
     });
 
-    // Barkod okuyucu (Enter tuşu ile direkt getirme)
-    input.addEventListener('keydown', async (e) => {
+    input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             clearTimeout(searchTimeout);
@@ -150,7 +147,19 @@ function loadTerminal() {
             if (!code) return;
             
             input.value = '';
-            fetchAndDisplayProduct(code);
+
+            const directMatch = productCatalog.find(m => 
+                (m.docId === code) || 
+                (m.urunKodu === code) || 
+                (m.barkod === code) || 
+                (m.refNo === code)
+            );
+
+            if (directMatch) {
+                fetchAndDisplayProduct(directMatch.docId);
+            } else {
+                fetchAndDisplayProduct(code);
+            }
         }
     });
 
@@ -213,7 +222,6 @@ function renderCard(data, container) {
                     <div style="font-size: 11px; color: #666; letter-spacing: 2px; margin-bottom: 5px;">ÜRÜN İSMİ</div>
                     <div style="font-size: 32px; font-weight: 800; color: #fff;">${data.urunAdi}</div>
                 </div>
-                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid #1a1a1a; padding-top: 20px;">
                     <div>
                         <div style="font-size: 10px; color: #666; margin-bottom: 4px;">ÜRÜN KODU</div>
@@ -246,7 +254,6 @@ function renderCard(data, container) {
                     <div style="font-size: 12px; color: #888; margin-bottom: 15px; letter-spacing: 1px;">ANA DEPO STOK</div>
                     ${anaContent}
                 </div>
-                
                 <div style="border: 1px solid #222; padding: 25px; background: #0a0a0a; text-align: center;">
                     <div style="font-size: 12px; color: #888; margin-bottom: 15px; letter-spacing: 1px;">AMELİYATHANE STOK</div>
                     ${amContent}
