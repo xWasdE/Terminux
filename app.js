@@ -83,7 +83,7 @@ async function buildCatalog() {
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
                     refNo: String(data.refNo || ""),
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""}`.toLowerCase()
+                    searchString: `${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${doc.id} ${data.urunAdi || ""}`.toLowerCase()
                 });
             }
         };
