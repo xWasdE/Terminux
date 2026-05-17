@@ -32,8 +32,8 @@ onAuthStateChanged(auth, async (user) => {
         appScreen.style.display = 'flex';
         appScreen.style.flexDirection = 'column';
         globalUser = user.email.split('@')[0].toUpperCase();
-        await buildCatalog();
         loadTerminal();
+        buildCatalog();
     } else {
         loginScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
@@ -56,28 +56,44 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 async function buildCatalog() {
-    productCatalog = [];
-    const snap = await getDocs(collection(db, "ana_depo"));
-    snap.forEach(doc => {
-        productCatalog.push({ docId: doc.id, ...doc.data() });
-    });
+    try {
+        productCatalog = [];
+        const [anaSnap, amSnap] = await Promise.all([
+            getDocs(collection(db, "ana_depo")),
+            getDocs(collection(db, "ameliyathane"))
+        ]);
+        
+        const tempMap = new Map();
+        
+        anaSnap.forEach(doc => {
+            tempMap.set(doc.id, { docId: doc.id, ...doc.data() });
+        });
+        
+        amSnap.forEach(doc => {
+            if (!tempMap.has(doc.id)) {
+                tempMap.set(doc.id, { docId: doc.id, ...doc.data() });
+            }
+        });
+        
+        productCatalog = Array.from(tempMap.values());
+    } catch (error) {}
 }
 
 function loadTerminal() {
     appScreen.innerHTML = `
-        <header style="padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505;">
-            <div style="font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:12px;">WMS</span></div>
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <span style="font-size: 12px; color: #666;">OPERATÖR: <b style="color: #00ff00;">${globalUser}</b></span>
-                <button id="btn-logout" style="background: #111; color: #fff; border: 1px solid #333; padding: 8px 15px; cursor: pointer; font-size: 11px;">ÇIKIŞ</button>
+        <header style="padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505;">
+            <div style="font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:14px; font-weight: 600;">WMS CORE</span></div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <span style="font-size: 13px; color: #666; letter-spacing: 1px;">OPERATÖR: <b style="color: #00ff00;">${globalUser}</b></span>
+                <button id="btn-logout" style="background: #ffffff; color: #000000; border: none; padding: 10px 25px; cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.2s;">GÜVENLİ ÇIKIŞ</button>
             </div>
         </header>
-        <main style="flex: 1; padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; background: #000;">
-            <div style="margin-bottom: 40px; position: relative;">
-                <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="width: 100%; background: #050505; border: 1px solid #222; color: #00ff00; padding: 25px; font-size: 24px; font-family: monospace; outline: none;" autofocus autocomplete="off">
-                <div id="dropdown-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #111; border: 1px solid #333; z-index: 100; max-height: 300px; overflow-y: auto;"></div>
+        <main style="flex: 1; padding: 50px; max-width: 1400px; margin: 0 auto; width: 100%; background: #000;">
+            <div style="margin-bottom: 50px; position: relative;">
+                <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ OKUTUN..." style="width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: border-color 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autofocus autocomplete="off">
+                <div id="dropdown-results" style="display: none; position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);"></div>
             </div>
-            <div id="result-container" style="display: none; border: 1px solid #1a1a1a; padding: 40px; background: #050505;"></div>
+            <div id="result-container" style="display: none;"></div>
         </main>
     `;
 
@@ -86,6 +102,9 @@ function loadTerminal() {
     const input = document.getElementById('main-search');
     const dropdown = document.getElementById('dropdown-results');
     const res = document.getElementById('result-container');
+
+    input.addEventListener('focus', () => { input.style.borderColor = '#444'; });
+    input.addEventListener('blur', () => { input.style.borderColor = '#222'; });
 
     document.addEventListener('click', (e) => {
         if (!input.contains(e.target) && !dropdown.contains(e.target)) {
@@ -106,7 +125,7 @@ function loadTerminal() {
         }
 
         searchTimeout = setTimeout(() => {
-            dropdown.innerHTML = '<div style="padding: 15px; color: #666;">Aranıyor...</div>';
+            dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 18px;">Aranıyor...</div>';
             dropdown.style.display = 'block';
 
             let matches = productCatalog.filter(m => {
@@ -119,12 +138,15 @@ function loadTerminal() {
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
-                    <div class="search-item" data-id="${m.docId}" style="padding: 15px; border-bottom: 1px solid #222; cursor: pointer; color: #fff;">
-                        <span style="color: #00ff00;">[${m.urunKodu}]</span> ${m.urunAdi} ${m.refNo ? `| REF: ${m.refNo}` : ''}
+                    <div class="search-item" data-id="${m.docId}" style="padding: 20px 25px; border-bottom: 1px solid #1a1a1a; cursor: pointer; display: flex; flex-direction: column; gap: 5px; transition: background 0.2s;">
+                        <div style="color: #fff; font-size: 18px; font-weight: 600;">${m.urunAdi}</div>
+                        <div style="color: #888; font-size: 13px; font-family: monospace;">KOD: <span style="color: #00ff00;">${m.urunKodu}</span> &nbsp;|&nbsp; REF: ${m.refNo || '-'} &nbsp;|&nbsp; BARKOD: ${m.barkod || '-'}</div>
                     </div>
                 `).join('');
 
                 document.querySelectorAll('.search-item').forEach(item => {
+                    item.addEventListener('mouseenter', () => item.style.background = '#111');
+                    item.addEventListener('mouseleave', () => item.style.background = 'transparent');
                     item.addEventListener('click', () => {
                         input.value = '';
                         dropdown.style.display = 'none';
@@ -132,9 +154,9 @@ function loadTerminal() {
                     });
                 });
             } else {
-                dropdown.innerHTML = '<div style="padding: 15px; color: #ff3333;">Eşleşme bulunamadı.</div>';
+                dropdown.innerHTML = '<div style="padding: 20px; color: #ff3333; font-size: 18px;">Eşleşme bulunamadı.</div>';
             }
-        }, 200);
+        }, 150);
     });
 
     input.addEventListener('keydown', (e) => {
@@ -149,10 +171,10 @@ function loadTerminal() {
             input.value = '';
 
             const directMatch = productCatalog.find(m => 
-                (m.docId === code) || 
-                (m.urunKodu === code) || 
-                (m.barkod === code) || 
-                (m.refNo === code)
+                (m.docId.toLowerCase() === code.toLowerCase()) || 
+                ((m.urunKodu || "").toLowerCase() === code.toLowerCase()) || 
+                ((m.barkod || "").toLowerCase() === code.toLowerCase()) || 
+                ((m.refNo || "").toLowerCase() === code.toLowerCase())
             );
 
             if (directMatch) {
@@ -165,7 +187,7 @@ function loadTerminal() {
 
     async function fetchAndDisplayProduct(code) {
         res.style.display = 'block';
-        res.innerHTML = '<div style="color: #444;">Sorgulanıyor...</div>';
+        res.innerHTML = '<div style="color: #666; font-size: 24px;">Sorgulanıyor...</div>';
 
         const anaDoc = await getDoc(doc(db, "ana_depo", code));
         const amDoc = await getDoc(doc(db, "ameliyathane", code));
@@ -186,77 +208,83 @@ function loadTerminal() {
                 minAlert: baseData.minAlert || 0,
                 max: baseData.max || 0,
                 hasAna: anaDoc.exists(),
-                anaDepoMiktar: anaData ? anaData.miktar : 0,
+                anaDepoMiktar: anaData ? parseInt(anaData.miktar) : 0,
                 hasAm: amDoc.exists(),
-                ameliyathaneMiktar: amData ? amData.miktar : 0
+                ameliyathaneMiktar: amData ? parseInt(amData.miktar) : 0
             };
 
             renderCard(mergedData, res);
         } else {
             res.innerHTML = `
-                <div style="color: #ff3333; font-size: 24px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                <div style="color: #666; font-size: 14px; font-family: monospace;">Okutulan Kod: ${code}</div>
+                <div style="background: #110000; border: 1px solid #330000; padding: 40px; border-radius: 8px;">
+                    <div style="color: #ff3333; font-size: 32px; font-weight: 800; margin-bottom: 15px;">KAYIT BULUNAMADI</div>
+                    <div style="color: #888; font-size: 18px; font-family: monospace;">Okutulan Kod: <span style="color: #fff;">${code}</span></div>
+                </div>
             `;
         }
     }
 }
 
 function renderCard(data, container) {
-    const min = data.minAlert;
-    const max = data.max;
+    const min = parseInt(data.minAlert) || 0;
+    const max = parseInt(data.max) || 0;
 
-    const anaContent = data.hasAna 
-        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.anaDepoMiktar <= min ? '#ff3333' : '#fff'};">${data.anaDepoMiktar}</div>
-           <div style="font-size: 12px; color: #666; margin-top: 10px;">MİN: ${min} | MAX: ${max}</div>`
-        : `<div style="font-size: 14px; color: #ffbc00; letter-spacing: 1px;">BU DEPO İÇİN TANIMLI DEĞİL</div>`;
+    const getStockStyle = (amount, hasDepo) => {
+        if (!hasDepo) return { color: '#ffbc00', text: 'TANIMLI DEĞİL', size: '18px' };
+        if (amount <= min) return { color: '#ff3333', text: amount, size: '80px' };
+        return { color: '#ffffff', text: amount, size: '80px' };
+    };
 
-    const amContent = data.hasAm 
-        ? `<div style="font-size: 64px; font-weight: 800; color: ${data.ameliyathaneMiktar <= min ? '#ff3333' : '#fff'};">${data.ameliyathaneMiktar}</div>
-           <div style="font-size: 12px; color: #666; margin-top: 10px;">MİN: ${min} | MAX: ${max}</div>`
-        : `<div style="font-size: 14px; color: #ffbc00; letter-spacing: 1px;">BU DEPO İÇİN TANIMLI DEĞİL</div>`;
+    const anaStyle = getStockStyle(data.anaDepoMiktar, data.hasAna);
+    const amStyle = getStockStyle(data.ameliyathaneMiktar, data.hasAm);
 
     container.innerHTML = `
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px;">
-            <div>
-                <div style="margin-bottom: 30px;">
-                    <div style="font-size: 11px; color: #666; letter-spacing: 2px; margin-bottom: 5px;">ÜRÜN İSMİ</div>
-                    <div style="font-size: 32px; font-weight: 800; color: #fff;">${data.urunAdi}</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="margin-bottom: 40px;">
+                    <div style="font-size: 12px; color: #666; letter-spacing: 3px; margin-bottom: 10px; font-weight: 600;">ÜRÜN İSMİ</div>
+                    <div style="font-size: 42px; font-weight: 800; color: #fff; line-height: 1.2;">${data.urunAdi}</div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid #1a1a1a; padding-top: 20px;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">ÜRÜN KODU</div>
-                        <div style="font-size: 16px; color: #00ff00; font-family: monospace;">${data.urunKodu}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">ÜRÜN KODU</div>
+                        <div style="font-size: 20px; color: #00ff00; font-family: monospace; font-weight: 600;">${data.urunKodu}</div>
                     </div>
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">BARKOD</div>
-                        <div style="font-size: 16px; color: #ccc; font-family: monospace;">${data.barkod}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">BARKOD</div>
+                        <div style="font-size: 20px; color: #ccc; font-family: monospace;">${data.barkod}</div>
                     </div>
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">REF NO</div>
-                        <div style="font-size: 16px; color: #ccc;">${data.refNo}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">REF NO</div>
+                        <div style="font-size: 20px; color: #fff; font-weight: 500;">${data.refNo}</div>
                     </div>
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">CLASS (SINIF)</div>
-                        <div style="font-size: 16px; color: #ffbc00;">${data.classTipi}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">CLASS (SINIF)</div>
+                        <div style="font-size: 20px; color: #ffbc00; font-weight: 500;">${data.classTipi}</div>
                     </div>
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">MİAT TARİHİ</div>
-                        <div style="font-size: 16px; color: #ff3333;">${data.miatTarihi}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">MİAT TARİHİ</div>
+                        <div style="font-size: 20px; color: #ff3333; font-weight: 600;">${data.miatTarihi}</div>
                     </div>
                     <div>
-                        <div style="font-size: 10px; color: #666; margin-bottom: 4px;">SÜREÇ TİPİ</div>
-                        <div style="font-size: 16px; color: #ccc;">${data.surecTipi}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px;">SÜREÇ TİPİ</div>
+                        <div style="font-size: 20px; color: #ccc;">${data.surecTipi}</div>
                     </div>
                 </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 20px;">
-                <div style="border: 1px solid #222; padding: 25px; background: #0a0a0a; text-align: center;">
-                    <div style="font-size: 12px; color: #888; margin-bottom: 15px; letter-spacing: 1px;">ANA DEPO STOK</div>
-                    ${anaContent}
+
+            <div style="display: flex; flex-direction: column; gap: 40px;">
+                <div style="flex: 1; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; background: #080808; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="font-size: 14px; color: #888; margin-bottom: 20px; letter-spacing: 2px; font-weight: 600;">ANA DEPO STOK</div>
+                    <div style="font-size: ${anaStyle.size}; font-weight: 800; color: ${anaStyle.color}; line-height: 1;">${anaStyle.text}</div>
+                    ${data.hasAna ? `<div style="font-size: 14px; color: #555; margin-top: 20px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>` : ''}
                 </div>
-                <div style="border: 1px solid #222; padding: 25px; background: #0a0a0a; text-align: center;">
-                    <div style="font-size: 12px; color: #888; margin-bottom: 15px; letter-spacing: 1px;">AMELİYATHANE STOK</div>
-                    ${amContent}
+                
+                <div style="flex: 1; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; background: #080808; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <div style="font-size: 14px; color: #888; margin-bottom: 20px; letter-spacing: 2px; font-weight: 600;">AMELİYATHANE STOK</div>
+                    <div style="font-size: ${amStyle.size}; font-weight: 800; color: ${amStyle.color}; line-height: 1;">${amStyle.text}</div>
+                    ${data.hasAm ? `<div style="font-size: 14px; color: #555; margin-top: 20px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>` : ''}
                 </div>
             </div>
         </div>
