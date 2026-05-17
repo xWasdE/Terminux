@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Terminux | Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; padding: 40px; }
+        .box { max-width: 800px; margin: 0 auto; border: 1px solid #111; background: #050505; padding: 40px; border-radius: 8px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        input, select { background: #000; border: 1px solid #222; color: #fff; padding: 15px; width: 100%; box-sizing: border-box; }
+        label { font-size: 10px; color: #444; text-transform: uppercase; display: block; margin-bottom: 10px; letter-spacing: 1px; }
+        button { background: #fff; color: #000; border: none; padding: 18px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; }
+        button:hover { opacity: 0.8; }
+        .log { margin-top: 30px; font-family: monospace; font-size: 12px; color: #555; border-top: 1px solid #111; padding-top: 20px; height: 200px; overflow-y: auto; }
+        h1 { margin-bottom: 40px; font-size: 24px; letter-spacing: -1px; }
+        .sep { height: 1px; background: #111; margin: 50px 0; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>TERMINUX ADMIN</h1>
+        
+        <label>Manuel Kayıt ve Stok Güncelleme</label>
+        <div class="row">
+            <input type="text" id="m-kod" placeholder="Ürün Kodu / Barkod">
+            <input type="text" id="m-ad" placeholder="Ürün Adı">
+        </div>
+        <div class="row">
+            <input type="number" id="m-ana" placeholder="Ana Depo Stok Miktarı">
+            <input type="number" id="m-am" placeholder="Ameliyathane Stok Miktarı">
+        </div>
+        <button id="btn-m">Veritabanına Yaz</button>
+
+        <div class="sep"></div>
+
+        <label>Excel Aktarım (Sadece Yeni Ürünler Eklenir)</label>
+        <div class="row">
+            <input type="file" id="f-in" accept=".xlsx">
+            <select id="f-depo">
+                <option value="ANA">LİSTEYİ ANA DEPO OLARAK İŞLE</option>
+                <option value="AM">LİSTEYİ AMELİYATHANE OLARAK İŞLE</option>
+            </select>
+        </div>
+        <button id="btn-f" style="background: #00ff00; color: #000;">Excel'i Başlat</button>
+
+        <div id="log" class="log">Sistem komut bekliyor...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const logger = (m) => document.getElementById('log').innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`;
+
+        document.getElementById('btn-m').addEventListener('click', async () => {
+            const id = document.getElementById('m-kod').value.trim();
+            if(!id) return;
+            const data = {
+                urunKodu: id,
+                urunAdi: document.getElementById('m-ad').value.trim()
+            };
+            const anaVal = document.getElementById('m-ana').value;
+            const amVal = document.getElementById('m-am').value;
+            if(anaVal !== "") data.anaDepoMiktar = parseInt(anaVal);
+            if(amVal !== "") data.ameliyathaneMiktar = parseInt(amVal);
+
+            await setDoc(doc(db, "urunler", id), data, { merge: true });
+            logger("Kayıt güncellendi: " + id);
+        });
+
+        document.getElementById('btn-f').addEventListener('click', () => {
+            const file = document.getElementById('f-in').files[0];
+            const depo = document.getElementById('f-depo').value;
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                logger(rows.length + " satır taranıyor...");
+
+                let addCount = 0, skipCount = 0;
+                for (let r of rows) {
+                    const id = r["Ürün Kodu"] ? r["Ürün Kodu"].toString().trim() : null;
+                    if(!id) continue;
+
+                    const snap = await getDoc(doc(db, "urunler", id));
+                    if (snap.exists()) {
+                        skipCount++;
+                        continue;
+                    }
+
+                    const data = {
+                        urunKodu: id,
+                        urunAdi: r["Ürün Adı"] || "",
+                        miatTarihi: r["Miat Tarihi"] || "",
+                        minAlert: parseInt(r["Min (Alert)"]) || 0,
+                        durum: r["Durum"] || "",
+                        surecTipi: r["Süreç Tipi"] || ""
+                    };
+
+                    if(depo === "ANA") data.anaDepoMiktar = parseInt(r["Miktar"]) || 0;
+                    else data.ameliyathaneMiktar = parseInt(r["Miktar"]) || 0;
+
+                    await setDoc(doc(db, "urunler", id), data);
+                    addCount++;
+                }
+                logger("TAMAMLANDI. Yeni Eklenen: " + addCount + " | Atlanan (Mevcut): " + skipCount);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>
