@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Warehouse Management System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .split-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .brand-section {
+            flex: 1;
+            background-color: #050505;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10%;
+            border-right: 1px solid #1a1a1a;
+            position: relative;
+        }
+
+        .brand-title {
+            font-size: 4.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .brand-subtitle {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #888888;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+        
+        .brand-website {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #444444;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .brand-website:hover {
+            color: #ffffff;
+        }
+
+        .form-section {
+            width: 500px;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #666666;
+            font-size: 0.875rem;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #222222;
+            color: #ffffff;
+            padding: 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            transition: border-color 0.2s, background-color 0.2s;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #ffffff;
+            background: #000000;
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666666;
+            font-size: 14px;
+            pointer-events: none;
+            transition: 0.2s;
+        }
+
+        .input-group input:focus ~ label,
+        .input-group input:valid ~ label {
+            top: 0;
+            font-size: 11px;
+            background: #000000;
+            padding: 0 4px;
+            color: #ffffff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-submit:active {
+            opacity: 0.8;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="split-layout">
+        <div class="brand-section">
+            <h1 class="brand-title">TERMINUX</h1>
+            <p class="brand-subtitle">Warehouse Management System</p>
+            <div>
+                <a href="https://terminux.com.tr" target="_blank" class="brand-website">terminux.com.tr</a>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="login-header">
+                <h2>Sisteme Giriş</h2>
+                <p>Devam etmek için bilgilerinizi girin.</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <input type="text" id="username" required autocomplete="off" spellcheck="false">
+                    <label>Kullanıcı Adı</label>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="password" required>
+                    <label>Şifre</label>
+                </div>
+                
+                <button type="submit" class="btn-submit">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden">
+    </div>
+
+</body>
+</html>
