@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// %100 EL TERMİNALİ / MOBİL MOTORU (RESPONSIVE CSS ENJEKSİYONU)
+// %100 EL TERMİNALİ & MOBİL CSS MOTORU (RESPONSIVE INJECTION)
 // =========================================================================
 if (!document.querySelector('meta[name="viewport"]')) {
     const meta = document.createElement('meta');
@@ -16,23 +16,28 @@ const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
-    .card-main { flex: 1.2; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
-    .stock-box { flex: 1; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .stock-box { flex: 1; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     
-    .grid-details { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 40px; }
-    .title-text { font-size: 36px; font-weight: 800; color: #fff; line-height: 1.2; word-break: break-word; }
-    .label-text { font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
-    .value-text { font-size: 20px; font-family: monospace; font-weight: bold; word-break: break-all; }
+    .grid-details { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 40px; }
+    .title-text { font-size: 34px; font-weight: 800; color: #fff; line-height: 1.2; word-break: break-word; }
+    .label-text { font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+    .value-text { font-size: 20px; font-family: monospace; font-weight: bold; }
     
-    .input-style { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; font-family: monospace; width: 100%; max-width: 180px; font-size: 14px; }
-    .btn-save { background: #0f0; color: #000; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
-    .btn-edit { background: #1a1a1a; border: 1px solid #333; color: #aaa; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
-    .btn-edit:hover { color: #fff; background: #333; }
+    .input-style { background: #000; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; font-family: monospace; width: 100%; max-width: 160px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .input-style:focus { border-color: #00ff00; }
+    .btn-save { background: #00ff00; color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
+    .btn-cancel { background: #1a1a1a; color: #ff3333; border: 1px solid #333; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .btn-edit { background: #111; border: 1px solid #333; color: #aaa; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .btn-edit:hover { color: #fff; background: #333; border-color: #555; }
     
     .flex-edit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; margin-bottom: 5px; transition: 0.2s; }
-    .doc-link:hover { background: #1a1a1a; }
+    .edit-btn-group { display: flex; gap: 5px; }
+    
+    .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s; }
+    .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .mobile-break { word-break: break-all; }
 
     /* EL TERMİNALİ VE TELEFON GÖRÜNÜMÜ */
     @media (max-width: 900px) {
@@ -40,23 +45,24 @@ style.innerHTML = `
         .card-wrapper { flex-direction: column; gap: 20px; }
         .card-main, .stock-box { padding: 25px; }
         .grid-details { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; padding-top: 25px; }
-        .title-text { font-size: 26px; }
+        .title-text { font-size: 24px; }
         .value-text { font-size: 18px; }
         
-        /* Parmak dostu tam genişlik ayarları */
-        .input-style { max-width: 100%; width: 100%; margin-bottom: 5px; padding: 15px; font-size: 16px; }
-        .btn-save { width: 100%; padding: 15px; font-size: 15px; }
-        .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; }
-        .flex-edit > div { display: flex; gap: 10px; width: 100%; }
-        .flex-edit > div > button { flex: 1; } /* OK ve X butonları yarı yarıya böler */
+        .input-style { max-width: 100%; width: 100%; padding: 12px; font-size: 16px; margin-bottom: 5px; }
+        .btn-save, .btn-cancel { padding: 12px; font-size: 14px; flex: 1; }
+        .btn-edit { padding: 10px; font-size: 12px; margin-top: 5px; width: 100%; }
         
-        .doc-link { display: block; text-align: center; margin-bottom: 10px; padding: 15px; }
-        .btn-edit { width: 100%; padding: 12px; font-size: 13px; margin-top: 5px; }
+        .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
+        .edit-btn-group { width: 100%; display: flex; gap: 10px; }
+        
+        .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
+        .doc-link { text-align: center; padding: 15px; width: 100%; }
     }
 `;
 document.head.appendChild(style);
 // =========================================================================
 
+// --- FIREBASE YAPILANDIRMASI ---
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
     authDomain: "terminux-wms.firebaseapp.com",
@@ -70,6 +76,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// --- DOM ELEMENTLERİ ---
 const loadingScreen = document.getElementById('loading-screen');
 const loginScreen = document.getElementById('login-screen');
 const appScreen = document.getElementById('app-screen');
@@ -84,8 +91,8 @@ const resultContainer = document.getElementById('result-container');
 let productCatalog = [];
 let searchTimeout = null;
 
+// --- OTURUM YÖNETİMİ ---
 setPersistence(auth, browserLocalPersistence);
-
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         operatorName.textContent = user.email.split('@')[0].toUpperCase();
@@ -103,16 +110,11 @@ onAuthStateChanged(auth, async (user) => {
 
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const userVal = usernameInput.value.trim().toLowerCase();
-    const passVal = passwordInput.value;
-    let finalEmail = userVal === 'test' ? 'test@terminux.com.tr' : (userVal.includes('@') ? userVal : `${userVal}@terminux.com.tr`);
-    let finalPass = (userVal === 'test' && passVal === 'test') ? 'testtest' : passVal;
+    const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+    const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
-    try {
-        await signInWithEmailAndPassword(auth, finalEmail, finalPass);
-    } catch (error) {
-        alert("Giriş Başarısız: Lütfen bilgileri kontrol edin.");
-    }
+    try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
+    catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
 });
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
@@ -120,14 +122,12 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     window.location.reload();
 });
 
+// --- VERİTABANI ÖNBELLEKLEME (HIZLI ARAMA İÇİN) ---
 async function buildCatalog() {
     try {
-        const [anaSnap, amSnap] = await Promise.all([
-            getDocs(collection(db, "ana_depo")),
-            getDocs(collection(db, "ameliyathane"))
-        ]);
-        
+        const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
+        
         const processDoc = (doc) => {
             const data = doc.data();
             if (!tempMap.has(doc.id)) {
@@ -138,7 +138,7 @@ async function buildCatalog() {
                     barkod: String(data.barkod || ""),
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${doc.id} ${data.altGrup || ""}`.toLowerCase()
+                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
         };
@@ -149,6 +149,7 @@ async function buildCatalog() {
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
+// --- EKRAN ETKİLEŞİMLERİ ---
 document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
@@ -164,11 +165,11 @@ searchInput.addEventListener('input', (e) => {
     if (val.length < 2) { dropdown.style.display = 'none'; return; }
 
     searchTimeout = setTimeout(() => {
-        dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 18px;">Aranıyor...</div>';
+        dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 16px;">Aranıyor...</div>';
         dropdown.style.display = 'block';
 
-        const searchTerms = val.split(/\s+/);
-        let matches = productCatalog.filter(m => searchTerms.every(term => m.searchString.includes(term))).slice(0, 15);
+        const terms = val.split(/\s+/);
+        let matches = productCatalog.filter(m => terms.every(t => m.searchString.includes(t))).slice(0, 15);
 
         if (matches.length > 0) {
             dropdown.innerHTML = matches.map(m => `
@@ -186,7 +187,7 @@ searchInput.addEventListener('input', (e) => {
                 });
             });
         } else {
-            dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Eşleşme bulunamadı.</div>';
+            dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Kayıt bulunamadı.</div>';
         }
     }, 150);
 });
@@ -196,7 +197,6 @@ searchInput.addEventListener('keydown', (e) => {
         e.preventDefault();
         clearTimeout(searchTimeout);
         dropdown.style.display = 'none';
-        
         const code = searchInput.value.trim();
         if (!code) return;
         searchInput.value = '';
@@ -213,9 +213,9 @@ searchInput.addEventListener('keydown', (e) => {
     }
 });
 
-// -----------------------------------------------------
-// İZOLE EDİLMİŞ GÜVENLİ DÜZENLEME MANTIĞI
-// -----------------------------------------------------
+// =========================================================================
+// İZOLE EDİLMİŞ GÜVENLİ DÜZENLEME MANTIĞI (PRO ENGINE)
+// =========================================================================
 window.editField = (id, type) => {
     document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
     document.getElementById(`edit-${type}-${id}`).style.display = 'flex';
@@ -230,18 +230,20 @@ window.saveUpdate = async (id, type) => {
     const inputEl = document.getElementById(`man-${type}-${id}`);
     const newVal = inputEl ? inputEl.value.trim() : null;
 
-    if (!newVal) return alert("Hata: Değer boş olamaz!");
+    if (!newVal) return alert("Hata: Değer boş bırakılamaz.");
 
     const updateData = {};
+    
+    // Zeki Karar Mekanizması
     if (type === 'b') {
         updateData.barkod = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Barkod değişirse botu uyandır
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
     } else if (type === 'r') {
         updateData.refNo = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Ref değişirse botu uyandır
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
     } else if (type === 'm') {
         updateData.miatTarihi = newVal;
-        // MİAT TARİHİNDE BELGELERİ SIFIRLAMIYORUZ! Bot boşuna çalışmaz.
+        // Miat tarihinde docLinks sıfırlanmaz, belgeler korunur.
     }
 
     try {
@@ -253,14 +255,44 @@ window.saveUpdate = async (id, type) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
         
-        await buildCatalog();
-        fetchAndDisplayProduct(id);
-    } catch (err) { alert("Güncelleme hatası: " + err.message); }
+        await buildCatalog(); // Belleği yenile
+        fetchAndDisplayProduct(id); // Kartı yenile
+    } catch (err) { alert("Sistem Hatası: " + err.message); }
 };
 
-// -----------------------------------------------------
+// =========================================================================
+// UI GENERATOR (Arayüz Üretici) DRY Prensibi
+// =========================================================================
+function createEditUI(id, type, val, placeholder, colorClass) {
+    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-";
+    
+    if (isSet) {
+        return `
+            <div id="txt-container-${type}-${id}" class="flex-edit">
+                <span style="color: ${colorClass};" class="value-text mobile-break">${val}</span>
+                <button onclick="editField('${id}', '${type}')" class="btn-edit">✎ DÜZENLE</button>
+            </div>
+            <div id="edit-${type}-${id}" class="flex-edit" style="display:none;">
+                <input type="text" id="man-${type}-${id}" value="${val}" class="input-style">
+                <div class="edit-btn-group">
+                    <button onclick="saveUpdate('${id}', '${type}')" class="btn-save" style="background:#ffbc00; color:#000;">OK</button>
+                    <button onclick="cancelEdit('${id}', '${type}')" class="btn-cancel">X</button>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="flex-edit">
+                <input type="text" id="man-${type}-${id}" placeholder="${placeholder}" class="input-style">
+                <button onclick="saveUpdate('${id}', '${type}')" class="btn-save">KAYDET</button>
+            </div>
+        `;
+    }
+}
+
+// =========================================================================
 // VİTRİN: ÜRÜN KARTI OLUŞTURMA
-// -----------------------------------------------------
+// =========================================================================
 window.fetchAndDisplayProduct = async (code) => {
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Veriler Çekiliyor...</div>';
@@ -296,56 +328,28 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
-            renderCard(mergedData, resultContainer);
+            renderCard(mergedData);
         } else {
             resultContainer.innerHTML = `
-                <div class="card-main" style="text-align:center; border-color:#300;">
-                    <div style="color: #f33; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Kod: <span style="color:#fff;">${code}</span></div>
+                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
+                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan: <span style="color:#fff;">${code}</span></div>
                 </div>
             `;
         }
-    } catch (err) { resultContainer.innerHTML = `<div style="color:#f33;">Hata: ${err.message}</div>`; }
+    } catch (err) { resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
 };
-
-// DÜZENLEME ARAYÜZÜ KALIBI (UI GENERATOR)
-function createEditUI(id, type, val, placeholder, colorClass) {
-    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-";
-    
-    if (isSet) {
-        return `
-            <div id="txt-container-${type}-${id}" class="flex-edit">
-                <span style="color: ${colorClass};" class="value-text">${val}</span>
-                <button onclick="editField('${id}', '${type}')" class="btn-edit">✎ DÜZENLE</button>
-            </div>
-            <div id="edit-${type}-${id}" class="flex-edit" style="display:none;">
-                <input type="text" id="man-${type}-${id}" value="${val}" class="input-style">
-                <div>
-                    <button onclick="saveUpdate('${id}', '${type}')" style="background:#fb0;" class="btn-save">OK</button>
-                    <button onclick="cancelEdit('${id}', '${type}')" style="background:#333; color:#f33;" class="btn-save">X</button>
-                </div>
-            </div>
-        `;
-    } else {
-        return `
-            <div class="flex-edit">
-                <input type="text" id="man-${type}-${id}" placeholder="${placeholder}" class="input-style">
-                <button onclick="saveUpdate('${id}', '${type}')" class="btn-save">KAYDET</button>
-            </div>
-        `;
-    }
-}
 
 function renderCard(data) {
     const min = parseInt(data.minAlert) || 0;
-    const getS = (val, has) => (!has ? { c: '#fb0', t: 'TANIMSIZ' } : { c: val <= min ? '#f33' : '#fff', t: val });
+    const getS = (val, has) => (!has ? { c: '#fb0', t: 'TANIMSIZ' } : { c: val <= min ? '#ff3333' : '#fff', t: val });
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    // Otomatik UI Üreticileri (Barkod, Ref, Miat)
+    // Otomatik UI Üreticileri
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
-    const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#f33');
+    const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     resultContainer.innerHTML = `
         <div class="card-wrapper">
@@ -356,50 +360,50 @@ function renderCard(data) {
                 </div>
                 
                 <div class="grid-details">
-                    <div><div class="label-text">ÜRÜN KODU</div><div class="value-text" style="color:#0f0;">${data.urunKodu}</div></div>
+                    <div><div class="label-text">ÜRÜN KODU</div><div class="value-text" style="color:#00ff00;">${data.urunKodu}</div></div>
                     <div><div class="label-text">BARKOD</div><div>${barkodUI}</div></div>
                     <div><div class="label-text">REF NO</div><div>${refUI}</div></div>
                     <div><div class="label-text">MİAT TARİHİ</div><div>${miatUI}</div></div>
-                    <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#fb0;">${data.altGrup}</div></div>
-                    <div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#aaa;">${data.surecTipi}</div></div>
+                    <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#ffbc00;">${data.altGrup}</div></div>
+                    <div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
                 </div>
 
                 <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
                     <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER</div>
-                    <div>
-                        ${data.docLinks.kunye ? `<a href="${data.docLinks.kunye}" target="_blank" class="doc-link" style="color:#0cf;">📄 Ürün Künyesi</a>` : ``}
-                        ${data.docLinks.etiket ? `<a href="${data.docLinks.etiket}" target="_blank" class="doc-link" style="color:#fb0;">🖼️ Etiket / Ambalaj</a>` : ``}
-                        ${data.docLinks.kilavuz ? `<a href="${data.docLinks.kilavuz}" target="_blank" class="doc-link" style="color:#0f0;">📖 Kılavuz</a>` : ``}
-                        ${(!data.docLinks.kunye && !data.docLinks.etiket && !data.docLinks.kilavuz) ? `<span style="color:#444; font-size:13px; font-style:italic;">Belge bekleniyor...</span>` : ``}
+                    <div class="doc-links-container" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        ${data.docLinks.kunye ? `<a href="${data.docLinks.kunye}" target="_blank" class="doc-link" style="color:#00ccff;">📄 Ürün Künyesi</a>` : ``}
+                        ${data.docLinks.etiket ? `<a href="${data.docLinks.etiket}" target="_blank" class="doc-link" style="color:#ffbc00;">🖼️ Etiket / Ambalaj</a>` : ``}
+                        ${data.docLinks.kilavuz ? `<a href="${data.docLinks.kilavuz}" target="_blank" class="doc-link" style="color:#00ff00;">📖 Kullanma Kılavuzu</a>` : ``}
+                        ${(!data.docLinks.kunye && !data.docLinks.etiket && !data.docLinks.kilavuz) ? `<span style="color:#444; font-size:13px; font-style:italic; padding:10px 0;">Sistem belgeleme bekliyor...</span>` : ``}
                     </div>
                 </div>
             </div>
 
             <div class="card-sidebar">
                 <div class="stock-box">
-                    <div class="label-text" style="margin-bottom:15px; font-size:14px; font-weight:bold;">ANA DEPO STOK</div>
+                    <div class="label-text" style="margin-bottom:15px; font-size:14px;">ANA DEPO STOK</div>
                     <div style="font-size:80px; font-weight:800; color:${sAna.c}; line-height:1;">${sAna.t}</div>
                     ${data.hasAna ? `
                         <div style="font-size: 13px; color: #555; margin-top: 15px;">MİN: ${data.minAlert} | MAX: ${data.max}</div>
                         <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 15px 0;"></div>
                         <div style="text-align: left; padding: 0 10px;">
                             <div style="font-size: 13px; color: #666; margin-bottom: 5px;">ADRES: <span style="color: #fff;">${data.anaStokAdresi}</span></div>
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">DUMMY: <span style="color: ${data.anaDummy === 'DUMMY' ? '#fb0' : '#0f0'};">${data.anaDummy}</span></div>
-                            <div style="font-size: 13px; color: #666;">CİHAZ: <span style="color: ${data.anaReuse === 'REUSE' ? '#f33' : '#0cf'};">${data.anaReuse}</span></div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">DUMMY: <span style="color: ${data.anaDummy === 'DUMMY' ? '#ffbc00' : '#00ff00'};">${data.anaDummy}</span></div>
+                            <div style="font-size: 13px; color: #666;">CİHAZ: <span style="color: ${data.anaReuse === 'REUSE' ? '#ff3333' : '#00ccff'};">${data.anaReuse}</span></div>
                         </div>
                     ` : ''}
                 </div>
                 
                 <div class="stock-box">
-                    <div class="label-text" style="margin-bottom:15px; font-size:14px; font-weight:bold;">AMELİYATHANE STOK</div>
+                    <div class="label-text" style="margin-bottom:15px; font-size:14px;">AMELİYATHANE STOK</div>
                     <div style="font-size:80px; font-weight:800; color:${sAm.c}; line-height:1;">${sAm.t}</div>
                     ${data.hasAm ? `
                         <div style="font-size: 13px; color: #555; margin-top: 15px;">MİN: ${data.minAlert} | MAX: ${data.max}</div>
                         <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 15px 0;"></div>
                         <div style="text-align: left; padding: 0 10px;">
                             <div style="font-size: 13px; color: #666; margin-bottom: 5px;">ADRES: <span style="color: #fff;">${data.amStokAdresi}</span></div>
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">DUMMY: <span style="color: ${data.amDummy === 'DUMMY' ? '#fb0' : '#0f0'};">${data.amDummy}</span></div>
-                            <div style="font-size: 13px; color: #666;">CİHAZ: <span style="color: ${data.amReuse === 'REUSE' ? '#f33' : '#0cf'};">${data.amReuse}</span></div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">DUMMY: <span style="color: ${data.amDummy === 'DUMMY' ? '#ffbc00' : '#00ff00'};">${data.amDummy}</span></div>
+                            <div style="font-size: 13px; color: #666;">CİHAZ: <span style="color: ${data.amReuse === 'REUSE' ? '#ff3333' : '#00ccff'};">${data.amReuse}</span></div>
                         </div>
                     ` : ''}
                 </div>
