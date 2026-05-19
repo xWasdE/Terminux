@@ -190,7 +190,6 @@ async function fetchAndDisplayProduct(code) {
             const amData = amDoc.exists() ? amDoc.data() : null;
             const baseData = anaData || amData; 
 
-            // Eğer Alt Grup vs. bir depoda eksikse diğerinden alır
             const altGrupGetir = (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-");
 
             const mergedData = {
