@@ -95,7 +95,6 @@
             logDiv.scrollTop = logDiv.scrollHeight;
         };
 
-        // Kurşun Geçirmez Sütun Okuyucu (Boşluk veya harf farkını affetmez)
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
@@ -149,7 +148,12 @@
                     if(!id) continue;
 
                     let urunAdiStr = getCol(r, ["ürün adı", "urun adi", "malzeme adı"]);
-                    let refNoStr = getCol(r, ["ref no", "ref", "katalog no", "katalog"]);
+                    let refNoStr = getCol(r, ["ref no", "ref", "katalog no", "katalog", "katalog numarası", "referans"]);
+
+                    // Excel'deki gizli Tire, Yok, 0 gibi gereksiz verileri silip virgül kırma sistemini çalıştır
+                    if(refNoStr === "-" || refNoStr.toLowerCase() === "yok" || refNoStr.toLowerCase() === "bulunamadı" || refNoStr === "0") {
+                        refNoStr = "";
+                    }
 
                     // Sondaki virgülü koparıp REF yapma algoritması
                     if (!refNoStr && urunAdiStr.includes(",")) {
@@ -171,9 +175,13 @@
                         miktar: parseInt(getCol(r, ["miktar", "stok"])) || 0
                     };
 
-                    // Eğer tek dosyada tüm kolonlar varsa onları da çek
-                    if (hasCol(r, ["alt grup", "altgrup"])) data.altGrup = getCol(r, ["alt grup", "altgrup"]);
-                    if (hasCol(r, ["stok adresi", "adres"])) data.stokAdresi = getCol(r, ["stok adresi", "adres"]);
+                    // Eğer tek dosyada tüm kolonlar varsa onları da çek (Genişletilmiş Alt Grup Anahtarları)
+                    if (hasCol(r, ["alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
+                        data.altGrup = getCol(r, ["alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
+                    }
+                    if (hasCol(r, ["stok adresi", "adres"])) {
+                        data.stokAdresi = getCol(r, ["stok adresi", "adres"]);
+                    }
                     
                     if (hasCol(r, ["dummy", "dummy durumu"])) {
                         let rawDummy = getCol(r, ["dummy", "dummy durumu"]).toUpperCase();
@@ -215,8 +223,12 @@
 
                     let extraData = {};
                     
-                    if (hasCol(r, ["alt grup", "altgrup"])) extraData.altGrup = getCol(r, ["alt grup", "altgrup"]);
-                    if (hasCol(r, ["stok adresi", "adres"])) extraData.stokAdresi = getCol(r, ["stok adresi", "adres"]);
+                    if (hasCol(r, ["alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
+                        extraData.altGrup = getCol(r, ["alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
+                    }
+                    if (hasCol(r, ["stok adresi", "adres"])) {
+                        extraData.stokAdresi = getCol(r, ["stok adresi", "adres"]);
+                    }
                     
                     if (hasCol(r, ["dummy", "dummy durumu"])) {
                         let rawDummy = getCol(r, ["dummy", "dummy durumu"]).toUpperCase();
