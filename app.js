@@ -200,7 +200,7 @@ async function fetchAndDisplayProduct(code) {
                 altGrup: altGrupGetir,
                 surecTipi: baseData.surecTipi || "-",
                 miatTarihi: baseData.miatTarihi || "-",
-                docLinks: baseData.docLinks || { kunye: "", etiket: "", kilavuz: "" }, // Belge Linkleri
+                docLinks: baseData.docLinks || { kunye: "", etiket: "", kilavuz: "" }, 
                 minAlert: baseData.minAlert || 0,
                 max: baseData.max || 0,
                 hasAna: anaDoc.exists(),
@@ -229,7 +229,19 @@ async function fetchAndDisplayProduct(code) {
     }
 }
 
-// Global olarak tetiklenebilmesi için window objesine kayıt
+// -----------------------------------------------------
+// DÜZENLEME (EDIT) FONKSİYONLARI 
+// -----------------------------------------------------
+window.editField = (id, type) => {
+    document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
+    document.getElementById(`edit-${type}-${id}`).style.display = 'flex';
+};
+
+window.cancelEdit = (id, type) => {
+    document.getElementById(`txt-container-${type}-${id}`).style.display = 'flex';
+    document.getElementById(`edit-${type}-${id}`).style.display = 'none';
+};
+
 window.saveManualData = async (urunKodu) => {
     const bInput = document.getElementById(`man-b-${urunKodu}`);
     const rInput = document.getElementById(`man-r-${urunKodu}`);
@@ -237,11 +249,17 @@ window.saveManualData = async (urunKodu) => {
     const newBarkod = bInput ? bInput.value.trim() : null;
     const newRef = rInput ? rInput.value.trim() : null;
     
-    if(!newBarkod && !newRef) return alert("Lütfen kaydedilecek bir değer girin.");
-    
     const updateData = {};
-    if(newBarkod) updateData.barkod = newBarkod;
-    if(newRef) updateData.refNo = newRef;
+    if (newBarkod) updateData.barkod = newBarkod;
+    if (newRef) updateData.refNo = newRef;
+
+    if (Object.keys(updateData).length === 0) {
+        return alert("Lütfen kaydedilecek bir değer girin.");
+    }
+
+    // AKILLI TETİKLEYİCİ: Barkod düzeltildiğinde eski yanlış PDF belgelerini SİL!
+    // Böylece Python ÜTS botumuz, doğru belgeleri baştan çeker.
+    updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
 
     try {
         const anaRef = doc(db, "ana_depo", urunKodu);
@@ -252,7 +270,6 @@ window.saveManualData = async (urunKodu) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
         
-        // Katalogu arkada tazele ve ekranı güncelle
         buildCatalog();
         fetchAndDisplayProduct(urunKodu);
     } catch (err) {
@@ -273,14 +290,31 @@ function renderCard(data, container) {
     const anaStyle = getStockStyle(data.anaDepoMiktar, data.hasAna);
     const amStyle = getStockStyle(data.amMiktar, data.hasAm);
 
-    // PRO ÖZELLİK: Eğer barkod veya ref eksikse, arayüzden direkt manuel giriş imkanı sağla.
-    let barkodUI = data.barkod 
-        ? `<span style="color: #ccc;">${data.barkod}</span>` 
-        : `<div style="display:flex; gap:10px;"><input type="text" id="man-b-${data.urunKodu}" placeholder="Barkod Okut..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold;">KAYDET</button></div>`;
+    // DÜZENLE KONTROLLÜ BARKOD ARAYÜZÜ
+    let barkodUI = data.barkod && data.barkod !== "TANIMLI DEĞİL" && data.barkod !== "BULUNAMADI"
+        ? `<div id="txt-container-b-${data.urunKodu}" style="display:flex; align-items:center; gap:10px;">
+             <span style="color: #ccc;">${data.barkod}</span>
+             <button onclick="editField('${data.urunKodu}', 'b')" style="background:#111; border:1px solid #333; color:#aaa; padding:3px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
+           </div>
+           <div id="edit-b-${data.urunKodu}" style="display:none; gap:10px;">
+             <input type="text" id="man-b-${data.urunKodu}" value="${data.barkod}" style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;">
+             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">GÜNCELLE</button>
+             <button onclick="cancelEdit('${data.urunKodu}', 'b')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:12px;">İPTAL</button>
+           </div>`
+        : `<div style="display:flex; gap:10px;"><input type="text" id="man-b-${data.urunKodu}" placeholder="Barkod Okut..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">KAYDET</button></div>`;
         
-    let refUI = (data.refNo && data.refNo !== "BULUNAMADI")
-        ? `<span style="color: #fff;">${data.refNo}</span>`
-        : `<div style="display:flex; gap:10px;"><input type="text" id="man-r-${data.urunKodu}" placeholder="Ref Yaz..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold;">KAYDET</button></div>`;
+    // DÜZENLE KONTROLLÜ REF ARAYÜZÜ
+    let refUI = data.refNo && data.refNo !== "BULUNAMADI"
+        ? `<div id="txt-container-r-${data.urunKodu}" style="display:flex; align-items:center; gap:10px;">
+             <span style="color: #fff;">${data.refNo}</span>
+             <button onclick="editField('${data.urunKodu}', 'r')" style="background:#111; border:1px solid #333; color:#aaa; padding:3px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
+           </div>
+           <div id="edit-r-${data.urunKodu}" style="display:none; gap:10px;">
+             <input type="text" id="man-r-${data.urunKodu}" value="${data.refNo}" style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;">
+             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">GÜNCELLE</button>
+             <button onclick="cancelEdit('${data.urunKodu}', 'r')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:12px;">İPTAL</button>
+           </div>`
+        : `<div style="display:flex; gap:10px;"><input type="text" id="man-r-${data.urunKodu}" placeholder="Ref Yaz..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">KAYDET</button></div>`;
 
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
@@ -295,11 +329,11 @@ function renderCard(data, container) {
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">ÜRÜN KODU</div>
                         <div style="font-size: 22px; color: #00ff00; font-family: monospace; font-weight: 600;">${data.urunKodu}</div>
                     </div>
-                    <div>
+                    <div style="height: 50px;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">BARKOD</div>
                         <div style="font-size: 20px; font-family: monospace;">${barkodUI}</div>
                     </div>
-                    <div>
+                    <div style="height: 50px;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">REF NO</div>
                         <div style="font-size: 20px; font-weight: 500;">${refUI}</div>
                     </div>
