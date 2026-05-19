@@ -190,12 +190,15 @@ async function fetchAndDisplayProduct(code) {
             const amData = amDoc.exists() ? amDoc.data() : null;
             const baseData = anaData || amData; 
 
+            // Eğer Alt Grup vs. bir depoda eksikse diğerinden alır
+            const altGrupGetir = (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-");
+
             const mergedData = {
                 urunKodu: code,
                 barkod: baseData.barkod || "",
                 urunAdi: baseData.urunAdi || "-",
                 refNo: baseData.refNo || "BULUNAMADI",
-                altGrup: baseData.altGrup || "-",
+                altGrup: altGrupGetir,
                 surecTipi: baseData.surecTipi || "-",
                 miatTarihi: baseData.miatTarihi || "-",
                 minAlert: baseData.minAlert || 0,
@@ -204,6 +207,7 @@ async function fetchAndDisplayProduct(code) {
                 anaDepoMiktar: anaData ? parseInt(anaData.miktar) : 0,
                 anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
                 anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
                 hasAm: amDoc.exists(),
                 amMiktar: amData ? parseInt(amData.miktar) : 0,
                 amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
@@ -286,6 +290,7 @@ function renderCard(data, container) {
                         <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; padding: 0 20px;">
                             <div style="font-size: 13px; color: #666; letter-spacing: 1px;">STOK ADRESİ: <span style="color: #fff; font-size: 15px;">${data.anaStokAdresi}</span></div>
                             <div style="font-size: 13px; color: #666; letter-spacing: 1px;">DUMMY DURUMU: <span style="color: ${data.anaDummy === 'DUMMY' ? '#ffbc00' : '#00ff00'}; font-size: 15px; font-weight: 600;">${data.anaDummy}</span></div>
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">CİHAZ TİPİ: <span style="color: ${data.anaReuse === 'REUSE' ? '#ff3333' : '#00ccff'}; font-size: 15px; font-weight: 600;">${data.anaReuse}</span></div>
                         </div>
                     ` : ''}
                 </div>
