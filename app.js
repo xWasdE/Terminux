@@ -82,8 +82,9 @@ async function buildCatalog() {
                     urunKodu: String(data.urunKodu || ""),
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
-                    refNo: String(data.refNo || ""),
-                    searchString: `${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${doc.id} ${data.urunAdi || ""}`.toLowerCase()
+                    refNo: String(data.refNo || "BULUNAMADI"),
+                    altGrup: String(data.altGrup || ""),
+                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${doc.id} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
         };
@@ -131,7 +132,7 @@ searchInput.addEventListener('input', (e) => {
             dropdown.innerHTML = matches.map(m => `
                 <div class="search-item" data-id="${m.docId}" style="padding: 20px 25px; border-bottom: 1px solid #1a1a1a; cursor: pointer; display: flex; flex-direction: column; gap: 5px; transition: background 0.2s;">
                     <div style="color: #fff; font-size: 18px; font-weight: 600;">${m.urunAdi}</div>
-                    <div style="color: #888; font-size: 13px; font-family: monospace;">KOD: <span style="color: #00ff00;">${m.urunKodu}</span> &nbsp;|&nbsp; REF: ${m.refNo || '-'} &nbsp;|&nbsp; BARKOD: ${m.barkod || '-'}</div>
+                    <div style="color: #888; font-size: 13px; font-family: monospace;">KOD: <span style="color: #00ff00;">${m.urunKodu}</span> &nbsp;|&nbsp; REF: ${m.refNo} &nbsp;|&nbsp; BARKOD: ${m.barkod || 'TANIMLI DEĞİL'} &nbsp;|&nbsp; ALT GRUP: <span style="color: #ffbc00;">${m.altGrup || '-'}</span></div>
                 </div>
             `).join('');
 
@@ -191,18 +192,23 @@ async function fetchAndDisplayProduct(code) {
 
             const mergedData = {
                 urunKodu: code,
-                barkod: baseData.barkod || code,
+                barkod: baseData.barkod || "",
                 urunAdi: baseData.urunAdi || "-",
-                refNo: baseData.refNo || "-",
-                classTipi: baseData.classTipi || "-",
+                refNo: baseData.refNo || "BULUNAMADI",
+                altGrup: baseData.altGrup || "-",
                 surecTipi: baseData.surecTipi || "-",
                 miatTarihi: baseData.miatTarihi || "-",
                 minAlert: baseData.minAlert || 0,
                 max: baseData.max || 0,
                 hasAna: anaDoc.exists(),
                 anaDepoMiktar: anaData ? parseInt(anaData.miktar) : 0,
+                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
+                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
                 hasAm: amDoc.exists(),
-                ameliyathaneMiktar: amData ? parseInt(amData.miktar) : 0
+                amMiktar: amData ? parseInt(amData.miktar) : 0,
+                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
+                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
             renderCard(mergedData, resultContainer);
@@ -230,7 +236,9 @@ function renderCard(data, container) {
     };
 
     const anaStyle = getStockStyle(data.anaDepoMiktar, data.hasAna);
-    const amStyle = getStockStyle(data.ameliyathaneMiktar, data.hasAm);
+    const amStyle = getStockStyle(data.amMiktar, data.hasAm);
+
+    const barkodUI = data.barkod ? `<span style="color: #ccc;">${data.barkod}</span>` : `<span style="color: #ff3333; font-weight: 600;">TANIMLI DEĞİL</span>`;
 
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
@@ -247,15 +255,15 @@ function renderCard(data, container) {
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">BARKOD</div>
-                        <div style="font-size: 22px; color: #ccc; font-family: monospace;">${data.barkod}</div>
+                        <div style="font-size: 22px; font-family: monospace;">${barkodUI}</div>
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">REF NO</div>
                         <div style="font-size: 22px; color: #fff; font-weight: 500;">${data.refNo}</div>
                     </div>
                     <div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">CLASS (SINIF)</div>
-                        <div style="font-size: 22px; color: #ffbc00; font-weight: 500;">${data.classTipi}</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">ALT GRUP</div>
+                        <div style="font-size: 22px; color: #ffbc00; font-weight: 500;">${data.altGrup}</div>
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">MİAT TARİHİ</div>
@@ -270,15 +278,30 @@ function renderCard(data, container) {
 
             <div style="display: flex; flex-direction: column; gap: 40px;">
                 <div style="flex: 1; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; background: #080808; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <div style="font-size: 16px; color: #888; margin-bottom: 25px; letter-spacing: 3px; font-weight: 600;">ANA DEPO STOK</div>
+                    <div style="font-size: 16px; color: #888; margin-bottom: 15px; letter-spacing: 3px; font-weight: 600;">ANA DEPO STOK</div>
                     <div style="font-size: ${anaStyle.size}; font-weight: 800; color: ${anaStyle.color}; line-height: 1;">${anaStyle.text}</div>
-                    ${data.hasAna ? `<div style="font-size: 16px; color: #555; margin-top: 25px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>` : ''}
+                    ${data.hasAna ? `
+                        <div style="font-size: 16px; color: #555; margin-top: 15px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>
+                        <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 20px 0;"></div>
+                        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; padding: 0 20px;">
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">STOK ADRESİ: <span style="color: #fff; font-size: 15px;">${data.anaStokAdresi}</span></div>
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">DUMMY DURUMU: <span style="color: ${data.anaDummy === 'DUMMY' ? '#ffbc00' : '#00ff00'}; font-size: 15px; font-weight: 600;">${data.anaDummy}</span></div>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 <div style="flex: 1; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; background: #080808; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <div style="font-size: 16px; color: #888; margin-bottom: 25px; letter-spacing: 3px; font-weight: 600;">AMELİYATHANE STOK</div>
+                    <div style="font-size: 16px; color: #888; margin-bottom: 15px; letter-spacing: 3px; font-weight: 600;">AMELİYATHANE STOK</div>
                     <div style="font-size: ${amStyle.size}; font-weight: 800; color: ${amStyle.color}; line-height: 1;">${amStyle.text}</div>
-                    ${data.hasAm ? `<div style="font-size: 16px; color: #555; margin-top: 25px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>` : ''}
+                    ${data.hasAm ? `
+                        <div style="font-size: 16px; color: #555; margin-top: 15px; font-weight: 500;">MİN: <span style="color:#888">${min}</span> &nbsp;|&nbsp; MAX: <span style="color:#888">${max}</span></div>
+                        <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 20px 0;"></div>
+                        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; padding: 0 20px;">
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">STOK ADRESİ: <span style="color: #fff; font-size: 15px;">${data.amStokAdresi}</span></div>
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">DUMMY DURUMU: <span style="color: ${data.amDummy === 'DUMMY' ? '#ffbc00' : '#00ff00'}; font-size: 15px; font-weight: 600;">${data.amDummy}</span></div>
+                            <div style="font-size: 13px; color: #666; letter-spacing: 1px;">CİHAZ TİPİ: <span style="color: ${data.amReuse === 'REUSE' ? '#ff3333' : '#00ccff'}; font-size: 15px; font-weight: 600;">${data.amReuse}</span></div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </div>
