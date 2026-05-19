@@ -190,11 +190,13 @@
                     const id = r["Ürün Kodu"] ? r["Ürün Kodu"].toString().trim() : null;
                     if(!id) continue;
 
-                    let isDummy = r["Dummy"] || r["DUMMY"] ? r["Dummy"] || r["DUMMY"] : "";
-                    isDummy = isDummy.toString().trim().toLowerCase() !== "hayır" && isDummy !== "" ? "DUMMY" : "DUMMY DEĞİL";
+                    // KESİN DUMMY MANTIĞI: Sadece "EVET" veya "DUMMY" yazıyorsa DUMMY olur.
+                    let rawDummy = (r["Dummy"] || r["DUMMY"] || "").toString().trim().toUpperCase();
+                    let isDummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
 
-                    let isReuse = r["Reuse"] || r["REUSE"] || r["Reuse/Sıfır"] ? r["Reuse"] || r["REUSE"] || r["Reuse/Sıfır"] : "";
-                    isReuse = isReuse.toString().trim().toLowerCase() !== "sıfır" && isReuse !== "" ? "REUSE" : "REUSE DEĞİL";
+                    // KESİN REUSE MANTIĞI: Sadece "REUSE" yazıyorsa REUSE olur. (SIFIR veya boşsa REUSE DEĞİL)
+                    let rawReuse = (r["Reuse"] || r["REUSE"] || r["Reuse/Sıfır"] || "").toString().trim().toUpperCase();
+                    let isReuse = (rawReuse === "REUSE") ? "REUSE" : "REUSE DEĞİL";
 
                     const extraData = {
                         altGrup: (r["Alt Grup"] || r["ALT GRUP"] || "").toString().trim(),
