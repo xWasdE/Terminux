@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- FİREBASE BAĞLANTISI ---
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
     authDomain: "terminux-wms.firebaseapp.com",
@@ -15,6 +16,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// --- DOM ELEMENTLERİ ---
 const loadingScreen = document.getElementById('loading-screen');
 const loginScreen = document.getElementById('login-screen');
 const appScreen = document.getElementById('app-screen');
@@ -29,6 +31,7 @@ const resultContainer = document.getElementById('result-container');
 let productCatalog = [];
 let searchTimeout = null;
 
+// --- OTURUM YÖNETİMİ ---
 setPersistence(auth, browserLocalPersistence);
 
 onAuthStateChanged(auth, async (user) => {
@@ -65,6 +68,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     window.location.reload();
 });
 
+// --- KATALOG (BELLEK) OLUŞTURMA ---
 async function buildCatalog() {
     try {
         const [anaSnap, amSnap] = await Promise.all([
@@ -97,6 +101,7 @@ async function buildCatalog() {
     }
 }
 
+// --- EKRAN ETKİLEŞİMLERİ ---
 document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
@@ -177,7 +182,64 @@ searchInput.addEventListener('keydown', (e) => {
     }
 });
 
-async function fetchAndDisplayProduct(code) {
+// -----------------------------------------------------
+// PRO DÜZENLEME (EDIT) VE KAYIT FONKSİYONLARI (GLOBAL)
+// -----------------------------------------------------
+window.editField = (id, type) => {
+    const displayContainer = document.getElementById(`txt-container-${type}-${id}`);
+    const editContainer = document.getElementById(`edit-${type}-${id}`);
+    if(displayContainer && editContainer) {
+        displayContainer.style.display = 'none';
+        editContainer.style.display = 'flex';
+    }
+};
+
+window.cancelEdit = (id, type) => {
+    const displayContainer = document.getElementById(`txt-container-${type}-${id}`);
+    const editContainer = document.getElementById(`edit-${type}-${id}`);
+    if(displayContainer && editContainer) {
+        displayContainer.style.display = 'flex';
+        editContainer.style.display = 'none';
+    }
+};
+
+window.saveManualData = async (urunKodu) => {
+    const bInput = document.getElementById(`man-b-${urunKodu}`);
+    const rInput = document.getElementById(`man-r-${urunKodu}`);
+    
+    const newBarkod = bInput ? bInput.value.trim() : null;
+    const newRef = rInput ? rInput.value.trim() : null;
+    
+    const updateData = {};
+    if (newBarkod) updateData.barkod = newBarkod;
+    if (newRef) updateData.refNo = newRef;
+
+    if (Object.keys(updateData).length === 0) {
+        return alert("Lütfen kaydedilecek bir değer girin.");
+    }
+
+    // PRO ÖZELLİK: AKILLI TETİKLEYİCİ
+    // Barkod veya REF değişirse ÜTS belgelerini temizle ki Python Bot yeniden çalışsın.
+    updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
+
+    try {
+        const anaRef = doc(db, "ana_depo", urunKodu);
+        const amRef = doc(db, "ameliyathane", urunKodu);
+        
+        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        
+        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
+        if(amSnap.exists()) await updateDoc(amRef, updateData);
+        
+        await buildCatalog(); // Sistemi arkada yenile
+        fetchAndDisplayProduct(urunKodu); // Kartı arayüzde yenile
+    } catch (err) {
+        alert("Güncelleme başarısız: " + err.message);
+    }
+};
+
+// --- VERİ ÇEKME VE KART YAZDIRMA ---
+window.fetchAndDisplayProduct = async (code) => {
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Veriler Çekiliyor...</div>';
 
@@ -227,54 +289,6 @@ async function fetchAndDisplayProduct(code) {
     } catch (error) {
         resultContainer.innerHTML = `<div style="color: #ff3333; font-size: 18px;">Bağlantı Hatası: ${error.message}</div>`;
     }
-}
-
-// -----------------------------------------------------
-// DÜZENLEME (EDIT) FONKSİYONLARI 
-// -----------------------------------------------------
-window.editField = (id, type) => {
-    document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
-    document.getElementById(`edit-${type}-${id}`).style.display = 'flex';
-};
-
-window.cancelEdit = (id, type) => {
-    document.getElementById(`txt-container-${type}-${id}`).style.display = 'flex';
-    document.getElementById(`edit-${type}-${id}`).style.display = 'none';
-};
-
-window.saveManualData = async (urunKodu) => {
-    const bInput = document.getElementById(`man-b-${urunKodu}`);
-    const rInput = document.getElementById(`man-r-${urunKodu}`);
-    
-    const newBarkod = bInput ? bInput.value.trim() : null;
-    const newRef = rInput ? rInput.value.trim() : null;
-    
-    const updateData = {};
-    if (newBarkod) updateData.barkod = newBarkod;
-    if (newRef) updateData.refNo = newRef;
-
-    if (Object.keys(updateData).length === 0) {
-        return alert("Lütfen kaydedilecek bir değer girin.");
-    }
-
-    // AKILLI TETİKLEYİCİ: Barkod düzeltildiğinde eski yanlış PDF belgelerini SİL!
-    // Böylece Python ÜTS botumuz, doğru belgeleri baştan çeker.
-    updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
-
-    try {
-        const anaRef = doc(db, "ana_depo", urunKodu);
-        const amRef = doc(db, "ameliyathane", urunKodu);
-        
-        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
-        
-        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
-        if(amSnap.exists()) await updateDoc(amRef, updateData);
-        
-        buildCatalog();
-        fetchAndDisplayProduct(urunKodu);
-    } catch (err) {
-        alert("Güncelleme başarısız: " + err.message);
-    }
 };
 
 function renderCard(data, container) {
@@ -290,31 +304,31 @@ function renderCard(data, container) {
     const anaStyle = getStockStyle(data.anaDepoMiktar, data.hasAna);
     const amStyle = getStockStyle(data.amMiktar, data.hasAm);
 
-    // DÜZENLE KONTROLLÜ BARKOD ARAYÜZÜ
+    // PRO BARKOD UI - Düzenleme ve Kaydetme Kontrolü
     let barkodUI = data.barkod && data.barkod !== "TANIMLI DEĞİL" && data.barkod !== "BULUNAMADI"
         ? `<div id="txt-container-b-${data.urunKodu}" style="display:flex; align-items:center; gap:10px;">
              <span style="color: #ccc;">${data.barkod}</span>
-             <button onclick="editField('${data.urunKodu}', 'b')" style="background:#111; border:1px solid #333; color:#aaa; padding:3px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
+             <button onclick="editField('${data.urunKodu}', 'b')" style="background:#111; border:1px solid #333; color:#aaa; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
            </div>
-           <div id="edit-b-${data.urunKodu}" style="display:none; gap:10px;">
-             <input type="text" id="man-b-${data.urunKodu}" value="${data.barkod}" style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;">
-             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">GÜNCELLE</button>
-             <button onclick="cancelEdit('${data.urunKodu}', 'b')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:12px;">İPTAL</button>
+           <div id="edit-b-${data.urunKodu}" style="display:none; gap:10px; align-items:center;">
+             <input type="text" id="man-b-${data.urunKodu}" value="${data.barkod}" style="background:#000; border:1px solid #444; color:#fff; padding:6px; width:140px; font-family:monospace; border-radius:4px;">
+             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:12px; border-radius:4px;">OK</button>
+             <button onclick="cancelEdit('${data.urunKodu}', 'b')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:14px; font-weight:bold;">X</button>
            </div>`
-        : `<div style="display:flex; gap:10px;"><input type="text" id="man-b-${data.urunKodu}" placeholder="Barkod Okut..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">KAYDET</button></div>`;
+        : `<div style="display:flex; gap:10px; align-items:center;"><input type="text" id="man-b-${data.urunKodu}" placeholder="Barkod Okut..." style="background:#000; border:1px solid #444; color:#fff; padding:6px; width:140px; font-family:monospace; border-radius:4px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:12px; border-radius:4px;">KAYDET</button></div>`;
         
-    // DÜZENLE KONTROLLÜ REF ARAYÜZÜ
+    // PRO REF NO UI - Düzenleme ve Kaydetme Kontrolü
     let refUI = data.refNo && data.refNo !== "BULUNAMADI"
         ? `<div id="txt-container-r-${data.urunKodu}" style="display:flex; align-items:center; gap:10px;">
              <span style="color: #fff;">${data.refNo}</span>
-             <button onclick="editField('${data.urunKodu}', 'r')" style="background:#111; border:1px solid #333; color:#aaa; padding:3px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
+             <button onclick="editField('${data.urunKodu}', 'r')" style="background:#111; border:1px solid #333; color:#aaa; padding:4px 8px; cursor:pointer; border-radius:4px; font-size:10px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎ DÜZENLE</button>
            </div>
-           <div id="edit-r-${data.urunKodu}" style="display:none; gap:10px;">
-             <input type="text" id="man-r-${data.urunKodu}" value="${data.refNo}" style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;">
-             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">GÜNCELLE</button>
-             <button onclick="cancelEdit('${data.urunKodu}', 'r')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:12px;">İPTAL</button>
+           <div id="edit-r-${data.urunKodu}" style="display:none; gap:10px; align-items:center;">
+             <input type="text" id="man-r-${data.urunKodu}" value="${data.refNo}" style="background:#000; border:1px solid #444; color:#fff; padding:6px; width:140px; font-family:monospace; border-radius:4px;">
+             <button onclick="saveManualData('${data.urunKodu}')" style="background:#ffbc00; color:#000; border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:12px; border-radius:4px;">OK</button>
+             <button onclick="cancelEdit('${data.urunKodu}', 'r')" style="background:transparent; border:none; color:#ff3333; cursor:pointer; font-size:14px; font-weight:bold;">X</button>
            </div>`
-        : `<div style="display:flex; gap:10px;"><input type="text" id="man-r-${data.urunKodu}" placeholder="Ref Yaz..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px; font-family:monospace;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold; font-size:12px;">KAYDET</button></div>`;
+        : `<div style="display:flex; gap:10px; align-items:center;"><input type="text" id="man-r-${data.urunKodu}" placeholder="Ref Yaz..." style="background:#000; border:1px solid #444; color:#fff; padding:6px; width:140px; font-family:monospace; border-radius:4px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:12px; border-radius:4px;">KAYDET</button></div>`;
 
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
@@ -329,11 +343,11 @@ function renderCard(data, container) {
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">ÜRÜN KODU</div>
                         <div style="font-size: 22px; color: #00ff00; font-family: monospace; font-weight: 600;">${data.urunKodu}</div>
                     </div>
-                    <div style="height: 50px;">
+                    <div style="min-height: 50px;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">BARKOD</div>
                         <div style="font-size: 20px; font-family: monospace;">${barkodUI}</div>
                     </div>
-                    <div style="height: 50px;">
+                    <div style="min-height: 50px;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">REF NO</div>
                         <div style="font-size: 20px; font-weight: 500;">${refUI}</div>
                     </div>
@@ -354,9 +368,9 @@ function renderCard(data, container) {
                 <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
                     <div style="font-size: 13px; color: #666; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600;">ÜTS BELGELERİ VE GÖRSELLER</div>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        ${data.docLinks.kunye ? `<a href="${data.docLinks.kunye}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ccff; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">📄 Ürün Künyesi</a>` : ``}
-                        ${data.docLinks.etiket ? `<a href="${data.docLinks.etiket}" target="_blank" style="background: #111; border: 1px solid #333; color: #ffbc00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">🖼️ Etiket / Ambalaj</a>` : ``}
-                        ${data.docLinks.kilavuz ? `<a href="${data.docLinks.kilavuz}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ff00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">📖 Kullanma Kılavuzu</a>` : ``}
+                        ${data.docLinks.kunye ? `<a href="${data.docLinks.kunye}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ccff; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#111'">📄 Ürün Künyesi</a>` : ``}
+                        ${data.docLinks.etiket ? `<a href="${data.docLinks.etiket}" target="_blank" style="background: #111; border: 1px solid #333; color: #ffbc00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#111'">🖼️ Etiket / Ambalaj</a>` : ``}
+                        ${data.docLinks.kilavuz ? `<a href="${data.docLinks.kilavuz}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ff00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#111'">📖 Kullanma Kılavuzu</a>` : ``}
                         ${(!data.docLinks.kunye && !data.docLinks.etiket && !data.docLinks.kilavuz) ? `<span style="color:#444; font-size: 13px; font-style: italic;">Henüz belge yüklenmedi veya sistem tarafından ÜTS taraması bekleniyor.</span>` : ``}
                     </div>
                 </div>
