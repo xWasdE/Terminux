@@ -15,6 +15,7 @@
         button:hover { opacity: 0.8; }
         .btn-ana { background: #00ff00; color: #000; }
         .btn-am { background: #00ccff; color: #000; }
+        .btn-update { background: #ffbc00; color: #000; }
         .log { margin-top: 30px; font-family: monospace; font-size: 12px; color: #555; border-top: 1px solid #111; padding-top: 20px; height: 250px; overflow-y: auto; }
         h1 { margin-bottom: 40px; font-size: 24px; letter-spacing: -1px; }
         .sep { height: 1px; background: #111; margin: 40px 0; }
@@ -26,7 +27,7 @@
         
         <label>MANUEL KAYIT VE STOK GÜNCELLEME</label>
         <div class="row">
-            <input type="text" id="m-kod" placeholder="Ürün Kodu / Barkod">
+            <input type="text" id="m-kod" placeholder="Ürün Kodu">
             <input type="text" id="m-ad" placeholder="Ürün Adı">
         </div>
         <div class="row">
@@ -37,18 +38,36 @@
 
         <div class="sep"></div>
 
-        <label>EXCEL İLE TOPLU AKTARIM (KOLEKSİYONLARA AYRI AYRI YAZILIR)</label>
+        <label>1. AŞAMA: ANA LİSTE YÜKLEME (SADECE YENİ ÜRÜNLER VE STOKLAR)</label>
         <div class="row">
             <div class="upload-section">
                 <label style="color: #00ff00;">ANA DEPO LİSTESİ</label>
                 <input type="file" id="f-ana" accept=".xlsx">
-                <button id="btn-ana" class="btn-ana">ANA DEPO EXCEL YÜKLE</button>
+                <button id="btn-ana" class="btn-ana">ANA DEPO YÜKLE</button>
             </div>
             
             <div class="upload-section">
                 <label style="color: #00ccff;">AMELİYATHANE LİSTESİ</label>
                 <input type="file" id="f-am" accept=".xlsx">
-                <button id="btn-am" class="btn-am">AMELİYATHANE EXCEL YÜKLE</button>
+                <button id="btn-am" class="btn-am">AMELİYATHANE YÜKLE</button>
+            </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <label>2. AŞAMA: EK VERİ GÜNCELLEME (REUSE, DUMMY, ALT GRUP, STOK ADRESİ)</label>
+        <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Bu alan mevcut ürünlerin üzerindeki ekstra verileri günceller. Aynı ürün koduna sahip olmaları gerekir.</p>
+        <div class="row">
+            <div class="upload-section">
+                <label style="color: #ffbc00;">ANA DEPO EK VERİ</label>
+                <input type="file" id="f-ana-ext" accept=".xlsx">
+                <button id="btn-ana-ext" class="btn-update">ANA DEPO GÜNCELLE</button>
+            </div>
+            
+            <div class="upload-section">
+                <label style="color: #ffbc00;">AMELİYATHANE EK VERİ</label>
+                <input type="file" id="f-am-ext" accept=".xlsx">
+                <button id="btn-am-ext" class="btn-update">AMELİYATHANE GÜNCELLE</button>
             </div>
         </div>
 
@@ -86,31 +105,20 @@
             const amVal = document.getElementById('m-am').value;
             
             if(anaVal !== "") {
-                await setDoc(doc(db, "ana_depo", id), {
-                    urunKodu: id, urunAdi: ad, miktar: parseInt(anaVal)
-                }, { merge: true });
+                await setDoc(doc(db, "ana_depo", id), { urunKodu: id, urunAdi: ad, miktar: parseInt(anaVal) }, { merge: true });
                 logger("Ana Depo kaydı eklendi: " + id);
             }
-            
             if(amVal !== "") {
-                await setDoc(doc(db, "ameliyathane", id), {
-                    urunKodu: id, urunAdi: ad, miktar: parseInt(amVal)
-                }, { merge: true });
+                await setDoc(doc(db, "ameliyathane", id), { urunKodu: id, urunAdi: ad, miktar: parseInt(amVal) }, { merge: true });
                 logger("Ameliyathane kaydı eklendi: " + id);
             }
             
-            document.getElementById('m-kod').value = '';
-            document.getElementById('m-ad').value = '';
-            document.getElementById('m-ana').value = '';
-            document.getElementById('m-am').value = '';
+            document.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => el.value = '');
         });
 
-        async function processExcel(inputId, depoType) {
+        async function processPrimaryExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
-            if(!file) {
-                logger("Lütfen Excel dosyası seçin.");
-                return;
-            }
+            if(!file) return logger("Lütfen Excel dosyası seçin.");
 
             const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
             const reader = new FileReader();
@@ -118,7 +126,7 @@
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                logger(`(${depoType}) ${rows.length} satır işleniyor...`);
+                logger(`(${depoType} - BİRİNCİL) ${rows.length} satır işleniyor...`);
 
                 let addCount = 0, skipCount = 0;
                 
@@ -127,21 +135,30 @@
                     if(!id) continue;
 
                     const snap = await getDoc(doc(db, collectionName, id));
-                    if (snap.exists()) {
-                        skipCount++;
-                        continue;
+                    if (snap.exists()) { skipCount++; continue; }
+
+                    let urunAdiStr = r["Ürün Adı"] || "";
+                    let refNoStr = (r["Ref No"] || r["REF"] || "").toString().trim();
+
+                    if (!refNoStr && urunAdiStr.includes(",")) {
+                        const parts = urunAdiStr.split(",");
+                        refNoStr = parts[parts.length - 1].trim();
+                        urunAdiStr = parts.slice(0, -1).join(",").trim();
                     }
+                    if(!refNoStr) refNoStr = "BULUNAMADI";
+
+                    let barkodVal = r["Barkod"] ? r["Barkod"].toString().trim() : "";
+                    let minAlertVal = parseInt(r["MİN(Kritik)"]) || parseInt(r["Min(Kritik)"]) || parseInt(r["Min (Kritik)"]) || parseInt(r["Min"]) || 0;
 
                     const data = {
                         urunKodu: id,
-                        barkod: (r["Barkod"] || id).toString(),
-                        urunAdi: r["Ürün Adı"] || "",
-                        refNo: (r["Ref No"] || r["REF"] || "").toString(),
-                        classTipi: r["Class"] || r["Sınıf"] || "",
+                        barkod: barkodVal,
+                        urunAdi: urunAdiStr,
+                        refNo: refNoStr,
                         surecTipi: r["Süreç Tipi"] || "",
                         miatTarihi: r["Miat Tarihi"] || "",
-                        minAlert: parseInt(r["Min"]) || parseInt(r["Min (Alert)"]) || 0,
-                        max: parseInt(r["Max"]) || 0,
+                        minAlert: minAlertVal,
+                        max: parseInt(r["Max"]) || parseInt(r["Maks"]) || 0,
                         miktar: parseInt(r["Miktar"]) || 0
                     };
 
@@ -149,15 +166,58 @@
                     addCount++;
                 }
                 
-                logger(`(${depoType}) BİTTİ. Yeni: ${addCount} | Atlanan: ${skipCount}`);
+                logger(`(${depoType} - BİRİNCİL) BİTTİ. Yeni: ${addCount} | Atlanan: ${skipCount}`);
                 document.getElementById(inputId).value = '';
             };
-            
             reader.readAsArrayBuffer(file);
         }
 
-        document.getElementById('btn-ana').addEventListener('click', () => processExcel('f-ana', 'ANA'));
-        document.getElementById('btn-am').addEventListener('click', () => processExcel('f-am', 'AMELİYATHANE'));
+        async function processExtraDataExcel(inputId, depoType) {
+            const file = document.getElementById(inputId).files[0];
+            if(!file) return logger("Lütfen Güncelleme Excel dosyası seçin.");
+
+            const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                logger(`(${depoType} - GÜNCELLEME) ${rows.length} satır kontrol ediliyor...`);
+
+                let updateCount = 0;
+                
+                for (let r of rows) {
+                    const id = r["Ürün Kodu"] ? r["Ürün Kodu"].toString().trim() : null;
+                    if(!id) continue;
+
+                    let isDummy = r["Dummy"] || r["DUMMY"] ? r["Dummy"] || r["DUMMY"] : "";
+                    isDummy = isDummy.toString().trim().toLowerCase() !== "hayır" && isDummy !== "" ? "DUMMY" : "DUMMY DEĞİL";
+
+                    let isReuse = r["Reuse"] || r["REUSE"] || r["Reuse/Sıfır"] ? r["Reuse"] || r["REUSE"] || r["Reuse/Sıfır"] : "";
+                    isReuse = isReuse.toString().trim().toLowerCase() !== "sıfır" && isReuse !== "" ? "REUSE" : "REUSE DEĞİL";
+
+                    const extraData = {
+                        altGrup: (r["Alt Grup"] || r["ALT GRUP"] || "").toString().trim(),
+                        stokAdresi: (r["Stok Adresi"] || r["STOK ADRESİ"] || r["Adres"] || "").toString().trim(),
+                        dummy: isDummy,
+                        reuse: isReuse
+                    };
+
+                    await setDoc(doc(db, collectionName, id), extraData, { merge: true });
+                    updateCount++;
+                }
+                
+                logger(`(${depoType} - GÜNCELLEME) BİTTİ. Güncellenen Kayıt: ${updateCount}`);
+                document.getElementById(inputId).value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        document.getElementById('btn-ana').addEventListener('click', () => processPrimaryExcel('f-ana', 'ANA'));
+        document.getElementById('btn-am').addEventListener('click', () => processPrimaryExcel('f-am', 'AMELİYATHANE'));
+        
+        document.getElementById('btn-ana-ext').addEventListener('click', () => processExtraDataExcel('f-ana-ext', 'ANA'));
+        document.getElementById('btn-am-ext').addEventListener('click', () => processExtraDataExcel('f-am-ext', 'AMELİYATHANE'));
     </script>
 </body>
 </html>
