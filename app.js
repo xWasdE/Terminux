@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -98,7 +98,7 @@ async function buildCatalog() {
 }
 
 document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
     }
     if(!['INPUT', 'SELECT', 'BUTTON'].includes(e.target.tagName) && !appScreen.classList.contains('hidden')) {
@@ -200,6 +200,7 @@ async function fetchAndDisplayProduct(code) {
                 altGrup: altGrupGetir,
                 surecTipi: baseData.surecTipi || "-",
                 miatTarihi: baseData.miatTarihi || "-",
+                docLinks: baseData.docLinks || { kunye: "", etiket: "", kilavuz: "" }, // Belge Linkleri
                 minAlert: baseData.minAlert || 0,
                 max: baseData.max || 0,
                 hasAna: anaDoc.exists(),
@@ -228,6 +229,37 @@ async function fetchAndDisplayProduct(code) {
     }
 }
 
+// Global olarak tetiklenebilmesi için window objesine kayıt
+window.saveManualData = async (urunKodu) => {
+    const bInput = document.getElementById(`man-b-${urunKodu}`);
+    const rInput = document.getElementById(`man-r-${urunKodu}`);
+    
+    const newBarkod = bInput ? bInput.value.trim() : null;
+    const newRef = rInput ? rInput.value.trim() : null;
+    
+    if(!newBarkod && !newRef) return alert("Lütfen kaydedilecek bir değer girin.");
+    
+    const updateData = {};
+    if(newBarkod) updateData.barkod = newBarkod;
+    if(newRef) updateData.refNo = newRef;
+
+    try {
+        const anaRef = doc(db, "ana_depo", urunKodu);
+        const amRef = doc(db, "ameliyathane", urunKodu);
+        
+        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        
+        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
+        if(amSnap.exists()) await updateDoc(amRef, updateData);
+        
+        // Katalogu arkada tazele ve ekranı güncelle
+        buildCatalog();
+        fetchAndDisplayProduct(urunKodu);
+    } catch (err) {
+        alert("Güncelleme başarısız: " + err.message);
+    }
+};
+
 function renderCard(data, container) {
     const min = parseInt(data.minAlert) || 0;
     const max = parseInt(data.max) || 0;
@@ -241,14 +273,21 @@ function renderCard(data, container) {
     const anaStyle = getStockStyle(data.anaDepoMiktar, data.hasAna);
     const amStyle = getStockStyle(data.amMiktar, data.hasAm);
 
-    const barkodUI = data.barkod ? `<span style="color: #ccc;">${data.barkod}</span>` : `<span style="color: #ff3333; font-weight: 600;">TANIMLI DEĞİL</span>`;
+    // PRO ÖZELLİK: Eğer barkod veya ref eksikse, arayüzden direkt manuel giriş imkanı sağla.
+    let barkodUI = data.barkod 
+        ? `<span style="color: #ccc;">${data.barkod}</span>` 
+        : `<div style="display:flex; gap:10px;"><input type="text" id="man-b-${data.urunKodu}" placeholder="Barkod Okut..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold;">KAYDET</button></div>`;
+        
+    let refUI = (data.refNo && data.refNo !== "BULUNAMADI")
+        ? `<span style="color: #fff;">${data.refNo}</span>`
+        : `<div style="display:flex; gap:10px;"><input type="text" id="man-r-${data.urunKodu}" placeholder="Ref Yaz..." style="background:#000; border:1px solid #333; color:#fff; padding:5px; width:130px;"><button onclick="saveManualData('${data.urunKodu}')" style="background:#00ff00; color:#000; border:none; padding:5px 10px; cursor:pointer; font-weight:bold;">KAYDET</button></div>`;
 
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;">
             <div style="background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                 <div style="margin-bottom: 50px;">
                     <div style="font-size: 13px; color: #666; letter-spacing: 3px; margin-bottom: 15px; font-weight: 600;">ÜRÜN BİLGİSİ</div>
-                    <div style="font-size: 46px; font-weight: 800; color: #fff; line-height: 1.2;">${data.urunAdi}</div>
+                    <div style="font-size: 38px; font-weight: 800; color: #fff; line-height: 1.2;">${data.urunAdi}</div>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 35px; border-top: 1px solid #1a1a1a; padding-top: 40px;">
@@ -258,11 +297,11 @@ function renderCard(data, container) {
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">BARKOD</div>
-                        <div style="font-size: 22px; font-family: monospace;">${barkodUI}</div>
+                        <div style="font-size: 20px; font-family: monospace;">${barkodUI}</div>
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">REF NO</div>
-                        <div style="font-size: 22px; color: #fff; font-weight: 500;">${data.refNo}</div>
+                        <div style="font-size: 20px; font-weight: 500;">${refUI}</div>
                     </div>
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">ALT GRUP</div>
@@ -275,6 +314,16 @@ function renderCard(data, container) {
                     <div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px; letter-spacing: 1px;">SÜREÇ TİPİ</div>
                         <div style="font-size: 22px; color: #ccc;">${data.surecTipi}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
+                    <div style="font-size: 13px; color: #666; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600;">ÜTS BELGELERİ VE GÖRSELLER</div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        ${data.docLinks.kunye ? `<a href="${data.docLinks.kunye}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ccff; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">📄 Ürün Künyesi</a>` : ``}
+                        ${data.docLinks.etiket ? `<a href="${data.docLinks.etiket}" target="_blank" style="background: #111; border: 1px solid #333; color: #ffbc00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">🖼️ Etiket / Ambalaj</a>` : ``}
+                        ${data.docLinks.kilavuz ? `<a href="${data.docLinks.kilavuz}" target="_blank" style="background: #111; border: 1px solid #333; color: #00ff00; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">📖 Kullanma Kılavuzu</a>` : ``}
+                        ${(!data.docLinks.kunye && !data.docLinks.etiket && !data.docLinks.kilavuz) ? `<span style="color:#444; font-size: 13px; font-style: italic;">Henüz belge yüklenmedi veya sistem tarafından ÜTS taraması bekleniyor.</span>` : ``}
                     </div>
                 </div>
             </div>
