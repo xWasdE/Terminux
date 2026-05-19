@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Terminux | Admin Panel</title>
+    <title>Terminux | Admin Panel PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; padding: 40px; }
@@ -23,7 +23,7 @@
 </head>
 <body>
     <div class="box">
-        <h1>TERMINUX ADMIN</h1>
+        <h1>TERMINUX ADMIN (PRO)</h1>
         
         <label>MANUEL KAYIT VE STOK GÜNCELLEME</label>
         <div class="row">
@@ -38,7 +38,7 @@
 
         <div class="sep"></div>
 
-        <label>1. AŞAMA: ANA LİSTE YÜKLEME (Eski Hatalı Kayıtları Düzeltir)</label>
+        <label>1. AŞAMA: ANA LİSTE YÜKLEME (Tam Veri Koruma Aktif)</label>
         <div class="row">
             <div class="upload-section">
                 <label style="color: #00ff00;">ANA DEPO LİSTESİ</label>
@@ -55,7 +55,7 @@
 
         <div class="sep"></div>
 
-        <label>2. AŞAMA: EK VERİ GÜNCELLEME (REUSE, DUMMY, ALT GRUP, STOK ADRESİ)</label>
+        <label>2. AŞAMA: EK VERİ GÜNCELLEME (REUSE, DUMMY, ALT GRUP ADI)</label>
         <div class="row">
             <div class="upload-section">
                 <label style="color: #ffbc00;">ANA DEPO EK VERİ</label>
@@ -110,11 +110,11 @@
             return rowKeys.some(k => keys.includes(k.trim().toLowerCase()));
         };
 
+        // Manuel Ekleme
         document.getElementById('btn-m').addEventListener('click', async () => {
             const id = document.getElementById('m-kod').value.trim();
             const ad = document.getElementById('m-ad').value.trim();
             if(!id) return;
-            
             const anaVal = document.getElementById('m-ana').value;
             const amVal = document.getElementById('m-am').value;
             
@@ -129,6 +129,7 @@
             document.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => el.value = '');
         });
 
+        // Ana Excel Yükleme (Tam İsim Korumalı)
         async function processPrimaryExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return logger("Lütfen Excel dosyası seçin.");
@@ -139,7 +140,7 @@
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                logger(`(${depoType} - BİRİNCİL) ${rows.length} satır işleniyor...`);
+                logger(`(${depoType} - BİRİNCİL) ${rows.length} satır işleniyor... (PRO Modu)`);
 
                 let updateCount = 0;
                 
@@ -147,38 +148,41 @@
                     const id = getCol(r, ["ürün kodu", "urun kodu", "kod"]);
                     if(!id) continue;
 
-                    let urunAdiStr = getCol(r, ["ürün adı", "urun adi", "malzeme adı"]);
+                    // Orijinal ismi ASLA DEĞİŞTİRME
+                    const urunAdiStr = getCol(r, ["ürün adı", "urun adi", "malzeme adı"]);
                     let refNoStr = getCol(r, ["ref no", "ref", "katalog no", "katalog", "katalog numarası", "referans"]);
 
                     if(refNoStr === "-" || refNoStr.toLowerCase() === "yok" || refNoStr.toLowerCase() === "bulunamadı" || refNoStr === "0") {
                         refNoStr = "";
                     }
 
+                    // İsmin sonundan sadece KOPYALA, ismi kesme
                     if (!refNoStr && urunAdiStr.includes(",")) {
                         const parts = urunAdiStr.split(",");
-                        refNoStr = parts.pop().trim();
+                        refNoStr = parts[parts.length - 1].trim(); 
                     }
                     if(!refNoStr) refNoStr = "BULUNAMADI";
 
                     const data = {
                         urunKodu: id,
                         barkod: getCol(r, ["barkod", "barcode"]),
-                        urunAdi: urunAdiStr,
+                        urunAdi: urunAdiStr, // İsim bozulmadan kaydedilir
                         refNo: refNoStr,
                         surecTipi: getCol(r, ["süreç tipi", "surec tipi"]),
                         miatTarihi: getCol(r, ["miat tarihi", "miat"]),
                         minAlert: parseInt(getCol(r, ["min(kritik)", "min (kritik)", "min"])) || 0,
                         max: parseInt(getCol(r, ["max", "maks"])) || 0,
-                        miktar: parseInt(getCol(r, ["miktar", "stok"])) || 0
+                        miktar: parseInt(getCol(r, ["miktar", "stok"])) || 0,
+                        docLinks: { kunye: "", etiket: "", kilavuz: "" } // ÜTS Belgeleri için veritabanı yuvası
                     };
 
+                    // Alt Grup Adı Tam Yakalama
                     if (hasCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
                         data.altGrup = getCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
                     }
                     if (hasCol(r, ["stok adresi", "adres"])) {
                         data.stokAdresi = getCol(r, ["stok adresi", "adres"]);
                     }
-                    
                     if (hasCol(r, ["dummy", "dummy durumu"])) {
                         let rawDummy = getCol(r, ["dummy", "dummy durumu"]).toUpperCase();
                         data.dummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
@@ -192,12 +196,13 @@
                     updateCount++;
                 }
                 
-                logger(`(${depoType} - BİRİNCİL) BİTTİ. Güncellenen / Eklenen: ${updateCount}`);
+                logger(`(${depoType} - BİRİNCİL) BİTTİ. Eklenen/Güncellenen: ${updateCount}`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
         }
 
+        // Ek Veri Yükleme
         async function processExtraDataExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return logger("Lütfen Güncelleme Excel dosyası seçin.");
@@ -208,7 +213,7 @@
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                logger(`(${depoType} - GÜNCELLEME) ${rows.length} satır kontrol ediliyor...`);
+                logger(`(${depoType} - GÜNCELLEME) ${rows.length} satır işleniyor...`);
 
                 let updateCount = 0;
                 
@@ -224,7 +229,6 @@
                     if (hasCol(r, ["stok adresi", "adres"])) {
                         extraData.stokAdresi = getCol(r, ["stok adresi", "adres"]);
                     }
-                    
                     if (hasCol(r, ["dummy", "dummy durumu"])) {
                         let rawDummy = getCol(r, ["dummy", "dummy durumu"]).toUpperCase();
                         extraData.dummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
