@@ -3,8 +3,12 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// %100 EL TERMİNALİ & MOBİL CSS MOTORU (RESPONSIVE INJECTION)
+// SİSTEM GEREKSİNİMLERİ: BARKOD KÜTÜPHANESİ VE YAZDIRMA CSS MOTORU
 // =========================================================================
+const jsbScript = document.createElement('script');
+jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
+document.head.appendChild(jsbScript);
+
 if (!document.querySelector('meta[name="viewport"]')) {
     const meta = document.createElement('meta');
     meta.name = "viewport";
@@ -39,7 +43,6 @@ style.innerHTML = `
     .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
 
-    /* EL TERMİNALİ VE TELEFON GÖRÜNÜMÜ */
     @media (max-width: 900px) {
         body { padding: 15px !important; }
         .card-wrapper { flex-direction: column; gap: 20px; }
@@ -58,11 +61,32 @@ style.innerHTML = `
         .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
         .doc-link { text-align: center; padding: 15px; width: 100%; }
     }
+
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU */
+    @media print {
+        body * { visibility: hidden; }
+        #print-container, #print-container * { visibility: visible; }
+        #print-container {
+            position: absolute; left: 0; top: 0;
+            display: flex; flex-wrap: wrap;
+            width: 8.3cm; gap: 0.3cm; 
+            margin: 0; padding: 0;
+            background: #fff;
+        }
+        .mini-label {
+            width: 4cm; height: 2.1cm;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden; padding: 2px; box-sizing: border-box;
+            color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
+        }
+        .mini-label .p-name { font-size: 8px; font-weight: bold; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; margin-bottom: 2px; }
+        .mini-label svg { height: 1.2cm !important; width: 100% !important; max-width: 3.8cm; }
+        .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
+    }
 `;
 document.head.appendChild(style);
 // =========================================================================
 
-// --- FIREBASE YAPILANDIRMASI ---
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
     authDomain: "terminux-wms.firebaseapp.com",
@@ -76,7 +100,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- DOM ELEMENTLERİ ---
 const loadingScreen = document.getElementById('loading-screen');
 const loginScreen = document.getElementById('login-screen');
 const appScreen = document.getElementById('app-screen');
@@ -90,8 +113,8 @@ const resultContainer = document.getElementById('result-container');
 
 let productCatalog = [];
 let searchTimeout = null;
+window.currentRenderedProduct = null; // Yazdırma motoru için global referans
 
-// --- OTURUM YÖNETİMİ ---
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -122,7 +145,6 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     window.location.reload();
 });
 
-// --- VERİTABANI ÖNBELLEKLEME (HIZLI ARAMA İÇİN) ---
 async function buildCatalog() {
     try {
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
@@ -136,9 +158,10 @@ async function buildCatalog() {
                     urunKodu: String(data.urunKodu || ""),
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
+                    barkod2: String(data.barkod2 || ""),
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
+                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.barkod2 || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
         };
@@ -149,7 +172,6 @@ async function buildCatalog() {
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
-// --- EKRAN ETKİLEŞİMLERİ ---
 document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
@@ -205,6 +227,7 @@ searchInput.addEventListener('keydown', (e) => {
             (m.docId.toLowerCase() === code.toLowerCase()) || 
             (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
             (m.barkod.toLowerCase() === code.toLowerCase()) || 
+            (m.barkod2.toLowerCase() === code.toLowerCase()) || 
             (m.refNo.toLowerCase() === code.toLowerCase())
         );
 
@@ -214,7 +237,61 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// İZOLE EDİLMİŞ GÜVENLİ DÜZENLEME MANTIĞI (PRO ENGINE)
+// YAZDIRMA (PRINT) TETİKLEYİCİ
+// =========================================================================
+window.printLabel = () => {
+    const data = window.currentRenderedProduct;
+    if (!data) return alert("Yazdırılacak ürün bulunamadı!");
+
+    // En uygun barkodu seç (1. Barkod > 2. Barkod > Ürün Kodu)
+    let targetBarcode = data.urunKodu; 
+    const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+    
+    if (data.barkod && !invalidCodes.includes(data.barkod)) {
+        targetBarcode = data.barkod;
+    } else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) {
+        targetBarcode = data.barkod2;
+    }
+
+    let printContainer = document.getElementById('print-container');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'print-container';
+        document.body.appendChild(printContainer);
+    }
+    
+    printContainer.innerHTML = ''; 
+
+    // Zebra Yazıcıya 4'lü Etiket Gönderimi (Ürün İsmi -> Barkod -> Ürün Kodu)
+    for(let i=0; i<4; i++) {
+        const label = document.createElement('div');
+        label.className = 'mini-label';
+        label.innerHTML = `
+            <div class="p-name">${data.urunAdi}</div>
+            <svg id="print-bc-${i}"></svg>
+            <div class="p-code">${data.urunKodu}</div>
+        `;
+        printContainer.appendChild(label);
+    }
+
+    if(window.JsBarcode) {
+        for(let i=0; i<4; i++) {
+            JsBarcode(`#print-bc-${i}`, targetBarcode, {
+                format: "CODE128",
+                width: 1.2,
+                height: 30,
+                displayValue: false,
+                margin: 0
+            });
+        }
+    }
+
+    // Sistemin barkodu render etmesi için milisaniyelik bir pay bırakıyoruz
+    setTimeout(() => { window.print(); }, 300);
+};
+
+// =========================================================================
+// İZOLE EDİLMİŞ GÜVENLİ DÜZENLEME MANTIĞI
 // =========================================================================
 window.editField = (id, type) => {
     document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
@@ -234,16 +311,17 @@ window.saveUpdate = async (id, type) => {
 
     const updateData = {};
     
-    // Zeki Karar Mekanizması
     if (type === 'b') {
         updateData.barkod = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
+    } else if (type === 'b2') {
+        updateData.barkod2 = newVal;
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'r') {
         updateData.refNo = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'm') {
         updateData.miatTarihi = newVal;
-        // Miat tarihinde docLinks sıfırlanmaz, belgeler korunur.
     }
 
     try {
@@ -255,16 +333,13 @@ window.saveUpdate = async (id, type) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
         
-        await buildCatalog(); // Belleği yenile
-        fetchAndDisplayProduct(id); // Kartı yenile
+        await buildCatalog(); 
+        fetchAndDisplayProduct(id); 
     } catch (err) { alert("Sistem Hatası: " + err.message); }
 };
 
-// =========================================================================
-// UI GENERATOR (Arayüz Üretici) DRY Prensibi
-// =========================================================================
 function createEditUI(id, type, val, placeholder, colorClass) {
-    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-";
+    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-" && val !== "TAM EŞLEŞME YOK" && val !== "SONUÇ YOK";
     
     if (isSet) {
         return `
@@ -308,6 +383,7 @@ window.fetchAndDisplayProduct = async (code) => {
             const mergedData = {
                 urunKodu: code,
                 barkod: baseData.barkod || "",
+                barkod2: baseData.barkod2 || "", 
                 urunAdi: baseData.urunAdi || "-",
                 refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
@@ -341,13 +417,15 @@ window.fetchAndDisplayProduct = async (code) => {
 };
 
 function renderCard(data) {
+    window.currentRenderedProduct = data; // Yazdırma motoruna veri köprüsü
+
     const min = parseInt(data.minAlert) || 0;
     const getS = (val, has) => (!has ? { c: '#fb0', t: 'TANIMSIZ' } : { c: val <= min ? '#ff3333' : '#fff', t: val });
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    // Otomatik UI Üreticileri
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
+    const barkod2UI = createEditUI(data.urunKodu, 'b2', data.barkod2, '2. Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
@@ -361,9 +439,19 @@ function renderCard(data) {
                 
                 <div class="grid-details">
                     <div><div class="label-text">ÜRÜN KODU</div><div class="value-text" style="color:#00ff00;">${data.urunKodu}</div></div>
-                    <div><div class="label-text">BARKOD</div><div>${barkodUI}</div></div>
+                    <div><div class="label-text">1. BARKOD</div><div>${barkodUI}</div></div>
+                    <div><div class="label-text">2. BARKOD</div><div>${barkod2UI}</div></div>
                     <div><div class="label-text">REF NO</div><div>${refUI}</div></div>
                     <div><div class="label-text">MİAT TARİHİ</div><div>${miatUI}</div></div>
+                    
+                    <div style="grid-column: 1 / -1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; align-items: flex-start; gap: 15px;">
+                        <div class="label-text">ETİKET ÖNİZLEME & YAZDIRMA</div>
+                        <div style="background: #fff; padding: 10px; border-radius: 6px; display: inline-block;">
+                            <svg id="ui-barcode" style="max-height: 50px; width: auto;"></svg>
+                        </div>
+                        <button onclick="printLabel()" class="btn-save" style="background: #00ccff; color: #000; width: 100%; max-width: 300px; padding: 15px; font-size: 14px;">🖨️ YAZDIR (4'LÜ ETİKET)</button>
+                    </div>
+
                     <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#ffbc00;">${data.altGrup}</div></div>
                     <div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
                 </div>
@@ -410,4 +498,25 @@ function renderCard(data) {
             </div>
         </div>
     `;
+
+    // Arayüz yüklendikten hemen sonra barkodu ekrana çiziyoruz
+    setTimeout(() => {
+        if(window.JsBarcode) {
+            let targetBarcode = data.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            
+            if (data.barkod && !invalidCodes.includes(data.barkod)) targetBarcode = data.barkod;
+            else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) targetBarcode = data.barkod2;
+
+            JsBarcode("#ui-barcode", targetBarcode, {
+                format: "CODE128",
+                width: 1.5,
+                height: 40,
+                displayValue: false,
+                lineColor: "#000",
+                background: "transparent",
+                margin: 0
+            });
+        }
+    }, 150);
 }
