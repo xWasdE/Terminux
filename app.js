@@ -3,8 +3,12 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// %100 EL TERMİNALİ & MOBİL CSS MOTORU (RESPONSIVE INJECTION)
+// SİSTEM GEREKSİNİMLERİ: BARKOD KÜTÜPHANESİ VE YAZDIRMA CSS MOTORU
 // =========================================================================
+const jsbScript = document.createElement('script');
+jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
+document.head.appendChild(jsbScript);
+
 if (!document.querySelector('meta[name="viewport"]')) {
     const meta = document.createElement('meta');
     meta.name = "viewport";
@@ -39,7 +43,6 @@ style.innerHTML = `
     .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
 
-    /* EL TERMİNALİ VE TELEFON GÖRÜNÜMÜ */
     @media (max-width: 900px) {
         body { padding: 15px !important; }
         .card-wrapper { flex-direction: column; gap: 20px; }
@@ -57,12 +60,49 @@ style.innerHTML = `
         
         .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
         .doc-link { text-align: center; padding: 15px; width: 100%; }
+        .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 15px !important; }
+    }
+
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU (4'LÜ IZGARA - SINIRSIZ SATIR) */
+    @media print {
+        body * { visibility: hidden; }
+        #print-container, #print-container * { visibility: visible; }
+        #print-container {
+            position: absolute; left: 0; top: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            width: 8.3cm; 
+            column-gap: 0.1cm; 
+            row-gap: 0.3cm; 
+            margin: 0; padding: 0;
+            background: #fff;
+        }
+        .mini-label {
+            height: 2.1cm; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden; padding: 2px; box-sizing: border-box;
+            color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
+        }
+        .mini-label .p-name { 
+            font-size: 8px; 
+            font-weight: bold; 
+            width: 100%; 
+            text-align: center; 
+            margin-bottom: 2px; 
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+            line-height: 1.1;
+        }
+        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 100%; }
+        .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
     }
 `;
 document.head.appendChild(style);
 // =========================================================================
 
-// --- FIREBASE YAPILANDIRMASI ---
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
     authDomain: "terminux-wms.firebaseapp.com",
@@ -76,53 +116,28 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- DOM ELEMENTLERİ ---
-const loadingScreen = document.getElementById('loading-screen');
-const loginScreen = document.getElementById('login-screen');
-const appScreen = document.getElementById('app-screen');
-const loginForm = document.getElementById('login-form');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const operatorName = document.getElementById('operator-name');
 const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
+const operatorName = document.getElementById('operator-name');
 
 let productCatalog = [];
 let searchTimeout = null;
+window.currentRenderedProduct = null;
 
-// --- OTURUM YÖNETİMİ ---
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         operatorName.textContent = user.email.split('@')[0].toUpperCase();
         await buildCatalog();
-        loadingScreen.classList.add('hidden');
-        loginScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
         searchInput.focus();
     } else {
-        loadingScreen.classList.add('hidden');
-        appScreen.classList.add('hidden');
-        loginScreen.classList.remove('hidden');
+        document.getElementById('login-screen').classList.remove('hidden');
     }
 });
 
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
-    const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
-
-    try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
-    catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
-});
-
-document.getElementById('btn-logout').addEventListener('click', async () => {
-    await signOut(auth);
-    window.location.reload();
-});
-
-// --- VERİTABANI ÖNBELLEKLEME (HIZLI ARAMA İÇİN) ---
 async function buildCatalog() {
     try {
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
@@ -136,9 +151,10 @@ async function buildCatalog() {
                     urunKodu: String(data.urunKodu || ""),
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
+                    barkod2: String(data.barkod2 || ""),
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
+                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.barkod2 || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
         };
@@ -149,13 +165,10 @@ async function buildCatalog() {
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
-// --- EKRAN ETKİLEŞİMLERİ ---
+// ODAK (FOCUS) ÇALMA HATASI DÜZELTİLDİ:
 document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
-    }
-    if(!['INPUT', 'SELECT', 'BUTTON'].includes(e.target.tagName) && !appScreen.classList.contains('hidden')) {
-        searchInput.focus();
     }
 });
 
@@ -205,6 +218,7 @@ searchInput.addEventListener('keydown', (e) => {
             (m.docId.toLowerCase() === code.toLowerCase()) || 
             (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
             (m.barkod.toLowerCase() === code.toLowerCase()) || 
+            (m.barkod2.toLowerCase() === code.toLowerCase()) || 
             (m.refNo.toLowerCase() === code.toLowerCase())
         );
 
@@ -214,7 +228,65 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// İZOLE EDİLMİŞ GÜVENLİ DÜZENLEME MANTIĞI (PRO ENGINE)
+// YAZDIRMA (PRINT) TETİKLEYİCİ - SINIRSIZ LİMİT
+// =========================================================================
+window.printLabel = () => {
+    const data = window.currentRenderedProduct;
+    if (!data) return alert("Yazdırılacak ürün bulunamadı!");
+
+    // SINIR KALDIRILDI! Kullanıcı dilediği kadar yazabilir.
+    let printQty = prompt("Kaç adet etiket basılsın? (Örn: 4, 100, 250 - Sistem 4'lü sıralar halinde basacaktır)", "4");
+    printQty = parseInt(printQty);
+
+    if (!printQty || printQty <= 0) return; // İptal edildi veya sıfır girildi
+
+    let targetBarcode = data.urunKodu; 
+    const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+    
+    if (data.barkod && !invalidCodes.includes(data.barkod)) {
+        targetBarcode = data.barkod;
+    } else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) {
+        targetBarcode = data.barkod2;
+    }
+
+    let printContainer = document.getElementById('print-container');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'print-container';
+        document.body.appendChild(printContainer);
+    }
+    
+    printContainer.innerHTML = ''; 
+
+    // Kaç adet istenmişse o kadar oluştur ve grid'e gönder (Örn: 250 adet)
+    for(let i=0; i < printQty; i++) {
+        const label = document.createElement('div');
+        label.className = 'mini-label';
+        label.innerHTML = `
+            <div class="p-name">${data.urunAdi}</div>
+            <svg id="print-bc-${i}"></svg>
+            <div class="p-code">${data.urunKodu}</div>
+        `;
+        printContainer.appendChild(label);
+    }
+
+    if(window.JsBarcode) {
+        for(let i=0; i < printQty; i++) {
+            JsBarcode(`#print-bc-${i}`, targetBarcode, {
+                format: "CODE128",
+                width: 1.2,
+                height: 30,
+                displayValue: false,
+                margin: 0
+            });
+        }
+    }
+
+    setTimeout(() => { window.print(); }, 300);
+};
+
+// =========================================================================
+// DÜZENLEME MANTIĞI
 // =========================================================================
 window.editField = (id, type) => {
     document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
@@ -233,39 +305,34 @@ window.saveUpdate = async (id, type) => {
     if (!newVal) return alert("Hata: Değer boş bırakılamaz.");
 
     const updateData = {};
-    
-    // Zeki Karar Mekanizması
     if (type === 'b') {
         updateData.barkod = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
+    } else if (type === 'b2') {
+        updateData.barkod2 = newVal;
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'r') {
         updateData.refNo = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" }; // Botu tetikler
+        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'm') {
         updateData.miatTarihi = newVal;
-        // Miat tarihinde docLinks sıfırlanmaz, belgeler korunur.
     }
 
     try {
         const anaRef = doc(db, "ana_depo", id);
         const amRef = doc(db, "ameliyathane", id);
-        
         const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
         
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
         
-        await buildCatalog(); // Belleği yenile
-        fetchAndDisplayProduct(id); // Kartı yenile
+        await buildCatalog(); 
+        fetchAndDisplayProduct(id); 
     } catch (err) { alert("Sistem Hatası: " + err.message); }
 };
 
-// =========================================================================
-// UI GENERATOR (Arayüz Üretici) DRY Prensibi
-// =========================================================================
 function createEditUI(id, type, val, placeholder, colorClass) {
-    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-";
-    
+    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-" && val !== "TAM EŞLEŞME YOK" && val !== "SONUÇ YOK";
     if (isSet) {
         return `
             <div id="txt-container-${type}-${id}" class="flex-edit">
@@ -290,9 +357,6 @@ function createEditUI(id, type, val, placeholder, colorClass) {
     }
 }
 
-// =========================================================================
-// VİTRİN: ÜRÜN KARTI OLUŞTURMA
-// =========================================================================
 window.fetchAndDisplayProduct = async (code) => {
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Veriler Çekiliyor...</div>';
@@ -308,6 +372,7 @@ window.fetchAndDisplayProduct = async (code) => {
             const mergedData = {
                 urunKodu: code,
                 barkod: baseData.barkod || "",
+                barkod2: baseData.barkod2 || "", 
                 urunAdi: baseData.urunAdi || "-",
                 refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
@@ -330,42 +395,51 @@ window.fetchAndDisplayProduct = async (code) => {
 
             renderCard(mergedData);
         } else {
-            resultContainer.innerHTML = `
-                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
-                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan: <span style="color:#fff;">${code}</span></div>
-                </div>
-            `;
+            resultContainer.innerHTML = `<div class="card-main" style="text-align:center; color:#f33;">KAYIT BULUNAMADI</div>`;
         }
     } catch (err) { resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
 };
 
 function renderCard(data) {
+    window.currentRenderedProduct = data;
+
     const min = parseInt(data.minAlert) || 0;
+    const max = parseInt(data.max) || 0;
     const getS = (val, has) => (!has ? { c: '#fb0', t: 'TANIMSIZ' } : { c: val <= min ? '#ff3333' : '#fff', t: val });
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    // Otomatik UI Üreticileri
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
+    const barkod2UI = createEditUI(data.urunKodu, 'b2', data.barkod2, '2. Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     resultContainer.innerHTML = `
         <div class="card-wrapper">
             <div class="card-main">
-                <div style="margin-bottom: 30px;">
-                    <div class="label-text">ÜRÜN BİLGİSİ</div>
-                    <div class="title-text">${data.urunAdi}</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div class="label-text">ÜRÜN BİLGİSİ</div>
+                        <div class="title-text">${data.urunAdi}</div>
+                    </div>
+                    <button onclick="printLabel()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">🖨️ ETİKET YAZDIR</button>
                 </div>
                 
                 <div class="grid-details">
-                    <div><div class="label-text">ÜRÜN KODU</div><div class="value-text" style="color:#00ff00;">${data.urunKodu}</div></div>
-                    <div><div class="label-text">BARKOD</div><div>${barkodUI}</div></div>
+                    <div>
+                        <div class="label-text">ÜRÜN KODU</div>
+                        <div class="value-text" style="color:#00ff00; margin-bottom: 12px;">${data.urunKodu}</div>
+                        <div style="background: #fff; padding: 6px; border-radius: 4px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                            <svg id="ui-barcode" style="max-height: 42px; width: auto;"></svg>
+                        </div>
+                    </div>
+                    
                     <div><div class="label-text">REF NO</div><div>${refUI}</div></div>
+                    <div><div class="label-text">1. BARKOD</div><div>${barkodUI}</div></div>
+                    <div><div class="label-text">2. BARKOD</div><div>${barkod2UI}</div></div>
                     <div><div class="label-text">MİAT TARİHİ</div><div>${miatUI}</div></div>
                     <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#ffbc00;">${data.altGrup}</div></div>
-                    <div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
+                    <div style="grid-column: 1 / -1;"><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
                 </div>
 
                 <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
@@ -410,4 +484,24 @@ function renderCard(data) {
             </div>
         </div>
     `;
+
+    setTimeout(() => {
+        if(window.JsBarcode) {
+            let targetBarcode = data.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            
+            if (data.barkod && !invalidCodes.includes(data.barkod)) targetBarcode = data.barkod;
+            else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) targetBarcode = data.barkod2;
+
+            JsBarcode("#ui-barcode", targetBarcode, {
+                format: "CODE128",
+                width: 1.5,
+                height: 40,
+                displayValue: false,
+                lineColor: "#000",
+                background: "transparent",
+                margin: 0
+            });
+        }
+    }, 150);
 }
