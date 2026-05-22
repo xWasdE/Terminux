@@ -88,7 +88,7 @@ style.innerHTML = `
         .doc-link { text-align: center; padding: 15px; }
     }
 
-    /* ZEBRA YAZDIRMA */
+    /* ZEBRA YAZDIRMA (TAM KESİN ÖLÇÜLERLE KORUNDU) */
     @media screen { #print-container { display: none !important; } }
     @media print {
         @page { margin: 0 !important; size: 8.3cm auto; }
@@ -128,13 +128,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM ELEMENTLERİ (Kayıp Parçalar Eklendi)
 const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
-const loginFormEl = document.getElementById('login-form');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
 
 let productCatalog = [];
 let searchTimeout = null;
@@ -186,19 +182,19 @@ dashDiv.innerHTML = `
         </div>
     </div>
 `;
-document.body.insertBefore(dashDiv, document.getElementById('app-screen'));
+if (document.getElementById('app-screen')) {
+    document.body.insertBefore(dashDiv, document.getElementById('app-screen'));
+}
 
 document.body.insertAdjacentHTML('beforeend', `<div id="toast-msg" class="toast-msg">🛠️ Bu modül şu an yapım aşamasındadır.</div>`);
 
-// =========================================================================
-// NAVİGASYON VE ÇIKIŞ FONKSİYONLARI
-// =========================================================================
 window.showToast = () => {
     const toast = document.getElementById("toast-msg");
     toast.className = "toast-msg show";
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
+// GLOBAL ÇIKIŞ FONKSİYONU
 window.logoutApp = async () => {
     try { await signOut(auth); window.location.reload(); } 
     catch (err) { alert("Çıkış Hatası!"); }
@@ -208,16 +204,21 @@ window.openModule = (mod) => {
     if(mod === 'stok') {
         document.getElementById('dashboard-screen').style.display = 'none';
         const appSc = document.getElementById('app-screen');
-        appSc.classList.remove('hidden');
-        appSc.classList.add('main-container');
+        if(appSc) {
+            appSc.classList.remove('hidden');
+            appSc.classList.add('main-container');
+        }
         document.getElementById('btn-go-dash').style.display = 'block';
         if(searchInput) searchInput.focus();
     }
 };
 
 document.getElementById('btn-go-dash').addEventListener('click', () => {
-    document.getElementById('app-screen').classList.add('hidden');
-    document.getElementById('app-screen').classList.remove('main-container');
+    const appSc = document.getElementById('app-screen');
+    if(appSc) {
+        appSc.classList.add('hidden');
+        appSc.classList.remove('main-container');
+    }
     document.getElementById('btn-go-dash').style.display = 'none';
     document.getElementById('dashboard-screen').style.display = 'block';
     if(searchInput) searchInput.value = '';
@@ -226,7 +227,54 @@ document.getElementById('btn-go-dash').addEventListener('click', () => {
 });
 
 // =========================================================================
-// OTURUM YÖNETİMİ & GİRİŞ BUG'I FİX
+// %100 GÜVENLİ GİRİŞ (LOGIN) ZIRHI
+// =========================================================================
+window.executeLoginProcess = async () => {
+    const uInput = document.getElementById('username');
+    const pInput = document.getElementById('password');
+
+    if (!uInput || !pInput) {
+        alert("Sistem Hatası: 'username' veya 'password' kutuları bulunamadı.");
+        return;
+    }
+
+    const valU = uInput.value.trim();
+    const valP = pInput.value;
+
+    if (!valU || !valP) {
+        alert("Lütfen kullanıcı adı ve şifre girin!");
+        return;
+    }
+
+    const finalEmail = valU.toLowerCase() === 'test' ? 'test@terminux.com.tr' : (valU.includes('@') ? valU : `${valU}@terminux.com.tr`);
+    const finalPass = (valU.toLowerCase() === 'test' && valP === 'test') ? 'testtest' : valP;
+
+    try { 
+        await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
+    } catch (error) { 
+        alert("Giriş Başarısız: Şifrenizi veya Kullanıcı Adınızı kontrol edin."); 
+    }
+};
+
+// Zırh 1: Form gönderilirse (Enter tuşuna basılırsa)
+document.addEventListener('submit', (e) => {
+    if (e.target && e.target.id === 'login-form') {
+        e.preventDefault(); // Sayfa yenilemeyi kesinlikle durdurur
+        window.executeLoginProcess();
+    }
+});
+
+// Zırh 2: Butona doğrudan fare ile tıklanırsa (type="button" sorununu çözer)
+document.addEventListener('click', (e) => {
+    if (e.target && (e.target.id === 'login-btn' || e.target.id === 'btn-login' || e.target.innerText?.trim().toLowerCase() === 'giriş yap')) {
+        // Eğer tıklanan şey bir form içindeyse sayfanın yenilenmesini durdur
+        e.preventDefault(); 
+        window.executeLoginProcess();
+    }
+});
+
+// =========================================================================
+// OTURUM YÖNETİMİ
 // =========================================================================
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
@@ -242,28 +290,15 @@ onAuthStateChanged(auth, async (user) => {
         
         document.getElementById('dynamic-header').style.display = 'flex';
         document.getElementById('dashboard-screen').style.display = 'block';
-        document.getElementById('app-screen').classList.add('hidden'); 
+        if(document.getElementById('app-screen')) document.getElementById('app-screen').classList.add('hidden'); 
     } else {
         if(loadScreen) loadScreen.classList.add('hidden');
         document.getElementById('dynamic-header').style.display = 'none';
         document.getElementById('dashboard-screen').style.display = 'none';
-        document.getElementById('app-screen').classList.add('hidden');
+        if(document.getElementById('app-screen')) document.getElementById('app-screen').classList.add('hidden');
         if(logScreen) logScreen.classList.remove('hidden');
     }
 });
-
-if (loginFormEl && usernameInput && passwordInput) {
-    loginFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
-        const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
-        try { 
-            await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
-        } catch (error) { 
-            alert("Giriş Başarısız: Lütfen bilgileri kontrol edin."); 
-        }
-    });
-}
 
 // =========================================================================
 // ARAMA VE VERİTABANI MOTORU
@@ -357,13 +392,13 @@ if(searchInput) {
 }
 
 // =========================================================================
-// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA
+// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA ZT230 YAN YANA 2'Lİ
 // =========================================================================
 window.printLabel = () => {
     const data = window.currentRenderedProduct;
     if (!data) return alert("Yazdırılacak ürün bulunamadı!");
 
-    let printQty = prompt("Kaç adet etiket basılsın? (Sistem yan yana 2'li olarak kesecektir)", "8");
+    let printQty = prompt("Kaç adet etiket basılsın? (Sistem yan yana 2'li olarak dizecektir)", "8");
     printQty = parseInt(printQty);
 
     if (!printQty || printQty <= 0) return;
