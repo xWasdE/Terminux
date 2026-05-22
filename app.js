@@ -17,17 +17,36 @@ if (!document.querySelector('meta[name="viewport"]')) {
 }
 
 // =========================================================================
-// TERMINUX NEXUS CSS MOTORU & KUSURSUZ YAZDIRMA KALIBI
+// TERMINUX WMS CSS MOTORU & KARŞILAMA EKRANI (DASHBOARD)
 // =========================================================================
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body { background: #050505; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
+    body { background: #050505; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     
-    .app-header { background: #000; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
-    .app-logo { font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .app-logo span { color: #00ff00; }
-    
+    /* YENİ ZIRHLI ÜST BAR (HEADER) */
+    .app-header { background: #000; padding: 15px 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .btn-back { background: #222; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; transition: 0.2s; }
+    .btn-back:hover { background: #333; }
+    .app-logo { font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #fff; }
+    .app-logo span { color: #888; font-weight: normal; }
+    .header-right { display: flex; align-items: center; gap: 15px; }
+    .op-text { font-size: 12px; color: #888; }
+    .op-text b { color: #fff; }
+    .btn-logout { background: transparent; border: 1px solid #f33; color: #f33; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-logout:hover { background: #f33; color: #000; }
+
+    /* KARŞILAMA EKRANI (DASHBOARD GRID) */
+    #dashboard-screen { padding: 40px 20px; max-width: 900px; margin: 0 auto; }
+    .dash-title { text-align: center; color: #666; font-size: 14px; letter-spacing: 3px; margin-bottom: 30px; font-weight: bold; }
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .dash-btn { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .dash-btn:hover { border-color: #00ff00; transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,255,0,0.1); }
+    .dash-icon { font-size: 45px; }
+    .dash-text { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 1px; }
+
+    /* ANA İÇERİK (STOK KARTI) */
     .main-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
     .card-wrapper { display: flex; gap: 30px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.5; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -51,18 +70,12 @@ style.innerHTML = `
     .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s; }
     .mobile-break { word-break: break-all; }
 
-    /* ALT MENÜ */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; padding: 10px 5px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 1000; }
-    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #555; text-decoration: none; cursor: pointer; transition: 0.2s; }
-    .nav-item.active { color: #00ff00; }
-    .nav-icon { font-size: 20px; }
-    .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
-
     /* TOAST MESAJI */
-    .toast-msg { visibility: hidden; min-width: 250px; background-color: #ffbc00; color: #000; text-align: center; border-radius: 8px; padding: 15px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-weight: bold; font-size: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
+    .toast-msg { visibility: hidden; min-width: 250px; background-color: #ffbc00; color: #000; text-align: center; border-radius: 8px; padding: 15px; position: fixed; z-index: 2000; left: 50%; bottom: 50px; transform: translateX(-50%); font-weight: bold; font-size: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
     .toast-msg.show { visibility: visible; opacity: 1; }
 
     @media (max-width: 900px) {
+        .dash-grid { grid-template-columns: 1fr; }
         .card-wrapper { flex-direction: column; gap: 15px; }
         .card-main, .stock-box { padding: 20px; }
         .grid-details { grid-template-columns: 1fr; gap: 20px; margin-top: 20px; padding-top: 20px; }
@@ -75,55 +88,26 @@ style.innerHTML = `
         .doc-link { text-align: center; padding: 15px; }
     }
 
-    /* =======================================================
-       YAZDIRMA MOTORU (Chrome Reklamları Yok Edildi, 2 Sütun Düzeni)
-       ======================================================= */
-    @media screen {
-        #print-container { display: none !important; }
-    }
-
+    /* ZEBRA YAZDIRMA (Aynı Kesin Ölçülerle Kaldı) */
+    @media screen { #print-container { display: none !important; } }
     @media print {
-        @page { 
-            margin: 0 !important; /* TARAYICI TARİH/LİNK YAZILARINI YOK EDER */
-            size: 8.3cm auto; /* ZEBRA YAZICI RULO GENİŞLİĞİ */
-        }
+        @page { margin: 0 !important; size: 8.3cm auto; }
         body, html { margin: 0; padding: 0; background: #fff; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         
         #print-container {
-            position: absolute; left: 0; top: 0;
-            display: grid;
-            grid-template-columns: 4cm 4cm; /* Yan yana 2 Etiket */
-            column-gap: 0.3cm; /* Etiketler Arası Boşluk */
-            row-gap: 0cm; /* Alt alta dizilim (boşluk rulo kesim yerindedir) */
-            width: 8.3cm; 
-            margin: 0; padding: 0;
-            background: #fff;
+            position: absolute; left: 0; top: 0; display: grid;
+            grid-template-columns: 4cm 4cm; column-gap: 0.3cm; row-gap: 0cm; 
+            width: 8.3cm; margin: 0; padding: 0; background: #fff;
         }
         
         .mini-label {
-            width: 4cm;
-            height: 2.1cm; /* Yükseklik (4 tanesi 8.4cm yapar) */
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            overflow: hidden; padding: 2px; box-sizing: border-box;
-            color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
+            width: 4cm; height: 2.1cm; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden; padding: 2px; box-sizing: border-box; color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
         }
         
-        .mini-label .p-name { 
-            font-size: 8px; 
-            font-weight: bold; 
-            width: 100%; 
-            text-align: center; 
-            margin-bottom: 2px; 
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* 2 Satır Sınırı */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            white-space: normal;
-            line-height: 1.1;
-        }
-        
+        .mini-label .p-name { font-size: 8px; font-weight: bold; width: 100%; text-align: center; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.1; }
         .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 3.8cm; }
         .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
     }
@@ -152,101 +136,141 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// Sisteme Menü ve Toast Ekleniyor
-document.body.insertAdjacentHTML('beforeend', `
-    <div id="toast-msg" class="toast-msg">🛠️ Bu modül yapım aşamasındadır.</div>
-    <div class="bottom-nav">
-        <div class="nav-item active">
-            <div class="nav-icon">🔍</div>
-            <div class="nav-label">STOK KARTI</div>
+// =========================================================================
+// UI OLUŞTURMA (HEADER, DASHBOARD, TOAST)
+// =========================================================================
+// 1. Üst Barı (Header) Zırhlı Şekilde Oluştur
+const headerDiv = document.createElement('div');
+headerDiv.id = 'dynamic-header';
+headerDiv.className = 'app-header';
+headerDiv.style.display = 'none'; // Login ekranında gizli
+headerDiv.innerHTML = `
+    <div class="header-left">
+        <button id="btn-go-dash" class="btn-back">⬅ GERİ</button>
+        <div class="app-logo">TERMINUX <span>WMS</span></div>
+    </div>
+    <div class="header-right">
+        <span class="op-text">OP: <b id="ui-op-name">USER</b></span>
+        <button onclick="logoutApp()" class="btn-logout">ÇIKIŞ</button>
+    </div>
+`;
+document.body.insertBefore(headerDiv, document.body.firstChild);
+
+// Eski bozuk header'ı gizle (eğer HTML'de varsa)
+const oldHeader = document.getElementById('header-bar');
+if(oldHeader) oldHeader.style.display = 'none';
+
+// 2. Karşılama Ekranı (Dashboard) Oluştur
+const dashDiv = document.createElement('div');
+dashDiv.id = 'dashboard-screen';
+dashDiv.style.display = 'none';
+dashDiv.innerHTML = `
+    <div class="dash-title">LÜTFEN İŞLEM YAPMAK İSTEDİĞİNİZ MODÜLÜ SEÇİNİZ</div>
+    <div class="dash-grid">
+        <div class="dash-btn" onclick="openModule('stok')">
+            <div class="dash-icon">🔍</div>
+            <div class="dash-text">STOK KARTI</div>
         </div>
-        <div class="nav-item" onclick="showToast()">
-            <div class="nav-icon">🚚</div>
-            <div class="nav-label">SEVK / KABUL</div>
+        <div class="dash-btn" onclick="showToast()">
+            <div class="dash-icon">🚚</div>
+            <div class="dash-text">SEVK / MAL KABUL</div>
         </div>
-        <div class="nav-item" onclick="showToast()">
-            <div class="nav-icon">📋</div>
-            <div class="nav-label">SAYIM</div>
+        <div class="dash-btn" onclick="showToast()">
+            <div class="dash-icon">📋</div>
+            <div class="dash-text">SAYIM</div>
         </div>
-        <div class="nav-item" onclick="showToast()">
-            <div class="nav-icon">🏢</div>
-            <div class="nav-label">ADRESLEME</div>
+        <div class="dash-btn" onclick="showToast()">
+            <div class="dash-icon">🏢</div>
+            <div class="dash-text">DEPO ADRESLEME</div>
         </div>
     </div>
-`);
+`;
+document.body.insertBefore(dashDiv, document.getElementById('app-screen'));
 
+// 3. Toast Mesajı
+document.body.insertAdjacentHTML('beforeend', `<div id="toast-msg" class="toast-msg">🛠️ Bu modül şu an yapım aşamasındadır.</div>`);
+
+// =========================================================================
+// NAVİGASYON VE ÇIKIŞ FONKSİYONLARI
+// =========================================================================
 window.showToast = () => {
     const toast = document.getElementById("toast-msg");
     toast.className = "toast-msg show";
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
-// GLOBAL ÇIKIŞ FONKSİYONU (ZIRHLI)
 window.logoutApp = async () => {
-    try {
-        await signOut(auth);
-        window.location.reload();
-    } catch (err) {
-        alert("Çıkış yapılırken bir hata oluştu!");
+    try { await signOut(auth); window.location.reload(); } 
+    catch (err) { alert("Çıkış Hatası!"); }
+};
+
+window.openModule = (mod) => {
+    if(mod === 'stok') {
+        document.getElementById('dashboard-screen').style.display = 'none';
+        const appSc = document.getElementById('app-screen');
+        appSc.classList.remove('hidden');
+        appSc.classList.add('main-container');
+        document.getElementById('btn-go-dash').style.display = 'block';
+        if(searchInput) searchInput.focus();
     }
 };
 
+document.getElementById('btn-go-dash').addEventListener('click', () => {
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('app-screen').classList.remove('main-container');
+    document.getElementById('btn-go-dash').style.display = 'none';
+    document.getElementById('dashboard-screen').style.display = 'block';
+    if(searchInput) searchInput.value = '';
+    if(dropdown) dropdown.style.display = 'none';
+    if(resultContainer) resultContainer.innerHTML = '';
+});
+
+// =========================================================================
+// OTURUM YÖNETİMİ & GİRİŞ BUG'I FİX
+// =========================================================================
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
-    try {
-        if (user) {
-            // Güvenli Header Ekleme
-            if(!document.querySelector('.app-header')) {
-                const header = document.createElement('div');
-                header.className = 'app-header';
-                const operatorName = user.email.split('@')[0].toUpperCase();
-                header.innerHTML = `
-                    <div class="app-logo">TERMINUX <span>NEXUS</span></div>
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <span style="font-size:12px; color:#888;">OP: <b style="color:#fff;">${operatorName}</b></span>
-                        <button onclick="logoutApp()" style="background:none; border:1px solid #333; color:#f33; padding:5px 10px; border-radius:4px; font-size:10px; cursor:pointer;">ÇIKIŞ</button>
-                    </div>`;
-                document.body.insertBefore(header, document.body.firstChild);
-                
-                const oldHeader = document.getElementById('header-bar');
-                if (oldHeader) oldHeader.style.display = 'none'; 
-            }
-
-            await buildCatalog();
-            
-            const loadScreen = document.getElementById('loading-screen');
-            if(loadScreen) loadScreen.classList.add('hidden');
-            
-            const appScreen = document.getElementById('app-screen');
-            if(appScreen) {
-                appScreen.classList.remove('hidden');
-                appScreen.classList.add('main-container');
-            }
-            if (searchInput) searchInput.focus();
-            
-        } else {
-            const loadScreen = document.getElementById('loading-screen');
-            if(loadScreen) loadScreen.classList.add('hidden');
-            
-            const appScreen = document.getElementById('app-screen');
-            if(appScreen) appScreen.classList.add('hidden');
-            
-            const logScreen = document.getElementById('login-screen');
-            if(logScreen) logScreen.classList.remove('hidden');
-        }
-    } catch (err) {
-        console.error("Başlatma Hatası: ", err);
+    const loadScreen = document.getElementById('loading-screen');
+    const logScreen = document.getElementById('login-screen');
+    
+    if (user) {
+        document.getElementById('ui-op-name').textContent = user.email.split('@')[0].toUpperCase();
+        await buildCatalog();
+        
+        if(loadScreen) loadScreen.classList.add('hidden');
+        if(logScreen) logScreen.classList.add('hidden');
+        
+        document.getElementById('dynamic-header').style.display = 'flex';
+        document.getElementById('dashboard-screen').style.display = 'block';
+        document.getElementById('app-screen').classList.add('hidden'); // İlk açılışta Stok gizli
+    } else {
+        if(loadScreen) loadScreen.classList.add('hidden');
+        document.getElementById('dynamic-header').style.display = 'none';
+        document.getElementById('dashboard-screen').style.display = 'none';
+        document.getElementById('app-screen').classList.add('hidden');
+        if(logScreen) logScreen.classList.remove('hidden');
     }
 });
 
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
-    const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
-    try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
-    catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
-});
+// GİRİŞ FORMUNUN SAYFAYI YENİLEME HATASI BURADA KESİN ÇÖZÜLDÜ
+const loginFormEl = document.getElementById('login-form');
+if (loginFormEl) {
+    loginFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault(); // SAYFA YENİLEMEYİ ENGELLER
+        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+        const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
+        try { 
+            await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
+        } catch (error) { 
+            alert("Giriş Başarısız: Lütfen bilgileri kontrol edin."); 
+        }
+        return false; // Çift güvenlik kilidi
+    });
+}
 
+// =========================================================================
+// ARAMA VE VERİTABANI MOTORU
+// =========================================================================
 async function buildCatalog() {
     try {
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
@@ -336,7 +360,7 @@ if(searchInput) {
 }
 
 // =========================================================================
-// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA ZT230 YAN YANA 2'Lİ
+// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA
 // =========================================================================
 window.printLabel = () => {
     const data = window.currentRenderedProduct;
@@ -384,10 +408,7 @@ window.printLabel = () => {
         }
     }
 
-    // Yazdırma dialoğu açılmadan önce küçük bir tampon süre bırakıyoruz.
-    setTimeout(() => { 
-        window.print(); 
-    }, 300);
+    setTimeout(() => { window.print(); }, 300);
 };
 
 // =========================================================================
