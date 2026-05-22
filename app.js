@@ -19,7 +19,7 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body { padding-bottom: 80px !important; } /* FOOTER İÇİN GÜVENLİ BOŞLUK */
+    body { padding-bottom: 80px !important; }
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
@@ -44,7 +44,6 @@ style.innerHTML = `
     .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
 
-    /* YASAL BİLGİLENDİRME (FOOTER) - KURUMSAL VE BÜYÜK */
     .legal-footer {
         position: fixed;
         bottom: 0;
@@ -69,78 +68,86 @@ style.innerHTML = `
         .grid-details { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; padding-top: 25px; }
         .title-text { font-size: 24px; }
         .value-text { font-size: 18px; }
-        
         .input-style { max-width: 100%; width: 100%; padding: 12px; font-size: 16px; margin-bottom: 5px; }
         .btn-save, .btn-cancel { padding: 12px; font-size: 14px; flex: 1; }
         .btn-edit { padding: 10px; font-size: 12px; margin-top: 5px; width: 100%; }
-        
         .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
         .edit-btn-group { width: 100%; display: flex; gap: 10px; }
-        
         .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
         .doc-link { text-align: center; padding: 15px; width: 100%; }
         .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 15px !important; }
-        
         .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - YAN YANA 4'LÜ IZGARA */
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ALT ALTA (TEK SÜTUN) DİZİLİM */
     @media screen {
         #print-container { display: none !important; }
     }
     @media print {
         @page { 
             margin: 0 !important; 
-            size: 8.3cm auto; /* ZEBRA YAZICI GENİŞLİĞİ */
+            size: 4.8cm 2.1cm; /* YAZICIYA BİLDİRİLEN TEK ETİKETİN NET BOYUTU */
         }
-        body, html { margin: 0; padding: 0; background: #fff; }
+        body, html { margin: 0; padding: 0; background: #fff; width: 4.8cm; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         .legal-footer { display: none !important; }
         
         #print-container {
             position: absolute; left: 0; top: 0;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* YAN YANA 4 ETİKET (4 SÜTUN) */
-            column-gap: 0.1cm;
-            row-gap: 0cm; 
-            width: 8.3cm; 
             margin: 0; padding: 0;
             background: #fff;
+            display: flex;
+            flex-direction: column; /* ETİKETLERİ BİRBİRİNİN ALTINA DİZER */
         }
         .mini-label {
-            width: 2cm; /* 8cm / 4 = ~2cm etiket genişliği */
-            height: 2.1cm; /* 4 sıra = 8.4cm, 1 sıra = 2.1cm yükseklik */
+            width: 4.8cm; /* KULLANICI ÖLÇÜSÜ */
+            height: 2.1cm; /* 8.4cm / 4 ETİKET = 2.1cm */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; padding: 2px; box-sizing: border-box;
-            color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
+            color: #000; font-family: Arial, sans-serif;
+            page-break-after: always; /* ZEBRA SÜRÜCÜSÜNÜN BUNU LİSTE GİBİ OKUMASINI SAĞLAR */
         }
         .mini-label .p-name { 
-            font-size: 8px; 
+            font-size: 7.5px; /* Sığması için milimetrik ayarlandı */
             font-weight: bold; 
             width: 100%; 
             text-align: center; 
             margin-bottom: 2px; 
             display: -webkit-box;
-            -webkit-line-clamp: 2; /* 2 Satır Sınırı */
+            -webkit-line-clamp: 2; /* 2 SATIR ZIRHI */
             -webkit-box-orient: vertical;
             overflow: hidden;
             white-space: normal;
             line-height: 1.1;
+            max-height: 17px;
         }
-        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 100%; }
-        .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
+        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 4.5cm; }
+        .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 1px; }
     }
 `;
 document.head.appendChild(style);
 
-// YASAL BİLGİLENDİRME (FOOTER) EKLENİYOR
+// =========================================================================
+// YENİ ŞIK YAZDIRMA POP-UP'I (MODAL) VE YASAL UYARI EKLENTİSİ
+// =========================================================================
 document.body.insertAdjacentHTML('beforeend', `
+    <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <h3 style="margin-top:0; color:#fff; font-size:18px;">🖨️ ETİKET YAZDIR</h3>
+            <p style="color:#888; font-size:13px; margin-bottom:20px;">Kaç adet etiket basılsın?</p>
+            <input type="number" id="print-qty-input" value="4" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="closePrintModal()" style="flex:1; padding:12px; background:#222; color:#fff; border:1px solid #444; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
+                <button onclick="executePrint()" style="flex:1; padding:12px; background:#00ccff; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">YAZDIR</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="legal-footer">
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; hiçbir kurum veya kişi tarafından maddi kazanç elde edilmemektedir.
     </div>
 `);
-// =========================================================================
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -170,7 +177,6 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Her Tıklamayı Yakalar)
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout'))) {
         try {
@@ -222,6 +228,7 @@ async function buildCatalog() {
                     barkod: String(data.barkod || ""),
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
+                    surecTipi: String(data.surecTipi || ""),
                     searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
@@ -237,7 +244,6 @@ document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
     }
-    // Arama kutusuna zorla odaklanmayı kapattık (Metin kopyalanabilsin diye)
 });
 
 searchInput.addEventListener('input', (e) => {
@@ -295,13 +301,20 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// YAZDIRMA (PRINT) TETİKLEYİCİ - 4 SÜTUNLU ZEBRA MANTIĞI
+// YAZDIRMA (PRINT) FONKSİYONLARI - MODAL İLE ENTEGRE EDİLDİ
 // =========================================================================
-window.printLabel = () => {
-    const data = window.currentRenderedProduct;
-    if (!data) return alert("Yazdırılacak ürün bulunamadı!");
+window.openPrintModal = () => {
+    if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
+    document.getElementById('print-modal').style.display = 'flex';
+};
 
-    let printQty = prompt("Kaç adet etiket basılsın? (Sistem yan yana 4'lü olarak kesecektir)", "4");
+window.closePrintModal = () => {
+    document.getElementById('print-modal').style.display = 'none';
+};
+
+window.executePrint = () => {
+    const data = window.currentRenderedProduct;
+    let printQty = document.getElementById('print-qty-input').value;
     printQty = parseInt(printQty);
 
     if (!printQty || printQty <= 0) return;
@@ -345,6 +358,7 @@ window.printLabel = () => {
         }
     }
 
+    closePrintModal();
     setTimeout(() => { window.print(); }, 300);
 };
 
@@ -457,7 +471,7 @@ window.fetchAndDisplayProduct = async (code) => {
             resultContainer.innerHTML = `
                 <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
                     <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan: <span style="color:#fff;">${code}</span></div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan Kod: <span style="color:#fff;">${code}</span></div>
                 </div>
             `;
         }
@@ -473,7 +487,7 @@ function renderCard(data) {
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
@@ -485,7 +499,7 @@ function renderCard(data) {
                         <div class="label-text">ÜRÜN BİLGİSİ</div>
                         <div class="title-text">${data.urunAdi}</div>
                     </div>
-                    <button onclick="printLabel()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">🖨️ ETİKET YAZDIR</button>
+                    <button onclick="openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">🖨️ ETİKET YAZDIR</button>
                 </div>
                 
                 <div class="grid-details">
@@ -500,8 +514,9 @@ function renderCard(data) {
                     <div><div class="label-text">REF NO</div><div>${refUI}</div></div>
                     <div><div class="label-text">BARKOD</div><div>${barkodUI}</div></div>
                     <div><div class="label-text">MİAT TARİHİ</div><div>${miatUI}</div></div>
+                    
                     <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#ffbc00;">${data.altGrup}</div></div>
-                    <div style="grid-column: 1 / -1;"><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
+                    <div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
                 </div>
 
                 <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
