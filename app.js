@@ -88,7 +88,7 @@ style.innerHTML = `
         .doc-link { text-align: center; padding: 15px; }
     }
 
-    /* ZEBRA YAZDIRMA (Aynı Kesin Ölçülerle Kaldı) */
+    /* ZEBRA YAZDIRMA */
     @media screen { #print-container { display: none !important; } }
     @media print {
         @page { margin: 0 !important; size: 8.3cm auto; }
@@ -128,9 +128,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// DOM ELEMENTLERİ (Kayıp Parçalar Eklendi)
 const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
+const loginFormEl = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
 
 let productCatalog = [];
 let searchTimeout = null;
@@ -139,11 +143,10 @@ window.currentRenderedProduct = null;
 // =========================================================================
 // UI OLUŞTURMA (HEADER, DASHBOARD, TOAST)
 // =========================================================================
-// 1. Üst Barı (Header) Zırhlı Şekilde Oluştur
 const headerDiv = document.createElement('div');
 headerDiv.id = 'dynamic-header';
 headerDiv.className = 'app-header';
-headerDiv.style.display = 'none'; // Login ekranında gizli
+headerDiv.style.display = 'none'; 
 headerDiv.innerHTML = `
     <div class="header-left">
         <button id="btn-go-dash" class="btn-back">⬅ GERİ</button>
@@ -156,11 +159,9 @@ headerDiv.innerHTML = `
 `;
 document.body.insertBefore(headerDiv, document.body.firstChild);
 
-// Eski bozuk header'ı gizle (eğer HTML'de varsa)
 const oldHeader = document.getElementById('header-bar');
 if(oldHeader) oldHeader.style.display = 'none';
 
-// 2. Karşılama Ekranı (Dashboard) Oluştur
 const dashDiv = document.createElement('div');
 dashDiv.id = 'dashboard-screen';
 dashDiv.style.display = 'none';
@@ -187,7 +188,6 @@ dashDiv.innerHTML = `
 `;
 document.body.insertBefore(dashDiv, document.getElementById('app-screen'));
 
-// 3. Toast Mesajı
 document.body.insertAdjacentHTML('beforeend', `<div id="toast-msg" class="toast-msg">🛠️ Bu modül şu an yapım aşamasındadır.</div>`);
 
 // =========================================================================
@@ -242,7 +242,7 @@ onAuthStateChanged(auth, async (user) => {
         
         document.getElementById('dynamic-header').style.display = 'flex';
         document.getElementById('dashboard-screen').style.display = 'block';
-        document.getElementById('app-screen').classList.add('hidden'); // İlk açılışta Stok gizli
+        document.getElementById('app-screen').classList.add('hidden'); 
     } else {
         if(loadScreen) loadScreen.classList.add('hidden');
         document.getElementById('dynamic-header').style.display = 'none';
@@ -252,11 +252,9 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// GİRİŞ FORMUNUN SAYFAYI YENİLEME HATASI BURADA KESİN ÇÖZÜLDÜ
-const loginFormEl = document.getElementById('login-form');
-if (loginFormEl) {
+if (loginFormEl && usernameInput && passwordInput) {
     loginFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault(); // SAYFA YENİLEMEYİ ENGELLER
+        e.preventDefault(); 
         const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
         try { 
@@ -264,7 +262,6 @@ if (loginFormEl) {
         } catch (error) { 
             alert("Giriş Başarısız: Lütfen bilgileri kontrol edin."); 
         }
-        return false; // Çift güvenlik kilidi
     });
 }
 
