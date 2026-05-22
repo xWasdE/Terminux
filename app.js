@@ -79,50 +79,53 @@ style.innerHTML = `
         .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ALT ALTA (TEK SÜTUN) DİZİLİM */
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ÇİFT SÜTUN (SAĞDA 4, SOLDA 4 MANTIĞI) */
     @media screen {
         #print-container { display: none !important; }
     }
     @media print {
         @page { 
             margin: 0 !important; 
-            size: 4.8cm 2.1cm; /* YAZICIYA BİLDİRİLEN TEK ETİKETİN NET BOYUTU */
+            size: 8.3cm auto; /* TAM 2 SÜTUNLUK RULO GENİŞLİĞİ */
         }
-        body, html { margin: 0; padding: 0; background: #fff; width: 4.8cm; }
+        body, html { margin: 0; padding: 0; background: #fff; width: 8.3cm; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         .legal-footer { display: none !important; }
         
         #print-container {
             position: absolute; left: 0; top: 0;
+            display: grid;
+            grid-template-columns: 4cm 4cm; /* 2 SÜTUN (Sol Sütun ve Sağ Sütun) */
+            column-gap: 0.3cm; /* İKİ SÜTUN ARASI BOŞLUK */
+            row-gap: 0cm; 
+            width: 8.3cm; 
             margin: 0; padding: 0;
             background: #fff;
-            display: flex;
-            flex-direction: column; /* ETİKETLERİ BİRBİRİNİN ALTINA DİZER */
         }
         .mini-label {
-            width: 4.8cm; /* KULLANICI ÖLÇÜSÜ */
-            height: 2.1cm; /* 8.4cm / 4 ETİKET = 2.1cm */
+            width: 4cm; 
+            height: 2.1cm; /* 1 ETİKET YÜKSEKLİĞİ (4 SATIR = 8.4cm YAPAR) */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; padding: 2px; box-sizing: border-box;
-            color: #000; font-family: Arial, sans-serif;
-            page-break-after: always; /* ZEBRA SÜRÜCÜSÜNÜN BUNU LİSTE GİBİ OKUMASINI SAĞLAR */
+            color: #000; font-family: Arial, sans-serif; 
+            page-break-inside: avoid;
         }
         .mini-label .p-name { 
-            font-size: 7.5px; /* Sığması için milimetrik ayarlandı */
+            font-size: 8px; 
             font-weight: bold; 
             width: 100%; 
             text-align: center; 
             margin-bottom: 2px; 
             display: -webkit-box;
-            -webkit-line-clamp: 2; /* 2 SATIR ZIRHI */
+            -webkit-line-clamp: 2; /* 2 SATIR ZIRHI KORUNUYOR */
             -webkit-box-orient: vertical;
             overflow: hidden;
             white-space: normal;
             line-height: 1.1;
             max-height: 17px;
         }
-        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 4.5cm; }
+        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 3.8cm; }
         .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 1px; }
     }
 `;
@@ -136,7 +139,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
             <h3 style="margin-top:0; color:#fff; font-size:18px;">🖨️ ETİKET YAZDIR</h3>
             <p style="color:#888; font-size:13px; margin-bottom:20px;">Kaç adet etiket basılsın?</p>
-            <input type="number" id="print-qty-input" value="4" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
+            <input type="number" id="print-qty-input" value="8" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
             <div style="display:flex; gap:10px;">
                 <button onclick="closePrintModal()" style="flex:1; padding:12px; background:#222; color:#fff; border:1px solid #444; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
                 <button onclick="executePrint()" style="flex:1; padding:12px; background:#00ccff; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">YAZDIR</button>
@@ -487,7 +490,7 @@ function renderCard(data) {
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
