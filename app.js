@@ -19,7 +19,7 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body { padding-bottom: 50px; } /* Footer için alt boşluk */
+    body { padding-bottom: 80px !important; } /* FOOTER İÇİN GÜVENLİ BOŞLUK */
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
@@ -44,8 +44,26 @@ style.innerHTML = `
     .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
 
+    /* YASAL BİLGİLENDİRME (FOOTER) - KURUMSAL VE BÜYÜK */
+    .legal-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: rgba(5, 5, 5, 0.95);
+        color: #888;
+        text-align: center;
+        padding: 16px 20px;
+        font-size: 13px;
+        z-index: 9999;
+        border-top: 1px solid #1a1a1a;
+        backdrop-filter: blur(8px);
+        line-height: 1.5;
+    }
+    .legal-footer b { color: #aaa; font-weight: bold; }
+
     @media (max-width: 900px) {
-        body { padding: 15px !important; padding-bottom: 60px !important; }
+        body { padding: 15px !important; padding-bottom: 100px !important; }
         .card-wrapper { flex-direction: column; gap: 20px; }
         .card-main, .stock-box { padding: 25px; }
         .grid-details { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; padding-top: 25px; }
@@ -62,51 +80,37 @@ style.innerHTML = `
         .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
         .doc-link { text-align: center; padding: 15px; width: 100%; }
         .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 15px !important; }
+        
+        .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* YASAL UYARI FOOTER CSS */
-    .legal-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(5, 5, 5, 0.95);
-        color: #666;
-        text-align: center;
-        padding: 12px 20px;
-        font-size: 11px;
-        z-index: 9999;
-        border-top: 1px solid #1a1a1a;
-        backdrop-filter: blur(5px);
-    }
-    .legal-footer b { color: #888; }
-    @media print { .legal-footer { display: none !important; } }
-
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - 2'Lİ SÜTUN ZIRHLI */
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - YAN YANA 4'LÜ IZGARA */
     @media screen {
         #print-container { display: none !important; }
     }
     @media print {
         @page { 
             margin: 0 !important; 
-            size: 8.3cm auto; 
+            size: 8.3cm auto; /* ZEBRA YAZICI GENİŞLİĞİ */
         }
         body, html { margin: 0; padding: 0; background: #fff; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
+        .legal-footer { display: none !important; }
         
         #print-container {
             position: absolute; left: 0; top: 0;
             display: grid;
-            grid-template-columns: 4cm 4cm;
-            column-gap: 0.3cm;
+            grid-template-columns: repeat(4, 1fr); /* YAN YANA 4 ETİKET (4 SÜTUN) */
+            column-gap: 0.1cm;
             row-gap: 0cm; 
             width: 8.3cm; 
             margin: 0; padding: 0;
             background: #fff;
         }
         .mini-label {
-            width: 4cm; height: 2.1cm; 
+            width: 2cm; /* 8cm / 4 = ~2cm etiket genişliği */
+            height: 2.1cm; /* 4 sıra = 8.4cm, 1 sıra = 2.1cm yükseklik */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; padding: 2px; box-sizing: border-box;
             color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
@@ -118,27 +122,25 @@ style.innerHTML = `
             text-align: center; 
             margin-bottom: 2px; 
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 2; /* 2 Satır Sınırı */
             -webkit-box-orient: vertical;
             overflow: hidden;
             white-space: normal;
             line-height: 1.1;
         }
-        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 3.8cm; }
+        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 100%; }
         .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
     }
 `;
 document.head.appendChild(style);
-// =========================================================================
 
-// =========================================================================
-// YASAL UYARI HTML İNŞASI
-// =========================================================================
+// YASAL BİLGİLENDİRME (FOOTER) EKLENİYOR
 document.body.insertAdjacentHTML('beforeend', `
     <div class="legal-footer">
-        <b>Yasal Uyarı:</b> Bu sistem tamamen kâr amacı gütmeyen, operasyonel kapalı devre bir platformdur. Site üzerinden hiçbir ticari faaliyet veya ürün satışı yapılmamakta olup, herhangi bir maddi kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; hiçbir kurum veya kişi tarafından maddi kazanç elde edilmemektedir.
     </div>
 `);
+// =========================================================================
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -153,26 +155,56 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+const loadingScreen = document.getElementById('loading-screen');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
+const loginForm = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const operatorName = document.getElementById('operator-name');
 const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
-const operatorName = document.getElementById('operator-name');
 
 let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
+
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Her Tıklamayı Yakalar)
+document.addEventListener('click', async (e) => {
+    if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout'))) {
+        try {
+            await signOut(auth);
+            window.location.reload();
+        } catch (err) {
+            alert("Çıkış yapılırken bir hata oluştu.");
+        }
+    }
+});
 
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         operatorName.textContent = user.email.split('@')[0].toUpperCase();
         await buildCatalog();
-        document.getElementById('loading-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
+        loadingScreen.classList.add('hidden');
+        loginScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
         searchInput.focus();
     } else {
-        document.getElementById('login-screen').classList.remove('hidden');
+        loadingScreen.classList.add('hidden');
+        appScreen.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
     }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+    const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
+
+    try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
+    catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
 });
 
 async function buildCatalog() {
@@ -188,10 +220,9 @@ async function buildCatalog() {
                     urunKodu: String(data.urunKodu || ""),
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
-                    barkod2: String(data.barkod2 || ""),
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.barkod2 || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
+                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
         };
@@ -202,11 +233,11 @@ async function buildCatalog() {
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
-// ODAK (FOCUS) ÇALMA HATASI DÜZELTİLDİ:
 document.addEventListener('click', (e) => {
     if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
     }
+    // Arama kutusuna zorla odaklanmayı kapattık (Metin kopyalanabilsin diye)
 });
 
 searchInput.addEventListener('input', (e) => {
@@ -255,7 +286,6 @@ searchInput.addEventListener('keydown', (e) => {
             (m.docId.toLowerCase() === code.toLowerCase()) || 
             (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
             (m.barkod.toLowerCase() === code.toLowerCase()) || 
-            (m.barkod2.toLowerCase() === code.toLowerCase()) || 
             (m.refNo.toLowerCase() === code.toLowerCase())
         );
 
@@ -265,24 +295,22 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA 2'Lİ SÜTUN / SINIRSIZ SATIR
+// YAZDIRMA (PRINT) TETİKLEYİCİ - 4 SÜTUNLU ZEBRA MANTIĞI
 // =========================================================================
 window.printLabel = () => {
     const data = window.currentRenderedProduct;
     if (!data) return alert("Yazdırılacak ürün bulunamadı!");
 
-    let printQty = prompt("Kaç adet etiket basılsın? (Örn: 4, 100, 250 - Sistem yan yana 2'li olarak kesecektir)", "8");
+    let printQty = prompt("Kaç adet etiket basılsın? (Sistem yan yana 4'lü olarak kesecektir)", "4");
     printQty = parseInt(printQty);
 
-    if (!printQty || printQty <= 0) return; // İptal edildi veya sıfır girildi
+    if (!printQty || printQty <= 0) return;
 
     let targetBarcode = data.urunKodu; 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     
     if (data.barkod && !invalidCodes.includes(data.barkod)) {
         targetBarcode = data.barkod;
-    } else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) {
-        targetBarcode = data.barkod2;
     }
 
     let printContainer = document.getElementById('print-container');
@@ -342,9 +370,6 @@ window.saveUpdate = async (id, type) => {
     const updateData = {};
     if (type === 'b') {
         updateData.barkod = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
-    } else if (type === 'b2') {
-        updateData.barkod2 = newVal;
         updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'r') {
         updateData.refNo = newVal;
@@ -407,7 +432,6 @@ window.fetchAndDisplayProduct = async (code) => {
             const mergedData = {
                 urunKodu: code,
                 barkod: baseData.barkod || "",
-                barkod2: baseData.barkod2 || "", 
                 urunAdi: baseData.urunAdi || "-",
                 refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
@@ -430,7 +454,12 @@ window.fetchAndDisplayProduct = async (code) => {
 
             renderCard(mergedData);
         } else {
-            resultContainer.innerHTML = `<div class="card-main" style="text-align:center; color:#f33;">KAYIT BULUNAMADI</div>`;
+            resultContainer.innerHTML = `
+                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
+                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan: <span style="color:#fff;">${code}</span></div>
+                </div>
+            `;
         }
     } catch (err) { resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
 };
@@ -445,7 +474,6 @@ function renderCard(data) {
     const sAm = getS(data.amMiktar, data.hasAm);
 
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
-    const barkod2UI = createEditUI(data.urunKodu, 'b2', data.barkod2, '2. Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
@@ -470,8 +498,7 @@ function renderCard(data) {
                     </div>
                     
                     <div><div class="label-text">REF NO</div><div>${refUI}</div></div>
-                    <div><div class="label-text">1. BARKOD</div><div>${barkodUI}</div></div>
-                    <div><div class="label-text">2. BARKOD</div><div>${barkod2UI}</div></div>
+                    <div><div class="label-text">BARKOD</div><div>${barkodUI}</div></div>
                     <div><div class="label-text">MİAT TARİHİ</div><div>${miatUI}</div></div>
                     <div><div class="label-text">ALT GRUP</div><div class="value-text" style="color:#ffbc00;">${data.altGrup}</div></div>
                     <div style="grid-column: 1 / -1;"><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">${data.surecTipi}</div></div>
@@ -526,7 +553,6 @@ function renderCard(data) {
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             
             if (data.barkod && !invalidCodes.includes(data.barkod)) targetBarcode = data.barkod;
-            else if (data.barkod2 && !invalidCodes.includes(data.barkod2)) targetBarcode = data.barkod2;
 
             JsBarcode("#ui-barcode", targetBarcode, {
                 format: "CODE128",
