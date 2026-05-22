@@ -17,21 +17,18 @@ if (!document.querySelector('meta[name="viewport"]')) {
 }
 
 // =========================================================================
-// TERMINUX NEXUS CSS MOTORU & ZEBRA YAZDIRMA KALIBI
+// TERMINUX NEXUS CSS MOTORU & KUSURSUZ YAZDIRMA KALIBI
 // =========================================================================
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
     body { background: #050505; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
     
-    /* Üst Başlık (Header) */
     .app-header { background: #000; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
     .app-logo { font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #fff; display: flex; align-items: center; gap: 10px; }
     .app-logo span { color: #00ff00; }
     
-    /* Ana İçerik */
     .main-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-    
     .card-wrapper { display: flex; gap: 30px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.5; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 30px; }
@@ -54,14 +51,14 @@ style.innerHTML = `
     .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s; }
     .mobile-break { word-break: break-all; }
 
-    /* ALT MENÜ (TERMINAL BOTTOM NAVIGATION) */
+    /* ALT MENÜ */
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; padding: 10px 5px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 1000; }
     .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #555; text-decoration: none; cursor: pointer; transition: 0.2s; }
     .nav-item.active { color: #00ff00; }
     .nav-icon { font-size: 20px; }
     .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
 
-    /* TOAST MESAJI (Hazırlanıyor Uyarısı İçin) */
+    /* TOAST MESAJI */
     .toast-msg { visibility: hidden; min-width: 250px; background-color: #ffbc00; color: #000; text-align: center; border-radius: 8px; padding: 15px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-weight: bold; font-size: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
     .toast-msg.show { visibility: visible; opacity: 1; }
 
@@ -79,32 +76,40 @@ style.innerHTML = `
     }
 
     /* =======================================================
-       YAZDIRMA MOTORU (F5 HATASI GİDERİLDİ & ZEBRA ÖLÇÜLERİ)
+       YAZDIRMA MOTORU (Chrome Reklamları Yok Edildi, 2 Sütun Düzeni)
        ======================================================= */
     @media screen {
         #print-container { display: none !important; }
     }
 
     @media print {
-        @page { margin: 0; size: 8.3cm auto; } /* Zebra Rulo Genişliği */
+        @page { 
+            margin: 0 !important; /* TARAYICI TARİH/LİNK YAZILARINI YOK EDER */
+            size: 8.3cm auto; /* ZEBRA YAZICI RULO GENİŞLİĞİ */
+        }
+        body, html { margin: 0; padding: 0; background: #fff; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
+        
         #print-container {
             position: absolute; left: 0; top: 0;
             display: grid;
-            grid-template-columns: 4cm 4cm; /* 2 Sütun (4+4) */
-            column-gap: 0.3cm; /* Ortadaki boşluk */
-            row-gap: 0.1cm; /* Alt alta etiket boşluğu */
+            grid-template-columns: 4cm 4cm; /* Yan yana 2 Etiket */
+            column-gap: 0.3cm; /* Etiketler Arası Boşluk */
+            row-gap: 0cm; /* Alt alta dizilim (boşluk rulo kesim yerindedir) */
             width: 8.3cm; 
             margin: 0; padding: 0;
             background: #fff;
         }
+        
         .mini-label {
-            height: 2.1cm; /* Yükseklik */
+            width: 4cm;
+            height: 2.1cm; /* Yükseklik (4 tanesi 8.4cm yapar) */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; padding: 2px; box-sizing: border-box;
             color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
         }
+        
         .mini-label .p-name { 
             font-size: 8px; 
             font-weight: bold; 
@@ -112,13 +117,14 @@ style.innerHTML = `
             text-align: center; 
             margin-bottom: 2px; 
             display: -webkit-box;
-            -webkit-line-clamp: 2; /* İKİ SATIR LİMİTİ */
+            -webkit-line-clamp: 2; /* 2 Satır Sınırı */
             -webkit-box-orient: vertical;
             overflow: hidden;
             white-space: normal;
             line-height: 1.1;
         }
-        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 100%; }
+        
+        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 3.8cm; }
         .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 2px; letter-spacing: 1px; }
     }
 `;
@@ -141,7 +147,6 @@ const db = getFirestore(app);
 const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
-const operatorName = document.getElementById('operator-name');
 
 let productCatalog = [];
 let searchTimeout = null;
@@ -176,32 +181,70 @@ window.showToast = () => {
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
+// GLOBAL ÇIKIŞ FONKSİYONU (ZIRHLI)
+window.logoutApp = async () => {
+    try {
+        await signOut(auth);
+        window.location.reload();
+    } catch (err) {
+        alert("Çıkış yapılırken bir hata oluştu!");
+    }
+};
+
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        operatorName.textContent = user.email.split('@')[0].toUpperCase();
-        
-        // Üst Başlık (Logoyu ve İsmi Özelleştirme)
-        const header = document.querySelector('.app-header') || document.createElement('div');
-        if(!document.querySelector('.app-header')) {
-            header.className = 'app-header';
-            header.innerHTML = `<div class="app-logo">TERMINUX <span>NEXUS</span></div>
-                                <div style="display:flex; align-items:center; gap:15px;">
-                                    <span style="font-size:12px; color:#888;">OP: <b style="color:#fff;">${operatorName.textContent}</b></span>
-                                    <button id="btn-logout-new" style="background:none; border:1px solid #333; color:#f33; padding:5px 10px; border-radius:4px; font-size:10px; cursor:pointer;">ÇIKIŞ</button>
-                                </div>`;
-            document.body.insertBefore(header, document.body.firstChild);
-            document.getElementById('btn-logout-new').addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
-            document.getElementById('header-bar').style.display = 'none'; // Eski header'ı gizle
-        }
+    try {
+        if (user) {
+            // Güvenli Header Ekleme
+            if(!document.querySelector('.app-header')) {
+                const header = document.createElement('div');
+                header.className = 'app-header';
+                const operatorName = user.email.split('@')[0].toUpperCase();
+                header.innerHTML = `
+                    <div class="app-logo">TERMINUX <span>NEXUS</span></div>
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <span style="font-size:12px; color:#888;">OP: <b style="color:#fff;">${operatorName}</b></span>
+                        <button onclick="logoutApp()" style="background:none; border:1px solid #333; color:#f33; padding:5px 10px; border-radius:4px; font-size:10px; cursor:pointer;">ÇIKIŞ</button>
+                    </div>`;
+                document.body.insertBefore(header, document.body.firstChild);
+                
+                const oldHeader = document.getElementById('header-bar');
+                if (oldHeader) oldHeader.style.display = 'none'; 
+            }
 
-        await buildCatalog();
-        document.getElementById('loading-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
-        document.getElementById('app-screen').classList.add('main-container');
-    } else {
-        document.getElementById('login-screen').classList.remove('hidden');
+            await buildCatalog();
+            
+            const loadScreen = document.getElementById('loading-screen');
+            if(loadScreen) loadScreen.classList.add('hidden');
+            
+            const appScreen = document.getElementById('app-screen');
+            if(appScreen) {
+                appScreen.classList.remove('hidden');
+                appScreen.classList.add('main-container');
+            }
+            if (searchInput) searchInput.focus();
+            
+        } else {
+            const loadScreen = document.getElementById('loading-screen');
+            if(loadScreen) loadScreen.classList.add('hidden');
+            
+            const appScreen = document.getElementById('app-screen');
+            if(appScreen) appScreen.classList.add('hidden');
+            
+            const logScreen = document.getElementById('login-screen');
+            if(logScreen) logScreen.classList.remove('hidden');
+        }
+    } catch (err) {
+        console.error("Başlatma Hatası: ", err);
     }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+    const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
+    try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
+    catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
 });
 
 async function buildCatalog() {
@@ -230,75 +273,76 @@ async function buildCatalog() {
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
-// ODAK ÇALMA VE KOPYALAMA HATASI DÜZELTİLDİ
 document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
+    if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
         dropdown.style.display = 'none';
     }
 });
 
-searchInput.addEventListener('input', (e) => {
-    const val = e.target.value.trim().toLowerCase();
-    clearTimeout(searchTimeout);
-    if (val.length < 2) { dropdown.style.display = 'none'; return; }
-
-    searchTimeout = setTimeout(() => {
-        dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 16px;">Aranıyor...</div>';
-        dropdown.style.display = 'block';
-
-        const terms = val.split(/\s+/);
-        let matches = productCatalog.filter(m => terms.every(t => m.searchString.includes(t))).slice(0, 15);
-
-        if (matches.length > 0) {
-            dropdown.innerHTML = matches.map(m => `
-                <div class="search-item" data-id="${m.docId}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
-                    <div style="color: #fff; font-size: 15px; font-weight: 600;">${m.urunAdi}</div>
-                    <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:6px;">KOD: <span style="color:#0f0;">${m.urunKodu}</span> | REF: ${m.refNo}</div>
-                </div>
-            `).join('');
-
-            document.querySelectorAll('.search-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    searchInput.value = '';
-                    dropdown.style.display = 'none';
-                    fetchAndDisplayProduct(item.getAttribute('data-id'));
-                });
-            });
-        } else {
-            dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Kayıt bulunamadı.</div>';
-        }
-    }, 150);
-});
-
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
+if(searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim().toLowerCase();
         clearTimeout(searchTimeout);
-        dropdown.style.display = 'none';
-        const code = searchInput.value.trim();
-        if (!code) return;
-        searchInput.value = '';
+        if (val.length < 2) { dropdown.style.display = 'none'; return; }
 
-        const directMatch = productCatalog.find(m => 
-            (m.docId.toLowerCase() === code.toLowerCase()) || 
-            (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
-            (m.barkod.toLowerCase() === code.toLowerCase()) || 
-            (m.refNo.toLowerCase() === code.toLowerCase())
-        );
+        searchTimeout = setTimeout(() => {
+            dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 16px;">Aranıyor...</div>';
+            dropdown.style.display = 'block';
 
-        if (directMatch) fetchAndDisplayProduct(directMatch.docId);
-        else fetchAndDisplayProduct(code);
-    }
-});
+            const terms = val.split(/\s+/);
+            let matches = productCatalog.filter(m => terms.every(t => m.searchString.includes(t))).slice(0, 15);
+
+            if (matches.length > 0) {
+                dropdown.innerHTML = matches.map(m => `
+                    <div class="search-item" data-id="${m.docId}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
+                        <div style="color: #fff; font-size: 15px; font-weight: 600;">${m.urunAdi}</div>
+                        <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:6px;">KOD: <span style="color:#0f0;">${m.urunKodu}</span> | REF: ${m.refNo}</div>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.search-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        searchInput.value = '';
+                        dropdown.style.display = 'none';
+                        fetchAndDisplayProduct(item.getAttribute('data-id'));
+                    });
+                });
+            } else {
+                dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Kayıt bulunamadı.</div>';
+            }
+        }, 150);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimeout);
+            dropdown.style.display = 'none';
+            const code = searchInput.value.trim();
+            if (!code) return;
+            searchInput.value = '';
+
+            const directMatch = productCatalog.find(m => 
+                (m.docId.toLowerCase() === code.toLowerCase()) || 
+                (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
+                (m.barkod.toLowerCase() === code.toLowerCase()) || 
+                (m.refNo.toLowerCase() === code.toLowerCase())
+            );
+
+            if (directMatch) fetchAndDisplayProduct(directMatch.docId);
+            else fetchAndDisplayProduct(code);
+        }
+    });
+}
 
 // =========================================================================
-// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA 2'Lİ SÜTUN / SINIRSIZ SATIR
+// YAZDIRMA (PRINT) TETİKLEYİCİ - ZEBRA ZT230 YAN YANA 2'Lİ
 // =========================================================================
 window.printLabel = () => {
     const data = window.currentRenderedProduct;
     if (!data) return alert("Yazdırılacak ürün bulunamadı!");
 
-    let printQty = prompt("Kaç adet etiket basılsın? (Örn: 4, 100, 250 - Sistem yan yana 2'li olarak dizecektir)", "4");
+    let printQty = prompt("Kaç adet etiket basılsın? (Sistem yan yana 2'li olarak kesecektir)", "8");
     printQty = parseInt(printQty);
 
     if (!printQty || printQty <= 0) return;
@@ -315,7 +359,6 @@ window.printLabel = () => {
         printContainer.id = 'print-container';
         document.body.appendChild(printContainer);
     }
-    
     printContainer.innerHTML = ''; 
 
     for(let i=0; i < printQty; i++) {
@@ -341,7 +384,10 @@ window.printLabel = () => {
         }
     }
 
-    setTimeout(() => { window.print(); }, 300);
+    // Yazdırma dialoğu açılmadan önce küçük bir tampon süre bırakıyoruz.
+    setTimeout(() => { 
+        window.print(); 
+    }, 300);
 };
 
 // =========================================================================
