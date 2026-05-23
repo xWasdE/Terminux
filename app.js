@@ -116,22 +116,32 @@ style.innerHTML = `
             page-break-inside: avoid;
         }
         .mini-label .p-name { 
-            font-size: 8px; 
+            font-size: 6.5px; /* DAHA KÜÇÜK FONT = DAHA ÇOK KELİME */
             font-weight: bold; 
             width: 100%; 
             text-align: center; 
             margin-bottom: 2px; 
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* UZUN İSİMLER İÇİN 3 SATIRA ÇIKARILDI */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             white-space: normal;
             line-height: 1.1;
-            /* 2 Satır limiti orijinal sistem mantığı ile Javascript'te çözüldü */
+            max-height: 22px; /* 3 SATIR İÇİN YER AÇILDI */
         }
         .mini-label svg { 
-            height: 0.9cm !important; 
+            height: 0.8cm !important; /* YAZIYA YER AÇMAK İÇİN 0.1cm KISALTILDI */
             width: 100% !important; 
             max-width: 3.5cm; 
             margin: 0 auto; /* BARKODU İÇERİDE ORTALAR */
         }
-        .mini-label .p-code { font-size: 8.5px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 0.5px; }
+        .mini-label .p-code { 
+            font-size: 8px; /* ORANLAMAK İÇİN HAFİF KÜÇÜLTÜLDÜ */
+            font-weight: bold; 
+            text-align: center; 
+            margin-top: 1px; 
+            letter-spacing: 0.5px; 
+        }
     }
 `;
 document.head.appendChild(style);
@@ -309,7 +319,7 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// YAZDIRMA (PRINT) FONKSİYONLARI - MODAL İLE ENTEGRE EDİLDİ
+// YAZDIRMA (PRINT) FONKSİYONLARI - İSİM KESİLMEMESİ İÇİN GÜNCELLENDİ
 // =========================================================================
 window.openPrintModal = () => {
     if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
@@ -341,11 +351,12 @@ window.executePrint = () => {
     }
     printContainer.innerHTML = ''; 
 
-    // Orijinal Sistemdeki gibi ismi Virgüle (,) göre bölüp 2 satır yapma zekası
+    // Virgül zekası: İsmi kesmek yerine virgülden sonra kalanı da yazdırır
     let urunParts = data.urunAdi.split(',');
     let displayName = urunParts[0].trim();
     if (urunParts.length > 1) {
-        displayName += "<br>" + urunParts[1].trim(); 
+        // İkinci ve sonraki tüm parçaları kesmeden alt satıra ekler
+        displayName += "<br>" + urunParts.slice(1).join(', ').trim(); 
     }
 
     for(let i=0; i < printQty; i++) {
@@ -500,7 +511,7 @@ function renderCard(data) {
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
