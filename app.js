@@ -79,16 +79,20 @@ style.innerHTML = `
         .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ÇİFT SÜTUN (SAĞDA 4, SOLDA 4 MANTIĞI) */
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ORTALANMIŞ 2'Lİ SÜTUN */
     @media screen {
         #print-container { display: none !important; }
     }
     @media print {
         @page { 
             margin: 0 !important; 
-            size: 8.3cm auto; /* TAM 2 SÜTUNLUK RULO GENİŞLİĞİ */
+            size: 8.3cm auto; /* ZEBRA YAZICI GENİŞLİĞİ */
         }
-        body, html { margin: 0; padding: 0; background: #fff; width: 8.3cm; }
+        body, html { 
+            margin: 0; padding: 0; background: #fff; 
+            width: 8.3cm; 
+            display: flex; justify-content: center; /* KAĞITTA ORTALAMA SAĞLAR */
+        }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         .legal-footer { display: none !important; }
@@ -96,18 +100,18 @@ style.innerHTML = `
         #print-container {
             position: absolute; left: 0; top: 0;
             display: grid;
-            grid-template-columns: 4cm 4cm; /* 2 SÜTUN (Sol Sütun ve Sağ Sütun) */
+            grid-template-columns: 3.9cm 3.9cm; /* TAM OLARAK İSTENEN ETİKET ENİ */
             column-gap: 0.3cm; /* İKİ SÜTUN ARASI BOŞLUK */
-            row-gap: 0cm; 
-            width: 8.3cm; 
-            margin: 0; padding: 0;
+            row-gap: 0cm; /* ALT ALTA BOŞLUKSUZ */
+            width: 8.1cm; /* 3.9 + 3.9 + 0.3 = 8.1cm Toplam Grid Genişliği */
+            margin: 0 auto; /* IZGARAYI KAĞIDIN ORTASI İÇİN MERKEZLER */
             background: #fff;
         }
         .mini-label {
-            width: 4cm; 
-            height: 2.1cm; /* 1 ETİKET YÜKSEKLİĞİ (4 SATIR = 8.4cm YAPAR) */
+            width: 3.9cm;  /* ETİKET NET GENİŞLİĞİ */
+            height: 1.9cm; /* ETİKET NET YÜKSEKLİĞİ */
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            overflow: hidden; padding: 2px; box-sizing: border-box;
+            overflow: hidden; padding: 1px; box-sizing: border-box;
             color: #000; font-family: Arial, sans-serif; 
             page-break-inside: avoid;
         }
@@ -117,40 +121,28 @@ style.innerHTML = `
             width: 100%; 
             text-align: center; 
             margin-bottom: 2px; 
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* 2 SATIR ZIRHI KORUNUYOR */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
             white-space: normal;
             line-height: 1.1;
-            max-height: 17px;
+            /* 2 Satır limiti orijinal sistem mantığı ile Javascript'te çözüldü */
         }
-        .mini-label svg { height: 1.1cm !important; width: 100% !important; max-width: 3.8cm; }
-        .mini-label .p-code { font-size: 9px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 1px; }
+        .mini-label svg { 
+            height: 0.9cm !important; 
+            width: 100% !important; 
+            max-width: 3.5cm; 
+            margin: 0 auto; /* BARKODU İÇERİDE ORTALAR */
+        }
+        .mini-label .p-code { font-size: 8.5px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 0.5px; }
     }
 `;
 document.head.appendChild(style);
 
-// =========================================================================
-// YENİ ŞIK YAZDIRMA POP-UP'I (MODAL) VE YASAL UYARI EKLENTİSİ
-// =========================================================================
+// YASAL BİLGİLENDİRME (FOOTER) EKLENİYOR
 document.body.insertAdjacentHTML('beforeend', `
-    <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
-        <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-            <h3 style="margin-top:0; color:#fff; font-size:18px;">🖨️ ETİKET YAZDIR</h3>
-            <p style="color:#888; font-size:13px; margin-bottom:20px;">Kaç adet etiket basılsın?</p>
-            <input type="number" id="print-qty-input" value="8" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
-            <div style="display:flex; gap:10px;">
-                <button onclick="closePrintModal()" style="flex:1; padding:12px; background:#222; color:#fff; border:1px solid #444; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
-                <button onclick="executePrint()" style="flex:1; padding:12px; background:#00ccff; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">YAZDIR</button>
-            </div>
-        </div>
-    </div>
-    
     <div class="legal-footer">
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; hiçbir kurum veya kişi tarafından maddi kazanç elde edilmemektedir.
     </div>
 `);
+// =========================================================================
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -180,6 +172,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout'))) {
         try {
@@ -304,7 +297,7 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// YAZDIRMA (PRINT) FONKSİYONLARI - MODAL İLE ENTEGRE EDİLDİ
+// YAZDIRMA (PRINT) FONKSİYONLARI - ORİJİNAL YAPAY-DÜZ MANTIĞI EKLENDİ
 // =========================================================================
 window.openPrintModal = () => {
     if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
@@ -324,7 +317,6 @@ window.executePrint = () => {
 
     let targetBarcode = data.urunKodu; 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-    
     if (data.barkod && !invalidCodes.includes(data.barkod)) {
         targetBarcode = data.barkod;
     }
@@ -335,14 +327,20 @@ window.executePrint = () => {
         printContainer.id = 'print-container';
         document.body.appendChild(printContainer);
     }
-    
     printContainer.innerHTML = ''; 
+
+    // Orijinal Sistemdeki gibi ismi Virgüle (,) göre bölüp 2 satır yapma zekası
+    let urunParts = data.urunAdi.split(',');
+    let displayName = urunParts[0].trim();
+    if (urunParts.length > 1) {
+        displayName += "<br>" + urunParts[1].trim(); // Virgülden sonraki ilk detayı 2. satıra atar
+    }
 
     for(let i=0; i < printQty; i++) {
         const label = document.createElement('div');
         label.className = 'mini-label';
         label.innerHTML = `
-            <div class="p-name">${data.urunAdi}</div>
+            <div class="p-name">${displayName}</div>
             <svg id="print-bc-${i}"></svg>
             <div class="p-code">${data.urunKodu}</div>
         `;
@@ -490,7 +488,7 @@ function renderCard(data) {
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
