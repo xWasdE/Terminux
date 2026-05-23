@@ -136,8 +136,20 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-// YASAL BİLGİLENDİRME (FOOTER) EKLENİYOR
+// YASAL BİLGİLENDİRME (FOOTER) VE YAZDIRMA MODALI EKLENİYOR
 document.body.insertAdjacentHTML('beforeend', `
+    <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+        <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <h3 style="margin-top:0; color:#fff; font-size:18px;">🖨️ ETİKET YAZDIR</h3>
+            <p style="color:#888; font-size:13px; margin-bottom:20px;">Kaç adet etiket basılsın?</p>
+            <input type="number" id="print-qty-input" value="8" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="closePrintModal()" style="flex:1; padding:12px; background:#222; color:#fff; border:1px solid #444; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
+                <button onclick="executePrint()" style="flex:1; padding:12px; background:#00ccff; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">YAZDIR</button>
+            </div>
+        </div>
+    </div>
+
     <div class="legal-footer">
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; hiçbir kurum veya kişi tarafından maddi kazanç elde edilmemektedir.
     </div>
@@ -297,7 +309,7 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // =========================================================================
-// YAZDIRMA (PRINT) FONKSİYONLARI - ORİJİNAL YAPAY-DÜZ MANTIĞI EKLENDİ
+// YAZDIRMA (PRINT) FONKSİYONLARI - MODAL İLE ENTEGRE EDİLDİ
 // =========================================================================
 window.openPrintModal = () => {
     if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
@@ -333,7 +345,7 @@ window.executePrint = () => {
     let urunParts = data.urunAdi.split(',');
     let displayName = urunParts[0].trim();
     if (urunParts.length > 1) {
-        displayName += "<br>" + urunParts[1].trim(); // Virgülden sonraki ilk detayı 2. satıra atar
+        displayName += "<br>" + urunParts[1].trim(); 
     }
 
     for(let i=0; i < printQty; i++) {
@@ -488,7 +500,7 @@ function renderCard(data) {
     const sAna = getS(data.anaMiktar, data.hasAna);
     const sAm = getS(data.amMiktar, data.hasAm);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, '1. Barkod Okut...', '#ccc');
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
