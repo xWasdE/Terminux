@@ -3,11 +3,11 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// SİSTEM MERKEZİ BAĞLANTI AYARLARI (VPS SUNUCU VEYA TÜNEL ADRESİ)
+// SİSTEM MERKEZİ BAĞLANTI AYARLARI (TÜNEL ADRESİ)
 // =========================================================================
-// Eğer botu kendi PC'nizde Ngrok/Localtunnel ile açarsanız adresi buraya girin:
-// Örnek: "https://benim-sunucum.loca.lt" veya "http://89.145.XX.XX:3001"
-const UTS_API_ADRESI = "http://localhost:3001"; // <--- BURAYI SUNUCUYA GÖRE GÜNCELLEYİN
+// Telefondan da botu kullanabilmek için Ngrok vb. tünel adresinizi buraya yazın.
+// Örnek: "https://d34f-89-145-xx-xx.ngrok-free.app"
+const UTS_API_ADRESI = "http://localhost:3001"; 
 
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
@@ -81,7 +81,6 @@ style.innerHTML = `
         .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ALT ALTA 4, SAĞA DOĞRU SINIRSIZ, SOLA YASLI */
     @media screen { #print-container { display: none !important; } }
     @media print {
         @page { margin: 0 !important; size: auto; }
@@ -115,7 +114,6 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-// YASAL BİLGİLENDİRME, LİGHTBOX VE YAZDIRMA MODALI
 document.body.insertAdjacentHTML('beforeend', `
     <div id="lightbox-modal">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -133,11 +131,10 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
     </div>
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; hiçbir kurum veya kişi tarafından maddi kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır.
     </div>
 `);
 
-// LİGHTBOX FONKSİYONLARI
 window.openLightbox = (src) => {
     document.getElementById('lightbox-img').src = src;
     document.getElementById('lightbox-modal').style.display = 'flex';
@@ -175,18 +172,14 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÖRSEL BULUNAMADI ŞABLONU
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
             await signOut(auth);
             window.location.reload();
-        } catch (err) {
-            alert("Sistem Hatası: Oturum kapatılamadı.");
-        }
+        } catch (err) { alert("Sistem Hatası: Oturum kapatılamadı."); }
     }
 });
 
@@ -235,7 +228,6 @@ async function buildCatalog() {
                     altGrup: String(data.altGrup || ""),
                     surecTipi: String(data.surecTipi || ""),
                     utsGorseller: data.utsGorseller || [],
-                    utsEtiketPdf: String(data.utsEtiketPdf || ""),
                     searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
                 });
             }
@@ -244,7 +236,7 @@ async function buildCatalog() {
         anaSnap.forEach(processDoc);
         amSnap.forEach(processDoc);
         productCatalog = Array.from(tempMap.values());
-    } catch (error) { console.error("Katalog senkronizasyon hatası:", error); }
+    } catch (error) { console.error("Katalog hatası:", error); }
 }
 
 document.addEventListener('click', (e) => {
@@ -309,17 +301,11 @@ if(searchInput) {
     });
 }
 
-// =========================================================================
-// YAZDIRMA (PRINT) FONKSİYONLARI 
-// =========================================================================
 window.openPrintModal = () => {
     if (!window.currentRenderedProduct) return alert("Hata: Yazdırılacak ürün verisi bulunamadı.");
     document.getElementById('print-modal').style.display = 'flex';
 };
-
-window.closePrintModal = () => {
-    document.getElementById('print-modal').style.display = 'none';
-};
+window.closePrintModal = () => { document.getElementById('print-modal').style.display = 'none'; };
 
 window.executePrint = () => {
     const data = window.currentRenderedProduct;
@@ -329,7 +315,6 @@ window.executePrint = () => {
     if (!printQty || printQty <= 0) return;
 
     let targetBarcode = data.urunKodu; 
-
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
         printContainer = document.createElement('div');
@@ -338,13 +323,11 @@ window.executePrint = () => {
     }
     printContainer.innerHTML = ''; 
 
-    let displayName = data.urunAdi; 
-
     for(let i=0; i < printQty; i++) {
         const label = document.createElement('div');
         label.className = 'mini-label';
         label.innerHTML = `
-            <div class="p-name">${displayName}</div>
+            <div class="p-name">${data.urunAdi}</div>
             <svg id="print-bc-${i}"></svg>
             <div class="p-code">${data.urunKodu}</div>
         `;
@@ -354,11 +337,7 @@ window.executePrint = () => {
     if(window.JsBarcode) {
         for(let i=0; i < printQty; i++) {
             JsBarcode(`#print-bc-${i}`, targetBarcode, {
-                format: "CODE128",
-                width: 1.2,
-                height: 30,
-                displayValue: false,
-                margin: 0
+                format: "CODE128", width: 1.2, height: 30, displayValue: false, margin: 0
             });
         }
     }
@@ -368,7 +347,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON (DİNAMİK SUNUCU/TÜNEL BAĞLANTISI)
+// ÜTS MERKEZİ ENTEGRASYON (LOKAL KAYIT)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -376,11 +355,9 @@ window.autoFetchUTS = async (id, barkod) => {
         gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. Lütfen bekleyiniz...</div>`;
     }
     
-    let utsGorseller = [];
-    let utsEtiketPdf = "";
+    let localGorseller = [];
 
     try {
-        // UTS_API_ADRESI üzerinden istek atar. Ngrok gibi tünellerin engel sayfalarını aşmak için özel header'lar kullanır.
         const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
             headers: {
                 "Bypass-Tunnel-Reminder": "true",
@@ -389,8 +366,7 @@ window.autoFetchUTS = async (id, barkod) => {
         });
         const data = await response.json(); 
         
-        if (data.utsGorseller && data.utsGorseller.length > 0) utsGorseller = data.utsGorseller;
-        if (data.utsEtiketPdf) utsEtiketPdf = data.utsEtiketPdf;
+        if (data.utsGorseller && data.utsGorseller.length > 0) localGorseller = data.utsGorseller;
 
     } catch(e) {
         console.error("Merkezi Servis Hatası:", e);
@@ -399,12 +375,11 @@ window.autoFetchUTS = async (id, barkod) => {
         }
     }
 
-    // GÖRSEL BULUNAMADIYSA LOKAL BASE64 ŞABLONUNU UYGULA
-    if (utsGorseller.length === 0) {
-        utsGorseller.push(noImageSvg);
+    if (localGorseller.length === 0) {
+        localGorseller.push(noImageSvg);
     }
 
-    const updateData = { utsGorseller, utsEtiketPdf };
+    const updateData = { utsGorseller: localGorseller };
     
     try {
         const anaRef = doc(db, "ana_depo", id);
@@ -415,27 +390,21 @@ window.autoFetchUTS = async (id, barkod) => {
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
         const catItem = productCatalog.find(m => m.docId === id);
-        if(catItem) {
-            catItem.utsGorseller = utsGorseller;
-            catItem.utsEtiketPdf = utsEtiketPdf;
-        }
+        if(catItem) catItem.utsGorseller = localGorseller;
+        
     } catch (dbError) {
         console.error("Veritabanı Kayıt Hatası:", dbError);
     }
 
     if (gorselContainer) {
         let html = '';
-        utsGorseller.forEach(url => {
+        localGorseller.forEach(url => {
             if(url.startsWith('data:image')) {
                 html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             } else {
                 html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             }
         });
-        
-        if (utsEtiketPdf) {
-            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">ORİJİNAL<br>ETİKET PDF</a>`;
-        }
         
         if(gorselContainer.innerHTML.includes('Sistem Hatası') || gorselContainer.innerHTML.includes('Sistem ÜTS')) {
            gorselContainer.innerHTML = html;
@@ -465,11 +434,8 @@ window.saveUpdate = async (id, type) => {
     if (type === 'b') {
         updateData.barkod = newVal;
         updateData.utsGorseller = []; 
-        updateData.utsEtiketPdf = "";
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'r') {
         updateData.refNo = newVal;
-        updateData.docLinks = { kunye: "", etiket: "", kilavuz: "" };
     } else if (type === 'm') {
         updateData.miatTarihi = newVal;
     }
@@ -542,9 +508,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
                 surecTipi: baseData.surecTipi || "-",
                 miatTarihi: baseData.miatTarihi || "-",
-                docLinks: baseData.docLinks || { kunye: "", etiket: "", kilavuz: "" }, 
                 utsGorseller: baseData.utsGorseller || [],
-                utsEtiketPdf: baseData.utsEtiketPdf || "",
                 minAlert: baseData.minAlert || 0,
                 max: baseData.max || 0,
                 hasAna: anaDoc.exists(),
@@ -620,9 +584,6 @@ function renderCard(data) {
                 gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             }
         });
-        if(data.utsEtiketPdf) {
-            gorselHTML += `<a href="${data.utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">ORİJİNAL<br>ETİKET PDF</a>`;
-        }
     } else if (hasValidBarcode) {
         gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
     } else {
