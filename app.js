@@ -649,7 +649,7 @@ function renderCard(data) {
                     </div>
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
-                        <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER (Orjinal)</div>
+                        <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
                         
                         <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
                             ${gorselHTML}
