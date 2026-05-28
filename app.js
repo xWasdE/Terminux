@@ -3,8 +3,12 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// SİSTEM GEREKSİNİMLERİ: BARKOD KÜTÜPHANESİ VE YAZDIRMA CSS MOTORU
+// SİSTEM MERKEZİ BAĞLANTI AYARLARI (VPS SUNUCU VEYA TÜNEL ADRESİ)
 // =========================================================================
+// Eğer botu kendi PC'nizde Ngrok/Localtunnel ile açarsanız adresi buraya girin:
+// Örnek: "https://benim-sunucum.loca.lt" veya "http://89.145.XX.XX:3001"
+const UTS_API_ADRESI = "http://localhost:3001"; // <--- BURAYI SUNUCUYA GÖRE GÜNCELLEYİN
+
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
 document.head.appendChild(jsbScript);
@@ -171,7 +175,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// İNTERNETE İHTİYAÇ DUYMAYAN "GÖRSEL YOK" BASE64 KODU
+// GÖRSEL BULUNAMADI ŞABLONU
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
 // GÜVENLİ ÇIKIŞ BUTONU ZIRHI
@@ -364,7 +368,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON (LOKAL NODE.JS SERVİSİ)
+// ÜTS MERKEZİ ENTEGRASYON (DİNAMİK SUNUCU/TÜNEL BAĞLANTISI)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -376,16 +380,22 @@ window.autoFetchUTS = async (id, barkod) => {
     let utsEtiketPdf = "";
 
     try {
-        const response = await fetch(`http://localhost:3001/api/uts?barkod=${barkod}`);
+        // UTS_API_ADRESI üzerinden istek atar. Ngrok gibi tünellerin engel sayfalarını aşmak için özel header'lar kullanır.
+        const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
+            headers: {
+                "Bypass-Tunnel-Reminder": "true",
+                "ngrok-skip-browser-warning": "true"
+            }
+        });
         const data = await response.json(); 
         
         if (data.utsGorseller && data.utsGorseller.length > 0) utsGorseller = data.utsGorseller;
         if (data.utsEtiketPdf) utsEtiketPdf = data.utsEtiketPdf;
 
     } catch(e) {
-        console.error("Lokal Servis Hatası:", e);
+        console.error("Merkezi Servis Hatası:", e);
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Lokal ÜTS servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Lütfen sunucu veya tünel bağlantınızı kontrol ediniz.</div>`;
         }
     }
 
