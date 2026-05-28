@@ -171,7 +171,10 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
+// İNTERNETE İHTİYAÇ DUYMAYAN "GÖRSEL YOK" BASE64 KODU (VPN ENGELLEYEMEZ)
+const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='45' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EENGEL VEYA%3C/text%3E%3Ctext x='50' y='60' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL YOK%3C/text%3E%3C/svg%3E";
+
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -187,10 +190,7 @@ setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
-        
-        // FİREBASE OPTİMİZASYONU: Katalog sadece ilk girişte 1 KERE indirilir!
         await buildCatalog();
-        
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(loginScreen) loginScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.remove('hidden');
@@ -324,7 +324,7 @@ window.executePrint = () => {
 
     if (!printQty || printQty <= 0) return;
 
-    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır
+    let targetBarcode = data.urunKodu; 
 
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
@@ -364,7 +364,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (ZIRHLI HATA EMİCİ İLE BİRLİKTE)
+// ÜTS ÇEKİM MOTORU (VPN/ADBLOCK ZIRHLI SÜRÜM)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -372,37 +372,39 @@ window.autoFetchUTS = async (id, barkod) => {
         gorselContainer.innerHTML = `<div style="color:#00ff00; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">🔄 ÜTS'den Bilgiler Çekiliyor... Lütfen Bekleyin...</div>`;
     }
     
+    let utsGorseller = [];
+    let utsEtiketPdf = "";
+
     try {
-        const proxyUrl = `https://uts-proxy.u-keserbi.workers.dev/?barkod=${barkod}`;
+        const targetUrl = encodeURIComponent(`https://utsuygulama.saglik.gov.tr/rest/bilgi/urun/sorgula?barkod=${barkod}`);
+        const proxyUrl = `https://corsproxy.io/?url=${targetUrl}`;
         
-        // HATA EMİCİ: Yanıtı önce düz metin olarak alıyoruz
         const response = await fetch(proxyUrl);
         const textData = await response.text(); 
         
         let data = null;
         try {
-            // Eğer bakanlık engellediyse ve HTML gönderdiyse burada yakalayacağız
             data = JSON.parse(textData);
         } catch(parseErr) {
-            console.warn("ÜTS Güvenlik Duvarı Engeli (Dönen veri JSON değil):", textData.substring(0, 100));
-            // Hata fırlatmıyoruz, data = null olarak yoluna devam edip 'Görsel Yok' basacak.
+            console.warn("ÜTS Güvenlik Duvarı Engeli (Dönen veri JSON değil)");
         }
         
-        let utsGorseller = [];
-        let utsEtiketPdf = "";
-
         if (data && typeof data === 'object' && !data.error) {
             if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
             if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
         }
+    } catch(e) {
+        console.error("Ağ Hatası:", e);
+    }
 
-        if (utsGorseller.length === 0) {
-            // Bakanlık engellediği için resim bulamadı
-            utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YOK+veya+ENGEL");
-        }
+    // AĞ KOPTUYSA VEYA ENGELLENDİYSE DAHİLİ (BASE64) GÖRSEL KULLAN
+    if (utsGorseller.length === 0) {
+        utsGorseller.push(noImageSvg);
+    }
 
-        const updateData = { utsGorseller, utsEtiketPdf };
-        
+    const updateData = { utsGorseller, utsEtiketPdf };
+    
+    try {
         const anaRef = doc(db, "ana_depo", id);
         const amRef = doc(db, "ameliyathane", id);
         const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
@@ -415,20 +417,19 @@ window.autoFetchUTS = async (id, barkod) => {
             catItem.utsGorseller = utsGorseller;
             catItem.utsEtiketPdf = utsEtiketPdf;
         }
+    } catch (dbError) {
+        console.error("Firebase kayıt hatası:", dbError);
+    }
 
-        if (gorselContainer) {
-            let html = '';
-            utsGorseller.forEach(url => {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            });
-            if (utsEtiketPdf) {
-                html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
-            }
-            gorselContainer.innerHTML = html;
+    if (gorselContainer) {
+        let html = '';
+        utsGorseller.forEach(url => {
+            html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+        });
+        if (utsEtiketPdf) {
+            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
         }
-    } catch(e) {
-        console.error("Fetch/Ağ Hatası:", e);
-        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Ağ Bağlantı Hatası</div>`;
+        gorselContainer.innerHTML = html;
     }
 };
 
@@ -546,7 +547,6 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
-            // REUSE ÇAPRAZ EŞLEŞTİRME ZEKASI
             let crossRefText = "";
             let exactName = mergedData.urunAdi.toLowerCase().trim();
             if (mergedData.surecTipi === "R") {
