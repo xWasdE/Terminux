@@ -3,11 +3,9 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// SİSTEM MERKEZİ BAĞLANTI AYARLARI (TÜNEL ADRESİ)
+// SİSTEM MERKEZİ BAĞLANTI AYARLARI (TÜNEL ADRESİ BURAYA!)
 // =========================================================================
-// Telefondan da botu kullanabilmek için Ngrok vb. tünel adresinizi buraya yazın.
-// Örnek: "https://d34f-89-145-xx-xx.ngrok-free.app"
-const UTS_API_ADRESI = "http://localhost:3001"; 
+const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; // NGROK TÜNELİ AÇTIĞINIZDA BURAYI DEĞİŞTİRİN
 
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
@@ -347,7 +345,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON (LOKAL KAYIT)
+// ÜTS MERKEZİ ENTEGRASYON
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -399,10 +397,16 @@ window.autoFetchUTS = async (id, barkod) => {
     if (gorselContainer) {
         let html = '';
         localGorseller.forEach(url => {
-            if(url.startsWith('data:image')) {
-                html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            // VERİTABANINDAN GELEN YOLA UTS_API_ADRESI EKLENİYOR (MOBİL UYUMLULUK)
+            let fullUrl = url;
+            if (!url.startsWith('http') && !url.startsWith('data:')) {
+                fullUrl = `${UTS_API_ADRESI}${url}`;
+            }
+
+            if(fullUrl.startsWith('data:image')) {
+                html += `<img src="${fullUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             } else {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+                html += `<img src="${fullUrl}" onclick="openLightbox('${fullUrl}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             }
         });
         
@@ -540,8 +544,9 @@ window.fetchAndDisplayProduct = async (code) => {
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
 
+            // Barkod mevcutsa ve henüz resim çekilmemişse Bot'u Tetikle
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0) {
+                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
                     window.autoFetchUTS(mergedData.docId, targetBarcode);
                 }
             }
@@ -578,10 +583,16 @@ function renderCard(data) {
     let gorselHTML = '';
     if (data.utsGorseller && data.utsGorseller.length > 0) {
         data.utsGorseller.forEach(url => {
-            if(url.startsWith('data:image')) {
-                gorselHTML += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            // VERİTABANINDAN GELEN YOLA UTS_API_ADRESI EKLENİYOR (MOBİL UYUMLULUK)
+            let fullUrl = url;
+            if (!url.startsWith('http') && !url.startsWith('data:')) {
+                fullUrl = `${UTS_API_ADRESI}${url}`;
+            }
+
+            if(fullUrl.startsWith('data:image')) {
+                gorselHTML += `<img src="${fullUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             } else {
-                gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+                gorselHTML += `<img src="${fullUrl}" onclick="openLightbox('${fullUrl}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             }
         });
     } else if (hasValidBarcode) {
