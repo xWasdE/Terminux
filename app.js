@@ -171,7 +171,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// İNTERNETE İHTİYAÇ DUYMAYAN "GÖRSEL YOK" BASE64 KODU (VPN ENGELLEYEMEZ)
+// İNTERNETE İHTİYAÇ DUYMAYAN "GÖRSEL YOK" BASE64 KODU
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='45' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EENGEL VEYA%3C/text%3E%3Ctext x='50' y='60' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL YOK%3C/text%3E%3C/svg%3E";
 
 // GÜVENLİ ÇIKIŞ BUTONU ZIRHI
@@ -364,7 +364,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (VPN/ADBLOCK ZIRHLI SÜRÜM)
+// ÜTS ÇEKİM MOTORU (VPN/ADBLOCK ZIRHLI VE SYNTAX HATASI ÇÖZÜLMÜŞ SÜRÜM)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -421,10 +421,15 @@ window.autoFetchUTS = async (id, barkod) => {
         console.error("Firebase kayıt hatası:", dbError);
     }
 
+    // SYNTAX HATASINI ÇÖZEN DÜZELTME: Eğer görsel Base64 ise tıklama(onclick) ekleme!
     if (gorselContainer) {
         let html = '';
         utsGorseller.forEach(url => {
-            html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            if(url.startsWith('data:image')) {
+                html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            } else {
+                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            }
         });
         if (utsEtiketPdf) {
             html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
@@ -547,6 +552,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
+            // REUSE ÇAPRAZ EŞLEŞTİRME ZEKASI
             let crossRefText = "";
             let exactName = mergedData.urunAdi.toLowerCase().trim();
             if (mergedData.surecTipi === "R") {
@@ -602,7 +608,11 @@ function renderCard(data) {
     let gorselHTML = '';
     if (data.utsGorseller && data.utsGorseller.length > 0) {
         data.utsGorseller.forEach(url => {
-            gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            if(url.startsWith('data:image')) {
+                gorselHTML += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            } else {
+                gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            }
         });
         if(data.utsEtiketPdf) {
             gorselHTML += `<a href="${data.utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
