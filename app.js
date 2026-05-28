@@ -369,35 +369,28 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ff00; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">🔄 ÜTS'den Bilgiler Çekiliyor... Lütfen Bekleyin...</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ff00; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">🤖 Bot ÜTS'ye Gizlice Girdi, Resimler Sökülüyor... Lütfen Bekleyin...</div>`;
     }
     
     let utsGorseller = [];
     let utsEtiketPdf = "";
 
     try {
-        const targetUrl = encodeURIComponent(`https://utsuygulama.saglik.gov.tr/rest/bilgi/urun/sorgula?barkod=${barkod}`);
-        const proxyUrl = `https://corsproxy.io/?url=${targetUrl}`;
+        // SENİN BİLGİSAYARINDA ÇALIŞAN GİZLİ TARAYICI BOTUNA İSTEK AT
+        const response = await fetch(`http://localhost:3001/api/uts?barkod=${barkod}`);
+        const data = await response.json(); 
         
-        const response = await fetch(proxyUrl);
-        const textData = await response.text(); 
-        
-        let data = null;
-        try {
-            data = JSON.parse(textData);
-        } catch(parseErr) {
-            console.warn("ÜTS Güvenlik Duvarı Engeli (Dönen veri JSON değil)");
-        }
-        
-        if (data && typeof data === 'object' && !data.error) {
-            if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
-            if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
-        }
+        if (data.utsGorseller) utsGorseller = data.utsGorseller;
+        if (data.utsEtiketPdf) utsEtiketPdf = data.utsEtiketPdf;
+
     } catch(e) {
-        console.error("Ağ Hatası:", e);
+        console.error("Bot Hatası veya Ulaşılamıyor:", e);
+        if (gorselContainer) {
+            gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold; padding-bottom:10px;">❌ Bot Kapalı veya Ulaşılamıyor! (Arka planda 'node server.js' çalıştırdığından emin ol)</div>`;
+        }
     }
 
-    // AĞ KOPTUYSA VEYA ENGELLENDİYSE DAHİLİ (BASE64) GÖRSEL KULLAN
+    // BOT RESİM BULAMADIYSA VEYA KAPALIYSA DAHİLİ (BASE64) GÖRSEL KULLAN
     if (utsGorseller.length === 0) {
         utsGorseller.push(noImageSvg);
     }
@@ -405,6 +398,7 @@ window.autoFetchUTS = async (id, barkod) => {
     const updateData = { utsGorseller, utsEtiketPdf };
     
     try {
+        // FİREBASE'E KAYDET
         const anaRef = doc(db, "ana_depo", id);
         const amRef = doc(db, "ameliyathane", id);
         const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
@@ -412,6 +406,7 @@ window.autoFetchUTS = async (id, barkod) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
+        // RAM'DEKİ KATALOĞU GÜNCELLE
         const catItem = productCatalog.find(m => m.docId === id);
         if(catItem) {
             catItem.utsGorseller = utsGorseller;
@@ -420,6 +415,31 @@ window.autoFetchUTS = async (id, barkod) => {
     } catch (dbError) {
         console.error("Firebase kayıt hatası:", dbError);
     }
+
+    // ARAYÜZE (EKRANA) BAS VE LİGHTBOX (TIKLAMA) AYARLARINI YAP
+    if (gorselContainer) {
+        let html = '';
+        utsGorseller.forEach(url => {
+            // Eğer görsel Base64 (Hata/Engel görseli) ise tıklanıp büyümesini (lightbox) engelle
+            if(url.startsWith('data:image')) {
+                html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            } else {
+                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            }
+        });
+        
+        if (utsEtiketPdf) {
+            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
+        }
+        
+        // Eğer baştaki hata mesajı duruyorsa onu silip yerine resimleri koyarız
+        if(gorselContainer.innerHTML.includes('❌ Bot Kapalı') || gorselContainer.innerHTML.includes('🤖 Bot')) {
+           gorselContainer.innerHTML = html;
+        } else {
+           gorselContainer.innerHTML += html;
+        }
+    }
+};
 
     // SYNTAX HATASINI ÇÖZEN DÜZELTME: Eğer görsel Base64 ise tıklama(onclick) ekleme!
     if (gorselContainer) {
