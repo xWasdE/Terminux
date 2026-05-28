@@ -119,8 +119,8 @@ document.body.insertAdjacentHTML('beforeend', `
     </div>
     <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
         <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-            <h3 style="margin-top:0; color:#fff; font-size:18px;">🖨️ ETİKET YAZDIR</h3>
-            <p style="color:#888; font-size:13px; margin-bottom:20px;">Kaç adet etiket basılsın?</p>
+            <h3 style="margin-top:0; color:#fff; font-size:18px;">ETİKET YAZDIR</h3>
+            <p style="color:#888; font-size:13px; margin-bottom:20px;">Yazdırılacak etiket miktarını giriniz.</p>
             <input type="number" id="print-qty-input" value="8" min="1" style="width:100%; padding:12px; border-radius:6px; border:1px solid #444; background:#000; color:#00ff00; font-size:24px; font-weight:bold; text-align:center; margin-bottom:20px; outline:none;">
             <div style="display:flex; gap:10px;">
                 <button onclick="closePrintModal()" style="flex:1; padding:12px; background:#222; color:#fff; border:1px solid #444; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
@@ -172,7 +172,7 @@ let searchTimeout = null;
 window.currentRenderedProduct = null;
 
 // İNTERNETE İHTİYAÇ DUYMAYAN "GÖRSEL YOK" BASE64 KODU
-const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='45' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EENGEL VEYA%3C/text%3E%3Ctext x='50' y='60' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL YOK%3C/text%3E%3C/svg%3E";
+const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
 // GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
@@ -181,7 +181,7 @@ document.addEventListener('click', async (e) => {
             await signOut(auth);
             window.location.reload();
         } catch (err) {
-            alert("Çıkış yapılırken bir hata oluştu.");
+            alert("Sistem Hatası: Oturum kapatılamadı.");
         }
     }
 });
@@ -210,7 +210,7 @@ if(loginForm) {
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
         try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
-        catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
+        catch (error) { alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz."); }
     });
 }
 
@@ -240,7 +240,7 @@ async function buildCatalog() {
         anaSnap.forEach(processDoc);
         amSnap.forEach(processDoc);
         productCatalog = Array.from(tempMap.values());
-    } catch (error) { console.error("Katalog hatası:", error); }
+    } catch (error) { console.error("Katalog senkronizasyon hatası:", error); }
 }
 
 document.addEventListener('click', (e) => {
@@ -256,7 +256,7 @@ if(searchInput) {
         if (val.length < 2) { dropdown.style.display = 'none'; return; }
 
         searchTimeout = setTimeout(() => {
-            dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 16px;">Aranıyor...</div>';
+            dropdown.innerHTML = '<div style="padding: 20px; color: #666; font-size: 16px;">Sorgulanıyor...</div>';
             dropdown.style.display = 'block';
 
             const terms = val.split(/\s+/);
@@ -309,7 +309,7 @@ if(searchInput) {
 // YAZDIRMA (PRINT) FONKSİYONLARI 
 // =========================================================================
 window.openPrintModal = () => {
-    if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
+    if (!window.currentRenderedProduct) return alert("Hata: Yazdırılacak ürün verisi bulunamadı.");
     document.getElementById('print-modal').style.display = 'flex';
 };
 
@@ -364,33 +364,32 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (LOKAL NODE.JS BOTUNA BAĞLANTI)
+// ÜTS MERKEZİ ENTEGRASYON (LOKAL NODE.JS SERVİSİ)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ff00; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">🤖 Bot ÜTS'ye Gizlice Girdi, Resimler Sökülüyor... Lütfen Bekleyin...</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. Lütfen bekleyiniz...</div>`;
     }
     
     let utsGorseller = [];
     let utsEtiketPdf = "";
 
     try {
-        // SENİN BİLGİSAYARINDA ÇALIŞAN GİZLİ TARAYICI BOTUNA İSTEK AT
         const response = await fetch(`http://localhost:3001/api/uts?barkod=${barkod}`);
         const data = await response.json(); 
         
-        if (data.utsGorseller) utsGorseller = data.utsGorseller;
+        if (data.utsGorseller && data.utsGorseller.length > 0) utsGorseller = data.utsGorseller;
         if (data.utsEtiketPdf) utsEtiketPdf = data.utsEtiketPdf;
 
     } catch(e) {
-        console.error("Bot Hatası veya Ulaşılamıyor:", e);
+        console.error("Lokal Servis Hatası:", e);
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold; padding-bottom:10px;">❌ Bot Kapalı veya Ulaşılamıyor! (Arka planda 'node server.js' çalıştırdığından emin ol)</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Lokal ÜTS servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
         }
     }
 
-    // BOT RESİM BULAMADIYSA VEYA KAPALIYSA DAHİLİ (BASE64) GÖRSEL KULLAN
+    // GÖRSEL BULUNAMADIYSA LOKAL BASE64 ŞABLONUNU UYGULA
     if (utsGorseller.length === 0) {
         utsGorseller.push(noImageSvg);
     }
@@ -398,7 +397,6 @@ window.autoFetchUTS = async (id, barkod) => {
     const updateData = { utsGorseller, utsEtiketPdf };
     
     try {
-        // FİREBASE'E KAYDET
         const anaRef = doc(db, "ana_depo", id);
         const amRef = doc(db, "ameliyathane", id);
         const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
@@ -406,21 +404,18 @@ window.autoFetchUTS = async (id, barkod) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
-        // RAM'DEKİ KATALOĞU GÜNCELLE
         const catItem = productCatalog.find(m => m.docId === id);
         if(catItem) {
             catItem.utsGorseller = utsGorseller;
             catItem.utsEtiketPdf = utsEtiketPdf;
         }
     } catch (dbError) {
-        console.error("Firebase kayıt hatası:", dbError);
+        console.error("Veritabanı Kayıt Hatası:", dbError);
     }
 
-    // ARAYÜZE (EKRANA) BAS VE LİGHTBOX (TIKLAMA) AYARLARINI YAP
     if (gorselContainer) {
         let html = '';
         utsGorseller.forEach(url => {
-            // Eğer görsel Base64 (Hata/Engel görseli) ise tıklanıp büyümesini (lightbox) engelle
             if(url.startsWith('data:image')) {
                 html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             } else {
@@ -429,11 +424,10 @@ window.autoFetchUTS = async (id, barkod) => {
         });
         
         if (utsEtiketPdf) {
-            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
+            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">ORİJİNAL<br>ETİKET PDF</a>`;
         }
         
-        // Eğer baştaki hata mesajı duruyorsa onu silip yerine resimleri koyarız
-        if(gorselContainer.innerHTML.includes('❌ Bot Kapalı') || gorselContainer.innerHTML.includes('🤖 Bot')) {
+        if(gorselContainer.innerHTML.includes('Sistem Hatası') || gorselContainer.innerHTML.includes('Sistem ÜTS')) {
            gorselContainer.innerHTML = html;
         } else {
            gorselContainer.innerHTML += html;
@@ -455,7 +449,7 @@ window.saveUpdate = async (id, type) => {
     const inputEl = document.getElementById(`man-${type}-${id}`);
     const newVal = inputEl ? inputEl.value.trim() : null;
 
-    if (!newVal) return alert("Hata: Değer boş bırakılamaz.");
+    if (!newVal) return alert("Hata: Veri alanı boş bırakılamaz.");
 
     const updateData = {};
     if (type === 'b') {
@@ -495,13 +489,13 @@ function createEditUI(id, type, val, placeholder, colorClass) {
         return `
             <div id="txt-container-${type}-${id}" class="flex-edit">
                 <span style="color: ${colorClass};" class="value-text mobile-break">${val}</span>
-                <button onclick="editField('${id}', '${type}')" class="btn-edit">✎ DÜZENLE</button>
+                <button onclick="editField('${id}', '${type}')" class="btn-edit">DÜZENLE</button>
             </div>
             <div id="edit-${type}-${id}" class="flex-edit" style="display:none;">
                 <input type="text" id="man-${type}-${id}" value="${val}" class="input-style">
                 <div class="edit-btn-group">
-                    <button onclick="saveUpdate('${id}', '${type}')" class="btn-save" style="background:#ffbc00; color:#000;">OK</button>
-                    <button onclick="cancelEdit('${id}', '${type}')" class="btn-cancel">X</button>
+                    <button onclick="saveUpdate('${id}', '${type}')" class="btn-save" style="background:#ffbc00; color:#000;">KAYDET</button>
+                    <button onclick="cancelEdit('${id}', '${type}')" class="btn-cancel">İPTAL</button>
                 </div>
             </div>
         `;
@@ -518,7 +512,7 @@ function createEditUI(id, type, val, placeholder, colorClass) {
 window.fetchAndDisplayProduct = async (code) => {
     if(resultContainer) {
         resultContainer.style.display = 'block';
-        resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Veriler Çekiliyor...</div>';
+        resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
     }
 
     try {
@@ -555,7 +549,6 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
-            // REUSE ÇAPRAZ EŞLEŞTİRME ZEKASI
             let crossRefText = "";
             let exactName = mergedData.urunAdi.toLowerCase().trim();
             if (mergedData.surecTipi === "R") {
@@ -583,7 +576,7 @@ window.fetchAndDisplayProduct = async (code) => {
             if(resultContainer) resultContainer.innerHTML = `
                 <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
                     <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Aranan Kod: <span style="color:#fff;">${code}</span></div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
                 </div>
             `;
         }
@@ -602,10 +595,10 @@ function renderCard(data) {
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     const hasValidBarcode = data.barkod && !invalidCodes.includes(data.barkod);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc');
     const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
 
-    const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref No Yaz...', '#fff');
+    const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref Numarası', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     let gorselHTML = '';
@@ -618,10 +611,10 @@ function renderCard(data) {
             }
         });
         if(data.utsEtiketPdf) {
-            gorselHTML += `<a href="${data.utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
+            gorselHTML += `<a href="${data.utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">ORİJİNAL<br>ETİKET PDF</a>`;
         }
     } else if (hasValidBarcode) {
-        gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Bağlantı Kuruluyor...</div>`;
+        gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
     } else {
         gorselHTML = `<div style="width: 100px; height: 100px; background: #111; border: 1px dashed #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; font-weight: bold; text-align: center; line-height:1.4;">BARKOD<br>GEREKLİ</div>`;
     }
@@ -635,7 +628,7 @@ function renderCard(data) {
                             <div class="label-text">ÜRÜN BİLGİSİ</div>
                             <div class="title-text">${data.urunAdi}</div>
                         </div>
-                        <button onclick="openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">🖨️ ETİKET YAZDIR</button>
+                        <button onclick="openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">ETİKET YAZDIR</button>
                     </div>
                     
                     <div class="grid-details">
