@@ -19,68 +19,35 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body { background: #050505; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; padding-bottom: 80px !important; }
+    body { padding-bottom: 80px !important; }
+    .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
+    .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
+    .stock-box { flex: 1; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     
-    .app-header { background: #000; padding: 15px 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
-    .header-left { display: flex; align-items: center; gap: 15px; }
-    .btn-back { background: #222; color: #fff; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; transition: 0.2s; }
-    .btn-back:hover { background: #333; }
-    .app-logo { font-size: 18px; font-weight: 900; letter-spacing: 2px; color: #fff; }
-    .app-logo span { color: #888; font-weight: normal; }
-    .header-right { display: flex; align-items: center; gap: 15px; }
-    .op-text { font-size: 12px; color: #888; }
-    .op-text b { color: #fff; }
-    .btn-logout { background: transparent; border: 1px solid #f33; color: #f33; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-logout:hover { background: #f33; color: #000; }
-
-    #dashboard-screen { padding: 40px 20px; max-width: 900px; margin: 0 auto; }
-    .dash-title { text-align: center; color: #666; font-size: 14px; letter-spacing: 3px; margin-bottom: 30px; font-weight: bold; }
-    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .dash-btn { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px; }
-    .dash-btn:hover { border-color: #00ff00; transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,255,0,0.1); }
-    .dash-icon { font-size: 45px; }
-    .dash-text { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 1px; }
-
-    .main-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-    .card-wrapper { display: flex; gap: 30px; width: 100%; align-items: stretch; }
-    .card-main { flex: 1.5; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-    .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 30px; }
-    .stock-box { flex: 1; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 35px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .grid-details { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 40px; }
+    .title-text { font-size: 34px; font-weight: 800; color: #fff; line-height: 1.2; word-break: break-word; }
+    .label-text { font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+    .value-text { font-size: 20px; font-family: monospace; font-weight: bold; }
     
-    .grid-details { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; border-top: 1px solid #1a1a1a; padding-top: 30px; }
-    .title-text { font-size: 28px; font-weight: 800; color: #fff; line-height: 1.3; word-break: break-word; }
-    .label-text { font-size: 11px; color: #777; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
-    .value-text { font-size: 18px; font-family: monospace; font-weight: bold; }
-    
-    .input-style { background: #000; border: 1px solid #333; color: #fff; padding: 10px 12px; border-radius: 6px; font-family: monospace; width: 100%; max-width: 160px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .input-style { background: #000; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; font-family: monospace; width: 100%; max-width: 160px; font-size: 14px; outline: none; transition: border-color 0.2s; }
     .input-style:focus { border-color: #00ff00; }
-    .btn-save { background: #00ff00; color: #000; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
-    .btn-cancel { background: #111; color: #ff3333; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
-    .btn-edit { background: #111; border: 1px solid #333; color: #aaa; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s; }
+    .btn-save { background: #00ff00; color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
+    .btn-cancel { background: #1a1a1a; color: #ff3333; border: 1px solid #333; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .btn-edit { background: #111; border: 1px solid #333; color: #aaa; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
     .btn-edit:hover { color: #fff; background: #333; border-color: #555; }
     
     .flex-edit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .edit-btn-group { display: flex; gap: 5px; }
+    
     .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s; }
+    .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
 
-    .toast-msg { visibility: hidden; min-width: 250px; background-color: #ffbc00; color: #000; text-align: center; border-radius: 8px; padding: 15px; position: fixed; z-index: 2000; left: 50%; bottom: 50px; transform: translateX(-50%); font-weight: bold; font-size: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
-    .toast-msg.show { visibility: visible; opacity: 1; }
-
     .legal-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(5, 5, 5, 0.95);
-        color: #888;
-        text-align: center;
-        padding: 16px 20px;
-        font-size: 13px;
-        z-index: 9999;
-        border-top: 1px solid #1a1a1a;
-        backdrop-filter: blur(8px);
-        line-height: 1.5;
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888;
+        text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
+        backdrop-filter: blur(8px); line-height: 1.5;
     }
     .legal-footer b { color: #aaa; font-weight: bold; }
 
@@ -88,33 +55,30 @@ style.innerHTML = `
         display: none; position: fixed; z-index: 15000; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(5px);
     }
-    #lightbox-img {
-        max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8);
-    }
-    .lightbox-close {
-        position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; transition: 0.2s;
-    }
+    #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; transition: 0.2s; }
     .lightbox-close:hover { color: #ff3333; }
 
     @media (max-width: 900px) {
-        .dash-grid { grid-template-columns: 1fr; }
-        .card-wrapper { flex-direction: column; gap: 15px; }
-        .card-main, .stock-box { padding: 20px; }
-        .grid-details { grid-template-columns: 1fr; gap: 20px; margin-top: 20px; padding-top: 20px; }
-        .title-text { font-size: 22px; }
-        .input-style { max-width: 100%; padding: 14px; font-size: 16px; margin-bottom: 5px; }
-        .btn-save, .btn-cancel { padding: 14px; font-size: 14px; flex: 1; }
-        .flex-edit { flex-direction: column; align-items: stretch; width: 100%; }
+        body { padding: 15px !important; padding-bottom: 100px !important; }
+        .card-wrapper { flex-direction: column; gap: 20px; }
+        .card-main, .stock-box { padding: 25px; }
+        .grid-details { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; padding-top: 25px; }
+        .title-text { font-size: 24px; }
+        .value-text { font-size: 18px; }
+        .input-style { max-width: 100%; width: 100%; padding: 12px; font-size: 16px; margin-bottom: 5px; }
+        .btn-save, .btn-cancel { padding: 12px; font-size: 14px; flex: 1; }
+        .btn-edit { padding: 10px; font-size: 12px; margin-top: 5px; width: 100%; }
+        .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
         .edit-btn-group { width: 100%; display: flex; gap: 10px; }
         .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
-        .doc-link { text-align: center; padding: 15px; }
+        .doc-link { text-align: center; padding: 15px; width: 100%; }
+        .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 15px !important; }
         .legal-footer { font-size: 11px; padding: 12px; }
     }
 
-    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - 4 YANA SINIRSIZ ALTA */
-    @media screen {
-        #print-container { display: none !important; }
-    }
+    /* ZEBRA ZT230 YAZDIRMA (PRINT) MOTORU - ALT ALTA 4, SAĞA DOĞRU SINIRSIZ, SOLA YASLI */
+    @media screen { #print-container { display: none !important; } }
     @media print {
         @page { margin: 0 !important; size: auto; }
         body, html { margin: 0; padding: 0; background: #fff; display: block; }
@@ -125,76 +89,30 @@ style.innerHTML = `
         #print-container {
             position: absolute; left: 0; top: 0;
             display: grid;
-            grid-template-columns: repeat(4, 3.9cm); /* YAN YANA TAM 4 ADET */
-            column-gap: 0.1cm; row-gap: 0cm; 
-            margin: 0; padding: 0; background: #fff;
-            width: max-content;
+            grid-template-rows: repeat(4, 1.9cm); /* ALT ALTA EN FAZLA 4 TANE */
+            grid-auto-columns: 3.9cm; /* YANA DOĞRU SINIRSIZ (4-4-4-4 GİDER) */
+            grid-auto-flow: column; /* ÖNCE AŞAĞI DOLDUR, SONRA SAĞA GEÇ */
+            column-gap: 0.2cm; row-gap: 0cm; 
+            margin: 0; padding: 0; background: #fff; width: max-content;
         }
         .mini-label {
             width: 3.9cm; height: 1.9cm; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            overflow: hidden; padding: 1px; box-sizing: border-box; color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start; /* ORİJİNAL GİBİ SOLA YASLA */
+            overflow: hidden; padding: 2px 4px; box-sizing: border-box; color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
         }
         .mini-label .p-name { 
-            font-size: 6.5px; font-weight: bold; width: 100%; text-align: center; margin-bottom: 2px; 
-            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.1; max-height: 22px; 
+            font-size: 7px; font-weight: bold; width: 100%; text-align: left; /* SOLA YASLA */
+            margin-bottom: 2px; text-transform: uppercase; /* ORİJİNAL GİBİ BÜYÜK HARF */
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.1; 
         }
-        .mini-label svg { height: 0.8cm !important; width: 100% !important; max-width: 3.5cm; margin: 0 auto; }
-        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: center; margin-top: 1px; letter-spacing: 0.5px; }
+        .mini-label svg { height: 0.8cm !important; width: 100% !important; max-width: 3.5cm; margin: 0; align-self: flex-start; } /* BARKOD SOLA YASLI */
+        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: left; margin-top: 1px; letter-spacing: 0.5px; } /* KOD SOLA YASLI */
     }
 `;
 document.head.appendChild(style);
 
-// UI OLUŞTURMA
-const headerDiv = document.createElement('div');
-headerDiv.id = 'dynamic-header';
-headerDiv.className = 'app-header';
-headerDiv.style.display = 'none'; 
-headerDiv.innerHTML = `
-    <div class="header-left">
-        <button id="btn-go-dash" class="btn-back">⬅ GERİ</button>
-        <div class="app-logo">TERMINUX <span>WMS</span></div>
-    </div>
-    <div class="header-right">
-        <span class="op-text">OP: <b id="ui-op-name">USER</b></span>
-        <button onclick="logoutApp()" class="btn-logout">ÇIKIŞ</button>
-    </div>
-`;
-document.body.insertBefore(headerDiv, document.body.firstChild);
-
-const oldHeader = document.getElementById('header-bar');
-if(oldHeader) oldHeader.style.display = 'none';
-
-const dashDiv = document.createElement('div');
-dashDiv.id = 'dashboard-screen';
-dashDiv.style.display = 'none';
-dashDiv.innerHTML = `
-    <div class="dash-title">LÜTFEN İŞLEM YAPMAK İSTEDİĞİNİZ MODÜLÜ SEÇİNİZ</div>
-    <div class="dash-grid">
-        <div class="dash-btn" onclick="openModule('stok')">
-            <div class="dash-icon">🔍</div>
-            <div class="dash-text">STOK KARTI</div>
-        </div>
-        <div class="dash-btn" onclick="showToast()">
-            <div class="dash-icon">🚚</div>
-            <div class="dash-text">SEVK / MAL KABUL</div>
-        </div>
-        <div class="dash-btn" onclick="showToast()">
-            <div class="dash-icon">📋</div>
-            <div class="dash-text">SAYIM</div>
-        </div>
-        <div class="dash-btn" onclick="showToast()">
-            <div class="dash-icon">🏢</div>
-            <div class="dash-text">DEPO ADRESLEME</div>
-        </div>
-    </div>
-`;
-if (document.getElementById('app-screen')) {
-    document.body.insertBefore(dashDiv, document.getElementById('app-screen'));
-}
-
+// YASAL BİLGİLENDİRME (FOOTER), LİGHTBOX VE YAZDIRMA MODALI EKLENİYOR
 document.body.insertAdjacentHTML('beforeend', `
-    <div id="toast-msg" class="toast-msg">🛠️ Bu modül şu an yapım aşamasındadır.</div>
     <div id="lightbox-modal">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
         <img id="lightbox-img" src="">
@@ -215,12 +133,7 @@ document.body.insertAdjacentHTML('beforeend', `
     </div>
 `);
 
-window.showToast = () => {
-    const toast = document.getElementById("toast-msg");
-    toast.className = "toast-msg show";
-    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-}
-
+// LİGHTBOX FONKSİYONLARI
 window.openLightbox = (src) => {
     document.getElementById('lightbox-img').src = src;
     document.getElementById('lightbox-modal').style.display = 'flex';
@@ -228,40 +141,6 @@ window.openLightbox = (src) => {
 window.closeLightbox = () => {
     document.getElementById('lightbox-modal').style.display = 'none';
     document.getElementById('lightbox-img').src = "";
-}
-
-window.logoutApp = async () => {
-    try { await signOut(auth); window.location.reload(); } 
-    catch (err) { alert("Çıkış Hatası!"); }
-};
-
-window.openModule = (mod) => {
-    if(mod === 'stok') {
-        document.getElementById('dashboard-screen').style.display = 'none';
-        const appSc = document.getElementById('app-screen');
-        if(appSc) {
-            appSc.classList.remove('hidden');
-            appSc.classList.add('main-container');
-        }
-        document.getElementById('btn-go-dash').style.display = 'block';
-        if(document.getElementById('main-search')) document.getElementById('main-search').focus();
-    }
-};
-
-const btnGoDash = document.getElementById('btn-go-dash');
-if(btnGoDash) {
-    btnGoDash.addEventListener('click', () => {
-        const appSc = document.getElementById('app-screen');
-        if(appSc) {
-            appSc.classList.add('hidden');
-            appSc.classList.remove('main-container');
-        }
-        document.getElementById('btn-go-dash').style.display = 'none';
-        document.getElementById('dashboard-screen').style.display = 'block';
-        if(document.getElementById('main-search')) document.getElementById('main-search').value = '';
-        if(document.getElementById('dropdown-results')) document.getElementById('dropdown-results').style.display = 'none';
-        if(document.getElementById('result-container')) document.getElementById('result-container').innerHTML = '';
-    });
 }
 
 const firebaseConfig = {
@@ -277,71 +156,62 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-window.executeLoginProcess = async () => {
-    const uInput = document.getElementById('username');
-    const pInput = document.getElementById('password');
-
-    if (!uInput || !pInput) return;
-    const valU = uInput.value.trim();
-    const valP = pInput.value;
-    if (!valU || !valP) {
-        alert("Lütfen kullanıcı adı ve şifre girin!");
-        return;
-    }
-
-    const finalEmail = valU.toLowerCase() === 'test' ? 'test@terminux.com.tr' : (valU.includes('@') ? valU : `${valU}@terminux.com.tr`);
-    const finalPass = (valU.toLowerCase() === 'test' && valP === 'test') ? 'testtest' : valP;
-
-    try { 
-        await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
-    } catch (error) { 
-        alert("Giriş Başarısız: Şifrenizi veya Kullanıcı Adınızı kontrol edin."); 
-    }
-};
-
-document.addEventListener('submit', (e) => {
-    if (e.target && e.target.id === 'login-form') {
-        e.preventDefault();
-        window.executeLoginProcess();
-    }
-});
-
-document.addEventListener('click', (e) => {
-    if (e.target && (e.target.id === 'login-btn' || e.target.id === 'btn-login' || e.target.innerText?.trim().toLowerCase() === 'giriş yap')) {
-        e.preventDefault(); 
-        window.executeLoginProcess();
-    }
-});
+const loadingScreen = document.getElementById('loading-screen');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
+const loginForm = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const operatorName = document.getElementById('operator-name');
+const searchInput = document.getElementById('main-search');
+const dropdown = document.getElementById('dropdown-results');
+const resultContainer = document.getElementById('result-container');
 
 let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
+document.addEventListener('click', async (e) => {
+    if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
+        try {
+            await signOut(auth);
+            window.location.reload();
+        } catch (err) {
+            alert("Çıkış yapılırken bir hata oluştu.");
+        }
+    }
+});
+
 setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
-    const loadScreen = document.getElementById('loading-screen');
-    const logScreen = document.getElementById('login-screen');
-    
     if (user) {
-        if(document.getElementById('ui-op-name')) document.getElementById('ui-op-name').textContent = user.email.split('@')[0].toUpperCase();
+        if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
         // FİREBASE OPTİMİZASYONU: Katalog sadece ilk girişte 1 KERE indirilir!
         await buildCatalog();
         
-        if(loadScreen) loadScreen.classList.add('hidden');
-        if(logScreen) logScreen.classList.add('hidden');
-        
-        document.getElementById('dynamic-header').style.display = 'flex';
-        document.getElementById('dashboard-screen').style.display = 'block';
-        if(document.getElementById('app-screen')) document.getElementById('app-screen').classList.add('hidden'); 
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+        if(loginScreen) loginScreen.classList.add('hidden');
+        if(appScreen) appScreen.classList.remove('hidden');
+        if(searchInput) searchInput.focus();
     } else {
-        if(loadScreen) loadScreen.classList.add('hidden');
-        document.getElementById('dynamic-header').style.display = 'none';
-        document.getElementById('dashboard-screen').style.display = 'none';
-        if(document.getElementById('app-screen')) document.getElementById('app-screen').classList.add('hidden');
-        if(logScreen) logScreen.classList.remove('hidden');
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+        if(appScreen) appScreen.classList.add('hidden');
+        if(loginScreen) loginScreen.classList.remove('hidden');
     }
 });
+
+if(loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+        const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
+
+        try { await signInWithEmailAndPassword(auth, finalEmail, finalPass); } 
+        catch (error) { alert("Giriş Başarısız: Bilgileri kontrol edin."); }
+    });
+}
 
 async function buildCatalog() {
     try {
@@ -371,10 +241,6 @@ async function buildCatalog() {
         productCatalog = Array.from(tempMap.values());
     } catch (error) { console.error("Katalog hatası:", error); }
 }
-
-const searchInput = document.getElementById('main-search');
-const dropdown = document.getElementById('dropdown-results');
-const resultContainer = document.getElementById('result-container');
 
 document.addEventListener('click', (e) => {
     if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
@@ -438,6 +304,9 @@ if(searchInput) {
     });
 }
 
+// =========================================================================
+// YAZDIRMA (PRINT) FONKSİYONLARI 
+// =========================================================================
 window.openPrintModal = () => {
     if (!window.currentRenderedProduct) return alert("Yazdırılacak ürün bulunamadı!");
     document.getElementById('print-modal').style.display = 'flex';
@@ -454,11 +323,7 @@ window.executePrint = () => {
 
     if (!printQty || printQty <= 0) return;
 
-    let targetBarcode = data.urunKodu; 
-    const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-    if (data.barkod && !invalidCodes.includes(data.barkod)) {
-        targetBarcode = data.barkod;
-    }
+    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır (Orijinal hastane sistemi gibi)
 
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
@@ -468,11 +333,7 @@ window.executePrint = () => {
     }
     printContainer.innerHTML = ''; 
 
-    let urunParts = data.urunAdi.split(',');
-    let displayName = urunParts[0].trim();
-    if (urunParts.length > 1) {
-        displayName += "<br>" + urunParts.slice(1).join(', ').trim(); 
-    }
+    let displayName = data.urunAdi; 
 
     for(let i=0; i < printQty; i++) {
         const label = document.createElement('div');
@@ -502,7 +363,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (FİREBASE OPTİMİZASYONLU)
+// ÜTS ÇEKİM MOTORU (FİREBASE OPTİMİZASYONLU - ALLORIGINS KÖPRÜSÜ)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -525,7 +386,6 @@ window.autoFetchUTS = async (id, barkod) => {
                 const data = JSON.parse(proxyData.contents);
                 if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
                 if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
-                // ÜTS Dönen JSON'ına göre ekstra resimler eklenebilir.
             } catch(e) {}
         }
 
@@ -542,15 +402,13 @@ window.autoFetchUTS = async (id, barkod) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
-        // OPTİMİZASYON: Tüm veritabanını indiren buildCatalog() iptal edildi!
-        // Onun yerine bellekteki (RAM) ürünü manuel güncelliyoruz.
+        // OPTİMİZASYON: RAM'deki veriyi manuel güncelle
         const catItem = productCatalog.find(m => m.docId === id);
         if(catItem) {
             catItem.utsGorseller = utsGorseller;
             catItem.utsEtiketPdf = utsEtiketPdf;
         }
 
-        // Arayüzü Güncelle
         if (gorselContainer) {
             let html = '';
             utsGorseller.forEach(url => {
@@ -604,8 +462,6 @@ window.saveUpdate = async (id, type) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
         
-        // FİREBASE OPTİMİZASYONU: Katalogu baştan indirmiyoruz (buildCatalog SİLİNDİ)!
-        // Sadece RAM'deki veriyi güncelliyoruz:
         const catItem = productCatalog.find(m => m.docId === id);
         if (catItem) {
             if (type === 'b') catItem.barkod = newVal;
@@ -613,7 +469,6 @@ window.saveUpdate = async (id, type) => {
             catItem.searchString = `${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`.toLowerCase();
         }
         
-        // Yalnızca ekrandaki kartı yenile (1 Read tüketir, 1000'lerce read yerine)
         fetchAndDisplayProduct(id); 
     } catch (err) { alert("Sistem Hatası: " + err.message); }
 };
@@ -684,7 +539,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
-            // REUSE ÇAPRAZ EŞLEŞTİRME ZEKASI (SIFIR KODU / REUSE KODU)
+            // REUSE ÇAPRAZ EŞLEŞTİRME ZEKASI
             let crossRefText = "";
             let exactName = mergedData.urunAdi.toLowerCase().trim();
             if (mergedData.surecTipi === "R") {
@@ -700,9 +555,7 @@ window.fetchAndDisplayProduct = async (code) => {
 
             let targetBarcode = mergedData.urunKodu;
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) {
-                targetBarcode = mergedData.barkod;
-            }
+            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
                 if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0) {
@@ -733,7 +586,6 @@ function renderCard(data) {
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     const hasValidBarcode = data.barkod && !invalidCodes.includes(data.barkod);
 
-    // BARKOD HİYERARŞİSİ (Ayrı SVG'ler)
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Okut...', '#ccc');
     const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
 
@@ -829,12 +681,10 @@ function renderCard(data) {
 
     setTimeout(() => {
         if(window.JsBarcode) {
-            // Ürün Kodu Barkodu (ASLA DEĞİŞMEZ)
             JsBarcode("#ui-barcode-urunkodu", data.urunKodu, {
                 format: "CODE128", width: 1.5, height: 40, displayValue: false, lineColor: "#000", background: "transparent", margin: 0
             });
 
-            // Eğer varsa Ekstra Barkodun kendi görseli
             if (hasValidBarcode) {
                 JsBarcode("#ui-barcode-real", data.barkod, {
                     format: "CODE128", width: 1.2, height: 28, displayValue: false, lineColor: "#000", background: "transparent", margin: 0
