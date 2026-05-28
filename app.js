@@ -171,7 +171,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -188,7 +188,7 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
-        // FİREBASE OPTİMİZASYONU
+        // FİREBASE OPTİMİZASYONU: Katalog sadece ilk girişte 1 KERE indirilir!
         await buildCatalog();
         
         if(loadingScreen) loadingScreen.classList.add('hidden');
@@ -324,7 +324,7 @@ window.executePrint = () => {
 
     if (!printQty || printQty <= 0) return;
 
-    let targetBarcode = data.urunKodu; 
+    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır
 
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
@@ -364,7 +364,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (CLOUDFLARE WORKERS ENTEGRASYONU)
+// ÜTS ÇEKİM MOTORU (ZIRHLI HATA EMİCİ İLE BİRLİKTE)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -373,24 +373,32 @@ window.autoFetchUTS = async (id, barkod) => {
     }
     
     try {
-        // İŞTE BURASI: CLOUDFLARE WORKER LİNKİ EKLENDİ
         const proxyUrl = `https://uts-proxy.u-keserbi.workers.dev/?barkod=${barkod}`;
         
+        // HATA EMİCİ: Yanıtı önce düz metin olarak alıyoruz
         const response = await fetch(proxyUrl);
-        const data = await response.json(); 
+        const textData = await response.text(); 
+        
+        let data = null;
+        try {
+            // Eğer bakanlık engellediyse ve HTML gönderdiyse burada yakalayacağız
+            data = JSON.parse(textData);
+        } catch(parseErr) {
+            console.warn("ÜTS Güvenlik Duvarı Engeli (Dönen veri JSON değil):", textData.substring(0, 100));
+            // Hata fırlatmıyoruz, data = null olarak yoluna devam edip 'Görsel Yok' basacak.
+        }
         
         let utsGorseller = [];
         let utsEtiketPdf = "";
 
-        // Cloudflare'den dönen gerçek veriyi okuyoruz
         if (data && typeof data === 'object' && !data.error) {
             if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
             if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
         }
 
-        // Eğer ürün var ama bakanlık resim girmemişse:
         if (utsGorseller.length === 0) {
-            utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YÜKLENMEMİŞ");
+            // Bakanlık engellediği için resim bulamadı
+            utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YOK+veya+ENGEL");
         }
 
         const updateData = { utsGorseller, utsEtiketPdf };
@@ -402,7 +410,6 @@ window.autoFetchUTS = async (id, barkod) => {
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
-        // OPTİMİZASYON: RAM'deki veriyi manuel güncelle
         const catItem = productCatalog.find(m => m.docId === id);
         if(catItem) {
             catItem.utsGorseller = utsGorseller;
@@ -420,8 +427,8 @@ window.autoFetchUTS = async (id, barkod) => {
             gorselContainer.innerHTML = html;
         }
     } catch(e) {
-        console.error("ÜTS Çekim Hatası:", e);
-        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (Cloudflare Sunucu Yanıt Vermedi)</div>`;
+        console.error("Fetch/Ağ Hatası:", e);
+        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Ağ Bağlantı Hatası</div>`;
     }
 };
 
