@@ -172,6 +172,45 @@ window.currentRenderedProduct = null;
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
+// =========================================================================
+// NGROK GÜVENLİK DUVARI AŞICI VE ÖNBELLEK TEMİZLEYİCİ
+// =========================================================================
+async function loadNgrokImage(imgElement, sourceUrl) {
+    if (sourceUrl.startsWith('data:image')) {
+        imgElement.src = sourceUrl;
+        imgElement.onclick = () => openLightbox(sourceUrl);
+        return;
+    }
+
+    // Tam URL oluştur (Ngrok adresi + /downloads/...)
+    let fullUrl = sourceUrl.startsWith('http') ? sourceUrl : UTS_API_ADRESI + sourceUrl;
+    
+    // Eski resmi görmemek için rastgele zaman damgası ekliyoruz
+    fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
+
+    try {
+        // Ngrok uyarı sayfasını bypass ederek sadece resmi blob olarak indir
+        const response = await fetch(fullUrl, {
+            method: 'GET',
+            headers: {
+                "Bypass-Tunnel-Reminder": "true",
+                "ngrok-skip-browser-warning": "true"
+            }
+        });
+        
+        if (!response.ok) throw new Error("Görsele ulaşılamadı.");
+        
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        imgElement.src = objectUrl;
+        imgElement.onclick = () => openLightbox(objectUrl);
+        
+    } catch (error) {
+        console.error("Resim Çekilemedi:", error);
+        imgElement.src = noImageSvg; 
+    }
+}
+
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -345,15 +384,15 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON (BASE64 VERİ OKUYUCU)
+// ÜTS MERKEZİ ENTEGRASYON VE FİREBASE KAYIT MİMARİSİ
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. Lütfen bekleyiniz...</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Yaklaşık 25 saniye sürer, lütfen bekleyiniz...)</div>`;
     }
     
-    let base64Gorseller = [];
+    let dbUrls = []; // Veritabanına sadece bu yollar (URL) yazılacak!
 
     try {
         const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
@@ -364,7 +403,10 @@ window.autoFetchUTS = async (id, barkod) => {
         });
         const data = await response.json(); 
         
-        if (data.utsGorseller && data.utsGorseller.length > 0) base64Gorseller = data.utsGorseller;
+        if (data.utsGorseller && data.utsGorseller.length > 0) {
+            // Sunucudan gelen yolları direkt DB'ye yazacağız
+            dbUrls = data.utsGorseller;
+        }
 
     } catch(e) {
         if (gorselContainer) {
@@ -372,11 +414,11 @@ window.autoFetchUTS = async (id, barkod) => {
         }
     }
 
-    if (base64Gorseller.length === 0) {
-        base64Gorseller.push(noImageSvg);
+    if (dbUrls.length === 0) {
+        dbUrls.push(noImageSvg);
     }
 
-    const updateData = { utsGorseller: base64Gorseller };
+    const updateData = { utsGorseller: dbUrls };
     
     try {
         const anaRef = doc(db, "ana_depo", id);
@@ -387,27 +429,31 @@ window.autoFetchUTS = async (id, barkod) => {
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
         const catItem = productCatalog.find(m => m.docId === id);
-        if(catItem) catItem.utsGorseller = base64Gorseller;
+        if(catItem) catItem.utsGorseller = dbUrls;
         
     } catch (dbError) {
         console.error("Veritabanı Kayıt Hatası:", dbError);
     }
 
+    // İŞLEM BİTTİ EKRANA ÇİZ!
     if (gorselContainer) {
-        let html = '';
-        base64Gorseller.forEach(url => {
-            if(url.startsWith('data:image')) {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            } else {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            }
+        gorselContainer.innerHTML = '';
+        const imgQueue = [];
+        
+        dbUrls.forEach((url, idx) => {
+            const imgId = `img-fetch-${id}-${idx}`;
+            const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+            
+            gorselContainer.innerHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgQueue.push({ id: imgId, url: url });
         });
         
-        if(gorselContainer.innerHTML.includes('Sistem Hatası') || gorselContainer.innerHTML.includes('Sistem ÜTS')) {
-           gorselContainer.innerHTML = html;
-        } else {
-           gorselContainer.innerHTML += html;
-        }
+        setTimeout(() => {
+            imgQueue.forEach(item => {
+                const imgEl = document.getElementById(item.id);
+                if(imgEl) loadNgrokImage(imgEl, item.url);
+            });
+        }, 100);
     }
 };
 
@@ -573,14 +619,15 @@ function renderCard(data) {
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     let gorselHTML = '';
+    const imgLoadQueue = [];
 
     if (data.utsGorseller && data.utsGorseller.length > 0) {
         data.utsGorseller.forEach((url, index) => {
-            if(url.startsWith('data:image')) {
-                gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            } else {
-                gorselHTML += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            }
+            const imgId = `img-render-${data.docId}-${index}`;
+            const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+            
+            gorselHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgLoadQueue.push({ id: imgId, url: url });
         });
     } else if (hasValidBarcode) {
         gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
@@ -659,6 +706,14 @@ function renderCard(data) {
                 </div>
             </div>
         `;
+        
+        // İşlem tamamlandıktan sonra tüm resimleri çek (Önbellek (Cache) sorunu olmadan)
+        setTimeout(() => {
+            imgLoadQueue.forEach(item => {
+                const imgEl = document.getElementById(item.id);
+                if(imgEl) loadNgrokImage(imgEl, item.url);
+            });
+        }, 100);
     }
 
     setTimeout(() => {
