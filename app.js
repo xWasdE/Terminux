@@ -111,7 +111,7 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-// YASAL BİLGİLENDİRME, LİGHTBOX VE YAZDIRMA MODALI (HİÇBİR MENÜ/HEADER EKLENMİYOR)
+// YASAL BİLGİLENDİRME, LİGHTBOX VE YAZDIRMA MODALI
 document.body.insertAdjacentHTML('beforeend', `
     <div id="lightbox-modal">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -171,7 +171,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -205,7 +205,6 @@ onAuthStateChanged(auth, async (user) => {
 if(loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
@@ -364,7 +363,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (FİREBASE OPTİMİZASYONLU - PHP KÖPRÜSÜ)
+// ÜTS ÇEKİM MOTORU (CLOUDFLARE WORKERS ENTEGRASYONU)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -373,8 +372,8 @@ window.autoFetchUTS = async (id, barkod) => {
     }
     
     try {
-        // KENDİ SUNUCUNDAKİ uts.php DOSYASINA İSTEK ATILIYOR (CORS ENGELİNE TAKILMAZ)
-        const proxyUrl = `https://terminux.com.tr/uts.php?barkod=${barkod}`;
+        // CLOUDFLARE KÖPRÜNE İSTEK ATILIYOR
+        const proxyUrl = `https://uts-proxy.u-keserbi.workers.dev/?barkod=${barkod}`;
         
         const response = await fetch(proxyUrl);
         const data = await response.json(); 
@@ -382,6 +381,7 @@ window.autoFetchUTS = async (id, barkod) => {
         let utsGorseller = [];
         let utsEtiketPdf = "";
 
+        // Cloudflare'den gelen doğrudan veriyi işliyoruz
         if (data && typeof data === 'object' && !data.error) {
             if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
             if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
@@ -419,7 +419,7 @@ window.autoFetchUTS = async (id, barkod) => {
         }
     } catch(e) {
         console.error("ÜTS Çekim Hatası:", e);
-        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (PHP Sunucu Yanıt Vermedi)</div>`;
+        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (Sunucu Yanıt Vermedi)</div>`;
     }
 };
 
