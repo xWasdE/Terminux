@@ -3,9 +3,9 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// SİSTEM MERKEZİ BAĞLANTI AYARLARI (TÜNEL ADRESİ BURAYA!)
+// NGROK TÜNEL ADRESİNİZ
 // =========================================================================
-const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; // NGROK TÜNELİ AÇTIĞINIZDA BURAYI DEĞİŞTİRİN
+const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
@@ -171,6 +171,42 @@ let searchTimeout = null;
 window.currentRenderedProduct = null;
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
+
+// =========================================================================
+// NGROK RESİM ÇEKİCİ (CORS DESTEKLİ VE ÖNBELLEK KIRICI)
+// =========================================================================
+async function loadNgrokImage(imgElement, sourceUrl) {
+    if (sourceUrl.startsWith('data:image')) {
+        imgElement.src = sourceUrl;
+        imgElement.onclick = () => openLightbox(sourceUrl);
+        return;
+    }
+
+    let fullUrl = sourceUrl.startsWith('http') ? sourceUrl : UTS_API_ADRESI + sourceUrl;
+    // Ön bellek sorununu aşmak için rastgele parametre ekliyoruz
+    fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
+
+    try {
+        const response = await fetch(fullUrl, {
+            method: 'GET',
+            headers: {
+                "Bypass-Tunnel-Reminder": "true",
+                "ngrok-skip-browser-warning": "true"
+            }
+        });
+        
+        if (!response.ok) throw new Error("Görsele ulaşılamadı.");
+        
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        imgElement.src = objectUrl;
+        imgElement.onclick = () => openLightbox(objectUrl);
+        
+    } catch (error) {
+        console.error("Resim Yükleme Hatası:", error);
+        imgElement.src = noImageSvg; 
+    }
+}
 
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
@@ -345,7 +381,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON
+// ÜTS MERKEZİ ENTEGRASYON (DİNAMİK RENDER)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -367,9 +403,8 @@ window.autoFetchUTS = async (id, barkod) => {
         if (data.utsGorseller && data.utsGorseller.length > 0) localGorseller = data.utsGorseller;
 
     } catch(e) {
-        console.error("Merkezi Servis Hatası:", e);
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Lütfen sunucu veya tünel bağlantınızı kontrol ediniz.</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
         }
     }
 
@@ -395,26 +430,23 @@ window.autoFetchUTS = async (id, barkod) => {
     }
 
     if (gorselContainer) {
-        let html = '';
-        localGorseller.forEach(url => {
-            // VERİTABANINDAN GELEN YOLA UTS_API_ADRESI EKLENİYOR (MOBİL UYUMLULUK)
-            let fullUrl = url;
-            if (!url.startsWith('http') && !url.startsWith('data:')) {
-                fullUrl = `${UTS_API_ADRESI}${url}`;
-            }
-
-            if(fullUrl.startsWith('data:image')) {
-                html += `<img src="${fullUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            } else {
-                html += `<img src="${fullUrl}" onclick="openLightbox('${fullUrl}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            }
+        gorselContainer.innerHTML = '';
+        const imgQueue = [];
+        
+        localGorseller.forEach((url, idx) => {
+            const imgId = `img-fetch-${id}-${idx}`;
+            const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+            
+            gorselContainer.innerHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgQueue.push({ id: imgId, url: url });
         });
         
-        if(gorselContainer.innerHTML.includes('Sistem Hatası') || gorselContainer.innerHTML.includes('Sistem ÜTS')) {
-           gorselContainer.innerHTML = html;
-        } else {
-           gorselContainer.innerHTML += html;
-        }
+        setTimeout(() => {
+            imgQueue.forEach(item => {
+                const imgEl = document.getElementById(item.id);
+                if(imgEl) loadNgrokImage(imgEl, item.url);
+            });
+        }, 100);
     }
 };
 
@@ -544,7 +576,7 @@ window.fetchAndDisplayProduct = async (code) => {
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
 
-            // Barkod mevcutsa ve henüz resim çekilmemişse Bot'u Tetikle
+            // Barkod var ama resim yoksa VEYA önceden yok atanmışsa (Sistem sürekli botu tetiklemesin diye kontrol edildi)
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
                 if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
                     window.autoFetchUTS(mergedData.docId, targetBarcode);
@@ -581,19 +613,15 @@ function renderCard(data) {
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     let gorselHTML = '';
-    if (data.utsGorseller && data.utsGorseller.length > 0) {
-        data.utsGorseller.forEach(url => {
-            // VERİTABANINDAN GELEN YOLA UTS_API_ADRESI EKLENİYOR (MOBİL UYUMLULUK)
-            let fullUrl = url;
-            if (!url.startsWith('http') && !url.startsWith('data:')) {
-                fullUrl = `${UTS_API_ADRESI}${url}`;
-            }
+    const imgLoadQueue = [];
 
-            if(fullUrl.startsWith('data:image')) {
-                gorselHTML += `<img src="${fullUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            } else {
-                gorselHTML += `<img src="${fullUrl}" onclick="openLightbox('${fullUrl}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            }
+    if (data.utsGorseller && data.utsGorseller.length > 0) {
+        data.utsGorseller.forEach((url, index) => {
+            const imgId = `img-render-${data.docId}-${index}`;
+            const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+            
+            gorselHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgLoadQueue.push({ id: imgId, url: url });
         });
     } else if (hasValidBarcode) {
         gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
@@ -672,19 +700,20 @@ function renderCard(data) {
                 </div>
             </div>
         `;
+        
+        // Ngrok resim yükleme kuyruğunu çalıştır
+        setTimeout(() => {
+            imgLoadQueue.forEach(item => {
+                const imgEl = document.getElementById(item.id);
+                if(imgEl) loadNgrokImage(imgEl, item.url);
+            });
+        }, 100);
     }
 
     setTimeout(() => {
         if(window.JsBarcode) {
-            JsBarcode("#ui-barcode-urunkodu", data.urunKodu, {
-                format: "CODE128", width: 1.5, height: 40, displayValue: false, lineColor: "#000", background: "transparent", margin: 0
-            });
-
-            if (hasValidBarcode) {
-                JsBarcode("#ui-barcode-real", data.barkod, {
-                    format: "CODE128", width: 1.2, height: 28, displayValue: false, lineColor: "#000", background: "transparent", margin: 0
-                });
-            }
+            JsBarcode("#ui-barcode-urunkodu", data.urunKodu, { format: "CODE128", width: 1.5, height: 40, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
+            if (hasValidBarcode) JsBarcode("#ui-barcode-real", data.barkod, { format: "CODE128", width: 1.2, height: 28, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
         }
     }, 150);
 }
