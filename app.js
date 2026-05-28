@@ -171,7 +171,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -188,7 +188,7 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
-        // FİREBASE OPTİMİZASYONU: Katalog sadece ilk girişte 1 KERE indirilir!
+        // FİREBASE OPTİMİZASYONU
         await buildCatalog();
         
         if(loadingScreen) loadingScreen.classList.add('hidden');
@@ -205,6 +205,7 @@ onAuthStateChanged(auth, async (user) => {
 if(loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
@@ -323,7 +324,7 @@ window.executePrint = () => {
 
     if (!printQty || printQty <= 0) return;
 
-    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır
+    let targetBarcode = data.urunKodu; 
 
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
@@ -372,7 +373,7 @@ window.autoFetchUTS = async (id, barkod) => {
     }
     
     try {
-        // CLOUDFLARE KÖPRÜNE İSTEK ATILIYOR
+        // İŞTE BURASI: CLOUDFLARE WORKER LİNKİ EKLENDİ
         const proxyUrl = `https://uts-proxy.u-keserbi.workers.dev/?barkod=${barkod}`;
         
         const response = await fetch(proxyUrl);
@@ -381,12 +382,13 @@ window.autoFetchUTS = async (id, barkod) => {
         let utsGorseller = [];
         let utsEtiketPdf = "";
 
-        // Cloudflare'den gelen doğrudan veriyi işliyoruz
+        // Cloudflare'den dönen gerçek veriyi okuyoruz
         if (data && typeof data === 'object' && !data.error) {
             if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
             if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
         }
 
+        // Eğer ürün var ama bakanlık resim girmemişse:
         if (utsGorseller.length === 0) {
             utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YÜKLENMEMİŞ");
         }
@@ -419,7 +421,7 @@ window.autoFetchUTS = async (id, barkod) => {
         }
     } catch(e) {
         console.error("ÜTS Çekim Hatası:", e);
-        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (Sunucu Yanıt Vermedi)</div>`;
+        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (Cloudflare Sunucu Yanıt Vermedi)</div>`;
     }
 };
 
