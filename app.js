@@ -364,7 +364,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (VPN/ADBLOCK ZIRHLI VE SYNTAX HATASI ÇÖZÜLMÜŞ SÜRÜM)
+// ÜTS ÇEKİM MOTORU (LOKAL NODE.JS BOTUNA BAĞLANTI)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -438,23 +438,6 @@ window.autoFetchUTS = async (id, barkod) => {
         } else {
            gorselContainer.innerHTML += html;
         }
-    }
-};
-
-    // SYNTAX HATASINI ÇÖZEN DÜZELTME: Eğer görsel Base64 ise tıklama(onclick) ekleme!
-    if (gorselContainer) {
-        let html = '';
-        utsGorseller.forEach(url => {
-            if(url.startsWith('data:image')) {
-                html += `<img src="${url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            } else {
-                html += `<img src="${url}" onclick="openLightbox('${url}')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: zoom-in; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            }
-        });
-        if (utsEtiketPdf) {
-            html += `<a href="${utsEtiketPdf}" target="_blank" style="width: 100px; height: 100px; background: #111; border: 1px solid #333; border-radius: 8px; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #ffbc00; font-size: 11px; font-weight: bold; text-align: center; text-decoration:none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition:0.2s;">📄<br>ORİJİNAL<br>ETİKET PDF</a>`;
-        }
-        gorselContainer.innerHTML = html;
     }
 };
 
