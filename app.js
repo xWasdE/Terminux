@@ -89,29 +89,29 @@ style.innerHTML = `
         #print-container {
             position: absolute; left: 0; top: 0;
             display: grid;
-            grid-template-rows: repeat(4, 1.9cm); /* ALT ALTA EN FAZLA 4 TANE */
-            grid-auto-columns: 3.9cm; /* YANA DOĞRU SINIRSIZ (4-4-4-4 GİDER) */
-            grid-auto-flow: column; /* ÖNCE AŞAĞI DOLDUR, SONRA SAĞA GEÇ */
+            grid-template-rows: repeat(4, 1.9cm); 
+            grid-auto-columns: 3.9cm; 
+            grid-auto-flow: column; 
             column-gap: 0.2cm; row-gap: 0cm; 
             margin: 0; padding: 0; background: #fff; width: max-content;
         }
         .mini-label {
             width: 3.9cm; height: 1.9cm; 
-            display: flex; flex-direction: column; justify-content: center; align-items: flex-start; /* ORİJİNAL GİBİ SOLA YASLA */
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
             overflow: hidden; padding: 2px 4px; box-sizing: border-box; color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
         }
         .mini-label .p-name { 
-            font-size: 7px; font-weight: bold; width: 100%; text-align: left; /* SOLA YASLA */
-            margin-bottom: 2px; text-transform: uppercase; /* ORİJİNAL GİBİ BÜYÜK HARF */
+            font-size: 7px; font-weight: bold; width: 100%; text-align: left; 
+            margin-bottom: 2px; text-transform: uppercase; 
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.1; 
         }
-        .mini-label svg { height: 0.8cm !important; width: 100% !important; max-width: 3.5cm; margin: 0; align-self: flex-start; } /* BARKOD SOLA YASLI */
-        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: left; margin-top: 1px; letter-spacing: 0.5px; } /* KOD SOLA YASLI */
+        .mini-label svg { height: 0.8cm !important; width: 100% !important; max-width: 3.5cm; margin: 0; align-self: flex-start; }
+        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: left; margin-top: 1px; letter-spacing: 0.5px; } 
     }
 `;
 document.head.appendChild(style);
 
-// YASAL BİLGİLENDİRME (FOOTER), LİGHTBOX VE YAZDIRMA MODALI EKLENİYOR
+// YASAL BİLGİLENDİRME, LİGHTBOX VE YAZDIRMA MODALI (HİÇBİR MENÜ/HEADER EKLENMİYOR)
 document.body.insertAdjacentHTML('beforeend', `
     <div id="lightbox-modal">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
@@ -171,7 +171,7 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
-// GÜVENLİ ÇIKIŞ BUTONU ZIRHI (Html'deki Orijinal Butona Bağlıdır)
+// GÜVENLİ ÇIKIŞ BUTONU ZIRHI
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
@@ -205,6 +205,7 @@ onAuthStateChanged(auth, async (user) => {
 if(loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
@@ -323,7 +324,7 @@ window.executePrint = () => {
 
     if (!printQty || printQty <= 0) return;
 
-    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır (Orijinal hastane sistemi gibi)
+    let targetBarcode = data.urunKodu; // Kâğıda her zaman ürün kodu barkodu basılır
 
     let printContainer = document.getElementById('print-container');
     if (!printContainer) {
@@ -363,7 +364,7 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS ÇEKİM MOTORU (FİREBASE OPTİMİZASYONLU - ALLORIGINS KÖPRÜSÜ)
+// ÜTS ÇEKİM MOTORU (FİREBASE OPTİMİZASYONLU - PHP KÖPRÜSÜ)
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
@@ -372,25 +373,22 @@ window.autoFetchUTS = async (id, barkod) => {
     }
     
     try {
-        const utsPublicUrl = encodeURIComponent(`https://utsuygulama.saglik.gov.tr/rest/bilgi/urun/sorgula?barkod=${barkod}`);
-        const proxyUrl = `https://api.allorigins.win/get?url=${utsPublicUrl}`;
+        // KENDİ SUNUCUNDAKİ uts.php DOSYASINA İSTEK ATILIYOR (CORS ENGELİNE TAKILMAZ)
+        const proxyUrl = `https://terminux.com.tr/uts.php?barkod=${barkod}`;
         
         const response = await fetch(proxyUrl);
-        const proxyData = await response.json();
+        const data = await response.json(); 
         
         let utsGorseller = [];
         let utsEtiketPdf = "";
 
-        if (proxyData.contents) {
-            try {
-                const data = JSON.parse(proxyData.contents);
-                if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
-                if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
-            } catch(e) {}
+        if (data && typeof data === 'object' && !data.error) {
+            if(data.urunGorselUrl) utsGorseller.push(data.urunGorselUrl);
+            if(data.ambalajGorselUrl) utsGorseller.push(data.ambalajGorselUrl);
         }
 
         if (utsGorseller.length === 0) {
-            utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YOK");
+            utsGorseller.push("https://via.placeholder.com/150/111/ff3333?text=GÖRSEL+YÜKLENMEMİŞ");
         }
 
         const updateData = { utsGorseller, utsEtiketPdf };
@@ -420,8 +418,8 @@ window.autoFetchUTS = async (id, barkod) => {
             gorselContainer.innerHTML = html;
         }
     } catch(e) {
-        console.log("ÜTS Çekim Hatası:", e);
-        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası</div>`;
+        console.error("ÜTS Çekim Hatası:", e);
+        if (gorselContainer) gorselContainer.innerHTML = `<div style="color:#f33; font-size:12px; font-weight:bold;">❌ ÜTS Bağlantı Hatası (PHP Sunucu Yanıt Vermedi)</div>`;
     }
 };
 
