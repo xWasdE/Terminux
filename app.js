@@ -173,7 +173,7 @@ window.currentRenderedProduct = null;
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
 // =========================================================================
-// NGROK GÜVENLİK DUVARI AŞICI VE ÖNBELLEK TEMİZLEYİCİ
+// NGROK GÜVENLİK DUVARI DELİCİ VE ÖNBELLEK TEMİZLEYİCİ
 // =========================================================================
 async function loadNgrokImage(imgElement, sourceUrl) {
     if (sourceUrl.startsWith('data:image')) {
@@ -185,11 +185,11 @@ async function loadNgrokImage(imgElement, sourceUrl) {
     // Tam URL oluştur (Ngrok adresi + /downloads/...)
     let fullUrl = sourceUrl.startsWith('http') ? sourceUrl : UTS_API_ADRESI + sourceUrl;
     
-    // Eski resmi görmemek için rastgele zaman damgası ekliyoruz
+    // Cache-buster: Tarayıcının eski resmi inatla göstermesini engellemek için url sonuna rastgele rakam ekliyoruz
     fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
 
     try {
-        // Ngrok uyarı sayfasını bypass ederek sadece resmi blob olarak indir
+        // Ngrok uyarı sayfasını bypass ederek sadece resmi blob olarak indiriyoruz
         const response = await fetch(fullUrl, {
             method: 'GET',
             headers: {
@@ -384,15 +384,15 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON VE FİREBASE KAYIT MİMARİSİ
+// ÜTS MERKEZİ ENTEGRASYON VE VERİTABANI YÖNETİMİ
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Yaklaşık 25 saniye sürer, lütfen bekleyiniz...)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
     }
     
-    let dbUrls = []; // Veritabanına sadece bu yollar (URL) yazılacak!
+    let dbUrls = []; // Veritabanına sadece bu kısacık yollar yazılacak (1MB hatasını önler)
 
     try {
         const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
@@ -404,7 +404,6 @@ window.autoFetchUTS = async (id, barkod) => {
         const data = await response.json(); 
         
         if (data.utsGorseller && data.utsGorseller.length > 0) {
-            // Sunucudan gelen yolları direkt DB'ye yazacağız
             dbUrls = data.utsGorseller;
         }
 
@@ -435,7 +434,7 @@ window.autoFetchUTS = async (id, barkod) => {
         console.error("Veritabanı Kayıt Hatası:", dbError);
     }
 
-    // İŞLEM BİTTİ EKRANA ÇİZ!
+    // EKRANA ÇİZİM İŞLEMİ
     if (gorselContainer) {
         gorselContainer.innerHTML = '';
         const imgQueue = [];
@@ -665,7 +664,7 @@ function renderCard(data) {
                     </div>
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
-                        <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
+                        <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER (Orjinal)</div>
                         
                         <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
                             ${gorselHTML}
@@ -707,7 +706,6 @@ function renderCard(data) {
             </div>
         `;
         
-        // İşlem tamamlandıktan sonra tüm resimleri çek (Önbellek (Cache) sorunu olmadan)
         setTimeout(() => {
             imgLoadQueue.forEach(item => {
                 const imgEl = document.getElementById(item.id);
