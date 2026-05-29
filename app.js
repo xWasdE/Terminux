@@ -2,7 +2,17 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// =========================================================================
+// NGROK TÜNEL ADRESİNİZİ BURAYA YAPIŞTIRIN
+// =========================================================================
 const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
+
+// Cloudflare Turnstile API & JsBarcode Entegrasyonu
+const cfScript = document.createElement('script');
+cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+cfScript.async = true;
+cfScript.defer = true;
+document.head.appendChild(cfScript);
 
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
@@ -18,11 +28,14 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body, html { overflow-x: hidden; max-width: 100vw; margin: 0; padding: 0; }
+    body, html { overflow-x: hidden; max-width: 100vw; width: 100%; margin: 0; padding: 0; }
     body { padding-bottom: 80px !important; }
     
     .hidden { display: none !important; }
 
+    /* Ana Arama Kutusu Optimizasyonu */
+    #main-search { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; transition: 0.3s; }
+    
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
@@ -45,12 +58,17 @@ style.innerHTML = `
     .edit-btn-group { display: flex; gap: 5px; }
     .mobile-break { word-break: break-all; }
 
+    /* Login Form Genel Temizliği (Yazılar gizlenir) */
+    #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
+    #login-form span:not(.mobile-login-header span) { display: none !important; }
+
     .mobile-login-header { display: none; }
 
+    /* Yasal Footer (Tam Genişlik - Taşma Korumalı) */
     .legal-footer {
-        position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888;
+        position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888;
         text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
-        backdrop-filter: blur(8px); line-height: 1.5;
+        backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; word-wrap: break-word; white-space: normal;
     }
     .legal-footer b { color: #aaa; font-weight: bold; }
 
@@ -63,25 +81,35 @@ style.innerHTML = `
     .lightbox-prev { left: 20px; }
     .lightbox-next { right: 20px; }
 
+    /* MOBİL MÜKEMMELLEŞTİRME EKRANI */
     @media (max-width: 900px) {
         body { padding: 10px !important; padding-bottom: 120px !important; }
         
+        /* Üst Menü (Header) Düzenlemesi - Sıkışıklığı Giderir */
+        #app-screen > div:first-child { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; align-items: center !important; gap: 10px !important; padding: 15px 10px !important; }
+        #app-screen > div:first-child > div:nth-child(1) { order: 1 !important; flex: 1 !important; } /* Logo Kısmı */
+        #btn-logout { order: 2 !important; padding: 10px 15px !important; font-size: 11px !important; white-space: nowrap !important; } /* Çıkış Butonu */
+        #app-screen > div:first-child > div:has(#operator-name), #operator-name { order: 3 !important; width: 100% !important; text-align: center !important; margin-top: 5px !important; font-size: 13px !important; justify-content: center !important; } /* Operatör Yazısı Alt Satıra Geçer */
+
+        /* Login Ekranı Tam Merkezleme */
         #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
         #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
         #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
         #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
-        #login-form p, #login-form span, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
         #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
-        #login-form button { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
+        #login-form button[type="submit"] { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
         .mobile-login-header { display: block !important; }
 
-        #main-search { font-size: 14px !important; }
+        /* Arama Kutusu Optimizasyonu */
+        #main-search { font-size: 14px !important; height: 50px !important; padding: 10px 15px !important; border-radius: 8px !important; }
         #main-search::placeholder { font-size: 11px !important; }
 
+        /* Kart ve Tanımsız Taşma Engeli */
         .card-wrapper { flex-direction: column; gap: 15px; }
         .card-main, .stock-box { padding: 20px; }
         .stock-value { font-size: 45px !important; } 
         
+        /* Kutu İçi Kompakt Tasarım */
         .grid-details { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; }
         .title-text { font-size: 20px; }
         .label-text { font-size: 10px; }
@@ -94,7 +122,7 @@ style.innerHTML = `
         svg { max-height: 30px !important; width: auto !important; }
 
         .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 12px !important; }
-        .legal-footer { font-size: 10px; padding: 10px; }
+        .legal-footer { font-size: 10px; padding: 10px 15px; }
 
         .lightbox-prev, .lightbox-next { font-size: 24px; padding: 10px 15px; }
         .lightbox-prev { left: 10px; }
@@ -102,6 +130,7 @@ style.innerHTML = `
         .lightbox-close { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 25px; }
     }
 
+    /* KUSURSUZ YATAY (LANDSCAPE) YAZDIRMA MOTORU */
     @media screen { #print-container { display: none !important; } }
     @media print {
         @page { size: landscape !important; margin: 0 !important; }
@@ -206,11 +235,26 @@ const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
 
+// Placeholder ve Cloudflare Hazırlığı
+if (usernameInput) usernameInput.placeholder = "Kullanıcı Adı/E-mail";
+if (passwordInput) passwordInput.placeholder = "Şifre/Password";
+
 if (loginForm) {
     const mobileHeader = document.createElement('div');
     mobileHeader.className = 'mobile-login-header';
     mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
     loginForm.insertBefore(mobileHeader, loginForm.firstChild);
+
+    if (!document.getElementById('cf-turnstile-widget')) {
+        const cfWrapper = document.createElement('div');
+        cfWrapper.id = 'cf-turnstile-widget';
+        cfWrapper.className = 'cf-turnstile';
+        cfWrapper.setAttribute('data-sitekey', 'SİTE_ANAHTARINIZI_BURAYA_GİRİN'); 
+        cfWrapper.style.margin = '15px auto';
+        cfWrapper.style.display = 'flex';
+        cfWrapper.style.justifyContent = 'center';
+        loginForm.insertBefore(cfWrapper, loginForm.querySelector('button[type="submit"]'));
+    }
 }
 
 let productCatalog = [];
@@ -429,7 +473,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgulama 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
     }
     
     let dbUrls = []; 
@@ -449,7 +493,7 @@ window.autoFetchUTS = async (id, barkod) => {
 
     } catch(e) {
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
         }
     }
 
@@ -707,7 +751,7 @@ function renderCard(data) {
                     </div>
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
-                        <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
+                        <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER (Orjinal)</div>
                         
                         <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
                             ${gorselHTML}
