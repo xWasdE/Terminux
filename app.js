@@ -21,9 +21,8 @@ style.innerHTML = `
     body, html { overflow-x: hidden; max-width: 100vw; margin: 0; padding: 0; }
     body { padding-bottom: 80px !important; }
     
-    /* Ana Arama Kutusu Optimizasyonu */
-    #main-search { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; transition: 0.3s; }
-    
+    .hidden { display: none !important; }
+
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
@@ -46,7 +45,6 @@ style.innerHTML = `
     .edit-btn-group { display: flex; gap: 5px; }
     .mobile-break { word-break: break-all; }
 
-    /* Mobilde Login Ekranı İçin Gerekli Header Sınıfı (Web'de Gizli) */
     .mobile-login-header { display: none; }
 
     .legal-footer {
@@ -56,37 +54,34 @@ style.innerHTML = `
     }
     .legal-footer b { color: #aaa; font-weight: bold; }
 
-    #lightbox-modal {
-        display: none; position: fixed; z-index: 15000; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(5px);
-    }
-    #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
-    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; transition: 0.2s; }
+    #lightbox-modal { display: none; position: fixed; z-index: 15000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+    #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8); object-fit: contain; }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 35px; color: #fff; cursor: pointer; transition: 0.2s; background: rgba(255,0,0,0.7); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 15001; }
+    .lightbox-close:hover { background: rgba(255,0,0,1); }
+    .lightbox-prev, .lightbox-next { position: absolute; top: 50%; transform: translateY(-50%); font-size: 40px; color: #fff; cursor: pointer; background: rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 8px; transition: 0.2s; user-select: none; z-index: 15001; }
+    .lightbox-prev:hover, .lightbox-next:hover { background: rgba(255,255,255,0.3); }
+    .lightbox-prev { left: 20px; }
+    .lightbox-next { right: 20px; }
 
-    /* MOBİL MÜKEMMELLEŞTİRME EKRANI */
     @media (max-width: 900px) {
         body { padding: 10px !important; padding-bottom: 120px !important; }
         
-        /* Login Ekranı Tam Merkezleme ve Temizlik */
-        #login-screen { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
-        #login-screen > div:not(:has(#login-form)) { display: none !important; }
-        #login-screen > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+        #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
+        #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
+        #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
         #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
         #login-form p, #login-form span, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
         #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
         #login-form button { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
         .mobile-login-header { display: block !important; }
 
-        /* Arama Kutusu Küçültme */
-        #main-search { font-size: 16px !important; height: 50px !important; padding: 10px 15px !important; border-radius: 8px !important; }
-        #main-search::placeholder { font-size: 14px !important; }
+        #main-search { font-size: 14px !important; }
+        #main-search::placeholder { font-size: 11px !important; }
 
-        /* Kart ve Tanımsız Taşma Engeli */
         .card-wrapper { flex-direction: column; gap: 15px; }
         .card-main, .stock-box { padding: 20px; }
-        .stock-value { font-size: 45px !important; } /* TANIMSIZ yazısının ekranı sağa kaydırmasını %100 önler */
+        .stock-value { font-size: 45px !important; } 
         
-        /* BARKOD / REF Kutu İçi Küçültme */
         .grid-details { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; }
         .title-text { font-size: 20px; }
         .label-text { font-size: 10px; }
@@ -96,13 +91,17 @@ style.innerHTML = `
         .btn-edit { padding: 6px; font-size: 10px; margin-top: 5px; width: 100%; }
         .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
         .edit-btn-group { width: 100%; display: flex; gap: 5px; }
-        svg { max-height: 30px !important; width: auto !important; } /* SVG Barkod mobilde küçültüldü */
+        svg { max-height: 30px !important; width: auto !important; }
 
         .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 12px !important; }
         .legal-footer { font-size: 10px; padding: 10px; }
+
+        .lightbox-prev, .lightbox-next { font-size: 24px; padding: 10px 15px; }
+        .lightbox-prev { left: 10px; }
+        .lightbox-next { right: 10px; }
+        .lightbox-close { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 25px; }
     }
 
-    /* KUSURSUZ YATAY (LANDSCAPE) YAZDIRMA MOTORU */
     @media screen { #print-container { display: none !important; } }
     @media print {
         @page { size: landscape !important; margin: 0 !important; }
@@ -139,7 +138,9 @@ document.head.appendChild(style);
 document.body.insertAdjacentHTML('beforeend', `
     <div id="lightbox-modal">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <span class="lightbox-prev" onclick="changeLightbox(-1)">&#10094;</span>
         <img id="lightbox-img" src="">
+        <span class="lightbox-next" onclick="changeLightbox(1)">&#10095;</span>
     </div>
     <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
         <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
@@ -157,13 +158,28 @@ document.body.insertAdjacentHTML('beforeend', `
     </div>
 `);
 
-window.openLightbox = (src) => {
-    document.getElementById('lightbox-img').src = src;
+window.lightboxImages = [];
+window.lightboxIndex = 0;
+
+window.openLightbox = (index) => {
+    if(!window.lightboxImages || window.lightboxImages.length === 0) return;
+    window.lightboxIndex = index;
+    document.getElementById('lightbox-img').src = window.lightboxImages[window.lightboxIndex];
     document.getElementById('lightbox-modal').style.display = 'flex';
+    
+    const showArrows = window.lightboxImages.length > 1 ? 'block' : 'none';
+    document.querySelector('.lightbox-prev').style.display = showArrows;
+    document.querySelector('.lightbox-next').style.display = showArrows;
 }
 window.closeLightbox = () => {
     document.getElementById('lightbox-modal').style.display = 'none';
     document.getElementById('lightbox-img').src = "";
+}
+window.changeLightbox = (dir) => {
+    window.lightboxIndex += dir;
+    if (window.lightboxIndex >= window.lightboxImages.length) window.lightboxIndex = 0;
+    if (window.lightboxIndex < 0) window.lightboxIndex = window.lightboxImages.length - 1;
+    document.getElementById('lightbox-img').src = window.lightboxImages[window.lightboxIndex];
 }
 
 const firebaseConfig = {
@@ -190,7 +206,6 @@ const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
 
-// MOBİL GİRİŞ (LOGIN) EKRANINA BAŞLIK EKLEME
 if (loginForm) {
     const mobileHeader = document.createElement('div');
     mobileHeader.className = 'mobile-login-header';
@@ -204,10 +219,11 @@ window.currentRenderedProduct = null;
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
-async function loadNgrokImage(imgElement, sourceUrl) {
+async function loadNgrokImage(imgElement, sourceUrl, index) {
     if (sourceUrl.startsWith('data:image')) {
         imgElement.src = sourceUrl;
-        imgElement.onclick = () => openLightbox(sourceUrl);
+        window.lightboxImages[index] = sourceUrl;
+        imgElement.onclick = () => openLightbox(index);
         return;
     }
 
@@ -228,11 +244,13 @@ async function loadNgrokImage(imgElement, sourceUrl) {
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
         imgElement.src = objectUrl;
-        imgElement.onclick = () => openLightbox(objectUrl);
+        window.lightboxImages[index] = objectUrl;
+        imgElement.onclick = () => openLightbox(index);
         
     } catch (error) {
-        console.error("Resim Çekilemedi:", error);
         imgElement.src = noImageSvg; 
+        window.lightboxImages[index] = noImageSvg;
+        imgElement.onclick = () => openLightbox(index);
     }
 }
 
@@ -411,7 +429,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz. İlk sorgulama 30 saniye kadar sürebilir. Lütfen bekleyiniz...)</div>`;
     }
     
     let dbUrls = []; 
@@ -456,23 +474,24 @@ window.autoFetchUTS = async (id, barkod) => {
         console.error("Veritabanı Kayıt Hatası:", dbError);
     }
 
-    // EKRANA ÇİZİM İŞLEMİ
     if (gorselContainer) {
         gorselContainer.innerHTML = '';
         const imgQueue = [];
+        window.lightboxImages = []; 
         
         dbUrls.forEach((url, idx) => {
+            window.lightboxImages.push(url); 
             const imgId = `img-fetch-${id}-${idx}`;
             const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
             
-            gorselContainer.innerHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            imgQueue.push({ id: imgId, url: url });
+            gorselContainer.innerHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgQueue.push({ id: imgId, url: url, index: idx });
         });
         
         setTimeout(() => {
             imgQueue.forEach(item => {
                 const imgEl = document.getElementById(item.id);
-                if(imgEl) loadNgrokImage(imgEl, item.url);
+                if(imgEl) loadNgrokImage(imgEl, item.url, item.index);
             });
         }, 100);
     }
@@ -641,14 +660,16 @@ function renderCard(data) {
 
     let gorselHTML = '';
     const imgLoadQueue = [];
+    window.lightboxImages = []; 
 
     if (data.utsGorseller && data.utsGorseller.length > 0) {
         data.utsGorseller.forEach((url, index) => {
+            window.lightboxImages.push(url); 
             const imgId = `img-render-${data.docId}-${index}`;
             const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
             
-            gorselHTML += `<img id="${imgId}" src="${loadingSvg}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            imgLoadQueue.push({ id: imgId, url: url });
+            gorselHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${index})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgLoadQueue.push({ id: imgId, url: url, index: index });
         });
     } else if (hasValidBarcode) {
         gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
@@ -731,7 +752,7 @@ function renderCard(data) {
         setTimeout(() => {
             imgLoadQueue.forEach(item => {
                 const imgEl = document.getElementById(item.id);
-                if(imgEl) loadNgrokImage(imgEl, item.url);
+                if(imgEl) loadNgrokImage(imgEl, item.url, item.index);
             });
         }, 100);
     }
