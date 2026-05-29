@@ -2,12 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// =========================================================================
-// NGROK TÜNEL ADRESİNİZİ BURAYA YAPIŞTIRIN
-// =========================================================================
 const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
-// Cloudflare Turnstile API & JsBarcode Entegrasyonu
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 cfScript.async = true;
@@ -235,7 +231,6 @@ const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
 
-// Placeholder ve Cloudflare Hazırlığı
 if (usernameInput) usernameInput.placeholder = "Kullanıcı Adı/E-mail";
 if (passwordInput) passwordInput.placeholder = "Şifre/Password";
 
@@ -249,7 +244,7 @@ if (loginForm) {
         const cfWrapper = document.createElement('div');
         cfWrapper.id = 'cf-turnstile-widget';
         cfWrapper.className = 'cf-turnstile';
-        cfWrapper.setAttribute('data-sitekey', 'SİTE_ANAHTARINIZI_BURAYA_GİRİN'); 
+        cfWrapper.setAttribute('data-sitekey', '0x4AAAAAADYmA33uynV7f5VV'); 
         cfWrapper.style.margin = '15px auto';
         cfWrapper.style.display = 'flex';
         cfWrapper.style.justifyContent = 'center';
@@ -473,7 +468,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgu 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
     }
     
     let dbUrls = []; 
@@ -493,7 +488,7 @@ window.autoFetchUTS = async (id, barkod) => {
 
     } catch(e) {
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
         }
     }
 
@@ -751,7 +746,7 @@ function renderCard(data) {
                     </div>
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
-                        <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER (Orjinal)</div>
+                        <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
                         
                         <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
                             ${gorselHTML}
