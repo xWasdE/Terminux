@@ -53,6 +53,10 @@ style.innerHTML = `
     .edit-btn-group { display: flex; gap: 5px; }
     .mobile-break { word-break: break-all; }
 
+    #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
+    #login-form span:not(.mobile-login-header span) { display: none !important; }
+    #login-form span[data-role="username"]::after { content: "Kullanıcı Adı/E-mail"; color: #aaa; font-size: 14px; } 
+
     .mobile-login-header { display: none; }
 
     .btn-loading {
@@ -93,10 +97,6 @@ style.innerHTML = `
         #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
         #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
         #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
-        
-        #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
-        #login-form span:not(.mobile-login-header span) { display: none !important; }
-        
         #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
         #login-form button[type="submit"] { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
         .mobile-login-header { display: block !important; }
@@ -347,7 +347,7 @@ if(loginForm) {
             alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz."); 
             if (window.turnstile) turnstile.reset();
             if (loginBtn) {
-                loginBtn.textContent = "Giriş Yap";
+                loginBtn.textContent = "GİRİŞ YAP / LOGIN";
                 loginBtn.classList.remove('btn-loading');
                 loginBtn.disabled = false;
             }
@@ -493,7 +493,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem Sunucuları sorguluyor. (Her üründe ilk sorgu 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Ürün için yapılan ilk sorgu sunucuların yoğunluğuna bağlı olarak 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
     }
     
     let dbUrls = []; 
