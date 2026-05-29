@@ -429,7 +429,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz. İlk sorgulama 30 saniye kadar sürebilir. Lütfen bekleyiniz...)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgulama 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
     }
     
     let dbUrls = []; 
