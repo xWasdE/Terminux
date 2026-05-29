@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPe
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================================
-// NGROK TÜNEL ADRESİNİZİ BURAYA YAPIŞTIRIN
+// NGROK TÜNEL ADRESİNİZ
 // =========================================================================
 const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
@@ -21,7 +21,9 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
+    body, html { overflow-x: hidden; max-width: 100vw; margin: 0; padding: 0; }
     body { padding-bottom: 80px !important; }
+    
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
     .card-sidebar { flex: 1; display: flex; flex-direction: column; gap: 40px; }
@@ -31,6 +33,7 @@ style.innerHTML = `
     .title-text { font-size: 34px; font-weight: 800; color: #fff; line-height: 1.2; word-break: break-word; }
     .label-text { font-size: 11px; color: #666; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
     .value-text { font-size: 20px; font-family: monospace; font-weight: bold; }
+    .stock-value { font-size: 80px; font-weight: 800; line-height: 1; word-break: break-word; overflow-wrap: break-word; }
     
     .input-style { background: #000; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; font-family: monospace; width: 100%; max-width: 160px; font-size: 14px; outline: none; transition: border-color 0.2s; }
     .input-style:focus { border-color: #00ff00; }
@@ -41,14 +44,15 @@ style.innerHTML = `
     
     .flex-edit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .edit-btn-group { display: flex; gap: 5px; }
-    
-    .doc-link { background: #111; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: 0.2s; }
-    .doc-link:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .mobile-break { word-break: break-all; }
+
+    /* Login Screen Fixes for Mobile */
+    #login-screen { width: 100vw; min-height: 100vh; overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+    #login-screen > div, #login-form { max-width: 100% !important; box-sizing: border-box; }
 
     .legal-footer {
         position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888;
-        text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
+        text-align: center; padding: 16px 20px; font-size: 12px; z-index: 9999; border-top: 1px solid #1a1a1a;
         backdrop-filter: blur(8px); line-height: 1.5;
     }
     .legal-footer b { color: #aaa; font-weight: bold; }
@@ -59,29 +63,34 @@ style.innerHTML = `
     }
     #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
     .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; transition: 0.2s; }
-    .lightbox-close:hover { color: #ff3333; }
 
+    /* Mobile Responsive Optimizations */
     @media (max-width: 900px) {
-        body { padding: 15px !important; padding-bottom: 100px !important; }
-        .card-wrapper { flex-direction: column; gap: 20px; }
-        .card-main, .stock-box { padding: 25px; }
-        .grid-details { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; padding-top: 25px; }
-        .title-text { font-size: 24px; }
-        .value-text { font-size: 18px; }
-        .input-style { max-width: 100%; width: 100%; padding: 12px; font-size: 16px; margin-bottom: 5px; }
-        .btn-save, .btn-cancel { padding: 12px; font-size: 14px; flex: 1; }
-        .btn-edit { padding: 10px; font-size: 12px; margin-top: 5px; width: 100%; }
+        body { padding: 10px !important; padding-bottom: 120px !important; }
+        .card-wrapper { flex-direction: column; gap: 15px; }
+        .card-main, .stock-box { padding: 20px; }
+        
+        /* Compact Grid for Mobile */
+        .grid-details { grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 20px; }
+        .title-text { font-size: 20px; }
+        .label-text { font-size: 10px; }
+        .value-text { font-size: 14px; }
+        .stock-value { font-size: 40px !important; } /* Stop Overflow on TANIMSIZ */
+        
+        .input-style { font-size: 12px; padding: 8px; max-width: 100%; width: 100%; margin-bottom: 5px; }
+        .btn-save, .btn-cancel { padding: 8px 10px; font-size: 12px; flex: 1; }
+        .btn-edit { padding: 8px; font-size: 11px; margin-top: 5px; width: 100%; }
         .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
         .edit-btn-group { width: 100%; display: flex; gap: 10px; }
-        .doc-links-container { display: flex; flex-direction: column; gap: 10px; }
-        .doc-link { text-align: center; padding: 15px; width: 100%; }
-        .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 15px !important; }
-        .legal-footer { font-size: 11px; padding: 12px; }
+        .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 12px !important; }
+        .legal-footer { font-size: 10px; padding: 10px; }
+        svg { max-width: 100%; height: auto; }
     }
 
+    /* Yatay (Landscape) Print Motoru */
     @media screen { #print-container { display: none !important; } }
     @media print {
-        @page { margin: 0 !important; size: auto; }
+        @page { margin: 0 !important; size: landscape !important; } /* Yatay Baskı Zorlaması */
         body, html { margin: 0; padding: 0; background: #fff; display: block; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
@@ -129,7 +138,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
     </div>
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 `);
 
@@ -182,14 +191,10 @@ async function loadNgrokImage(imgElement, sourceUrl) {
         return;
     }
 
-    // Tam URL oluştur (Ngrok adresi + /downloads/...)
     let fullUrl = sourceUrl.startsWith('http') ? sourceUrl : UTS_API_ADRESI + sourceUrl;
-    
-    // Cache-buster: Tarayıcının eski resmi inatla göstermesini engellemek için url sonuna rastgele rakam ekliyoruz
     fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
 
     try {
-        // Ngrok uyarı sayfasını bypass ederek sadece resmi blob olarak indiriyoruz
         const response = await fetch(fullUrl, {
             method: 'GET',
             headers: {
@@ -384,15 +389,15 @@ window.executePrint = () => {
 };
 
 // =========================================================================
-// ÜTS MERKEZİ ENTEGRASYON VE VERİTABANI YÖNETİMİ
+// MERKEZİ ENTEGRASYON VE VERİTABANI YÖNETİMİ
 // =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem ÜTS sunucularını sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Lütfen bu sayfa açıkken bekleyiniz...)</div>`;
     }
     
-    let dbUrls = []; // Veritabanına sadece bu kısacık yollar yazılacak (1MB hatasını önler)
+    let dbUrls = []; 
 
     try {
         const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
@@ -409,7 +414,7 @@ window.autoFetchUTS = async (id, barkod) => {
 
     } catch(e) {
         if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: ÜTS arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
+            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
         }
     }
 
@@ -664,7 +669,7 @@ function renderCard(data) {
                     </div>
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
-                        <div class="label-text" style="margin-bottom:15px;">ÜTS BELGELERİ VE GÖRSELLER (Orjinal)</div>
+                        <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
                         
                         <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
                             ${gorselHTML}
@@ -675,7 +680,7 @@ function renderCard(data) {
                 <div class="card-sidebar">
                     <div class="stock-box">
                         <div class="label-text" style="margin-bottom:15px; font-size:14px;">ANA DEPO STOK</div>
-                        <div style="font-size:80px; font-weight:800; color:${sAna.c}; line-height:1;">${sAna.t}</div>
+                        <div class="stock-value" style="color:${sAna.c};">${sAna.t}</div>
                         ${data.hasAna ? `
                             <div style="font-size: 13px; color: #555; margin-top: 15px;">MİN: ${data.minAlert} | MAX: ${data.max}</div>
                             <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 15px 0;"></div>
@@ -690,7 +695,7 @@ function renderCard(data) {
                     
                     <div class="stock-box">
                         <div class="label-text" style="margin-bottom:15px; font-size:14px;">AMELİYATHANE STOK</div>
-                        <div style="font-size:80px; font-weight:800; color:${sAm.c}; line-height:1;">${sAm.t}</div>
+                        <div class="stock-value" style="color:${sAm.c};">${sAm.t}</div>
                         ${data.hasAm ? `
                             <div style="font-size: 13px; color: #555; margin-top: 15px;">MİN: ${data.minAlert} | MAX: ${data.max}</div>
                             <div style="width: 100%; height: 1px; background: #1a1a1a; margin: 15px 0;"></div>
