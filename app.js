@@ -2,9 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// =========================================================================
-// NGROK TÜNEL ADRESİNİZ
-// =========================================================================
 const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
 const jsbScript = document.createElement('script');
@@ -23,6 +20,9 @@ style.innerHTML = `
     * { box-sizing: border-box; }
     body, html { overflow-x: hidden; max-width: 100vw; margin: 0; padding: 0; }
     body { padding-bottom: 80px !important; }
+    
+    /* Ana Arama Kutusu Optimizasyonu */
+    #main-search { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; transition: 0.3s; }
     
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -46,13 +46,12 @@ style.innerHTML = `
     .edit-btn-group { display: flex; gap: 5px; }
     .mobile-break { word-break: break-all; }
 
-    /* Login Screen Fixes for Mobile */
-    #login-screen { width: 100vw; min-height: 100vh; overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-    #login-screen > div, #login-form { max-width: 100% !important; box-sizing: border-box; }
+    /* Mobilde Login Ekranı İçin Gerekli Header Sınıfı (Web'de Gizli) */
+    .mobile-login-header { display: none; }
 
     .legal-footer {
         position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888;
-        text-align: center; padding: 16px 20px; font-size: 12px; z-index: 9999; border-top: 1px solid #1a1a1a;
+        text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
         backdrop-filter: blur(8px); line-height: 1.5;
     }
     .legal-footer b { color: #aaa; font-weight: bold; }
@@ -64,34 +63,50 @@ style.innerHTML = `
     #lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
     .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; transition: 0.2s; }
 
-    /* Mobile Responsive Optimizations */
+    /* MOBİL MÜKEMMELLEŞTİRME EKRANI */
     @media (max-width: 900px) {
         body { padding: 10px !important; padding-bottom: 120px !important; }
+        
+        /* Login Ekranı Tam Merkezleme ve Temizlik */
+        #login-screen { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
+        #login-screen > div:not(:has(#login-form)) { display: none !important; }
+        #login-screen > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+        #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
+        #login-form p, #login-form span, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
+        #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
+        #login-form button { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
+        .mobile-login-header { display: block !important; }
+
+        /* Arama Kutusu Küçültme */
+        #main-search { font-size: 16px !important; height: 50px !important; padding: 10px 15px !important; border-radius: 8px !important; }
+        #main-search::placeholder { font-size: 14px !important; }
+
+        /* Kart ve Tanımsız Taşma Engeli */
         .card-wrapper { flex-direction: column; gap: 15px; }
         .card-main, .stock-box { padding: 20px; }
+        .stock-value { font-size: 45px !important; } /* TANIMSIZ yazısının ekranı sağa kaydırmasını %100 önler */
         
-        /* Compact Grid for Mobile */
-        .grid-details { grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 20px; }
+        /* BARKOD / REF Kutu İçi Küçültme */
+        .grid-details { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; }
         .title-text { font-size: 20px; }
         .label-text { font-size: 10px; }
-        .value-text { font-size: 14px; }
-        .stock-value { font-size: 40px !important; } /* Stop Overflow on TANIMSIZ */
-        
-        .input-style { font-size: 12px; padding: 8px; max-width: 100%; width: 100%; margin-bottom: 5px; }
-        .btn-save, .btn-cancel { padding: 8px 10px; font-size: 12px; flex: 1; }
-        .btn-edit { padding: 8px; font-size: 11px; margin-top: 5px; width: 100%; }
+        .value-text { font-size: 13px; }
+        .input-style { font-size: 12px; padding: 8px; margin-bottom: 5px; max-width: 100%; width: 100%; }
+        .btn-save, .btn-cancel { padding: 8px 10px; font-size: 12px; }
+        .btn-edit { padding: 6px; font-size: 10px; margin-top: 5px; width: 100%; }
         .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
-        .edit-btn-group { width: 100%; display: flex; gap: 10px; }
+        .edit-btn-group { width: 100%; display: flex; gap: 5px; }
+        svg { max-height: 30px !important; width: auto !important; } /* SVG Barkod mobilde küçültüldü */
+
         .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 12px !important; }
         .legal-footer { font-size: 10px; padding: 10px; }
-        svg { max-width: 100%; height: auto; }
     }
 
-    /* Yatay (Landscape) Print Motoru */
+    /* KUSURSUZ YATAY (LANDSCAPE) YAZDIRMA MOTORU */
     @media screen { #print-container { display: none !important; } }
     @media print {
-        @page { margin: 0 !important; size: landscape !important; } /* Yatay Baskı Zorlaması */
-        body, html { margin: 0; padding: 0; background: #fff; display: block; }
+        @page { size: landscape !important; margin: 0 !important; }
+        body, html { margin: 0; padding: 0; background: #fff; display: block; width: 100%; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         .legal-footer { display: none !important; }
@@ -175,15 +190,20 @@ const searchInput = document.getElementById('main-search');
 const dropdown = document.getElementById('dropdown-results');
 const resultContainer = document.getElementById('result-container');
 
+// MOBİL GİRİŞ (LOGIN) EKRANINA BAŞLIK EKLEME
+if (loginForm) {
+    const mobileHeader = document.createElement('div');
+    mobileHeader.className = 'mobile-login-header';
+    mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
+    loginForm.insertBefore(mobileHeader, loginForm.firstChild);
+}
+
 let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
-// =========================================================================
-// NGROK GÜVENLİK DUVARI DELİCİ VE ÖNBELLEK TEMİZLEYİCİ
-// =========================================================================
 async function loadNgrokImage(imgElement, sourceUrl) {
     if (sourceUrl.startsWith('data:image')) {
         imgElement.src = sourceUrl;
@@ -388,9 +408,6 @@ window.executePrint = () => {
     setTimeout(() => { window.print(); }, 300);
 };
 
-// =========================================================================
-// MERKEZİ ENTEGRASYON VE VERİTABANI YÖNETİMİ
-// =========================================================================
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
