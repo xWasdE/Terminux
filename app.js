@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const UTS_API_ADRESI = "http://AWS_IP_ADRESINIZ:3001"; 
+const UTS_API_ADRESI = "BURAYA_NGROK_ADRESINIZI_YAZIN"; 
 
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -262,6 +262,7 @@ async function loadTelegramImage(imgElement, fileId, index) {
     }
 
     let fullUrl = `${UTS_API_ADRESI}/api/telegram-image?file_id=${fileId}`;
+    fullUrl += '&cb=' + new Date().getTime();
 
     try {
         const response = await fetch(fullUrl, {
