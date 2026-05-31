@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
+const UTS_API_ADRESI = "http://AWS_IP_ADRESINIZ:3001"; 
 
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -53,19 +53,9 @@ style.innerHTML = `
     .edit-btn-group { display: flex; gap: 5px; }
     .mobile-break { word-break: break-all; }
 
-    #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
-    #login-form span:not(.mobile-login-header span) { display: none !important; }
-    #login-form span[data-role="username"]::after { content: "Kullanıcı Adı/E-mail"; color: #aaa; font-size: 14px; } 
-
     .mobile-login-header { display: none; }
 
-    .btn-loading {
-        background: #333 !important;
-        color: #aaa !important;
-        opacity: 0.7;
-        pointer-events: none;
-        animation: btnPulse 1s infinite alternate;
-    }
+    .btn-loading { background: #333 !important; color: #aaa !important; opacity: 0.7; pointer-events: none; animation: btnPulse 1s infinite alternate; }
     @keyframes btnPulse { from { opacity: 0.7; } to { opacity: 1; } }
 
     .legal-footer {
@@ -91,12 +81,16 @@ style.innerHTML = `
         #app-screen > div:first-child > div:nth-child(1) { order: 1 !important; flex: 1 !important; } 
         #btn-logout { order: 2 !important; padding: 10px 15px !important; font-size: 11px !important; white-space: nowrap !important; } 
         #app-screen > div:first-child > div:has(#operator-name) { order: 3 !important; width: 100% !important; text-align: center !important; margin-top: 5px !important; font-size: 13px !important; justify-content: center !important; gap: 15px !important; } 
-        #operator-name { font-size: 13px !important; }
+        #operator-name { font-size: 13px !important; color: #0f0 !important; font-weight: bold !important; }
 
         #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
         #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
         #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
         #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
+        
+        #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
+        #login-form span:not(.mobile-login-header span) { display: none !important; }
+        
         #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
         #login-form button[type="submit"] { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
         .mobile-login-header { display: block !important; }
@@ -130,33 +124,33 @@ style.innerHTML = `
 
     @media screen { #print-container { display: none !important; } }
     @media print {
-        @page { size: landscape !important; margin: 0 !important; }
+        @page { margin: 0 !important; size: portrait !important; }
         body, html { margin: 0; padding: 0; background: #fff; display: block; width: 100%; }
         body * { visibility: hidden; }
         #print-container, #print-container * { visibility: visible; }
         .legal-footer { display: none !important; }
         
         #print-container {
-            position: absolute; left: 0; top: 0;
+            position: absolute; left: 0; top: 0.2cm; 
             display: grid;
-            grid-template-rows: repeat(4, 1.9cm); 
-            grid-auto-columns: 3.9cm; 
+            grid-template-rows: repeat(4, 2cm); 
+            grid-auto-columns: 4cm; 
             grid-auto-flow: column; 
-            column-gap: 0.2cm; row-gap: 0cm; 
+            column-gap: 0.3cm; row-gap: 0cm; 
             margin: 0; padding: 0; background: #fff; width: max-content;
         }
         .mini-label {
-            width: 3.9cm; height: 1.9cm; 
-            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            width: 4cm; height: 2cm; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; padding: 2px 4px; box-sizing: border-box; color: #000; font-family: Arial, sans-serif; page-break-inside: avoid;
         }
         .mini-label .p-name { 
-            font-size: 7px; font-weight: bold; width: 100%; text-align: left; 
+            font-size: 7px; font-weight: bold; width: 100%; text-align: center; 
             margin-bottom: 2px; text-transform: uppercase; 
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.1; 
         }
-        .mini-label svg { height: 0.8cm !important; width: 100% !important; max-width: 3.5cm; margin: 0; align-self: flex-start; }
-        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: left; margin-top: 1px; letter-spacing: 0.5px; } 
+        .mini-label svg { height: 0.9cm !important; width: 100% !important; max-width: 3.8cm; margin: 0; }
+        .mini-label .p-code { font-size: 8px; font-weight: bold; text-align: center; width: 100%; margin-top: 1px; letter-spacing: 0.5px; } 
     }
 `;
 document.head.appendChild(style);
@@ -259,16 +253,15 @@ window.currentRenderedProduct = null;
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
-async function loadNgrokImage(imgElement, sourceUrl, index) {
-    if (sourceUrl.startsWith('data:image')) {
-        imgElement.src = sourceUrl;
-        window.lightboxImages[index] = sourceUrl;
+async function loadTelegramImage(imgElement, fileId, index) {
+    if (fileId.startsWith('data:image')) {
+        imgElement.src = fileId;
+        window.lightboxImages[index] = fileId;
         imgElement.onclick = () => openLightbox(index);
         return;
     }
 
-    let fullUrl = sourceUrl.startsWith('http') ? sourceUrl : UTS_API_ADRESI + sourceUrl;
-    fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
+    let fullUrl = `${UTS_API_ADRESI}/api/telegram-image?file_id=${fileId}`;
 
     try {
         const response = await fetch(fullUrl, {
@@ -347,7 +340,7 @@ if(loginForm) {
             alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz."); 
             if (window.turnstile) turnstile.reset();
             if (loginBtn) {
-                loginBtn.textContent = "GİRİŞ YAP / LOGIN";
+                loginBtn.textContent = "Giriş Yap";
                 loginBtn.classList.remove('btn-loading');
                 loginBtn.disabled = false;
             }
@@ -493,7 +486,7 @@ window.executePrint = () => {
 window.autoFetchUTS = async (id, barkod) => {
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (Ürün için yapılan ilk sorgu sunucuların yoğunluğuna bağlı olarak 30 saniye kadar sürebilir. Lütfen bu sayfa açıkken bekleyiniz.)</div>`;
+        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgu 30 saniye kadar sürebilir. Lütfen bekleyiniz.)</div>`;
     }
     
     let dbUrls = []; 
@@ -555,7 +548,7 @@ window.autoFetchUTS = async (id, barkod) => {
         setTimeout(() => {
             imgQueue.forEach(item => {
                 const imgEl = document.getElementById(item.id);
-                if(imgEl) loadNgrokImage(imgEl, item.url, item.index);
+                if(imgEl) loadTelegramImage(imgEl, item.url, item.index);
             });
         }, 100);
     }
@@ -816,7 +809,7 @@ function renderCard(data) {
         setTimeout(() => {
             imgLoadQueue.forEach(item => {
                 const imgEl = document.getElementById(item.id);
-                if(imgEl) loadNgrokImage(imgEl, item.url, item.index);
+                if(imgEl) loadTelegramImage(imgEl, item.url, item.index);
             });
         }, 100);
     }
