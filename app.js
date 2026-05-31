@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
+const UTS_API_ADRESI = " https://anchor-crushing-constant.ngrok-free.dev"; 
 
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -484,7 +484,9 @@ window.executePrint = () => {
     setTimeout(() => { window.print(); }, 300);
 };
 
-window.autoFetchUTS = async (id, barkod) => {
+// YENİ GÜNCELLEME: Arayüzdeki ürün detayları sunucuya parametre olarak gönderiliyor.
+window.autoFetchUTS = async (data, barkod) => {
+    const id = data.docId;
     const gorselContainer = document.getElementById('uts-gorsel-container');
     if(gorselContainer) {
         gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgu 30 saniye kadar sürebilir. Lütfen bekleyiniz.)</div>`;
@@ -493,16 +495,23 @@ window.autoFetchUTS = async (id, barkod) => {
     let dbUrls = []; 
 
     try {
-        const response = await fetch(`${UTS_API_ADRESI}/api/uts?barkod=${barkod}`, {
+        const urlParams = new URLSearchParams({
+            barkod: barkod,
+            urunKodu: data.urunKodu,
+            urunAdi: data.urunAdi,
+            refNo: data.refNo
+        });
+
+        const response = await fetch(`${UTS_API_ADRESI}/api/uts?${urlParams.toString()}`, {
             headers: {
                 "Bypass-Tunnel-Reminder": "true",
                 "ngrok-skip-browser-warning": "true"
             }
         });
-        const data = await response.json(); 
+        const responseData = await response.json(); 
         
-        if (data.utsGorseller && data.utsGorseller.length > 0) {
-            dbUrls = data.utsGorseller;
+        if (responseData.utsGorseller && responseData.utsGorseller.length > 0) {
+            dbUrls = responseData.utsGorseller;
         }
 
     } catch(e) {
@@ -683,7 +692,8 @@ window.fetchAndDisplayProduct = async (code) => {
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
                 if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                    window.autoFetchUTS(mergedData.docId, targetBarcode);
+                    // YENİ GÜNCELLEME: Artık sadece ID'yi değil, tüm ürün bilgisini gönderiyoruz
+                    window.autoFetchUTS(mergedData, targetBarcode);
                 }
             }
 
