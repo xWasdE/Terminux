@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
@@ -24,7 +24,7 @@ if (!document.querySelector('meta[name="viewport"]')) {
 const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
-    body, html { overflow-x: hidden; max-width: 100vw; width: 100%; margin: 0; padding: 0; background: #000; }
+    body, html { overflow-x: hidden; max-width: 100vw; width: 100%; margin: 0; padding: 0; background: #000; font-family: sans-serif; }
     body { padding-bottom: 80px !important; }
     
     .hidden { display: none !important; }
@@ -291,6 +291,8 @@ async function loadTelegramImage(imgElement, fileId, index) {
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
+            localStorage.removeItem('terminux_catalog_cache');
+            localStorage.removeItem('terminux_catalog_time');
             await signOut(auth);
             window.location.reload();
         } catch (err) { alert("Sistem Hatası: Oturum kapatılamadı."); }
@@ -301,6 +303,17 @@ setPersistence(auth, browserLocalPersistence);
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
+        
+        onSnapshot(doc(db, "system", "version"), (snapshot) => {
+            if(snapshot.exists()) {
+                const data = snapshot.data();
+                const cacheTime = localStorage.getItem('terminux_catalog_time');
+                if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
+                    buildCatalog(true);
+                }
+            }
+        });
+
         await buildCatalog();
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(loginScreen) loginScreen.classList.add('hidden');
@@ -349,8 +362,21 @@ if(loginForm) {
     });
 }
 
-async function buildCatalog() {
+async function buildCatalog(forceUpdate = false) {
     try {
+        const CACHE_KEY = 'terminux_catalog_cache';
+        const CACHE_TIME_KEY = 'terminux_catalog_time';
+        const CACHE_EXPIRY_MS = 14400000;
+
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
+        const now = Date.now();
+
+        if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
+            productCatalog = JSON.parse(cachedData);
+            return;
+        }
+
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
         
@@ -374,6 +400,18 @@ async function buildCatalog() {
         anaSnap.forEach(processDoc);
         amSnap.forEach(processDoc);
         productCatalog = Array.from(tempMap.values());
+
+        localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
+        localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
+        if (forceUpdate && document.getElementById('main-search')) {
+            const toast = document.createElement('div');
+            toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
+            toast.innerText = "Sistem Veritabanı Güncellendi";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
     } catch (error) { console.error("Katalog hatası:", error); }
 }
 
@@ -484,44 +522,42 @@ window.executePrint = () => {
     setTimeout(() => { window.print(); }, 300);
 };
 
-// YENİ GÜNCELLEME: Arayüzdeki ürün detayları sunucuya parametre olarak gönderiliyor.
 window.autoFetchUTS = async (data, barkod) => {
     const id = data.docId;
     const gorselContainer = document.getElementById('uts-gorsel-container');
-    if(gorselContainer) {
-        gorselContainer.innerHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Sistem sunucuları sorguluyor. (İlk sorgu 30 saniye kadar sürebilir. Lütfen bekleyiniz.)</div>`;
+    let statusEl = document.getElementById(`uts-status-${id}`);
+    
+    if (gorselContainer) {
+        gorselContainer.innerHTML = '';
+        statusEl = document.createElement('div');
+        statusEl.id = `uts-status-${id}`;
+        statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
+        statusEl.innerHTML = "ÜTS Sunucuları Sorgulanıyor... (Lütfen bekleyiniz)";
+        gorselContainer.appendChild(statusEl);
     }
     
     let dbUrls = []; 
 
     try {
-        const urlParams = new URLSearchParams({
-            barkod: barkod,
-            urunKodu: data.urunKodu,
-            urunAdi: data.urunAdi,
-            refNo: data.refNo
-        });
-
+        const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
         const response = await fetch(`${UTS_API_ADRESI}/api/uts?${urlParams.toString()}`, {
-            headers: {
-                "Bypass-Tunnel-Reminder": "true",
-                "ngrok-skip-browser-warning": "true"
-            }
+            headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
         });
         const responseData = await response.json(); 
         
         if (responseData.utsGorseller && responseData.utsGorseller.length > 0) {
             dbUrls = responseData.utsGorseller;
         }
-
     } catch(e) {
-        if (gorselContainer) {
-            gorselContainer.innerHTML = `<div style="color:#ff3333; font-size:12px; font-weight:bold; padding-bottom:10px;">Sistem Hatası: Arka plan servisine ulaşılamadı. Sunucu bağlantısını kontrol ediniz.</div>`;
-        }
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ff3333;">Sistem Hatası: Arka plan servisine ulaşılamadı.</span>`;
+        return;
     }
 
     if (dbUrls.length === 0) {
         dbUrls.push(noImageSvg);
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">ÜTS'de görsel bulunamadı.</span>`;
+    } else {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. Hazırlanıyor...</span>`;
     }
 
     const updateData = { utsGorseller: dbUrls };
@@ -535,14 +571,18 @@ window.autoFetchUTS = async (data, barkod) => {
         if(amSnap.exists()) await updateDoc(amRef, updateData);
 
         const catItem = productCatalog.find(m => m.docId === id);
-        if(catItem) catItem.utsGorseller = dbUrls;
-        
-    } catch (dbError) {
-        console.error("Veritabanı Kayıt Hatası:", dbError);
-    }
+        if(catItem) {
+            catItem.utsGorseller = dbUrls;
+            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
+        }
+    } catch (dbError) {}
 
     if (gorselContainer) {
-        gorselContainer.innerHTML = '';
+        const imgWrapperDiv = document.createElement('div');
+        imgWrapperDiv.style.cssText = "display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; width: 100%;";
+        gorselContainer.appendChild(imgWrapperDiv);
+
+        let loadedCount = 0;
         const imgQueue = [];
         window.lightboxImages = []; 
         
@@ -551,14 +591,24 @@ window.autoFetchUTS = async (data, barkod) => {
             const imgId = `img-fetch-${id}-${idx}`;
             const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
             
-            gorselContainer.innerHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            imgWrapperDiv.innerHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             imgQueue.push({ id: imgId, url: url, index: idx });
         });
         
         setTimeout(() => {
-            imgQueue.forEach(item => {
+            imgQueue.forEach(async (item) => {
                 const imgEl = document.getElementById(item.id);
-                if(imgEl) loadTelegramImage(imgEl, item.url, item.index);
+                if(imgEl) {
+                    await loadTelegramImage(imgEl, item.url, item.index);
+                    loadedCount++;
+                    if (dbUrls[0] !== noImageSvg && statusEl) {
+                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. ${loadedCount}/${dbUrls.length} yüklendi.</span>`;
+                        if (loadedCount === dbUrls.length) {
+                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller hazır!</span>`;
+                            setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+                        }
+                    }
+                }
             });
         }, 100);
     }
@@ -603,6 +653,7 @@ window.saveUpdate = async (id, type) => {
             if (type === 'b') catItem.barkod = newVal;
             if (type === 'r') catItem.refNo = newVal;
             catItem.searchString = `${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`.toLowerCase();
+            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
         }
         
         fetchAndDisplayProduct(id); 
@@ -692,7 +743,6 @@ window.fetchAndDisplayProduct = async (code) => {
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
                 if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                    // YENİ GÜNCELLEME: Artık sadece ID'yi değil, tüm ürün bilgisini gönderiyoruz
                     window.autoFetchUTS(mergedData, targetBarcode);
                 }
             }
@@ -731,16 +781,17 @@ function renderCard(data) {
     window.lightboxImages = []; 
 
     if (data.utsGorseller && data.utsGorseller.length > 0) {
+        let internalImgs = '';
         data.utsGorseller.forEach((url, index) => {
             window.lightboxImages.push(url); 
             const imgId = `img-render-${data.docId}-${index}`;
             const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
-            
-            gorselHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${index})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+            internalImgs += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${index})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
             imgLoadQueue.push({ id: imgId, url: url, index: index });
         });
+        gorselHTML = `<div style="display: flex; gap: 15px; flex-wrap: wrap; width: 100%;">${internalImgs}</div>`;
     } else if (hasValidBarcode) {
-        gorselHTML = `<div style="color:#555; font-size:12px; font-weight:bold; padding: 20px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
+        gorselHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
     } else {
         gorselHTML = `<div style="width: 100px; height: 100px; background: #111; border: 1px dashed #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; font-weight: bold; text-align: center; line-height:1.4;">BARKOD<br>GEREKLİ</div>`;
     }
@@ -776,8 +827,7 @@ function renderCard(data) {
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
                         <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
-                        
-                        <div id="uts-gorsel-container" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 100px;">
+                        <div id="uts-gorsel-container" style="min-height: 100px;">
                             ${gorselHTML}
                         </div>
                     </div>
