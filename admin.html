@@ -11,7 +11,7 @@
         .upload-section { border: 1px solid #222; padding: 25px; background: #0a0a0a; border-radius: 4px; }
         input { background: #000; border: 1px solid #222; color: #fff; padding: 15px; width: 100%; box-sizing: border-box; }
         label { font-size: 11px; color: #666; text-transform: uppercase; display: block; margin-bottom: 12px; letter-spacing: 1px; font-weight: bold; }
-        button { background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 15px; }
+        button { background: #fff; color: #000; border: none; padding: 15px; font-weight: 800; cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 15px; transition: opacity 0.2s; }
         button:hover { opacity: 0.8; }
         .btn-ana { background: #00ff00; color: #000; }
         .btn-am { background: #00ccff; color: #000; }
@@ -70,12 +70,19 @@
             </div>
         </div>
 
+        <div class="sep"></div>
+
+        <label>3. AŞAMA: SİSTEM SENKRONİZASYONU</label>
+        <div class="upload-section" style="text-align: center;">
+            <p style="color: #888; font-size: 12px; margin-top: 0; margin-bottom: 15px;">Veritabanı güncellemeleri tamamlandıktan sonra tüm istemcilerdeki önbelleği (cache) temizleyip yeni verileri çekmeye zorlamak için aşağıdaki butonu kullanın.</p>
+            <button id="btn-sync-global" style="background: #ff3333; color: #fff; width: 60%; font-size: 14px;">SİSTEMİ SENKRONİZE ET (TÜM CİHAZLARI GÜNCELLE)</button>
+        </div>
+
         <div id="log" class="log">Sistem komut bekliyor...</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // EKLENEN KISIM: collection ve getDocs (Veritabanı Okuması için eklendi)
         import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -111,7 +118,15 @@
             return rowKeys.some(k => keys.includes(k.trim().toLowerCase()));
         };
 
-        // Manuel Ekleme
+        document.getElementById('btn-sync-global').addEventListener('click', async () => {
+            try {
+                await setDoc(doc(db, "system", "version"), { lastUpdate: Date.now() });
+                logger("🚀 SİSTEM SENKRONİZASYON SİNYALİ GÖNDERİLDİ! Terminaller güncelleniyor...");
+            } catch(e) {
+                logger("Senkronizasyon hatası: " + e.message);
+            }
+        });
+
         document.getElementById('btn-m').addEventListener('click', async () => {
             const id = document.getElementById('m-kod').value.trim();
             const ad = document.getElementById('m-ad').value.trim();
@@ -130,9 +145,6 @@
             document.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => el.value = '');
         });
 
-        // =======================================================================
-        // ANA EXCEL YÜKLEME (KOTA KORUMASI VE KÖR YAZMA ENGELİ AKTİF)
-        // =======================================================================
         async function processPrimaryExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return logger("Lütfen Excel dosyası seçin.");
@@ -144,9 +156,7 @@
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 logger(`(${depoType} - BİRİNCİL) ${rows.length} satır analiz ediliyor...`);
-                logger(`Lütfen bekleyin, veritabanı ile Akıllı Karşılaştırma yapılıyor...`);
 
-                // 1. ADIM: MEVCUT VERİTABANINI HAFIZAYA AL (Yazma Kotası Harcamamak İçin)
                 const dbCache = {};
                 try {
                     const snapshot = await getDocs(collection(db, collectionName));
@@ -177,7 +187,6 @@
                     }
                     if(!refNoStr) refNoStr = "BULUNAMADI";
 
-                    // GÜNCELLENECEK VERİ PAKETİ (Burada barkod veya utsGorseller yok!)
                     const newData = {
                         urunKodu: id,
                         urunAdi: urunAdiStr,
@@ -189,13 +198,11 @@
                         miktar: parseInt(getCol(r, ["miktar", "stok"])) || 0
                     };
 
-                    // KÖR YAZMA ENGELİ: Sadece Excel'de barkod cidden varsa pakete ekle
                     const excelBarkod = getCol(r, ["barkod", "barcode"]);
                     if (excelBarkod) {
                         newData.barkod = excelBarkod;
                     }
 
-                    // Alt Grup Adı ve Diğerleri Tam Yakalama
                     if (hasCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
                         newData.altGrup = getCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
                     }
@@ -211,40 +218,31 @@
                         newData.reuse = (rawReuse === "REUSE") ? "REUSE" : "REUSE DEĞİL";
                     }
 
-                    // 2. ADIM: AKILLI KARŞILAŞTIRMA (DELTA CHECK)
                     const oldData = dbCache[id] || {};
                     let isDifferent = false;
                     
                     for (let key in newData) {
-                        // Eğer eski veri ile yeni veri birbirinden farklıysa güncelleme kararı al
                         if (oldData[key] != newData[key]) {
                             isDifferent = true;
                             break;
                         }
                     }
 
-                    // Eğer ürün veritabanında zaten varsa VE hiçbir bilgisi değişmemişse, YAZMA İŞLEMİNİ ATLA (Kota Tasarrufu)
                     if (!isDifferent && Object.keys(oldData).length > 0) {
                         skipCount++;
                         continue; 
                     }
 
-                    // Sadece Değişenleri veya Yeni Eklenenleri Yaz!
                     await setDoc(doc(db, collectionName, id), newData, { merge: true });
                     updateCount++;
                 }
                 
-                logger(`✅ (${depoType}) İŞLEM BİTTİ!`);
-                logger(`⬆️ Firebase'e Yazılan/Güncellenen Kayıt: <b>${updateCount}</b>`);
-                logger(`🛡️ Değişmediği İçin Atlanan (Kota Tasarrufu): <b style='color:#ffbc00;'>${skipCount}</b>`);
+                logger(`✅ (${depoType}) İŞLEM BİTTİ! Yazılan: <b>${updateCount}</b> | Atlanan: <b style='color:#ffbc00;'>${skipCount}</b>`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // =======================================================================
-        // EK VERİ YÜKLEME (AKILLI KOTA KORUMASI AKTİF)
-        // =======================================================================
         async function processExtraDataExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return logger("Lütfen Güncelleme Excel dosyası seçin.");
@@ -257,7 +255,6 @@
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 logger(`(${depoType} - GÜNCELLEME) ${rows.length} satır analiz ediliyor...`);
 
-                // MEVCUT VERİTABANINI HAFIZAYA AL
                 const dbCache = {};
                 try {
                     const snapshot = await getDocs(collection(db, collectionName));
@@ -303,7 +300,6 @@
                             }
                         }
 
-                        // Veri aynıysa kotadan tasarruf et
                         if (!isDifferent && Object.keys(oldData).length > 0) {
                             skipCount++;
                             continue;
@@ -314,7 +310,7 @@
                     }
                 }
                 
-                logger(`✅ (${depoType}) GÜNCELLEME BİTTİ! Güncellenen: <b>${updateCount}</b> | Tasarruf Edilen: <b style='color:#ffbc00;'>${skipCount}</b>`);
+                logger(`✅ (${depoType}) GÜNCELLEME BİTTİ! Güncellenen: <b>${updateCount}</b> | Atlanan: <b style='color:#ffbc00;'>${skipCount}</b>`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
