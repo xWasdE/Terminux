@@ -524,15 +524,15 @@ window.executePrint = () => {
 
 window.autoFetchUTS = async (data, barkod) => {
     const id = data.docId;
-    const gorselContainer = document.getElementById('uts-gorsel-container');
-    let statusEl = document.getElementById(`uts-status-${id}`);
+    const gorselContainer = document.getElementById('gorsel-container');
+    let statusEl = document.getElementById(`fetch-status-${id}`);
     
     if (gorselContainer) {
         gorselContainer.innerHTML = '';
         statusEl = document.createElement('div');
-        statusEl.id = `uts-status-${id}`;
+        statusEl.id = `fetch-status-${id}`;
         statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
-        statusEl.innerHTML = "ÜTS Sunucuları Sorgulanıyor... (Lütfen bekleyiniz)";
+        statusEl.innerHTML = "Merkezi Sistem Sorgulanıyor... (Lütfen bekleyiniz)";
         gorselContainer.appendChild(statusEl);
     }
     
@@ -555,7 +555,7 @@ window.autoFetchUTS = async (data, barkod) => {
 
     if (dbUrls.length === 0) {
         dbUrls.push(noImageSvg);
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">ÜTS'de görsel bulunamadı.</span>`;
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Sistemde kayıtlı görsel bulunamadı.</span>`;
     } else {
         if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. Hazırlanıyor...</span>`;
     }
@@ -595,22 +595,23 @@ window.autoFetchUTS = async (data, barkod) => {
             imgQueue.push({ id: imgId, url: url, index: idx });
         });
         
-        setTimeout(() => {
-            imgQueue.forEach(async (item) => {
-                const imgEl = document.getElementById(item.id);
-                if(imgEl) {
-                    await loadTelegramImage(imgEl, item.url, item.index);
+        imgQueue.forEach((item) => {
+            const imgEl = document.getElementById(item.id);
+            if(imgEl) {
+                loadTelegramImage(imgEl, item.url, item.index).then(() => {
                     loadedCount++;
                     if (dbUrls[0] !== noImageSvg && statusEl) {
-                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. ${loadedCount}/${dbUrls.length} yüklendi.</span>`;
+                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. [${loadedCount}/${dbUrls.length}] hazırlandı.</span>`;
                         if (loadedCount === dbUrls.length) {
-                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller hazır!</span>`;
-                            setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller başarıyla yüklendi!</span>`;
+                            setTimeout(() => { 
+                                if (statusEl) statusEl.style.display = 'none'; 
+                            }, 4000);
                         }
                     }
-                }
-            });
-        }, 100);
+                });
+            }
+        });
     }
 };
 
@@ -827,7 +828,7 @@ function renderCard(data) {
 
                     <div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">
                         <div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>
-                        <div id="uts-gorsel-container" style="min-height: 100px;">
+                        <div id="gorsel-container" style="min-height: 100px;">
                             ${gorselHTML}
                         </div>
                     </div>
