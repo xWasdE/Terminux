@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
@@ -304,6 +304,16 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
+        onSnapshot(doc(db, "system", "version"), (snapshot) => {
+            if(snapshot.exists()) {
+                const data = snapshot.data();
+                const cacheTime = localStorage.getItem('terminux_catalog_time');
+                if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
+                    buildCatalog(true);
+                }
+            }
+        });
+
         await buildCatalog();
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(loginScreen) loginScreen.classList.add('hidden');
@@ -352,7 +362,7 @@ if(loginForm) {
     });
 }
 
-async function buildCatalog() {
+async function buildCatalog(forceUpdate = false) {
     try {
         const CACHE_KEY = 'terminux_catalog_cache';
         const CACHE_TIME_KEY = 'terminux_catalog_time';
@@ -362,7 +372,7 @@ async function buildCatalog() {
         const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
         const now = Date.now();
 
-        if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
+        if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
             productCatalog = JSON.parse(cachedData);
             return;
         }
@@ -393,6 +403,14 @@ async function buildCatalog() {
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
         localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
+        if (forceUpdate && document.getElementById('main-search')) {
+            const toast = document.createElement('div');
+            toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
+            toast.innerText = "Sistem Veritabanı Güncellendi";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
 
     } catch (error) {}
 }
@@ -514,7 +532,7 @@ window.autoFetchCentral = async (data, barkod) => {
         statusEl = document.createElement('div');
         statusEl.id = `fetch-status-${id}`;
         statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
-        statusEl.innerHTML = "Merkezi Sistem Kayıtları Aranıyor... (Bu işlem ağ hızına bağlı olarak 15-30 sn sürebilir)";
+        statusEl.innerHTML = "Sisteme bağlanılıyor...";
         gorselContainer.appendChild(statusEl);
     }
     
@@ -525,10 +543,39 @@ window.autoFetchCentral = async (data, barkod) => {
         const response = await fetch(`${MERKEZ_API_ADRESI}/api/uts?${urlParams.toString()}`, {
             headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
         });
-        const responseData = await response.json(); 
-        
-        if (responseData.utsGorseller && responseData.utsGorseller.length > 0) {
-            dbUrls = responseData.utsGorseller;
+
+        if (!response.body) throw new Error();
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let partialChunk = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            partialChunk += decoder.decode(value, { stream: true });
+            const lines = partialChunk.split('\n\n');
+            partialChunk = lines.pop();
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const resData = JSON.parse(line.substring(6));
+                    
+                    if (resData.type === "INFO") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ccff;">${resData.msg}</span>`;
+                    } else if (resData.type === "COUNT") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">${resData.count} adet görsel bulundu. Aktarım başlatılıyor...</span>`;
+                    } else if (resData.type === "PROGRESS") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${resData.total} görsel bulundu. ${resData.current}. görsel yüklendi. (${resData.current}/${resData.total})</span>`;
+                    } else if (resData.type === "DONE") {
+                        dbUrls = resData.data;
+                        break;
+                    } else if (resData.type === "ERROR") {
+                        throw new Error(resData.msg);
+                    }
+                }
+            }
         }
     } catch(e) {
         if (statusEl) statusEl.innerHTML = `<span style="color:#ff3333;">Sistem Hatası: Arka plan servisine ulaşılamadı.</span>`;
@@ -537,9 +584,12 @@ window.autoFetchCentral = async (data, barkod) => {
 
     if (dbUrls.length === 0) {
         dbUrls.push(noImageSvg);
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Merkezi sistemde kayıtlı görsel bulunamadı.</span>`;
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Sistemde kayıtlı görsel bulunamadı.</span>`;
     } else {
-        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. Yükleme işlemi başlatılıyor...</span>`;
+        if (statusEl) {
+            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Görseller başarıyla hazırlandı! Ekrana yansıtılıyor...</span>`;
+            setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 3000);
+        }
     }
 
     const updateData = { utsGorseller: dbUrls };
@@ -577,23 +627,10 @@ window.autoFetchCentral = async (data, barkod) => {
                 imgWrapperDiv.insertAdjacentHTML('beforeend', `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`);
             }
 
-            let loadedCount = 0;
             for (let idx = 0; idx < dbUrls.length; idx++) {
                 const imgEl = document.getElementById(`img-fetch-${id}-${idx}`);
                 if(imgEl) {
-                    if (statusEl) {
-                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} görsel bulundu. ${loadedCount + 1}/${dbUrls.length} cihazınıza indiriliyor...</span>`;
-                    }
                     await loadTelegramImage(imgEl, dbUrls[idx], idx);
-                    loadedCount++;
-                    if (loadedCount === dbUrls.length) {
-                        if (statusEl) {
-                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller başarıyla hazırlandı!</span>`;
-                            setTimeout(() => { 
-                                if (statusEl) statusEl.style.display = 'none'; 
-                            }, 4000);
-                        }
-                    }
                 }
             }
         }
