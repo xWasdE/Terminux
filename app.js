@@ -235,82 +235,19 @@ window.openLightbox = (index) => {
     const showArrows = window.lightboxImages.length > 1 ? 'block' : 'none';
     document.querySelector('.lightbox-prev').style.display = showArrows;
     document.querySelector('.lightbox-next').style.display = showArrows;
-}
+};
+
 window.closeLightbox = () => {
     document.getElementById('lightbox-modal').style.display = 'none';
     document.getElementById('lightbox-img').src = "";
-}
+};
+
 window.changeLightbox = (dir) => {
     window.lightboxIndex += dir;
     if (window.lightboxIndex >= window.lightboxImages.length) window.lightboxIndex = 0;
     if (window.lightboxIndex < 0) window.lightboxIndex = window.lightboxImages.length - 1;
     document.getElementById('lightbox-img').src = window.lightboxImages[window.lightboxIndex];
-}
-
-const firebaseConfig = {
-    apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
-    authDomain: "terminux-wms.firebaseapp.com",
-    projectId: "terminux-wms",
-    storageBucket: "terminux-wms.firebasestorage.app",
-    messagingSenderId: "427323493367",
-    appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
 };
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-const loadingScreen = document.getElementById('loading-screen');
-const loginScreen = document.getElementById('login-screen');
-const appScreen = document.getElementById('app-screen');
-const loginForm = document.getElementById('login-form');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const operatorName = document.getElementById('operator-name');
-const searchInput = document.getElementById('main-search');
-const dropdown = document.getElementById('dropdown-results');
-const resultContainer = document.getElementById('result-container');
-
-if (usernameInput) usernameInput.placeholder = "Kullanıcı Adı/E-mail";
-if (passwordInput) passwordInput.placeholder = "Şifre/Password";
-
-if (loginForm) {
-    const mobileHeader = document.createElement('div');
-    mobileHeader.className = 'mobile-login-header';
-    mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
-    loginForm.insertBefore(mobileHeader, loginForm.firstChild);
-
-    if (!document.getElementById('cf-turnstile-widget')) {
-        const cfWrapper = document.createElement('div');
-        cfWrapper.id = 'cf-turnstile-widget';
-        cfWrapper.className = 'cf-turnstile';
-        cfWrapper.setAttribute('data-sitekey', '0x4AAAAAADYmA33uynV7f5VV'); 
-        cfWrapper.style.margin = '15px auto';
-        cfWrapper.style.display = 'flex';
-        cfWrapper.style.justifyContent = 'center';
-        loginForm.insertBefore(cfWrapper, loginForm.querySelector('button[type="submit"]'));
-    }
-}
-
-if (searchInput) {
-    const parent = searchInput.parentNode;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'top-search-container';
-    parent.insertBefore(wrapper, searchInput);
-    wrapper.appendChild(searchInput);
-    
-    const camBtn = document.createElement('button');
-    camBtn.className = 'btn-camera';
-    camBtn.innerHTML = '📷';
-    camBtn.onclick = startScanner;
-    wrapper.appendChild(camBtn);
-}
-
-let productCatalog = [];
-let searchTimeout = null;
-window.currentRenderedProduct = null;
-
-const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
 function parseUDI(rawString) {
     let cleanStr = rawString.trim();
@@ -326,11 +263,12 @@ window.startScanner = () => {
     document.getElementById('scanner-modal').style.display = 'flex';
     window.html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
     window.html5QrcodeScanner.render((decodedText) => {
-        stopScanner();
+        window.stopScanner();
         const parsedCode = parseUDI(decodedText);
-        if(searchInput) {
-            searchInput.value = parsedCode;
-            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        const searchInputEl = document.getElementById('main-search');
+        if(searchInputEl) {
+            searchInputEl.value = parsedCode;
+            searchInputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
         }
     }, (error) => {});
 };
@@ -454,6 +392,353 @@ window.executeBatchPrint = () => {
     setTimeout(() => { window.print(); }, 400);
 };
 
+window.openPrintModal = () => {
+    if (!window.currentRenderedProduct) return alert("Hata: Yazdırılacak ürün verisi bulunamadı.");
+    document.getElementById('print-modal').style.display = 'flex';
+};
+
+window.closePrintModal = () => { 
+    document.getElementById('print-modal').style.display = 'none'; 
+};
+
+window.executeSinglePrint = () => {
+    const data = window.currentRenderedProduct;
+    let printQty = document.getElementById('print-qty-input').value;
+    printQty = parseInt(printQty);
+
+    if (!printQty || printQty <= 0) return;
+
+    let targetBarcode = data.urunKodu; 
+    let printContainer = document.getElementById('print-container');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'print-container';
+        document.body.appendChild(printContainer);
+    }
+    printContainer.innerHTML = ''; 
+
+    for(let i=0; i < printQty; i++) {
+        const label = document.createElement('div');
+        label.className = 'mini-label';
+        label.innerHTML = `
+            <div class="p-name">${data.urunAdi}</div>
+            <svg id="print-bc-${i}"></svg>
+            <div class="p-code">${data.urunKodu}</div>
+        `;
+        printContainer.appendChild(label);
+    }
+
+    if(window.JsBarcode) {
+        for(let i=0; i < printQty; i++) {
+            JsBarcode(`#print-bc-${i}`, targetBarcode, {
+                format: "CODE128", width: 1.2, height: 30, displayValue: false, margin: 0
+            });
+        }
+    }
+
+    window.closePrintModal();
+    setTimeout(() => { window.print(); }, 300);
+};
+
+window.editField = (id, type) => {
+    document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
+    document.getElementById(`edit-${type}-${id}`).style.display = 'flex';
+};
+
+window.cancelEdit = (id, type) => {
+    document.getElementById(`txt-container-${type}-${id}`).style.display = 'flex';
+    document.getElementById(`edit-${type}-${id}`).style.display = 'none';
+};
+
+window.saveUpdate = async (id, type) => {
+    const inputEl = document.getElementById(`man-${type}-${id}`);
+    const newVal = inputEl ? inputEl.value.trim() : null;
+
+    if (!newVal) return alert("Hata: Veri alanı boş bırakılamaz.");
+
+    const updateData = {};
+    if (type === 'b') {
+        updateData.barkod = newVal;
+        updateData.utsGorseller = []; 
+    } else if (type === 'r') {
+        updateData.refNo = newVal;
+    } else if (type === 'm') {
+        updateData.miatTarihi = newVal;
+    }
+
+    try {
+        const anaRef = doc(db, "ana_depo", id);
+        const amRef = doc(db, "ameliyathane", id);
+        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        
+        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
+        if(amSnap.exists()) await updateDoc(amRef, updateData);
+        
+        const catItem = productCatalog.find(m => m.docId === id);
+        if (catItem) {
+            if (type === 'b') catItem.barkod = newVal;
+            if (type === 'r') catItem.refNo = newVal;
+            if (type === 'm') catItem.miatTarihi = newVal;
+            catItem.searchString = `${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`.toLowerCase();
+            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
+            renderMiatDashboard();
+        }
+        
+        window.fetchAndDisplayProduct(id); 
+    } catch (err) { alert("Sistem Hatası: " + err.message); }
+};
+
+window.autoFetchCentral = async (data, barkod) => {
+    const id = data.docId;
+    const gorselContainer = document.getElementById('gorsel-container');
+    let statusEl = document.getElementById(`fetch-status-${id}`);
+    
+    if (gorselContainer) {
+        gorselContainer.innerHTML = '';
+        statusEl = document.createElement('div');
+        statusEl.id = `fetch-status-${id}`;
+        statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
+        statusEl.innerHTML = "Merkezi Sisteme Bağlanılıyor...";
+        gorselContainer.appendChild(statusEl);
+    }
+    
+    let dbUrls = []; 
+
+    try {
+        const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
+        const response = await fetch(`${MERKEZ_API_ADRESI}/api/uts?${urlParams.toString()}`, {
+            headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
+        });
+
+        if (!response.body) throw new Error();
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let partialChunk = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            partialChunk += decoder.decode(value, { stream: true });
+            const lines = partialChunk.split('\n\n');
+            partialChunk = lines.pop();
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const resData = JSON.parse(line.substring(6));
+                    
+                    if (resData.type === "INFO") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ccff;">${resData.msg}</span>`;
+                    } else if (resData.type === "COUNT") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">${resData.count} adet görsel bulundu. Hazırlanıyor...</span>`;
+                    } else if (resData.type === "PROGRESS") {
+                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${resData.total} adet görsel bulundu. ${resData.current}. görsel yüklendi. (${resData.current}/${resData.total})</span>`;
+                    } else if (resData.type === "DONE") {
+                        dbUrls = resData.data;
+                        break;
+                    } else if (resData.type === "ERROR") {
+                        throw new Error(resData.msg);
+                    }
+                }
+            }
+        }
+    } catch(e) {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ff3333;">Sistem Hatası: Arka plan servisine ulaşılamadı.</span>`;
+        return;
+    }
+
+    if (dbUrls.length === 0) {
+        dbUrls.push(noImageSvg);
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Merkezi sistemde kayıtlı görsel bulunamadı.</span>`;
+    } else {
+        if (statusEl) {
+            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Görseller başarıyla hazırlandı! Ekrana yansıtılıyor...</span>`;
+            setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 3000);
+        }
+    }
+
+    const updateData = { utsGorseller: dbUrls };
+    
+    try {
+        const anaRef = doc(db, "ana_depo", id);
+        const amRef = doc(db, "ameliyathane", id);
+        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        
+        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
+        if(amSnap.exists()) await updateDoc(amRef, updateData);
+
+        const catItem = productCatalog.find(m => m.docId === id);
+        if(catItem) {
+            catItem.utsGorseller = dbUrls;
+            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
+        }
+    } catch (dbError) {}
+
+    if (gorselContainer) {
+        const imgWrapperDiv = document.createElement('div');
+        imgWrapperDiv.style.cssText = "display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; width: 100%;";
+        gorselContainer.appendChild(imgWrapperDiv);
+
+        window.lightboxImages = []; 
+
+        if (dbUrls[0] === noImageSvg) {
+            window.lightboxImages.push(noImageSvg);
+            imgWrapperDiv.innerHTML += `<img src="${noImageSvg}" onclick="openLightbox(0)" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+        } else {
+            for (let idx = 0; idx < dbUrls.length; idx++) {
+                window.lightboxImages.push(dbUrls[idx]); 
+                const imgId = `img-fetch-${id}-${idx}`;
+                const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+                imgWrapperDiv.insertAdjacentHTML('beforeend', `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`);
+            }
+
+            for (let idx = 0; idx < dbUrls.length; idx++) {
+                const imgEl = document.getElementById(`img-fetch-${id}-${idx}`);
+                if(imgEl) {
+                    await loadTelegramImage(imgEl, dbUrls[idx], idx);
+                }
+            }
+        }
+    }
+};
+
+window.fetchAndDisplayProduct = async (code) => {
+    const dashboard = document.getElementById('miat-dashboard');
+    if(dashboard) dashboard.style.display = 'none';
+
+    const resultContainerLocal = document.getElementById('result-container');
+
+    if(resultContainerLocal) {
+        resultContainerLocal.style.display = 'block';
+        resultContainerLocal.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
+    }
+
+    try {
+        const [anaDoc, amDoc] = await Promise.all([getDoc(doc(db, "ana_depo", code)), getDoc(doc(db, "ameliyathane", code))]);
+
+        if (anaDoc.exists() || amDoc.exists()) {
+            const anaData = anaDoc.exists() ? anaDoc.data() : null;
+            const amData = amDoc.exists() ? amDoc.data() : null;
+            const baseData = anaData || amData; 
+
+            const mergedData = {
+                docId: code, 
+                urunKodu: code,
+                barkod: baseData.barkod || "",
+                urunAdi: baseData.urunAdi || "-",
+                refNo: baseData.refNo || "BULUNAMADI",
+                altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
+                surecTipi: baseData.surecTipi || "-",
+                miatTarihi: baseData.miatTarihi || "-",
+                utsGorseller: baseData.utsGorseller || [],
+                minAlert: baseData.minAlert || 0,
+                max: baseData.max || 0,
+                hasAna: anaDoc.exists(),
+                anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
+                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
+                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
+                hasAm: amDoc.exists(),
+                amMiktar: amData ? parseInt(amData.miktar) : 0,
+                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
+                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+            };
+
+            let crossRefText = "";
+            let exactName = mergedData.urunAdi.toLowerCase().trim();
+            if (mergedData.surecTipi === "R") {
+                const sifirUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi !== "R");
+                if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
+            } else {
+                const reuseUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi === "R");
+                if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
+            }
+            mergedData.crossRefText = crossRefText;
+
+            renderCard(mergedData);
+
+            let targetBarcode = mergedData.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
+
+            if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
+                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
+                    window.autoFetchCentral(mergedData, targetBarcode);
+                }
+            }
+
+        } else {
+            if(resultContainerLocal) resultContainerLocal.innerHTML = `
+                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
+                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
+                </div>
+            `;
+        }
+    } catch (err) { if(resultContainerLocal) resultContainerLocal.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
+};
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+    authDomain: "terminux-wms.firebaseapp.com",
+    projectId: "terminux-wms",
+    storageBucket: "terminux-wms.firebasestorage.app",
+    messagingSenderId: "427323493367",
+    appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loadingScreen = document.getElementById('loading-screen');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
+const loginForm = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const operatorName = document.getElementById('operator-name');
+const searchInput = document.getElementById('main-search');
+const dropdown = document.getElementById('dropdown-results');
+const resultContainer = document.getElementById('result-container');
+
+if (usernameInput) usernameInput.placeholder = "Kullanıcı Adı/E-mail";
+if (passwordInput) passwordInput.placeholder = "Şifre/Password";
+
+if (loginForm) {
+    const mobileHeader = document.createElement('div');
+    mobileHeader.className = 'mobile-login-header';
+    mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
+    loginForm.insertBefore(mobileHeader, loginForm.firstChild);
+
+    if (!document.getElementById('cf-turnstile-widget')) {
+        const cfWrapper = document.createElement('div');
+        cfWrapper.id = 'cf-turnstile-widget';
+        cfWrapper.className = 'cf-turnstile';
+        cfWrapper.setAttribute('data-sitekey', '0x4AAAAAADYmA33uynV7f5VV'); 
+        cfWrapper.style.margin = '15px auto';
+        cfWrapper.style.display = 'flex';
+        cfWrapper.style.justifyContent = 'center';
+        loginForm.insertBefore(cfWrapper, loginForm.querySelector('button[type="submit"]'));
+    }
+}
+
+if (searchInput) {
+    const parent = searchInput.parentNode;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'top-search-container';
+    parent.insertBefore(wrapper, searchInput);
+    wrapper.appendChild(searchInput);
+    
+    const camBtn = document.createElement('button');
+    camBtn.className = 'btn-camera';
+    camBtn.innerHTML = '📷';
+    camBtn.onclick = window.startScanner;
+    wrapper.appendChild(camBtn);
+}
+
 function parseMiatString(dateStr) {
     if(!dateStr || dateStr === "-" || dateStr.toLowerCase().includes("tanimsiz") || dateStr.toLowerCase().includes("yok")) return Infinity;
     const parts = dateStr.split(/[\.\-\/]/);
@@ -509,7 +794,7 @@ function renderMiatDashboard() {
         else if(item.diffDays <= 60) { statusClass = "miat-warning"; statusColor = "#ffbc00"; }
 
         html += `
-            <div class="miat-card ${statusClass}" onclick="fetchAndDisplayProduct('${item.docId}')">
+            <div class="miat-card ${statusClass}" onclick="window.fetchAndDisplayProduct('${item.docId}')">
                 <div style="flex: 1; padding-right: 15px;">
                     <div style="color: #fff; font-size: 13px; font-weight: bold; margin-bottom: 4px;" class="mobile-break">${item.urunAdi}</div>
                     <div style="color: #888; font-size: 11px; font-family: monospace;">KOD: <span style="color:#0f0;">${item.urunKodu}</span> | STOK (Ana): ${item.hasAna ? item.anaMiktar : 0}</div>
@@ -530,7 +815,7 @@ async function loadTelegramImage(imgElement, fileId, index) {
     if (fileId.startsWith('data:image')) {
         imgElement.src = fileId;
         window.lightboxImages[index] = fileId;
-        imgElement.onclick = () => openLightbox(index);
+        imgElement.onclick = () => window.openLightbox(index);
         return;
     }
 
@@ -552,12 +837,12 @@ async function loadTelegramImage(imgElement, fileId, index) {
         const objectUrl = URL.createObjectURL(blob);
         imgElement.src = objectUrl;
         window.lightboxImages[index] = objectUrl;
-        imgElement.onclick = () => openLightbox(index);
+        imgElement.onclick = () => window.openLightbox(index);
         
     } catch (error) {
         imgElement.src = noImageSvg; 
         window.lightboxImages[index] = noImageSvg;
-        imgElement.onclick = () => openLightbox(index);
+        imgElement.onclick = () => window.openLightbox(index);
     }
 }
 
@@ -738,7 +1023,7 @@ if(searchInput) {
                     item.addEventListener('click', () => {
                         searchInput.value = '';
                         dropdown.style.display = 'none';
-                        fetchAndDisplayProduct(item.getAttribute('data-id'));
+                        window.fetchAndDisplayProduct(item.getAttribute('data-id'));
                     });
                 });
             } else {
@@ -763,320 +1048,11 @@ if(searchInput) {
                 (m.refNo.toLowerCase() === code.toLowerCase())
             );
 
-            if (directMatch) fetchAndDisplayProduct(directMatch.docId);
-            else fetchAndDisplayProduct(code);
+            if (directMatch) window.fetchAndDisplayProduct(directMatch.docId);
+            else window.fetchAndDisplayProduct(code);
         }
     });
 }
-
-window.openPrintModal = () => {
-    if (!window.currentRenderedProduct) return alert("Hata: Yazdırılacak ürün verisi bulunamadı.");
-    document.getElementById('print-modal').style.display = 'flex';
-};
-window.closePrintModal = () => { document.getElementById('print-modal').style.display = 'none'; };
-
-window.executeSinglePrint = () => {
-    const data = window.currentRenderedProduct;
-    let printQty = document.getElementById('print-qty-input').value;
-    printQty = parseInt(printQty);
-
-    if (!printQty || printQty <= 0) return;
-
-    let targetBarcode = data.urunKodu; 
-    let printContainer = document.getElementById('print-container');
-    if (!printContainer) {
-        printContainer = document.createElement('div');
-        printContainer.id = 'print-container';
-        document.body.appendChild(printContainer);
-    }
-    printContainer.innerHTML = ''; 
-
-    for(let i=0; i < printQty; i++) {
-        const label = document.createElement('div');
-        label.className = 'mini-label';
-        label.innerHTML = `
-            <div class="p-name">${data.urunAdi}</div>
-            <svg id="print-bc-${i}"></svg>
-            <div class="p-code">${data.urunKodu}</div>
-        `;
-        printContainer.appendChild(label);
-    }
-
-    if(window.JsBarcode) {
-        for(let i=0; i < printQty; i++) {
-            JsBarcode(`#print-bc-${i}`, targetBarcode, {
-                format: "CODE128", width: 1.2, height: 30, displayValue: false, margin: 0
-            });
-        }
-    }
-
-    closePrintModal();
-    setTimeout(() => { window.print(); }, 300);
-};
-
-window.autoFetchCentral = async (data, barkod) => {
-    const id = data.docId;
-    const gorselContainer = document.getElementById('gorsel-container');
-    let statusEl = document.getElementById(`fetch-status-${id}`);
-    
-    if (gorselContainer) {
-        gorselContainer.innerHTML = '';
-        statusEl = document.createElement('div');
-        statusEl.id = `fetch-status-${id}`;
-        statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
-        statusEl.innerHTML = "Merkezi Sisteme Bağlanılıyor...";
-        gorselContainer.appendChild(statusEl);
-    }
-    
-    let dbUrls = []; 
-
-    try {
-        const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
-        const response = await fetch(`${MERKEZ_API_ADRESI}/api/uts?${urlParams.toString()}`, {
-            headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
-        });
-
-        if (!response.body) throw new Error();
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let partialChunk = "";
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            partialChunk += decoder.decode(value, { stream: true });
-            const lines = partialChunk.split('\n\n');
-            partialChunk = lines.pop();
-
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const resData = JSON.parse(line.substring(6));
-                    
-                    if (resData.type === "INFO") {
-                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ccff;">${resData.msg}</span>`;
-                    } else if (resData.type === "COUNT") {
-                        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">${resData.count} adet görsel bulundu. Hazırlanıyor...</span>`;
-                    } else if (resData.type === "PROGRESS") {
-                        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${resData.total} adet görsel bulundu. ${resData.current}. görsel yüklendi. (${resData.current}/${resData.total})</span>`;
-                    } else if (resData.type === "DONE") {
-                        dbUrls = resData.data;
-                        break;
-                    } else if (resData.type === "ERROR") {
-                        throw new Error(resData.msg);
-                    }
-                }
-            }
-        }
-    } catch(e) {
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ff3333;">Sistem Hatası: Arka plan servisine ulaşılamadı.</span>`;
-        return;
-    }
-
-    if (dbUrls.length === 0) {
-        dbUrls.push(noImageSvg);
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Merkezi sistemde kayıtlı görsel bulunamadı.</span>`;
-    } else {
-        if (statusEl) {
-            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Görseller başarıyla hazırlandı! Ekrana yansıtılıyor...</span>`;
-            setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 3000);
-        }
-    }
-
-    const updateData = { utsGorseller: dbUrls };
-    
-    try {
-        const anaRef = doc(db, "ana_depo", id);
-        const amRef = doc(db, "ameliyathane", id);
-        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
-        
-        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
-        if(amSnap.exists()) await updateDoc(amRef, updateData);
-
-        const catItem = productCatalog.find(m => m.docId === id);
-        if(catItem) {
-            catItem.utsGorseller = dbUrls;
-            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
-        }
-    } catch (dbError) {}
-
-    if (gorselContainer) {
-        const imgWrapperDiv = document.createElement('div');
-        imgWrapperDiv.style.cssText = "display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; width: 100%;";
-        gorselContainer.appendChild(imgWrapperDiv);
-
-        window.lightboxImages = []; 
-
-        if (dbUrls[0] === noImageSvg) {
-            window.lightboxImages.push(noImageSvg);
-            imgWrapperDiv.innerHTML += `<img src="${noImageSvg}" onclick="openLightbox(0)" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-        } else {
-            for (let idx = 0; idx < dbUrls.length; idx++) {
-                window.lightboxImages.push(dbUrls[idx]); 
-                const imgId = `img-fetch-${id}-${idx}`;
-                const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
-                imgWrapperDiv.insertAdjacentHTML('beforeend', `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`);
-            }
-
-            for (let idx = 0; idx < dbUrls.length; idx++) {
-                const imgEl = document.getElementById(`img-fetch-${id}-${idx}`);
-                if(imgEl) {
-                    await loadTelegramImage(imgEl, dbUrls[idx], idx);
-                }
-            }
-        }
-    }
-};
-
-window.editField = (id, type) => {
-    document.getElementById(`txt-container-${type}-${id}`).style.display = 'none';
-    document.getElementById(`edit-${type}-${id}`).style.display = 'flex';
-};
-
-window.cancelEdit = (id, type) => {
-    document.getElementById(`txt-container-${type}-${id}`).style.display = 'flex';
-    document.getElementById(`edit-${type}-${id}`).style.display = 'none';
-};
-
-window.saveUpdate = async (id, type) => {
-    const inputEl = document.getElementById(`man-${type}-${id}`);
-    const newVal = inputEl ? inputEl.value.trim() : null;
-
-    if (!newVal) return alert("Hata: Veri alanı boş bırakılamaz.");
-
-    const updateData = {};
-    if (type === 'b') {
-        updateData.barkod = newVal;
-        updateData.utsGorseller = []; 
-    } else if (type === 'r') {
-        updateData.refNo = newVal;
-    } else if (type === 'm') {
-        updateData.miatTarihi = newVal;
-    }
-
-    try {
-        const anaRef = doc(db, "ana_depo", id);
-        const amRef = doc(db, "ameliyathane", id);
-        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
-        
-        if(anaSnap.exists()) await updateDoc(anaRef, updateData);
-        if(amSnap.exists()) await updateDoc(amRef, updateData);
-        
-        const catItem = productCatalog.find(m => m.docId === id);
-        if (catItem) {
-            if (type === 'b') catItem.barkod = newVal;
-            if (type === 'r') catItem.refNo = newVal;
-            if (type === 'm') catItem.miatTarihi = newVal;
-            catItem.searchString = `${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`.toLowerCase();
-            localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
-            renderMiatDashboard();
-        }
-        
-        fetchAndDisplayProduct(id); 
-    } catch (err) { alert("Sistem Hatası: " + err.message); }
-};
-
-function createEditUI(id, type, val, placeholder, colorClass) {
-    const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-" && val !== "TAM EŞLEŞME YOK" && val !== "SONUÇ YOK";
-    if (isSet) {
-        return `
-            <div id="txt-container-${type}-${id}" class="flex-edit">
-                <span style="color: ${colorClass};" class="value-text mobile-break">${val}</span>
-                <button onclick="editField('${id}', '${type}')" class="btn-edit">DÜZENLE</button>
-            </div>
-            <div id="edit-${type}-${id}" class="flex-edit" style="display:none;">
-                <input type="text" id="man-${type}-${id}" value="${val}" class="input-style">
-                <div class="edit-btn-group">
-                    <button onclick="saveUpdate('${id}', '${type}')" class="btn-save" style="background:#ffbc00; color:#000;">KAYDET</button>
-                    <button onclick="cancelEdit('${id}', '${type}')" class="btn-cancel">İPTAL</button>
-                </div>
-            </div>
-        `;
-    } else {
-        return `
-            <div class="flex-edit">
-                <input type="text" id="man-${type}-${id}" placeholder="${placeholder}" class="input-style">
-                <button onclick="saveUpdate('${id}', '${type}')" class="btn-save">KAYDET</button>
-            </div>
-        `;
-    }
-}
-
-window.fetchAndDisplayProduct = async (code) => {
-    const dashboard = document.getElementById('miat-dashboard');
-    if(dashboard) dashboard.style.display = 'none';
-
-    if(resultContainer) {
-        resultContainer.style.display = 'block';
-        resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
-    }
-
-    try {
-        const [anaDoc, amDoc] = await Promise.all([getDoc(doc(db, "ana_depo", code)), getDoc(doc(db, "ameliyathane", code))]);
-
-        if (anaDoc.exists() || amDoc.exists()) {
-            const anaData = anaDoc.exists() ? anaDoc.data() : null;
-            const amData = amDoc.exists() ? amDoc.data() : null;
-            const baseData = anaData || amData; 
-
-            const mergedData = {
-                docId: code, 
-                urunKodu: code,
-                barkod: baseData.barkod || "",
-                urunAdi: baseData.urunAdi || "-",
-                refNo: baseData.refNo || "BULUNAMADI",
-                altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
-                surecTipi: baseData.surecTipi || "-",
-                miatTarihi: baseData.miatTarihi || "-",
-                utsGorseller: baseData.utsGorseller || [],
-                minAlert: baseData.minAlert || 0,
-                max: baseData.max || 0,
-                hasAna: anaDoc.exists(),
-                anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
-                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
-                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
-                hasAm: amDoc.exists(),
-                amMiktar: amData ? parseInt(amData.miktar) : 0,
-                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
-                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
-            };
-
-            let crossRefText = "";
-            let exactName = mergedData.urunAdi.toLowerCase().trim();
-            if (mergedData.surecTipi === "R") {
-                const sifirUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi !== "R");
-                if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
-            } else {
-                const reuseUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi === "R");
-                if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
-            }
-            mergedData.crossRefText = crossRefText;
-
-            renderCard(mergedData);
-
-            let targetBarcode = mergedData.urunKodu;
-            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
-
-            if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                    window.autoFetchCentral(mergedData, targetBarcode);
-                }
-            }
-
-        } else {
-            if(resultContainer) resultContainer.innerHTML = `
-                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
-                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
-                </div>
-            `;
-        }
-    } catch (err) { if(resultContainer) resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
-};
 
 function renderCard(data) {
     window.currentRenderedProduct = data;
@@ -1131,8 +1107,8 @@ function renderCard(data) {
                             <div class="title-text">${data.urunAdi}</div>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button onclick="addToPrintCart('${data.docId}', '${data.urunAdi.replace(/'/g, "\\'")}', '${data.urunKodu}')" class="btn-save btn-print-mobile" style="background: #ffbc00; color: #000; padding: 14px 20px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(255,188,0,0.2);">🛒 SEPETE EKLE</button>
-                            <button onclick="openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 20px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">ETİKET YAZDIR</button>
+                            <button onclick="window.addToPrintCart('${data.docId}', '${data.urunAdi.replace(/'/g, "\\'")}', '${data.urunKodu}')" class="btn-save btn-print-mobile" style="background: #ffbc00; color: #000; padding: 14px 20px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(255,188,0,0.2);">🛒 SEPETE EKLE</button>
+                            <button onclick="window.openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 20px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">ETİKET YAZDIR</button>
                         </div>
                     </div>
                     
