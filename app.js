@@ -522,7 +522,7 @@ window.executePrint = () => {
     setTimeout(() => { window.print(); }, 300);
 };
 
-window.autoFetchUTS = async (data, barkod) => {
+window.autoFetchCentral = async (data, barkod) => {
     const id = data.docId;
     const gorselContainer = document.getElementById('gorsel-container');
     let statusEl = document.getElementById(`fetch-status-${id}`);
@@ -582,36 +582,37 @@ window.autoFetchUTS = async (data, barkod) => {
         imgWrapperDiv.style.cssText = "display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; width: 100%;";
         gorselContainer.appendChild(imgWrapperDiv);
 
-        let loadedCount = 0;
-        const imgQueue = [];
         window.lightboxImages = []; 
-        
-        dbUrls.forEach((url, idx) => {
-            window.lightboxImages.push(url); 
-            const imgId = `img-fetch-${id}-${idx}`;
-            const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
-            
-            imgWrapperDiv.innerHTML += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            imgQueue.push({ id: imgId, url: url, index: idx });
-        });
-        
-        imgQueue.forEach((item) => {
-            const imgEl = document.getElementById(item.id);
-            if(imgEl) {
-                loadTelegramImage(imgEl, item.url, item.index).then(() => {
+
+        if (dbUrls[0] === noImageSvg) {
+            window.lightboxImages.push(noImageSvg);
+            imgWrapperDiv.innerHTML += `<img src="${noImageSvg}" onclick="openLightbox(0)" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
+        } else {
+            for (let idx = 0; idx < dbUrls.length; idx++) {
+                window.lightboxImages.push(dbUrls[idx]); 
+                const imgId = `img-fetch-${id}-${idx}`;
+                const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
+                
+                imgWrapperDiv.insertAdjacentHTML('beforeend', `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`);
+            }
+
+            let loadedCount = 0;
+            for (let idx = 0; idx < dbUrls.length; idx++) {
+                const imgEl = document.getElementById(`img-fetch-${id}-${idx}`);
+                if(imgEl) {
+                    await loadTelegramImage(imgEl, dbUrls[idx], idx);
                     loadedCount++;
-                    if (dbUrls[0] !== noImageSvg && statusEl) {
-                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. [${loadedCount}/${dbUrls.length}] hazırlandı.</span>`;
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} görsel bulundu. ${loadedCount}/${dbUrls.length} görsel yüklendi.</span>`;
                         if (loadedCount === dbUrls.length) {
-                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller başarıyla yüklendi!</span>`;
                             setTimeout(() => { 
                                 if (statusEl) statusEl.style.display = 'none'; 
-                            }, 4000);
+                            }, 3000);
                         }
                     }
-                });
+                }
             }
-        });
+        }
     }
 };
 
@@ -744,7 +745,7 @@ window.fetchAndDisplayProduct = async (code) => {
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
                 if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                    window.autoFetchUTS(mergedData, targetBarcode);
+                    window.autoFetchCentral(mergedData, targetBarcode);
                 }
             }
 
@@ -778,19 +779,24 @@ function renderCard(data) {
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
 
     let gorselHTML = '';
-    const imgLoadQueue = [];
-    window.lightboxImages = []; 
 
     if (data.utsGorseller && data.utsGorseller.length > 0) {
         let internalImgs = '';
+        window.lightboxImages = []; 
         data.utsGorseller.forEach((url, index) => {
             window.lightboxImages.push(url); 
             const imgId = `img-render-${data.docId}-${index}`;
             const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
             internalImgs += `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${index})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`;
-            imgLoadQueue.push({ id: imgId, url: url, index: index });
         });
         gorselHTML = `<div style="display: flex; gap: 15px; flex-wrap: wrap; width: 100%;">${internalImgs}</div>`;
+        
+        setTimeout(() => {
+            data.utsGorseller.forEach((url, index) => {
+                const imgEl = document.getElementById(`img-render-${data.docId}-${index}`);
+                if(imgEl) loadTelegramImage(imgEl, url, index);
+            });
+        }, 100);
     } else if (hasValidBarcode) {
         gorselHTML = `<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Senkronizasyon Bekleniyor...</div>`;
     } else {
@@ -867,13 +873,6 @@ function renderCard(data) {
                 </div>
             </div>
         `;
-        
-        setTimeout(() => {
-            imgLoadQueue.forEach(item => {
-                const imgEl = document.getElementById(item.id);
-                if(imgEl) loadTelegramImage(imgEl, item.url, item.index);
-            });
-        }, 100);
     }
 
     setTimeout(() => {
