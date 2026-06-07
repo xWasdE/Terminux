@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const UTS_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
+const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -261,7 +261,7 @@ async function loadTelegramImage(imgElement, fileId, index) {
         return;
     }
 
-    let fullUrl = `${UTS_API_ADRESI}/api/telegram-image?file_id=${fileId}`;
+    let fullUrl = `${MERKEZ_API_ADRESI}/api/telegram-image?file_id=${fileId}`;
     fullUrl += '&cb=' + new Date().getTime();
 
     try {
@@ -273,7 +273,7 @@ async function loadTelegramImage(imgElement, fileId, index) {
             }
         });
         
-        if (!response.ok) throw new Error("Görsele ulaşılamadı.");
+        if (!response.ok) throw new Error("");
         
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
@@ -304,16 +304,6 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
-        onSnapshot(doc(db, "system", "version"), (snapshot) => {
-            if(snapshot.exists()) {
-                const data = snapshot.data();
-                const cacheTime = localStorage.getItem('terminux_catalog_time');
-                if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
-                    buildCatalog(true);
-                }
-            }
-        });
-
         await buildCatalog();
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(loginScreen) loginScreen.classList.add('hidden');
@@ -362,7 +352,7 @@ if(loginForm) {
     });
 }
 
-async function buildCatalog(forceUpdate = false) {
+async function buildCatalog() {
     try {
         const CACHE_KEY = 'terminux_catalog_cache';
         const CACHE_TIME_KEY = 'terminux_catalog_time';
@@ -372,7 +362,7 @@ async function buildCatalog(forceUpdate = false) {
         const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
         const now = Date.now();
 
-        if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
+        if (cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
             productCatalog = JSON.parse(cachedData);
             return;
         }
@@ -404,15 +394,7 @@ async function buildCatalog(forceUpdate = false) {
         localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
         localStorage.setItem(CACHE_TIME_KEY, now.toString());
 
-        if (forceUpdate && document.getElementById('main-search')) {
-            const toast = document.createElement('div');
-            toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
-            toast.innerText = "Sistem Veritabanı Güncellendi";
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-    } catch (error) { console.error("Katalog hatası:", error); }
+    } catch (error) {}
 }
 
 document.addEventListener('click', (e) => {
@@ -532,7 +514,7 @@ window.autoFetchCentral = async (data, barkod) => {
         statusEl = document.createElement('div');
         statusEl.id = `fetch-status-${id}`;
         statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
-        statusEl.innerHTML = "Merkezi Sistem Sorgulanıyor... (Lütfen bekleyiniz)";
+        statusEl.innerHTML = "Merkezi Sistem Kayıtları Aranıyor... (Bu işlem ağ hızına bağlı olarak 15-30 sn sürebilir)";
         gorselContainer.appendChild(statusEl);
     }
     
@@ -540,7 +522,7 @@ window.autoFetchCentral = async (data, barkod) => {
 
     try {
         const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
-        const response = await fetch(`${UTS_API_ADRESI}/api/uts?${urlParams.toString()}`, {
+        const response = await fetch(`${MERKEZ_API_ADRESI}/api/uts?${urlParams.toString()}`, {
             headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
         });
         const responseData = await response.json(); 
@@ -555,9 +537,9 @@ window.autoFetchCentral = async (data, barkod) => {
 
     if (dbUrls.length === 0) {
         dbUrls.push(noImageSvg);
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Sistemde kayıtlı görsel bulunamadı.</span>`;
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffbc00;">Merkezi sistemde kayıtlı görsel bulunamadı.</span>`;
     } else {
-        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. Hazırlanıyor...</span>`;
+        if (statusEl) statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} adet görsel bulundu. Yükleme işlemi başlatılıyor...</span>`;
     }
 
     const updateData = { utsGorseller: dbUrls };
@@ -592,7 +574,6 @@ window.autoFetchCentral = async (data, barkod) => {
                 window.lightboxImages.push(dbUrls[idx]); 
                 const imgId = `img-fetch-${id}-${idx}`;
                 const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
-                
                 imgWrapperDiv.insertAdjacentHTML('beforeend', `<img id="${imgId}" src="${loadingSvg}" onclick="openLightbox(${idx})" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">`);
             }
 
@@ -600,14 +581,17 @@ window.autoFetchCentral = async (data, barkod) => {
             for (let idx = 0; idx < dbUrls.length; idx++) {
                 const imgEl = document.getElementById(`img-fetch-${id}-${idx}`);
                 if(imgEl) {
+                    if (statusEl) {
+                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} görsel bulundu. ${loadedCount + 1}/${dbUrls.length} cihazınıza indiriliyor...</span>`;
+                    }
                     await loadTelegramImage(imgEl, dbUrls[idx], idx);
                     loadedCount++;
-                    if (statusEl) {
-                        statusEl.innerHTML = `<span style="color:#00ff00;">${dbUrls.length} görsel bulundu. ${loadedCount}/${dbUrls.length} görsel yüklendi.</span>`;
-                        if (loadedCount === dbUrls.length) {
+                    if (loadedCount === dbUrls.length) {
+                        if (statusEl) {
+                            statusEl.innerHTML = `<span style="color:#00ff00;">✅ Tüm görseller başarıyla hazırlandı!</span>`;
                             setTimeout(() => { 
                                 if (statusEl) statusEl.style.display = 'none'; 
-                            }, 3000);
+                            }, 4000);
                         }
                     }
                 }
