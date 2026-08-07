@@ -251,6 +251,11 @@ let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
 
+const trToLower = (text) => {
+    if (!text) return "";
+    return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+};
+
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
 async function loadTelegramImage(imgElement, fileId, index) {
@@ -299,11 +304,24 @@ document.addEventListener('click', async (e) => {
     }
 });
 
+const initFallback = setTimeout(() => {
+    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+        loadingScreen.classList.add('hidden');
+        if (loginScreen) loginScreen.classList.remove('hidden');
+    }
+}, 5000);
+
 setPersistence(auth, browserLocalPersistence);
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, (user) => {
+    clearTimeout(initFallback);
+    
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+        if(loginScreen) loginScreen.classList.add('hidden');
+        if(appScreen) appScreen.classList.remove('hidden');
+
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
                 const data = snapshot.data();
@@ -314,11 +332,9 @@ onAuthStateChanged(auth, async (user) => {
             }
         });
 
-        await buildCatalog();
-        if(loadingScreen) loadingScreen.classList.add('hidden');
-        if(loginScreen) loginScreen.classList.add('hidden');
-        if(appScreen) appScreen.classList.remove('hidden');
-        if(searchInput) searchInput.focus();
+        buildCatalog().then(() => {
+            if(searchInput) searchInput.focus();
+        });
     } else {
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.add('hidden');
@@ -392,7 +408,7 @@ async function buildCatalog(forceUpdate = false) {
                     altGrup: String(data.altGrup || ""),
                     surecTipi: String(data.surecTipi || ""),
                     utsGorseller: data.utsGorseller || [],
-                    searchString: `${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`.toLowerCase()
+                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`)
                 });
             }
         };
@@ -423,7 +439,7 @@ document.addEventListener('click', (e) => {
 
 if(searchInput) {
     searchInput.addEventListener('input', (e) => {
-        const val = e.target.value.trim().toLowerCase();
+        const val = trToLower(e.target.value.trim());
         clearTimeout(searchTimeout);
         if (val.length < 2) { dropdown.style.display = 'none'; return; }
 
@@ -460,19 +476,22 @@ if(searchInput) {
             e.preventDefault();
             clearTimeout(searchTimeout);
             dropdown.style.display = 'none';
-            const code = searchInput.value.trim();
-            if (!code) return;
+            
+            const rawCode = searchInput.value.trim();
+            if (!rawCode) return;
             searchInput.value = '';
 
+            const searchCode = trToLower(rawCode);
+
             const directMatch = productCatalog.find(m => 
-                (m.docId.toLowerCase() === code.toLowerCase()) || 
-                (m.urunKodu.toLowerCase() === code.toLowerCase()) || 
-                (m.barkod.toLowerCase() === code.toLowerCase()) || 
-                (m.refNo.toLowerCase() === code.toLowerCase())
+                (trToLower(m.docId) === searchCode) || 
+                (trToLower(m.urunKodu) === searchCode) || 
+                (trToLower(m.barkod) === searchCode) || 
+                (trToLower(m.refNo) === searchCode)
             );
 
             if (directMatch) fetchAndDisplayProduct(directMatch.docId);
-            else fetchAndDisplayProduct(code);
+            else fetchAndDisplayProduct(rawCode); 
         }
     });
 }
@@ -675,7 +694,7 @@ window.saveUpdate = async (id, type) => {
         if (catItem) {
             if (type === 'b') catItem.barkod = newVal;
             if (type === 'r') catItem.refNo = newVal;
-            catItem.searchString = `${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`.toLowerCase();
+            catItem.searchString = trToLower(`${catItem.urunAdi} ${catItem.urunKodu} ${catItem.barkod} ${catItem.refNo} ${catItem.altGrup}`);
             localStorage.setItem('terminux_catalog_cache', JSON.stringify(productCatalog));
         }
         
@@ -748,12 +767,12 @@ window.fetchAndDisplayProduct = async (code) => {
             };
 
             let crossRefText = "";
-            let exactName = mergedData.urunAdi.toLowerCase().trim();
+            let exactName = trToLower(mergedData.urunAdi).trim();
             if (mergedData.surecTipi === "R") {
-                const sifirUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi !== "R");
+                const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
                 if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
             } else {
-                const reuseUrun = productCatalog.find(p => p.urunAdi.toLowerCase().trim() === exactName && p.surecTipi === "R");
+                const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
                 if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
             }
             mergedData.crossRefText = crossRefText;
