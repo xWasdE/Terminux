@@ -77,11 +77,49 @@ style.innerHTML = `
     @media (max-width: 900px) {
         body { padding: 10px !important; padding-bottom: 120px !important; }
         
-        #app-screen > div:first-child { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; align-items: center !important; gap: 10px !important; padding: 15px 10px !important; }
-        #app-screen > div:first-child > div:nth-child(1) { order: 1 !important; flex: 1 !important; } 
-        #btn-logout { order: 2 !important; padding: 10px 15px !important; font-size: 11px !important; white-space: nowrap !important; } 
-        #app-screen > div:first-child > div:has(#operator-name) { order: 3 !important; width: 100% !important; text-align: center !important; margin-top: 5px !important; font-size: 13px !important; justify-content: center !important; gap: 15px !important; } 
-        #operator-name { font-size: 13px !important; color: #0f0 !important; font-weight: bold !important; }
+        #app-screen > header { 
+            display: flex !important;
+            flex-direction: column !important; 
+            align-items: center !important; 
+            padding: 20px 15px !important; 
+            gap: 15px !important; 
+        }
+        #app-screen > header > div:nth-child(1) { 
+            text-align: center !important; 
+        }
+        #app-screen > header > div:nth-child(2) { 
+            display: flex !important;
+            flex-direction: row !important; 
+            flex-wrap: wrap !important; 
+            justify-content: center !important; 
+            width: 100% !important; 
+            gap: 10px !important; 
+        }
+        #app-screen > header > div:nth-child(2) > a { 
+            order: 1 !important; 
+            flex: 1 !important; 
+            text-align: center !important; 
+            font-size: 11px !important; 
+            padding: 12px 10px !important; 
+            white-space: nowrap !important; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #btn-logout { 
+            order: 2 !important; 
+            flex: 1 !important; 
+            font-size: 11px !important; 
+            padding: 12px 10px !important; 
+            white-space: nowrap !important; 
+        }
+        #app-screen > header > div:nth-child(2) > span { 
+            order: 3 !important; 
+            width: 100% !important; 
+            text-align: center !important; 
+            margin-top: 5px !important; 
+            font-size: 12px !important; 
+        }
 
         #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
         #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
