@@ -55,7 +55,9 @@
         .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 768px) {
-            header { padding: 15px; }
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            header > div:nth-child(1) { width: 100%; justify-content: center; }
+            header > div:nth-child(2) { width: 100%; justify-content: center; }
             main { padding: 15px 15px 80px 15px; }
             .search-container { flex-direction: column; }
             .filter-btn { padding: 15px; }
@@ -69,8 +71,8 @@
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">LENS TERMINAL</span></div>
-        <div style="display: flex; gap: 20px;">
-            <a href="index.html" style="color: #666; text-decoration: none; font-size: 12px; font-weight: bold; align-self: center;">WMS GEÇİŞ</a>
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <a href="index.html" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'">WMS GEÇİŞ</a>
         </div>
     </header>
 
