@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Lens Operasyon Terminali</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #444; font-size: 14px; font-weight: 600; }
+        
+        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; }
+        
+        .search-container { display: flex; gap: 20px; margin-bottom: 30px; }
+        .search-input { flex: 1; background: #080808; border: 2px solid #222; color: #00ff00; padding: 20px 25px; font-size: 20px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .search-input:focus { border-color: #444; }
+        
+        .brand-filter { display: flex; gap: 10px; }
+        .filter-btn { background: #111; border: 1px solid #333; color: #666; padding: 0 30px; font-weight: 800; cursor: pointer; border-radius: 8px; font-size: 14px; transition: 0.2s; }
+        .filter-btn.active.alcon { background: #00ccff; color: #000; border-color: #00ccff; }
+        .filter-btn.active.tecnis { background: #ffbc00; color: #000; border-color: #ffbc00; }
+        .filter-btn.active.all { background: #fff; color: #000; border-color: #fff; }
+
+        .lens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 25px; }
+        .lens-card { background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 20px; }
+        .lens-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .lens-brand { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+        .lens-brand.alcon { background: rgba(0,204,255,0.1); color: #00ccff; border: 1px solid rgba(0,204,255,0.3); }
+        .lens-brand.tecnis { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
+        
+        .lens-title { font-size: 18px; font-weight: 800; line-height: 1.3; margin-top: 10px; color: #fff; }
+        .lens-code { font-family: monospace; color: #888; font-size: 12px; margin-top: 5px; }
+        .lens-no { font-size: 28px; font-weight: 900; color: #fff; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #111; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; text-align: center; }
+        .input-group input:focus { border-color: #00ff00; }
+        
+        .btn-save { background: #00ff00; color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 12px; text-transform: uppercase; margin-top: 10px; }
+        .btn-save:hover { opacity: 0.8; }
+
+        #loading { text-align: center; color: #666; padding: 50px; font-size: 18px; font-weight: bold; letter-spacing: 2px; }
+
+        @media (max-width: 768px) {
+            header, main { padding: 15px; }
+            .search-container { flex-direction: column; }
+            .filter-btn { padding: 15px; }
+            .lens-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">LENS TERMINAL</span></div>
+        <div style="display: flex; gap: 20px;">
+            <a href="index.html" style="color: #666; text-decoration: none; font-size: 12px; font-weight: bold; align-self: center;">WMS GEÇİŞ</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-input" placeholder="LENS NO VEYA KOD YAZIN..." autocomplete="off">
+            <div class="brand-filter">
+                <button class="filter-btn active all" data-brand="ALL">TÜMÜ</button>
+                <button class="filter-btn alcon" data-brand="ALCON">ALCON</button>
+                <button class="filter-btn tecnis" data-brand="TECNIS">TECNIS</button>
+            </div>
+        </div>
+
+        <div id="loading">SİSTEM BAĞLANTISI KURULUYOR...</div>
+        <div id="lens-grid" class="lens-grid"></div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let lensData = [];
+        let currentFilter = "ALL";
+
+        const searchInput = document.getElementById('search-input');
+        const lensGrid = document.getElementById('lens-grid');
+        const loading = document.getElementById('loading');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        const trToLower = (text) => {
+            if (!text) return "";
+            return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+        };
+
+        async function fetchLenses() {
+            try {
+                lensData = [];
+                const [alconSnap, tecnisSnap] = await Promise.all([
+                    getDocs(collection(db, "lens_alcon")),
+                    getDocs(collection(db, "lens_tecnis"))
+                ]);
+
+                alconSnap.forEach(d => lensData.push({ id: d.id, col: "lens_alcon", ...d.data() }));
+                tecnisSnap.forEach(d => lensData.push({ id: d.id, col: "lens_tecnis", ...d.data() }));
+                
+                loading.style.display = "none";
+                renderLenses();
+            } catch (error) {
+                loading.innerHTML = "VERİTABANI HATASI: " + error.message;
+            }
+        }
+
+        window.saveLens = async (id, collectionName) => {
+            const btn = document.getElementById(`btn-${id}`);
+            const miktarVal = document.getElementById(`mik-${id}`).value;
+            const refVal = document.getElementById(`ref-${id}`).value;
+            const miatVal = document.getElementById(`miat-${id}`).value;
+
+            btn.textContent = "KAYDEDİLİYOR...";
+            btn.style.opacity = "0.5";
+            btn.disabled = true;
+
+            try {
+                const updateObj = {
+                    miktar: parseInt(miktarVal) || 0,
+                    refNo: refVal.trim(),
+                    miatTarihi: miatVal.trim()
+                };
+
+                await updateDoc(doc(db, collectionName, id), updateObj);
+                
+                const itemIndex = lensData.findIndex(l => l.id === id);
+                if(itemIndex > -1) {
+                    lensData[itemIndex].miktar = updateObj.miktar;
+                    lensData[itemIndex].refNo = updateObj.refNo;
+                    lensData[itemIndex].miatTarihi = updateObj.miatTarihi;
+                }
+
+                btn.textContent = "KAYDEDİLDİ";
+                btn.style.background = "#fff";
+                
+                setTimeout(() => {
+                    btn.textContent = "GÜNCELLE";
+                    btn.style.background = "#00ff00";
+                    btn.style.opacity = "1";
+                    btn.disabled = false;
+                }, 1500);
+
+            } catch (error) {
+                alert("Hata: " + error.message);
+                btn.textContent = "GÜNCELLE";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        };
+
+        function renderLenses() {
+            const searchTerm = trToLower(searchInput.value.trim());
+            let filtered = lensData;
+
+            if (currentFilter !== "ALL") {
+                filtered = filtered.filter(l => l.marka === currentFilter);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(l => 
+                    trToLower(l.urunKodu).includes(searchTerm) || 
+                    trToLower(l.lensNo).includes(searchTerm) || 
+                    trToLower(l.urunAdi).includes(searchTerm)
+                );
+            }
+
+            if (filtered.length === 0) {
+                lensGrid.innerHTML = `<div style="grid-column: 1/-1; color:#ff3333; text-align:center; padding: 40px; font-weight:bold;">EŞLEŞEN KAYIT BULUNAMADI.</div>`;
+                return;
+            }
+
+            lensGrid.innerHTML = filtered.map(l => {
+                const brandClass = l.marka === "ALCON" ? "alcon" : "tecnis";
+                const refVal = l.refNo || "";
+                const miatVal = l.miatTarihi || "";
+                const mikVal = l.miktar || 0;
+
+                return `
+                    <div class="lens-card">
+                        <div class="lens-header">
+                            <div>
+                                <span class="lens-brand ${brandClass}">${l.marka}</span>
+                                <div class="lens-title">${l.urunAdi}</div>
+                                <div class="lens-code">KOD: ${l.urunKodu}</div>
+                            </div>
+                            <div class="lens-no">${l.lensNo}</div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>MİKTAR</label>
+                                <input type="number" id="mik-${l.id}" value="${mikVal}">
+                            </div>
+                            <div class="input-group">
+                                <label>REF NO</label>
+                                <input type="text" id="ref-${l.id}" value="${refVal}" placeholder="-">
+                            </div>
+                            <div class="input-group">
+                                <label>MİAT</label>
+                                <input type="text" id="miat-${l.id}" value="${miatVal}" placeholder="GG.AA.YYYY">
+                            </div>
+                        </div>
+                        <button id="btn-${l.id}" class="btn-save" onclick="saveLens('${l.id}', '${l.col}')">GÜNCELLE</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        searchInput.addEventListener('input', renderLenses);
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.getAttribute('data-brand');
+                renderLenses();
+            });
+        });
+
+        fetchLenses();
+    </script>
+</body>
+</html>
