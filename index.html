@@ -31,6 +31,9 @@
         .input-group input:focus ~ label, .input-group input:valid ~ label { top: 0; font-size: 11px; background: #000000; padding: 0 4px; color: #ffffff; }
         .btn-submit { width: 100%; background: #ffffff; color: #000000; border: none; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 8px; transition: 0.2s; }
         .btn-submit:hover { opacity: 0.9; }
+        
+        .btn-lens-redirect { display: block; width: 100%; text-align: center; background: #0a0a0a; color: #888; border: 1px solid #222; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 16px; text-decoration: none; transition: 0.2s; }
+        .btn-lens-redirect:hover { border-color: #444; color: #ffffff; }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #000; }
@@ -66,6 +69,7 @@
                     <label>Şifre</label>
                 </div>
                 <button type="submit" class="btn-submit">Giriş Yap</button>
+                <a href="lens.html" class="btn-lens-redirect">LENS OPERASYONUNA GEÇİŞ</a>
             </form>
         </div>
     </div>
@@ -74,6 +78,7 @@
         <header style="padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505;">
             <div style="font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:14px; font-weight: 600;">WMS TERMINAL</span></div>
             <div style="display: flex; gap: 30px; align-items: center;">
+                <a href="lens.html" style="color: #666; text-decoration: none; font-size: 12px; font-weight: bold; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">LENS GEÇİŞ</a>
                 <span style="font-size: 13px; color: #666; letter-spacing: 1px;">OPERATÖR: <b id="operator-name" style="color: #00ff00;"></b></span>
                 <button id="btn-logout" style="background: #ffffff; color: #000000; border: none; padding: 10px 25px; cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.2s;">GÜVENLİ ÇIKIŞ</button>
             </div>
