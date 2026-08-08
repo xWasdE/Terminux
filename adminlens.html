@@ -65,17 +65,15 @@
             logDiv.scrollTop = logDiv.scrollHeight;
         };
 
-        const normalizeStr = (str) => {
-            if (!str) return "";
-            return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
-        };
-
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
-                const normK = normalizeStr(k);
-                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
-                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                const normK = k.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                for(let searchKey of keys) {
+                    const normS = searchKey.replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                    if (normK.includes(normS)) {
+                        return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                    }
                 }
             }
             return "";
@@ -103,6 +101,12 @@
                     const lensNoStr = getCol(r, ["lens no", "lens numarası", "numara", "no"]);
                     const miktarVal = parseInt(getCol(r, ["stok miktar", "stok", "miktar", "adet"])) || 0;
 
+                    let extractedRef = "";
+                    if (urunAdiStr.includes(",")) {
+                        const parts = urunAdiStr.split(",");
+                        extractedRef = parts[parts.length - 1].trim();
+                    }
+
                     const newData = {
                         urunKodu: id,
                         urunAdi: urunAdiStr,
@@ -110,6 +114,10 @@
                         miktar: miktarVal,
                         marka: brand
                     };
+
+                    if (extractedRef) {
+                        newData.refNo = extractedRef;
+                    }
 
                     await setDoc(doc(db, collectionName, id), newData, { merge: true });
                     updateCount++;
