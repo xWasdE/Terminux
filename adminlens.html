@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -22,20 +22,20 @@
 </head>
 <body>
     <div class="box">
-        <h1>TERMINUX LENS KONTROL</h1>
+        <h1>TERMINUX LENS YÜKLEME MERKEZİ</h1>
         
         <div class="row">
             <div class="upload-section">
                 <div class="brand-title" style="color: #00ccff;">ALCON LENS YÜKLEME</div>
                 <label>Sütunlar: Ürün Kodu, Ürün İsmi, Lens No, Stok Miktar</label>
-                <input type="file" id="f-alcon" accept=".xlsx">
+                <input type="file" id="f-alcon" accept=".xlsx, .xls">
                 <button id="btn-alcon" class="btn-alcon">ALCON EXCEL YÜKLE</button>
             </div>
             
             <div class="upload-section">
                 <div class="brand-title" style="color: #ffbc00;">TECNIS LENS YÜKLEME</div>
                 <label>Sütunlar: Ürün Kodu, Ürün İsmi, Lens No, Stok Miktar</label>
-                <input type="file" id="f-tecnis" accept=".xlsx">
+                <input type="file" id="f-tecnis" accept=".xlsx, .xls">
                 <button id="btn-tecnis" class="btn-tecnis">TECNIS EXCEL YÜKLE</button>
             </div>
         </div>
@@ -65,10 +65,16 @@
             logDiv.scrollTop = logDiv.scrollHeight;
         };
 
+        const normalizeStr = (str) => {
+            if (!str) return "";
+            return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+        };
+
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
-                if (keys.includes(k.trim().toLowerCase())) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
                     return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
                 }
             }
