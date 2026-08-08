@@ -35,7 +35,7 @@
         .lens-brand.tecnis { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
         .lens-code { font-family: monospace; color: #888; font-size: 12px; margin-top: 5px; }
         
-        .row-lens-no { flex: 1; min-width: 80px; text-align: center; font-size: 28px; font-weight: 900; color: #fff; }
+        .row-lens-no { flex: 1; min-width: 100px; text-align: center; font-size: 28px; font-weight: 900; color: #fff; }
         .row-data { flex: 4; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
         .row-action { flex: 1; min-width: 120px; display: flex; justify-content: flex-end; }
         
@@ -61,6 +61,18 @@
         }
         .legal-footer b { color: #aaa; font-weight: bold; }
 
+        #password-modal { display: none; position: fixed; z-index: 15000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .password-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; text-align: center; width: 100%; max-width: 350px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .password-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; }
+        .password-box input { width: 100%; background: #000; border: 1px solid #444; color: #00ff00; padding: 15px; font-size: 24px; border-radius: 6px; text-align: center; margin-bottom: 20px; outline: none; letter-spacing: 8px; font-family: monospace; }
+        .password-box input:focus { border-color: #00ff00; }
+        .pw-btn-group { display: flex; gap: 10px; }
+        .pw-btn-group button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; }
+        .btn-pw-cancel { background: #222; color: #fff; border: 1px solid #444; }
+        .btn-pw-cancel:hover { background: #333; }
+        .btn-pw-submit { background: #00ff00; color: #000; }
+        .btn-pw-submit:hover { opacity: 0.8; }
+
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             header > div:nth-child(1) { width: 100%; justify-content: center; }
@@ -76,7 +88,7 @@
             .data-label { margin-bottom: 0; }
             .row-action { justify-content: stretch; }
             .btn-save { width: 100%; }
-            .legal-footer { font-size: 10px; padding: 10px 15px; }
+            .legal-footer { font-size: 8px; padding: 6px 10px; line-height: 1.2; }
         }
     </style>
 </head>
@@ -85,7 +97,7 @@
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">LENS TERMINAL</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <button id="btn-lock" style="display:none; background: #222; color: #fff; border: 1px solid #444; padding: 10px 20px; font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s;">🔒 KİLİDİ AÇ</button>
+            <button id="btn-lock" style="display:none; background: #222; color: #fff; border: 1px solid #444; padding: 10px 20px; font-size: 12px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s;">KİLİDİ AÇ</button>
             <a href="index.html" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'">WMS GEÇİŞ</a>
         </div>
     </header>
@@ -106,6 +118,17 @@
 
     <div class="legal-footer">
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
+    <div id="password-modal">
+        <div class="password-box">
+            <h3>SİSTEM YÖNETİCİ ŞİFRESİ</h3>
+            <input type="password" id="admin-pw-input" autocomplete="new-password">
+            <div class="pw-btn-group">
+                <button class="btn-pw-cancel" onclick="closePasswordModal()">İPTAL</button>
+                <button class="btn-pw-submit" onclick="submitPassword()">ONAYLA</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -135,6 +158,9 @@
         const loading = document.getElementById('loading');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const lockBtn = document.getElementById('btn-lock');
+        
+        const passwordModal = document.getElementById('password-modal');
+        const pwInput = document.getElementById('admin-pw-input');
 
         const trToLower = (text) => {
             if (!text) return "";
@@ -151,21 +177,37 @@
             if(lensData.length > 0) renderLenses();
         });
 
+        window.closePasswordModal = () => {
+            passwordModal.style.display = 'none';
+            pwInput.value = '';
+        };
+
+        window.submitPassword = () => {
+            if (pwInput.value === "admin") {
+                isEditingUnlocked = true;
+                lockBtn.innerHTML = 'KİLİDİ KAPAT';
+                lockBtn.style.background = '#ff3333';
+                lockBtn.style.borderColor = '#ff3333';
+                closePasswordModal();
+                renderLenses();
+            } else {
+                alert("Güvenlik İhlali: Hatalı Şifre!");
+                pwInput.value = '';
+                pwInput.focus();
+            }
+        };
+
+        pwInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitPassword();
+        });
+
         lockBtn.addEventListener('click', () => {
             if (!isEditingUnlocked) {
-                const pw = prompt("Yönetici Şifresi:");
-                if (pw === "admin") {
-                    isEditingUnlocked = true;
-                    lockBtn.innerHTML = '🔓 KİLİDİ KAPAT';
-                    lockBtn.style.background = '#ff3333';
-                    lockBtn.style.borderColor = '#ff3333';
-                    renderLenses();
-                } else if (pw !== null) {
-                    alert("Güvenlik İhlali: Hatalı Şifre!");
-                }
+                passwordModal.style.display = 'flex';
+                pwInput.focus();
             } else {
                 isEditingUnlocked = false;
-                lockBtn.innerHTML = '🔒 KİLİDİ AÇ';
+                lockBtn.innerHTML = 'KİLİDİ AÇ';
                 lockBtn.style.background = '#222';
                 lockBtn.style.borderColor = '#444';
                 renderLenses();
@@ -266,6 +308,9 @@
                 const refVal = l.refNo && l.refNo !== "-" ? l.refNo : "BULUNAMADI";
                 const miatVal = l.miatTarihi && l.miatTarihi !== "-" ? l.miatTarihi : "GİRİLMEDİ";
                 const mikVal = l.miktar || 0;
+                
+                let num = parseFloat(String(l.lensNo || "0").replace(',', '.'));
+                let formattedLensNo = !isNaN(num) ? (num > 0 ? "+" : "") + num.toFixed(2) : l.lensNo;
 
                 if (isEditingUnlocked) {
                     return `
@@ -275,7 +320,7 @@
                                 <div class="lens-code">KOD: <span style="color:#fff;">${l.urunKodu}</span></div>
                                 <div style="font-size:13px; color:#ccc; margin-top: 6px; line-height: 1.4; font-weight: 500;">${l.urunAdi}</div>
                             </div>
-                            <div class="row-lens-no">${l.lensNo}</div>
+                            <div class="row-lens-no">${formattedLensNo}</div>
                             <div class="row-data">
                                 <div class="edit-group">
                                     <label>MİKTAR</label>
@@ -303,7 +348,7 @@
                                 <div class="lens-code">KOD: <span style="color:#fff;">${l.urunKodu}</span></div>
                                 <div style="font-size:13px; color:#ccc; margin-top: 6px; line-height: 1.4; font-weight: 500;">${l.urunAdi}</div>
                             </div>
-                            <div class="row-lens-no">${l.lensNo}</div>
+                            <div class="row-lens-no">${formattedLensNo}</div>
                             <div class="row-data">
                                 <div class="data-text"><div class="data-label">STOK MİKTARI</div><div class="data-val qty">${mikVal}</div></div>
                                 <div class="data-text"><div class="data-label">REF NO</div><div class="data-val" style="color: ${refVal === 'BULUNAMADI' ? '#555' : '#fff'};">${refVal}</div></div>
