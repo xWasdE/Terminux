@@ -7,6 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) { window.location.reload(); }
+        });
+    </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -270,6 +275,13 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
 
+        window.hideLoader = () => {
+            const loader = document.getElementById('loading-overlay');
+            if (loader) loader.style.display = 'none';
+            const main = document.getElementById('main-content');
+            if (main) main.style.display = 'block';
+        };
+
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-desc').innerText = desc;
@@ -295,19 +307,17 @@
             closeCustomConfirm();
         });
 
-        const initFallback = setTimeout(() => {
-            const loader = document.getElementById('loading-overlay');
-            if (loader && loader.style.display !== 'none') {
-                loader.style.display = 'none';
-            }
-        }, 5000);
+        const emergencyTimer = setTimeout(() => {
+            window.hideLoader();
+        }, 2500);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('main-content').style.display = 'block';
                 loadCatalog();
             } else {
-                window.location.href = 'index.html';
+                setTimeout(() => {
+                    if(!auth.currentUser) window.location.href = 'index.html';
+                }, 1000);
             }
         });
 
@@ -315,50 +325,62 @@
             try {
                 const cachedData = localStorage.getItem('terminux_catalog_cache');
                 if (cachedData) {
-                    const parsed = JSON.parse(cachedData);
-                    parsed.forEach(item => {
-                        catalogDb[item.urunKodu] = { 
-                            urunKodu: item.urunKodu, 
-                            urunAdi: item.urunAdi, 
-                            barkod: item.barkod, 
-                            refNo: item.refNo 
-                        };
-                    });
-                    clearTimeout(initFallback);
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    loadData();
-                    return;
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || "") 
+                                };
+                            });
+                            clearTimeout(emergencyTimer);
+                            window.hideLoader();
+                            loadData();
+                            return;
+                        }
+                    } catch(e) { }
                 }
 
                 const [anaSnap, amSnap] = await Promise.all([
-                    getDocs(collection(db, "ana_depo")),
-                    getDocs(collection(db, "ameliyathane"))
+                    getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
+                    getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
                 const processSnap = (snap) => {
+                    if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
-                        const key = d.urunKodu;
+                        const key = String(d.urunKodu || doc.id || "");
                         if (!catalogDb[key]) {
-                            catalogDb[key] = { urunKodu: d.urunKodu, urunAdi: d.urunAdi || "İsimsiz Ürün", barkod: d.barkod || "", refNo: d.refNo || "" };
+                            catalogDb[key] = { 
+                                urunKodu: key, 
+                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
+                                barkod: String(d.barkod || ""), 
+                                refNo: String(d.refNo || "") 
+                            };
                         }
                     });
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
-                clearTimeout(initFallback);
-                document.getElementById('loading-overlay').style.display = 'none';
-                loadData();
             } catch (err) {
-                clearTimeout(initFallback);
-                document.getElementById('loading-overlay').style.display = 'none';
-                showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
+                console.warn(err);
+            } finally {
+                clearTimeout(emergencyTimer);
+                window.hideLoader();
+                loadData();
             }
         };
 
         const loadData = () => {
             const saved = localStorage.getItem('terminux_shipments_v3');
-            if (saved) allShipments = JSON.parse(saved);
+            if (saved) {
+                try { allShipments = JSON.parse(saved) || []; } catch(e) { allShipments = []; }
+            }
             renderHomeList();
         };
 
