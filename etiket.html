@@ -122,7 +122,6 @@
                     <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     <button class="btn-add" onclick="processScan()">BUL VE EKLE</button>
                 </div>
-
                 <div id="dropdown-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-top: 5px;"></div>
             </div>
         </div>
@@ -199,7 +198,7 @@
 
         const trToLower = (text) => {
             if (!text) return "";
-            return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+            return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
         };
 
         window.showCustomAlert = (title, desc) => {
@@ -244,20 +243,25 @@
             try {
                 const cachedData = localStorage.getItem('terminux_catalog_cache');
                 if (cachedData) {
-                    const parsed = JSON.parse(cachedData);
-                    parsed.forEach(item => {
-                        catalogDb[item.urunKodu] = { 
-                            urunKodu: item.urunKodu, 
-                            urunAdi: item.urunAdi, 
-                            barkod: item.barkod || "", 
-                            refNo: item.refNo || "" 
-                        };
-                    });
-                    catalogArray = Object.values(catalogDb);
-                    clearTimeout(initFallback);
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    loadLocalList();
-                    return;
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || "") 
+                                };
+                            });
+                            catalogArray = Object.values(catalogDb);
+                            clearTimeout(initFallback);
+                            document.getElementById('loading-overlay').style.display = 'none';
+                            loadLocalList();
+                            return;
+                        }
+                    } catch(e) { console.warn("Önbellek işleme hatası", e); }
                 }
 
                 const [anaSnap, amSnap] = await Promise.all([
@@ -268,9 +272,14 @@
                 const processSnap = (snap) => {
                     snap.forEach(doc => {
                         const d = doc.data();
-                        const key = d.urunKodu;
+                        const key = String(d.urunKodu || doc.id || "");
                         if (!catalogDb[key]) {
-                            catalogDb[key] = { urunKodu: d.urunKodu, urunAdi: d.urunAdi || "İsimsiz Ürün", barkod: d.barkod || "", refNo: d.refNo || "" };
+                            catalogDb[key] = { 
+                                urunKodu: key, 
+                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
+                                barkod: String(d.barkod || ""), 
+                                refNo: String(d.refNo || "") 
+                            };
                         }
                     });
                 };
@@ -289,7 +298,9 @@
 
         const loadLocalList = () => {
             const saved = localStorage.getItem('terminux_print_list');
-            if (saved) printItems = JSON.parse(saved);
+            if (saved) {
+                try { printItems = JSON.parse(saved); } catch(e) { printItems = {}; }
+            }
             renderList();
         };
 
@@ -298,41 +309,45 @@
         };
 
         scanInput.addEventListener('input', (e) => {
-            const val = trToLower(e.target.value.trim());
-            clearTimeout(searchTimeout);
-            if (val.length < 2) { dropdown.style.display = 'none'; return; }
+            try {
+                const val = trToLower(e.target.value.trim());
+                clearTimeout(searchTimeout);
+                if (val.length < 2) { dropdown.style.display = 'none'; return; }
 
-            searchTimeout = setTimeout(() => {
-                dropdown.innerHTML = '<div style="padding: 15px; color: #666; font-size: 14px;">Sorgulanıyor...</div>';
-                dropdown.style.display = 'block';
+                searchTimeout = setTimeout(() => {
+                    dropdown.innerHTML = '<div style="padding: 15px; color: #666; font-size: 14px;">Sorgulanıyor...</div>';
+                    dropdown.style.display = 'block';
 
-                const terms = val.split(/\s+/);
-                let matches = catalogArray.filter(m => {
-                    const searchStr = trToLower(`${m.urunAdi} ${m.urunKodu} ${m.barkod} ${m.refNo}`);
-                    return terms.every(t => searchStr.includes(t));
-                }).slice(0, 15);
+                    const terms = val.split(/\s+/);
+                    let matches = catalogArray.filter(m => {
+                        const searchStr = trToLower(`${m.urunAdi} ${m.urunKodu} ${m.barkod} ${m.refNo}`);
+                        return terms.every(t => searchStr.includes(t));
+                    }).slice(0, 15);
 
-                if (matches.length > 0) {
-                    dropdown.innerHTML = matches.map(m => `
-                        <div class="search-item" data-code="${m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition:0.2s;">
-                            <div style="color: #fff; font-size: 14px; font-weight: 600;">${m.urunAdi}</div>
-                            <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:4px;">KOD: <span style="color:#ffbc00;">${m.urunKodu}</span> | REF: ${m.refNo || '-'}</div>
-                        </div>
-                    `).join('');
+                    if (matches.length > 0) {
+                        dropdown.innerHTML = matches.map(m => `
+                            <div class="search-item" data-code="${m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition:0.2s;">
+                                <div style="color: #fff; font-size: 14px; font-weight: 600;">${m.urunAdi}</div>
+                                <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:4px;">KOD: <span style="color:#ffbc00;">${m.urunKodu}</span> | REF: ${m.refNo || '-'}</div>
+                            </div>
+                        `).join('');
 
-                    document.querySelectorAll('.search-item').forEach(item => {
-                        item.addEventListener('click', () => {
-                            scanInput.value = item.getAttribute('data-code');
-                            dropdown.style.display = 'none';
-                            processScan(); 
+                        document.querySelectorAll('.search-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                scanInput.value = item.getAttribute('data-code');
+                                dropdown.style.display = 'none';
+                                processScan(); 
+                            });
+                            item.addEventListener('mouseover', () => item.style.background = '#111');
+                            item.addEventListener('mouseout', () => item.style.background = 'transparent');
                         });
-                        item.addEventListener('mouseover', () => item.style.background = '#111');
-                        item.addEventListener('mouseout', () => item.style.background = 'transparent');
-                    });
-                } else {
-                    dropdown.innerHTML = '<div style="padding: 15px; color: #f33; font-size: 14px;">Kayıt bulunamadı.</div>';
-                }
-            }, 150);
+                    } else {
+                        dropdown.innerHTML = '<div style="padding: 15px; color: #f33; font-size: 14px;">Kayıt bulunamadı.</div>';
+                    }
+                }, 150);
+            } catch(err) {
+                console.warn(err);
+            }
         });
 
         document.addEventListener('click', (e) => {
@@ -342,43 +357,49 @@
         });
 
         window.processScan = () => {
-            const searchCode = scanInput.value.trim();
-            if(!searchCode) return;
-            dropdown.style.display = 'none';
+            try {
+                const searchCode = scanInput.value.trim();
+                if(!searchCode) return;
+                dropdown.style.display = 'none';
 
-            let matchedKey = null;
-            let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
+                let matchedKey = null;
+                let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
 
-            if (catalogDb[searchCode]) {
-                matchedKey = searchCode;
-                matchedName = catalogDb[searchCode].urunAdi;
-            } else {
-                for (const key in catalogDb) {
-                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || catalogDb[key].urunAdi.toLowerCase() === searchCode.toLowerCase()) {
-                        matchedKey = key;
-                        matchedName = catalogDb[key].urunAdi;
-                        break;
+                if (catalogDb[searchCode]) {
+                    matchedKey = searchCode;
+                    matchedName = catalogDb[searchCode].urunAdi;
+                } else {
+                    const searchLower = trToLower(searchCode);
+                    for (const key in catalogDb) {
+                        const dbAd = trToLower(catalogDb[key].urunAdi);
+                        if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || dbAd === searchLower) {
+                            matchedKey = key;
+                            matchedName = catalogDb[key].urunAdi;
+                            break;
+                        }
                     }
                 }
-            }
 
-            const finalKey = matchedKey || searchCode;
+                const finalKey = matchedKey || searchCode;
 
-            if (printItems[finalKey]) {
-                printItems[finalKey].qty += 1;
-            } else {
-                printItems[finalKey] = {
-                    code: finalKey,
-                    name: matchedName,
-                    qty: 1
-                };
+                if (printItems[finalKey]) {
+                    printItems[finalKey].qty += 1;
+                } else {
+                    printItems[finalKey] = {
+                        code: finalKey,
+                        name: matchedName,
+                        qty: 1
+                    };
+                }
+                
+                scanInput.value = '';
+                scanInput.focus();
+                
+                saveLocalList();
+                renderList();
+            } catch(e) {
+                showCustomAlert("HATA", "İşlem sırasında bir sorun oluştu.");
             }
-            
-            scanInput.value = '';
-            scanInput.focus();
-            
-            saveLocalList();
-            renderList();
         };
 
         scanInput.addEventListener('keypress', (e) => {
@@ -464,8 +485,7 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    const inputEl = document.getElementById('scan-code');
-                    inputEl.value = decodedText;
+                    scanInput.value = decodedText;
                     closeScanner();
                     processScan(); 
                 },
