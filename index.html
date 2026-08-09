@@ -78,7 +78,6 @@
                     <label>Şifre</label>
                 </div>
                 <button type="submit" class="btn-submit">Giriş Yap</button>
-                <a href="lens.html" class="btn-lens-redirect">LENS MERKEZİNE GİRİŞ</a>
             </form>
         </div>
     </div>
@@ -87,6 +86,7 @@
         <header style="padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505;">
             <div style="font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:14px; font-weight: 600;">WMS TERMINAL</span></div>
             <div style="display: flex; gap: 30px; align-items: center;">
+                <a href="etiket.html" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#ff3333'; this.style.color='#000'" onmouseout="this.style.background='rgba(255, 51, 51, 0.1)'; this.style.color='#ff3333'">ETİKET MODÜLÜ</a>
                 <a href="sevkiyat.html" style="background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ccff'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 204, 255, 0.1)'; this.style.color='#00ccff'">SEVKİYAT KONTROL</a>
                 <a href="sayim.html" style="background: rgba(255, 188, 0, 0.1); color: #ffbc00; border: 1px solid rgba(255, 188, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#ffbc00'; this.style.color='#000'" onmouseout="this.style.background='rgba(255, 188, 0, 0.1)'; this.style.color='#ffbc00'">SAYIM MODÜLÜ</a>
                 <a href="lens.html" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'">LENS MERKEZİ</a>
@@ -97,7 +97,7 @@
         <main style="flex: 1; padding: 50px; max-width: 1400px; margin: 0 auto; width: 100%; background: #000; overflow-y: auto;">
             <div style="margin-bottom: 50px; position: relative;">
                 <div class="search-wrapper" style="display: flex; gap: 15px; width: 100%;">
-                    <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="flex: 1; width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autocomplete="off">
+                    <input type="text" id="main-search" maxlength="50" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="flex: 1; width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autocomplete="off">
                     <button id="btn-scan-mobile" class="btn-scan-mobile" onclick="openScanner()">BARKOD TARA</button>
                 </div>
                 <div id="dropdown-results" style="display: none; position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 500px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);"></div>
