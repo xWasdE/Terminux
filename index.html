@@ -44,9 +44,91 @@
         ::-webkit-scrollbar-thumb:hover { background: #555; }
 
         @media (max-width: 900px) {
-            .search-wrapper { height: 50px !important; gap: 10px !important; }
-            #main-search { font-size: 16px !important; padding: 10px 15px !important; border-radius: 8px !important; height: 100% !important; }
-            .btn-scan-mobile { display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; padding: 0 15px !important; height: 100% !important; border-radius: 8px !important; border-width: 1px !important; }
+            body { padding: 10px !important; padding-bottom: 120px !important; }
+            
+            #app-screen > header { 
+                display: flex !important;
+                flex-direction: column !important; 
+                align-items: center !important; 
+                padding: 20px 15px !important; 
+                gap: 15px !important; 
+            }
+            #app-screen > header > div:nth-child(1) { 
+                text-align: center !important; 
+            }
+            #app-screen > header > div:nth-child(2) { 
+                display: flex !important;
+                flex-direction: row !important; 
+                flex-wrap: wrap !important; 
+                justify-content: center !important; 
+                width: 100% !important; 
+                gap: 10px !important; 
+            }
+            #app-screen > header > div:nth-child(2) > a { 
+                order: 1 !important; 
+                flex: 1 !important; 
+                text-align: center !important; 
+                font-size: 11px !important; 
+                padding: 12px 10px !important; 
+                white-space: nowrap !important; 
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #btn-logout { 
+                order: 2 !important; 
+                flex: 1 !important; 
+                font-size: 11px !important; 
+                padding: 12px 10px !important; 
+                white-space: nowrap !important; 
+            }
+            #app-screen > header > div:nth-child(2) > span { 
+                order: 3 !important; 
+                width: 100% !important; 
+                text-align: center !important; 
+                margin-top: 5px !important; 
+                font-size: 12px !important; 
+            }
+
+            #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
+            #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
+            #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
+            #login-form { width: 100% !important; max-width: 360px !important; background: #0c0c0c !important; border: 1px solid #222 !important; border-radius: 16px !important; padding: 40px 25px !important; box-shadow: 0 15px 40px rgba(0,0,0,0.8) !important; text-align: center !important; margin: 0 auto !important; display: block !important; box-sizing: border-box !important; }
+            
+            #login-form p, #login-form label, #login-form h1, #login-form h2, #login-form h3 { display: none !important; }
+            #login-form span:not(.mobile-login-header span) { display: none !important; }
+            
+            #login-form input { width: 100% !important; background: #000 !important; border: 1px solid #333 !important; color: #fff !important; padding: 16px !important; font-size: 16px !important; border-radius: 8px !important; margin-bottom: 15px !important; box-sizing: border-box !important; text-align: center !important; }
+            #login-form button[type="submit"] { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
+            .mobile-login-header { display: block !important; }
+
+            .search-wrapper { flex-direction: column !important; height: auto !important; gap: 15px !important; }
+            #main-search { font-size: 16px !important; height: 55px !important; padding: 10px 15px !important; border-radius: 8px !important; width: 100% !important; }
+            #main-search::placeholder { font-size: 12px !important; }
+            .btn-scan-mobile { display: flex !important; align-items: center; justify-content: center; font-size: 16px !important; height: 55px !important; padding: 0 !important; border-radius: 8px !important; border-width: 2px !important; width: 100% !important; }
+
+            .card-wrapper { flex-direction: column; gap: 15px; }
+            .card-main, .stock-box { padding: 20px; }
+            .stock-value { font-size: 45px !important; } 
+            
+            .grid-details { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; }
+            .title-text { font-size: 20px; }
+            .label-text { font-size: 10px; }
+            .value-text { font-size: 13px; }
+            .input-style { font-size: 12px; padding: 8px; margin-bottom: 5px; max-width: 100%; width: 100%; }
+            .btn-save, .btn-cancel { padding: 8px 10px; font-size: 12px; }
+            .btn-edit { padding: 6px; font-size: 10px; margin-top: 5px; width: 100%; }
+            .flex-edit { flex-direction: column; align-items: stretch; gap: 5px; width: 100%; }
+            .edit-btn-group { width: 100%; display: flex; gap: 5px; }
+            svg { max-height: 30px !important; width: auto !important; }
+
+            .btn-print-mobile { width: 100% !important; margin-top: 15px; padding: 12px !important; }
+            .legal-footer { font-size: 10px; padding: 10px 15px; }
+
+            .lightbox-prev, .lightbox-next { font-size: 24px; padding: 10px 15px; }
+            .lightbox-prev { left: 10px; }
+            .lightbox-next { right: 10px; }
+            .lightbox-close { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 25px; }
         }
     </style>
 </head>
