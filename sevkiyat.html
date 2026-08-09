@@ -1,0 +1,698 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Sevkiyat Terminali</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
+        
+        .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ccff; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .input-group input:focus, .input-group select:focus { border-color: #00ccff; }
+        
+        .btn-primary { background: #00ccff; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary:hover { background: #222; border-color: #555; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+        .btn-success { background: #00ff00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-success:hover { opacity: 0.8; }
+
+        .history-container { max-width: 1000px; margin: 0 auto; }
+        .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; border: 1px solid #1a1a1a; padding: 20px; border-radius: 8px; transition: 0.2s; }
+        .history-card:hover { border-color: #333; }
+        .history-info { display: flex; flex-direction: column; gap: 5px; }
+        .history-name { font-size: 18px; font-weight: 800; color: #00ccff; }
+        .history-detail { font-size: 12px; color: #888; font-family: monospace; }
+        .history-actions { display: flex; gap: 10px; }
+
+        .active-count-header { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
+        .session-info { display: flex; flex-direction: column; gap: 5px; }
+        .session-name { font-size: 20px; font-weight: 800; color: #00ccff; }
+        .session-details { font-size: 12px; color: #888; font-family: monospace; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        
+        .scan-area { display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
+        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { opacity: 0.8; }
+
+        .search-area { display: flex; gap: 15px; margin-bottom: 20px; }
+        .search-area input { flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .search-area input:focus { border-color: #00ccff; }
+
+        .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
+        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
+        .list-item:hover { background: #0c0c0c; }
+        
+        .status-pending { border-left-color: #444; }
+        .status-missing { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); }
+        .status-complete { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); }
+        .status-over { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.08) 0%, transparent 100%); }
+
+        .item-code { font-family: monospace; font-size: 14px; font-weight: bold; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        
+        .val-expected { color: #888; }
+        .val-missing { color: #ff3333; }
+        .val-complete { color: #00ff00; }
+        .val-over { color: #ffbc00; }
+        .val-label { color: #00ccff; }
+        
+        .item-action { display: flex; gap: 5px; justify-content: flex-end; }
+        .btn-action-sm { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-action-sm:hover { border-color: #00ccff; color: #00ccff; }
+
+        .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
+        .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
+        
+        .modal-inputs-wrapper { display: flex; gap: 15px; margin-bottom: 25px; width: 100%; }
+        .modal-inputs-wrapper .input-group { flex: 1; margin: 0; }
+        
+        .modal-actions { display: flex; gap: 15px; justify-content: center; }
+        .modal-actions button { flex: 1; max-width: 200px; white-space: normal; }
+        
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+
+        #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+        .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { color: #333; } 50% { color: #00ccff; } 100% { color: #333; } }
+
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px 15px 80px 15px; }
+            .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
+            .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
+            .header-actions { flex-direction: column; }
+            .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
+            .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; }
+            .scan-area .input-group { min-width: 100%; }
+            .scan-area > div { flex-direction: column; }
+            .scan-area button { width: 100%; height: 50px; }
+
+            .modal-inputs-wrapper { flex-direction: column; gap: 15px; }
+            
+            .list-header { display: none; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; }
+            .item-code { grid-column: 1 / -1; font-size: 16px; }
+            .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
+            .item-action { grid-column: 1 / -1; margin-top: 10px; }
+            .item-val { font-size: 16px; text-align: left; display: flex; flex-direction: column; gap: 5px; }
+            .item-val::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
+            
+            .modal-actions { flex-direction: column; }
+            .modal-actions button { max-width: 100%; }
+            .legal-footer { font-size: 8px; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="loader-text">VERİTABANI EŞİTLENİYOR...</div>
+    </div>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">SEVKİYAT KONTROL</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="index.html" class="btn-secondary" style="margin:0; border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
+        </div>
+    </header>
+
+    <main>
+        <div id="home-screen">
+            <div class="setup-container">
+                <div class="setup-title">YENİ SEVKİYAT LİSTESİ YÜKLE</div>
+                <div class="input-group">
+                    <label>SEVKİYAT İSMİ / TARİHİ</label>
+                    <input type="text" id="setup-name" placeholder="Örn: 12 Ağustos Medikal Sevkiyat" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>SEVKİYAT KATEGORİSİ</label>
+                    <select id="setup-type">
+                        <option value="ANA DEPO">ANA DEPO</option>
+                        <option value="AMELİYATHANE">AMELİYATHANE</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>SEVKİYAT EXCEL DOSYASI (Ürün Kodu, Ürün İsmi, Miktar)</label>
+                    <input type="file" id="setup-file" accept=".xlsx, .xls">
+                </div>
+                <button class="btn-primary" style="margin-top: 10px;" onclick="createShipment()">LİSTEYİ YÜKLE VE BAŞLAT</button>
+            </div>
+
+            <div class="history-container" id="history-container" style="display:none;">
+                <div class="history-title">MEVCUT VE GEÇMİŞ SEVKİYATLAR</div>
+                <div class="history-list" id="history-list"></div>
+            </div>
+        </div>
+
+        <div id="active-screen" style="display: none;">
+            <div class="active-count-header">
+                <div class="session-info">
+                    <div class="session-name" id="ui-session-name">-</div>
+                    <div class="session-details" id="ui-session-details">-</div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="closeActiveScreen()">ANA EKRANA DÖN</button>
+                    <button class="btn-primary" style="background:#ffbc00; color:#000;" onclick="exportLabels()">ETİKET LİSTESİ (EXCEL)</button>
+                    <button class="btn-success" onclick="promptFinishShipment()">SEVKİYATI KAPAT</button>
+                </div>
+            </div>
+
+            <div class="scan-area">
+                <div class="input-group scan-input">
+                    <label>KOD, BARKOD VEYA REF NO OKUT / ARA</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1; border-color:#333; padding:15px; font-size:16px;">
+                        <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
+                        <button class="btn-add" onclick="processScan()">BUL VE İŞLE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-area">
+                <input type="text" id="search-input" placeholder="Aşağıdaki listede ara: Ürün Kodu, İsim..." oninput="filterShipmentList()">
+            </div>
+
+            <div class="list-container">
+                <div class="list-header">
+                    <div>ASG KOD / REF NO</div>
+                    <div>ÜRÜN İSMİ</div>
+                    <div style="text-align:center;">BEKLENEN</div>
+                    <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">ETİKET ADETİ</div>
+                    <div style="text-align:right;">KONTROL</div>
+                </div>
+                <div id="shipment-list"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="custom-alert" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="alert-title">UYARI</div>
+            <div class="modal-desc" id="alert-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
+            <div class="modal-desc" id="confirm-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
+                <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="input-modal" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title">SEVKİYAT KONTROL GİRİŞİ</div>
+            <div class="modal-desc" id="input-item-name" style="color:#00ccff; font-family:monospace; margin-bottom:25px; font-size:14px; font-weight:bold;">-</div>
+            
+            <div class="modal-inputs-wrapper">
+                <div class="input-group">
+                    <label style="color:#00ff00;">TESLİM ALINAN MİKTAR</label>
+                    <input type="number" id="input-received" style="text-align:center; font-size:24px; color:#00ff00; border-color:#00ff00;" min="0">
+                </div>
+                <div class="input-group">
+                    <label style="color:#ffbc00;">ETİKET YAZDIR ADETİ</label>
+                    <input type="number" id="input-label" style="text-align:center; font-size:24px; color:#ffbc00; border-color:#ffbc00;" min="0">
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeInputModal()">İPTAL</button>
+                <button class="btn-success" id="input-save-btn">GÜNCELLE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanner-modal">
+        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
+        <div id="reader"></div>
+        <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let catalogDb = {};
+        let allShipments = [];
+        let currentShipmentId = null;
+        let editItemCode = null;
+        let confirmActionCallback = null;
+        let html5QrCode = null;
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
+
+        window.showCustomConfirm = (title, desc, confirmBtnText, confirmBtnClass, callback) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = desc;
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            yesBtn.innerText = confirmBtnText;
+            yesBtn.className = confirmBtnClass;
+            confirmActionCallback = callback;
+            document.getElementById('custom-confirm').style.display = 'flex';
+        };
+        window.closeCustomConfirm = () => {
+            document.getElementById('custom-confirm').style.display = 'none';
+            confirmActionCallback = null;
+        };
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if(confirmActionCallback) confirmActionCallback();
+            closeCustomConfirm();
+        });
+
+        const loadCatalog = async () => {
+            try {
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, "ana_depo")),
+                    getDocs(collection(db, "ameliyathane"))
+                ]);
+                
+                const processSnap = (snap) => {
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const key = d.urunKodu;
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { urunKodu: d.urunKodu, urunAdi: d.urunAdi || "İsimsiz Ürün", barkod: d.barkod || "", refNo: d.refNo || "" };
+                        }
+                    });
+                };
+                
+                processSnap(anaSnap); processSnap(amSnap);
+                document.getElementById('loading-overlay').style.display = 'none';
+                loadData();
+            } catch (err) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
+            }
+        };
+
+        const loadData = () => {
+            const saved = localStorage.getItem('terminux_shipments_v2');
+            if (saved) allShipments = JSON.parse(saved);
+            renderHomeList();
+        };
+
+        const saveData = () => {
+            localStorage.setItem('terminux_shipments_v2', JSON.stringify(allShipments));
+            renderHomeList();
+        };
+
+        const renderHomeList = () => {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+            
+            if (allShipments.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = allShipments.map(s => {
+                const statusColor = s.status === 'active' ? '#00ccff' : '#00ff00';
+                const statusText = s.status === 'active' ? 'BEKLEMEDE / KONTROL EDİLİYOR' : 'TAMAMLANDI';
+                
+                return `
+                    <div class="history-card">
+                        <div class="history-info">
+                            <div class="history-name" style="color:${statusColor}">${s.name}</div>
+                            <div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items).length} Kalem Ürün | Durum: ${statusText}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn-danger" onclick="deleteShipment('${s.id}')">SİL</button>
+                            <button class="btn-secondary" style="margin:0;" onclick="resumeShipment('${s.id}')">KONTROL ET</button>
+                        </div>
+                    </div>
+                `;
+            }).reverse().join('');
+        };
+
+        const normalizeStr = (str) => { if (!str) return ""; return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const getCol = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
+                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                }
+            }
+            return "";
+        };
+
+        window.createShipment = () => {
+            const name = document.getElementById('setup-name').value.trim();
+            const type = document.getElementById('setup-type').value;
+            const fileInput = document.getElementById('setup-file');
+            
+            if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat için bir isim belirleyin.");
+            if (!fileInput.files[0]) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat listesini içeren Excel dosyasını seçin.");
+
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    
+                    const now = new Date();
+                    const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
+                    const newId = 'SVK-' + Date.now();
+                    const shipmentItems = {};
+
+                    let addedCount = 0;
+                    rows.forEach(r => {
+                        const excelCode = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod", "ref no"]);
+                        const expectedQty = parseInt(getCol(r, ["beklenen", "miktar", "adet", "stok miktarı"])) || 0;
+                        let excelName = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim", "açıklama"]);
+                        
+                        if(excelCode) {
+                            let finalCode = excelCode;
+                            let finalName = excelName || "İsimsiz Excel Ürünü";
+                            
+                            if (catalogDb[excelCode]) {
+                                finalName = catalogDb[excelCode].urunAdi;
+                            } else {
+                                for (const key in catalogDb) {
+                                    if (catalogDb[key].barkod === excelCode || catalogDb[key].refNo === excelCode) {
+                                        finalCode = key;
+                                        finalName = catalogDb[key].urunAdi;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (shipmentItems[finalCode]) {
+                                shipmentItems[finalCode].expectedQty += expectedQty;
+                            } else {
+                                shipmentItems[finalCode] = { code: finalCode, name: finalName, expectedQty: expectedQty, receivedQty: 0, labelQty: 0 };
+                            }
+                            addedCount++;
+                        }
+                    });
+
+                    if (addedCount === 0) {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen Excel dosyasında ürün kodu veya miktar sütunları bulunamadı.");
+                    }
+
+                    const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems };
+                    allShipments.push(newShipment);
+                    saveData();
+                    
+                    document.getElementById('setup-name').value = '';
+                    fileInput.value = '';
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    resumeShipment(newId);
+
+                } catch(err) {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
+                }
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        };
+
+        window.deleteShipment = (id) => {
+            showCustomConfirm("SEVKİYATI SİL", "Geçmiş sevkiyat listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", () => {
+                allShipments = allShipments.filter(s => s.id !== id);
+                saveData();
+            });
+        };
+
+        window.resumeShipment = (id) => {
+            currentShipmentId = id;
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('active-screen').style.display = 'block';
+            
+            const shipment = allShipments.find(s => s.id === id);
+            document.getElementById('ui-session-name').innerText = shipment.name;
+            document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
+            
+            document.getElementById('search-input').value = '';
+            document.getElementById('scan-code').focus();
+            renderShipmentList();
+        };
+
+        window.closeActiveScreen = () => {
+            document.getElementById('home-screen').style.display = 'block';
+            document.getElementById('active-screen').style.display = 'none';
+            currentShipmentId = null;
+            renderHomeList();
+        };
+
+        window.processScan = () => {
+            const inputEl = document.getElementById('scan-code');
+            const searchCode = inputEl.value.trim();
+            if(!searchCode) return;
+
+            let matchedKey = null;
+            let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
+
+            if (catalogDb[searchCode]) {
+                matchedKey = searchCode;
+                matchedName = catalogDb[searchCode].urunAdi;
+            } else {
+                for (const key in catalogDb) {
+                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || catalogDb[key].urunAdi.toLowerCase() === searchCode.toLowerCase()) {
+                        matchedKey = key;
+                        matchedName = catalogDb[key].urunAdi;
+                        break;
+                    }
+                }
+            }
+
+            const finalKey = matchedKey || searchCode;
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+
+            if (!shipment.items[finalKey]) {
+                shipment.items[finalKey] = {
+                    code: finalKey,
+                    name: matchedName,
+                    expectedQty: 0,
+                    receivedQty: 0,
+                    labelQty: 0
+                };
+            }
+            
+            inputEl.value = '';
+            openInputModal(finalKey);
+        };
+
+        document.getElementById('scan-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processScan();
+        });
+
+        const renderShipmentList = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            const container = document.getElementById('shipment-list');
+            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            
+            let items = Object.values(shipment.items);
+            
+            if (searchVal) {
+                items = items.filter(i => 
+                    i.code.toLowerCase().includes(searchVal) || 
+                    i.name.toLowerCase().includes(searchVal)
+                );
+            }
+
+            container.innerHTML = items.map(item => {
+                let statusClass = 'status-pending';
+                let valClass = 'val-expected';
+                
+                if (item.receivedQty > 0) {
+                    if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
+                    else if (item.receivedQty < item.expectedQty) { statusClass = 'status-missing'; valClass = 'val-missing'; }
+                    else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
+                }
+
+                return `
+                    <div class="list-item ${statusClass}">
+                        <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
+                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        <div class="item-action">
+                            <button class="btn-action-sm" onclick="openInputModal('${item.code}')">KONTROL GİRİŞİ</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.filterShipmentList = () => renderShipmentList();
+
+        window.openInputModal = (code) => {
+            editItemCode = code;
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            const item = shipment.items[code];
+            
+            document.getElementById('input-item-name').innerText = `[${item.code}] ${item.name}`;
+            
+            const rInput = document.getElementById('input-received');
+            const lInput = document.getElementById('input-label');
+            
+            rInput.value = item.receivedQty === 0 ? item.expectedQty : item.receivedQty; 
+            lInput.value = item.labelQty === 0 ? item.expectedQty : item.labelQty;
+            
+            document.getElementById('input-modal').style.display = 'flex';
+            setTimeout(() => rInput.focus(), 100);
+        };
+        
+        window.closeInputModal = () => { 
+            document.getElementById('input-modal').style.display = 'none'; 
+            editItemCode = null; 
+            setTimeout(() => document.getElementById('scan-code').focus(), 100);
+        };
+        
+        document.getElementById('input-received').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('input-label').focus();
+        });
+        
+        document.getElementById('input-label').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('input-save-btn').click();
+        });
+
+        document.getElementById('input-save-btn').addEventListener('click', () => {
+            const recVal = parseInt(document.getElementById('input-received').value) || 0;
+            const lblVal = parseInt(document.getElementById('input-label').value) || 0;
+            
+            if (editItemCode) {
+                const shipment = allShipments.find(s => s.id === currentShipmentId);
+                shipment.items[editItemCode].receivedQty = recVal;
+                shipment.items[editItemCode].labelQty = lblVal;
+                saveData();
+                renderShipmentList();
+            }
+            closeInputModal();
+        });
+
+        window.exportLabels = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            const itemsToPrint = Object.values(shipment.items).filter(i => i.labelQty > 0);
+            
+            if (itemsToPrint.length === 0) return showCustomAlert("ETİKET YOK", "Listede etiket adeti 0'dan büyük olan hiçbir ürün bulunmuyor.");
+
+            const exportData = itemsToPrint.map(i => ({
+                "ÜRÜN KODU": i.code,
+                "ÜRÜN İSMİ": i.name,
+                "ETİKET ADETİ": i.labelQty
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ETIKETLER");
+
+            const safeName = shipment.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            XLSX.writeFile(wb, `Terminux_Etiket_${safeName}.xlsx`);
+        };
+
+        window.promptFinishShipment = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            const items = Object.values(shipment.items);
+            
+            const missingItems = items.filter(i => i.receivedQty < i.expectedQty);
+            const overItems = items.filter(i => i.receivedQty > i.expectedQty);
+            
+            let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
+            if (missingItems.length > 0 || overItems.length > 0) {
+                msg = `DİKKAT: Listede ${missingItems.length} kalem eksik, ${overItems.length} kalem fazla ürün girişi var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
+            }
+
+            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", () => {
+                shipment.status = 'finished';
+                saveData();
+                closeActiveScreen();
+            });
+        };
+
+        window.openScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'flex';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    document.getElementById('scan-code').value = decodedText;
+                    closeScanner();
+                    processScan(); 
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
+                closeScanner();
+            });
+        };
+
+        window.closeScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'none';
+            if(html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+            }
+        };
+
+        loadCatalog();
+    </script>
+</body>
+</html>
