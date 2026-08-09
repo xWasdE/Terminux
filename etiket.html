@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Etiket Terminali</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
+        
+        .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px 25px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary:hover { background: #222; border-color: #555; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
+        .top-info { display: flex; flex-direction: column; gap: 5px; }
+        .top-title { font-size: 20px; font-weight: 800; color: #ffbc00; }
+        .top-desc { font-size: 12px; color: #888; }
+        
+        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
+        .scan-wrapper { display: flex; gap: 10px; width: 100%; }
+        .scan-input { flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .scan-input:focus { border-color: #ffbc00; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .btn-scan:hover { border-color: #ffbc00; color: #ffbc00; }
+        .btn-add { background: #ffbc00; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { opacity: 0.8; }
+
+        .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-header { display: grid; grid-template-columns: 2fr 4fr 1.5fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
+        .list-item { display: grid; grid-template-columns: 2fr 4fr 1.5fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; }
+        .list-item:hover { background: #0c0c0c; }
+
+        .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        
+        .qty-wrapper { display: flex; justify-content: center; }
+        .qty-input { width: 100%; max-width: 120px; background: #000; border: 1px solid #444; color: #ffbc00; padding: 12px 10px; font-size: 18px; font-weight: 900; font-family: monospace; text-align: center; border-radius: 6px; outline: none; transition: 0.2s; }
+        .qty-input:focus { border-color: #ffbc00; }
+
+        .item-action { display: flex; justify-content: flex-end; }
+
+        .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
+        .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
+        .modal-actions { display: flex; gap: 15px; justify-content: center; }
+        
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+
+        #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+        .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { color: #333; } 50% { color: #ffbc00; } 100% { color: #333; } }
+
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px 15px 80px 15px; }
+            
+            .top-bar { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
+            .top-actions { display: flex; flex-direction: column; gap: 10px; }
+            
+            .scan-wrapper { flex-direction: column; }
+            .scan-wrapper button { width: 100%; }
+            
+            .list-header { display: none; }
+            .list-item { grid-template-columns: 1fr; gap: 10px; padding: 20px 15px; text-align: center; }
+            .qty-wrapper { margin: 10px 0; }
+            .qty-wrapper::before { content: "ETİKET ADETİ"; display: block; font-size: 10px; color: #666; margin-bottom: 5px; width: 100%; text-align: center; font-weight: bold; }
+            .qty-input { max-width: 100%; }
+            
+            .legal-footer { font-size: 8px; padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="loader-text">SİSTEM HAZIRLANIYOR...</div>
+    </div>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">ETİKET MODÜLÜ</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="index.html" class="btn-secondary" style="margin:0; border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="top-bar">
+            <div class="top-info">
+                <div class="top-title">TOPLU ETİKET BASMA LİSTESİ</div>
+                <div class="top-desc">Barkod veya ürün kodu okutarak listeye ürün ekleyin, miktarlarını belirleyip Excel olarak indirin.</div>
+            </div>
+            <div class="top-actions" style="display: flex; gap: 10px;">
+                <button class="btn-secondary" style="margin:0;" onclick="promptClearList()">LİSTEYİ TEMİZLE</button>
+                <button class="btn-primary" style="margin:0;" onclick="exportExcel()">EXCEL İNDİR</button>
+            </div>
+        </div>
+
+        <div class="scan-area">
+            <div class="input-group">
+                <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
+                <div class="scan-wrapper">
+                    <input type="text" id="scan-code" class="scan-input" placeholder="Aramak veya eklemek için yazın..." autocomplete="off">
+                    <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
+                    <button class="btn-add" onclick="processScan()">BUL VE EKLE</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-container">
+            <div class="list-header" id="list-header">
+                <div>ÜRÜN KODU</div>
+                <div>ÜRÜN İSMİ</div>
+                <div style="text-align:center;">ETİKET ADETİ</div>
+                <div style="text-align:right;">İŞLEM</div>
+            </div>
+            <div id="print-list"></div>
+        </div>
+    </main>
+
+    <div id="custom-alert" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="alert-title">UYARI</div>
+            <div class="modal-desc" id="alert-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="closeCustomAlert()" style="width: 150px;">TAMAM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
+            <div class="modal-desc" id="confirm-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeCustomConfirm()" style="width: 120px;">VAZGEÇ</button>
+                <button class="btn-danger" id="confirm-yes-btn" style="width: 120px; font-size: 12px; padding: 12px 20px;">ONAYLA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanner-modal">
+        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
+        <div id="reader"></div>
+        <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let catalogDb = {};
+        let printItems = {};
+        let html5QrCode = null;
+        let confirmActionCallback = null;
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
+
+        window.showCustomConfirm = (title, desc, callback) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = desc;
+            confirmActionCallback = callback;
+            document.getElementById('custom-confirm').style.display = 'flex';
+        };
+        window.closeCustomConfirm = () => {
+            document.getElementById('custom-confirm').style.display = 'none';
+            confirmActionCallback = null;
+        };
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if(confirmActionCallback) confirmActionCallback();
+            closeCustomConfirm();
+        });
+
+        const initFallback = setTimeout(() => {
+            const loader = document.getElementById('loading-overlay');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.display = 'none';
+            }
+        }, 5000);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('main-content').style.display = 'block';
+                loadCatalog();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        const loadCatalog = async () => {
+            try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    const parsed = JSON.parse(cachedData);
+                    parsed.forEach(item => {
+                        catalogDb[item.urunKodu] = { 
+                            urunKodu: item.urunKodu, 
+                            urunAdi: item.urunAdi, 
+                            barkod: item.barkod, 
+                            refNo: item.refNo 
+                        };
+                    });
+                    clearTimeout(initFallback);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    loadLocalList();
+                    return;
+                }
+
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, "ana_depo")),
+                    getDocs(collection(db, "ameliyathane"))
+                ]);
+                
+                const processSnap = (snap) => {
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const key = d.urunKodu;
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { urunKodu: d.urunKodu, urunAdi: d.urunAdi || "İsimsiz Ürün", barkod: d.barkod || "", refNo: d.refNo || "" };
+                        }
+                    });
+                };
+                
+                processSnap(anaSnap); processSnap(amSnap);
+                clearTimeout(initFallback);
+                document.getElementById('loading-overlay').style.display = 'none';
+                loadLocalList();
+            } catch (err) {
+                clearTimeout(initFallback);
+                document.getElementById('loading-overlay').style.display = 'none';
+                showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
+            }
+        };
+
+        const loadLocalList = () => {
+            const saved = localStorage.getItem('terminux_print_list');
+            if (saved) printItems = JSON.parse(saved);
+            renderList();
+        };
+
+        const saveLocalList = () => {
+            localStorage.setItem('terminux_print_list', JSON.stringify(printItems));
+        };
+
+        window.processScan = () => {
+            const inputEl = document.getElementById('scan-code');
+            const searchCode = inputEl.value.trim();
+            if(!searchCode) return;
+
+            let matchedKey = null;
+            let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
+
+            if (catalogDb[searchCode]) {
+                matchedKey = searchCode;
+                matchedName = catalogDb[searchCode].urunAdi;
+            } else {
+                for (const key in catalogDb) {
+                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || catalogDb[key].urunAdi.toLowerCase() === searchCode.toLowerCase()) {
+                        matchedKey = key;
+                        matchedName = catalogDb[key].urunAdi;
+                        break;
+                    }
+                }
+            }
+
+            const finalKey = matchedKey || searchCode;
+
+            if (printItems[finalKey]) {
+                printItems[finalKey].qty += 1;
+            } else {
+                printItems[finalKey] = {
+                    code: finalKey,
+                    name: matchedName,
+                    qty: 1
+                };
+            }
+            
+            inputEl.value = '';
+            inputEl.focus();
+            
+            saveLocalList();
+            renderList();
+        };
+
+        document.getElementById('scan-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processScan();
+        });
+
+        window.updateQty = (key, value) => {
+            const newQty = parseInt(value) || 0;
+            if (newQty <= 0) {
+                delete printItems[key];
+            } else {
+                printItems[key].qty = newQty;
+            }
+            saveLocalList();
+            renderList();
+        };
+
+        window.removeItem = (key) => {
+            delete printItems[key];
+            saveLocalList();
+            renderList();
+        };
+
+        window.promptClearList = () => {
+            if (Object.keys(printItems).length === 0) return;
+            showCustomConfirm("LİSTEYİ TEMİZLE", "Etiket listesindeki tüm ürünler silinecektir. Onaylıyor musunuz?", () => {
+                printItems = {};
+                saveLocalList();
+                renderList();
+            });
+        };
+
+        const renderList = () => {
+            const container = document.getElementById('print-list');
+            const header = document.getElementById('list-header');
+            const items = Object.values(printItems);
+            
+            if (items.length === 0) {
+                header.style.display = 'none';
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:#555; font-size:16px; font-weight:bold;">Listeye henüz ürün eklenmedi.</div>`;
+                return;
+            }
+
+            header.style.display = 'grid';
+            
+            container.innerHTML = items.map(item => `
+                <div class="list-item">
+                    <div class="item-code">${item.code}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="qty-wrapper">
+                        <input type="number" class="qty-input" value="${item.qty}" min="0" onchange="updateQty('${item.code}', this.value)">
+                    </div>
+                    <div class="item-action">
+                        <button class="btn-danger" onclick="removeItem('${item.code}')">SİL</button>
+                    </div>
+                </div>
+            `).reverse().join('');
+        };
+
+        window.exportExcel = () => {
+            const items = Object.values(printItems);
+            if (items.length === 0) return showCustomAlert("BOŞ LİSTE", "Dışa aktarılacak ürün bulunmuyor.");
+
+            const exportData = items.map(i => ({
+                "ÜRÜN KODU": i.code,
+                "ÜRÜN İSMİ": i.name,
+                "MİKTAR": i.qty
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ETIKETLER");
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+            
+            XLSX.writeFile(wb, `Terminux_TopluEtiket_${dateStr}.xlsx`);
+        };
+
+        window.openScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'flex';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    const inputEl = document.getElementById('scan-code');
+                    inputEl.value = decodedText;
+                    closeScanner();
+                    processScan(); 
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
+                closeScanner();
+            });
+        };
+
+        window.closeScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'none';
+            if(html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+            }
+        };
+
+    </script>
+</body>
+</html>
