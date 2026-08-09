@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -30,7 +30,7 @@
         .top-desc { font-size: 12px; color: #888; }
         
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
-        .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; display: flex; flex-direction: column; gap: 8px; position: relative; }
         .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
         .scan-input { flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
@@ -122,6 +122,8 @@
                     <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     <button class="btn-add" onclick="processScan()">BUL VE EKLE</button>
                 </div>
+                
+                <div id="dropdown-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-top: 5px;"></div>
             </div>
         </div>
 
@@ -186,9 +188,19 @@
         const auth = getAuth(app);
 
         let catalogDb = {};
+        let catalogArray = [];
         let printItems = {};
         let html5QrCode = null;
         let confirmActionCallback = null;
+        let searchTimeout = null;
+
+        const scanInput = document.getElementById('scan-code');
+        const dropdown = document.getElementById('dropdown-results');
+
+        const trToLower = (text) => {
+            if (!text) return "";
+            return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+        };
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -237,10 +249,11 @@
                         catalogDb[item.urunKodu] = { 
                             urunKodu: item.urunKodu, 
                             urunAdi: item.urunAdi, 
-                            barkod: item.barkod, 
-                            refNo: item.refNo 
+                            barkod: item.barkod || "", 
+                            refNo: item.refNo || "" 
                         };
                     });
+                    catalogArray = Object.values(catalogDb);
                     clearTimeout(initFallback);
                     document.getElementById('loading-overlay').style.display = 'none';
                     loadLocalList();
@@ -263,6 +276,7 @@
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
+                catalogArray = Object.values(catalogDb);
                 clearTimeout(initFallback);
                 document.getElementById('loading-overlay').style.display = 'none';
                 loadLocalList();
@@ -283,10 +297,54 @@
             localStorage.setItem('terminux_print_list', JSON.stringify(printItems));
         };
 
+        scanInput.addEventListener('input', (e) => {
+            const val = trToLower(e.target.value.trim());
+            clearTimeout(searchTimeout);
+            if (val.length < 2) { dropdown.style.display = 'none'; return; }
+
+            searchTimeout = setTimeout(() => {
+                dropdown.innerHTML = '<div style="padding: 15px; color: #666; font-size: 14px;">Sorgulanıyor...</div>';
+                dropdown.style.display = 'block';
+
+                const terms = val.split(/\s+/);
+                let matches = catalogArray.filter(m => {
+                    const searchStr = trToLower(`${m.urunAdi} ${m.urunKodu} ${m.barkod} ${m.refNo}`);
+                    return terms.every(t => searchStr.includes(t));
+                }).slice(0, 15);
+
+                if (matches.length > 0) {
+                    dropdown.innerHTML = matches.map(m => `
+                        <div class="search-item" data-code="${m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition:0.2s;">
+                            <div style="color: #fff; font-size: 14px; font-weight: 600;">${m.urunAdi}</div>
+                            <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:4px;">KOD: <span style="color:#ffbc00;">${m.urunKodu}</span> | REF: ${m.refNo || '-'}</div>
+                        </div>
+                    `).join('');
+
+                    document.querySelectorAll('.search-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            scanInput.value = item.getAttribute('data-code');
+                            dropdown.style.display = 'none';
+                            processScan(); 
+                        });
+                        item.addEventListener('mouseover', () => item.style.background = '#111');
+                        item.addEventListener('mouseout', () => item.style.background = 'transparent');
+                    });
+                } else {
+                    dropdown.innerHTML = '<div style="padding: 15px; color: #f33; font-size: 14px;">Kayıt bulunamadı.</div>';
+                }
+            }, 150);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (scanInput && dropdown && !scanInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
+                dropdown.style.display = 'none';
+            }
+        });
+
         window.processScan = () => {
-            const inputEl = document.getElementById('scan-code');
-            const searchCode = inputEl.value.trim();
+            const searchCode = scanInput.value.trim();
             if(!searchCode) return;
+            dropdown.style.display = 'none';
 
             let matchedKey = null;
             let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
@@ -316,14 +374,14 @@
                 };
             }
             
-            inputEl.value = '';
-            inputEl.focus();
+            scanInput.value = '';
+            scanInput.focus();
             
             saveLocalList();
             renderList();
         };
 
-        document.getElementById('scan-code').addEventListener('keypress', (e) => {
+        scanInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') processScan();
         });
 
@@ -406,8 +464,7 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    const inputEl = document.getElementById('scan-code');
-                    inputEl.value = decodedText;
+                    scanInput.value = decodedText;
                     closeScanner();
                     processScan(); 
                 },
