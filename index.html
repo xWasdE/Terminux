@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | WMS Terminal</title>
     <script>
-
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
@@ -49,10 +48,14 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
 
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer b { color: #aaa; font-weight: bold; }
+
         @media (max-width: 900px) {
             .search-wrapper { flex-direction: column !important; height: auto !important; gap: 15px !important; }
             #main-search { font-size: 16px !important; height: 55px !important; padding: 10px 15px !important; border-radius: 8px !important; width: 100% !important; }
             .btn-scan-mobile { display: flex !important; align-items: center; justify-content: center; font-size: 16px !important; height: 55px !important; padding: 0 !important; border-radius: 8px !important; width: 100% !important; }
+            .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; }
         }
     </style>
 </head>
@@ -111,6 +114,10 @@
             </div>
             <div id="result-container" style="display: none;"></div>
         </main>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <script type="module" src="app.js"></script>
