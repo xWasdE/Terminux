@@ -4,6 +4,10 @@ import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, onSnapshot }
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
+const scannerScript = document.createElement('script');
+scannerScript.src = "https://unpkg.com/html5-qrcode";
+document.head.appendChild(scannerScript);
+
 const cfScript = document.createElement('script');
 cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 cfScript.async = true;
@@ -133,9 +137,6 @@ style.innerHTML = `
         #login-form button[type="submit"] { width: 100% !important; background: #fff !important; color: #000 !important; padding: 16px !important; font-size: 16px !important; font-weight: 900 !important; border: none !important; border-radius: 8px !important; margin-top: 10px !important; cursor: pointer !important; }
         .mobile-login-header { display: block !important; }
 
-        #main-search { font-size: 16px !important; height: 50px !important; padding: 10px 15px !important; border-radius: 8px !important; }
-        #main-search::placeholder { font-size: 14px !important; }
-
         .card-wrapper { flex-direction: column; gap: 15px; }
         .card-main, .stock-box { padding: 20px; }
         .stock-value { font-size: 45px !important; } 
@@ -211,6 +212,11 @@ document.body.insertAdjacentHTML('beforeend', `
             </div>
         </div>
     </div>
+    <div id="scanner-modal" style="display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">BARKOD / KAREKOD TARA</div>
+        <div id="reader" style="width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333;"></div>
+        <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
     <div class="legal-footer">
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
@@ -239,6 +245,44 @@ window.changeLightbox = (dir) => {
     if (window.lightboxIndex < 0) window.lightboxIndex = window.lightboxImages.length - 1;
     document.getElementById('lightbox-img').src = window.lightboxImages[window.lightboxIndex];
 }
+
+let html5QrCode = null;
+
+window.openScanner = () => {
+    document.getElementById('scanner-modal').style.display = 'flex';
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start({ facingMode: "environment" }, config,
+        (decodedText) => {
+            const searchInputEl = document.getElementById('main-search');
+            if (searchInputEl) {
+                searchInputEl.value = decodedText;
+                window.closeScanner();
+                
+                const inputEvent = new Event('input', { bubbles: true });
+                searchInputEl.dispatchEvent(inputEvent);
+                
+                const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+                searchInputEl.dispatchEvent(enterEvent);
+            }
+        },
+        (errorMessage) => {}
+    ).catch((err) => {
+        alert("Kamera başlatılamadı. Lütfen kamera izinlerini kontrol edin.");
+        window.closeScanner();
+    });
+};
+
+window.closeScanner = () => {
+    document.getElementById('scanner-modal').style.display = 'none';
+    if(html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+        }).catch((err) => {});
+    }
+};
 
 const firebaseConfig = {
     apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
