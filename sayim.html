@@ -17,7 +17,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -138,7 +138,7 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <div id="home-screen">
             <div class="setup-container">
                 <div class="setup-title">YENİ SAYIM OLUŞTUR</div>
@@ -197,7 +197,6 @@
 
             <div class="list-container">
                 <div class="list-header" id="list-header-ui">
-                    
                 </div>
                 <div id="counted-list"></div>
             </div>
@@ -264,6 +263,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -276,6 +276,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         let catalogDb = {};
         let allSessions = [];
@@ -309,6 +310,15 @@
             closeCustomConfirm();
         });
 
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('main-content').style.display = 'block';
+                loadCatalog();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
         const loadCatalog = async () => {
             try {
                 const [anaSnap, amSnap] = await Promise.all([
@@ -330,6 +340,7 @@
                 document.getElementById('loading-overlay').style.display = 'none';
                 loadSessions();
             } catch (err) {
+                document.getElementById('loading-overlay').style.display = 'none';
                 showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
             }
         };
@@ -683,7 +694,6 @@
             }
         };
 
-        loadCatalog();
     </script>
 </body>
 </html>
