@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | WMS Terminal</title>
+    <script>
+
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) { window.location.reload(); }
+        });
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
 
@@ -32,8 +38,8 @@
         .btn-submit { width: 100%; background: #ffffff; color: #000000; border: none; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 8px; transition: 0.2s; }
         .btn-submit:hover { opacity: 0.9; }
         
-        .btn-lens-redirect { display: block; width: 100%; text-align: center; background: #0a0a0a; color: #888; border: 1px solid #222; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 16px; text-decoration: none; transition: 0.2s; }
-        .btn-lens-redirect:hover { border-color: #444; color: #ffffff; }
+        .btn-lens-redirect { display: block; width: 100%; text-align: center; background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 16px; font-size: 13px; font-weight: 800; border-radius: 4px; cursor: pointer; margin-top: 16px; text-decoration: none; transition: 0.2s; letter-spacing: 1px; }
+        .btn-lens-redirect:hover { background: #00ccff; color: #000; border-color: #00ccff; }
 
         .btn-scan-mobile { display: none; background: #000; border: 2px solid #222; color: #00ff00; padding: 0 35px; font-size: 24px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .btn-scan-mobile:hover { border-color: #00ff00; background: rgba(0, 255, 0, 0.1); }
