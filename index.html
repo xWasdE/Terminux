@@ -5,17 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | WMS Terminal</title>
     <script>
-
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
+
+        if (sessionStorage.getItem('terminux_splash_shown')) {
+            document.write('<style>#loading-screen { display: none !important; }</style>');
+        } else {
+            sessionStorage.setItem('terminux_splash_shown', 'true');
+        }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; overflow: hidden; }  
-
+        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; overflow: hidden; }
+        
         .hidden { display: none !important; }
 
         #loading-screen { 
