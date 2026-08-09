@@ -35,10 +35,19 @@
         .btn-lens-redirect { display: block; width: 100%; text-align: center; background: #0a0a0a; color: #888; border: 1px solid #222; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 4px; cursor: pointer; margin-top: 16px; text-decoration: none; transition: 0.2s; }
         .btn-lens-redirect:hover { border-color: #444; color: #ffffff; }
 
+        .btn-scan-mobile { display: none; background: #000; border: 2px solid #222; color: #00ff00; padding: 0 35px; font-size: 24px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-scan-mobile:hover { border-color: #00ff00; background: rgba(0, 255, 0, 0.1); }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        @media (max-width: 900px) {
+            .search-wrapper { height: 50px !important; gap: 10px !important; }
+            #main-search { font-size: 16px !important; padding: 10px 15px !important; border-radius: 8px !important; height: 100% !important; }
+            .btn-scan-mobile { display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; padding: 0 15px !important; height: 100% !important; border-radius: 8px !important; border-width: 1px !important; }
+        }
     </style>
 </head>
 <body>
@@ -85,7 +94,10 @@
         </header>
         <main style="flex: 1; padding: 50px; max-width: 1400px; margin: 0 auto; width: 100%; background: #000; overflow-y: auto;">
             <div style="margin-bottom: 50px; position: relative;">
-                <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autocomplete="off">
+                <div class="search-wrapper" style="display: flex; gap: 15px; width: 100%;">
+                    <input type="text" id="main-search" placeholder="BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN..." style="flex: 1; width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 35px; font-size: 32px; font-family: monospace; outline: none; border-radius: 8px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" autocomplete="off">
+                    <button id="btn-scan-mobile" class="btn-scan-mobile" onclick="openScanner()">BARKOD TARA</button>
+                </div>
                 <div id="dropdown-results" style="display: none; position: absolute; top: 110%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 500px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);"></div>
             </div>
             <div id="result-container" style="display: none;"></div>
