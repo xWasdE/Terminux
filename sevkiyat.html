@@ -295,6 +295,13 @@
             closeCustomConfirm();
         });
 
+        const initFallback = setTimeout(() => {
+            const loader = document.getElementById('loading-overlay');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.display = 'none';
+            }
+        }, 5000);
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('main-content').style.display = 'block';
@@ -306,6 +313,23 @@
 
         const loadCatalog = async () => {
             try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    const parsed = JSON.parse(cachedData);
+                    parsed.forEach(item => {
+                        catalogDb[item.urunKodu] = { 
+                            urunKodu: item.urunKodu, 
+                            urunAdi: item.urunAdi, 
+                            barkod: item.barkod, 
+                            refNo: item.refNo 
+                        };
+                    });
+                    clearTimeout(initFallback);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    loadData();
+                    return;
+                }
+
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")),
                     getDocs(collection(db, "ameliyathane"))
@@ -322,9 +346,11 @@
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
+                clearTimeout(initFallback);
                 document.getElementById('loading-overlay').style.display = 'none';
                 loadData();
             } catch (err) {
+                clearTimeout(initFallback);
                 document.getElementById('loading-overlay').style.display = 'none';
                 showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
             }
