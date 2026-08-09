@@ -261,7 +261,9 @@
                             loadLocalList();
                             return;
                         }
-                    } catch(e) { console.warn("Önbellek işleme hatası", e); }
+                    } catch(e) { 
+                        localStorage.removeItem('terminux_catalog_cache'); 
+                    }
                 }
 
                 const [anaSnap, amSnap] = await Promise.all([
@@ -299,7 +301,13 @@
         const loadLocalList = () => {
             const saved = localStorage.getItem('terminux_print_list');
             if (saved) {
-                try { printItems = JSON.parse(saved); } catch(e) { printItems = {}; }
+                try { 
+                    printItems = JSON.parse(saved); 
+                    if (typeof printItems !== 'object' || printItems === null) printItems = {};
+                } catch(e) { 
+                    printItems = {}; 
+                    localStorage.removeItem('terminux_print_list');
+                }
             }
             renderList();
         };
@@ -345,9 +353,7 @@
                         dropdown.innerHTML = '<div style="padding: 15px; color: #f33; font-size: 14px;">Kayıt bulunamadı.</div>';
                     }
                 }, 150);
-            } catch(err) {
-                console.warn(err);
-            }
+            } catch(err) {}
         });
 
         document.addEventListener('click', (e) => {
