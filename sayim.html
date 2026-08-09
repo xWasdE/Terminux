@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -17,8 +19,8 @@
         
         main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
         
-        .setup-container { max-width: 600px; margin: 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; }
+        .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
         
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
@@ -27,41 +29,71 @@
         
         .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary:hover { opacity: 0.8; }
-        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
-        .btn-secondary:hover { background: #222; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary:hover { background: #222; border-color: #555; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+
+        .history-container { max-width: 1000px; margin: 0 auto; }
+        .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; border: 1px solid #1a1a1a; padding: 20px; border-radius: 8px; transition: 0.2s; }
+        .history-card:hover { border-color: #333; }
+        .history-info { display: flex; flex-direction: column; gap: 5px; }
+        .history-name { font-size: 18px; font-weight: 800; color: #00ff00; }
+        .history-detail { font-size: 12px; color: #888; font-family: monospace; }
+        .history-actions { display: flex; gap: 10px; }
 
         .active-count-header { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
         .session-info { display: flex; flex-direction: column; gap: 5px; }
         .session-name { font-size: 20px; font-weight: 800; color: #00ff00; }
         .session-details { font-size: 12px; color: #888; font-family: monospace; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
         
-        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; }
-        .scan-input { flex: 2; }
+        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-input { flex: 2; min-width: 250px; }
         .qty-input { flex: 1; max-width: 150px; }
-        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 50px; font-size: 18px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ff00; color: #00ff00; }
         .btn-add { background: #00ff00; color: #000; border: none; padding: 0 30px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
 
-        .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
-        .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
-        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
-        .list-item:hover { background: #0c0c0c; }
-        .item-code { font-family: monospace; color: #00ff00; font-size: 14px; font-weight: bold; }
-        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; padding-right: 15px; }
-        .item-qty { font-size: 20px; font-weight: 900; color: #fff; text-align: center; }
-        .item-action { text-align: right; }
-        .btn-delete { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 8px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .btn-delete:hover { background: #ff3333; color: #fff; }
+        .system-stock-bar { width: 100%; display: flex; justify-content: flex-end; margin-bottom: 15px; }
+        .upload-label { cursor: pointer; }
 
+        .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-header { display: grid; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
+        .list-item { display: grid; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
+        .list-item:hover { background: #0c0c0c; }
+        
+        .grid-cols-normal { grid-template-columns: 2fr 3fr 1fr 1fr; gap: 15px; }
+        .grid-cols-reconcile { grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; gap: 15px; }
+
+        .item-code { font-family: monospace; color: #00ff00; font-size: 14px; font-weight: bold; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        .item-qty { font-size: 20px; font-weight: 900; color: #fff; text-align: center; }
+        .item-sys { font-size: 18px; font-weight: 700; color: #666; text-align: center; font-family: monospace; }
+        .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        .diff-pos { color: #00ff00; }
+        .diff-neg { color: #ff3333; }
+        .diff-zero { color: #555; }
+        
+        .item-action { display: flex; gap: 5px; justify-content: flex-end; }
+        .btn-action-sm { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-action-sm:hover { color: #fff; border-color: #666; }
+        .btn-action-del { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
+        .btn-action-del:hover { background: #ff3333; color: #000; border-color: #ff3333; }
+
+        .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
+        .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
 
-        .legal-footer {
-            position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888;
-            text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
-            backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word;
-        }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
         #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
         .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
@@ -70,16 +102,20 @@
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px 15px 80px 15px; }
-            .setup-container { margin: 20px auto; padding: 25px 20px; }
+            .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
+            .header-actions { flex-direction: column; }
+            .header-actions button, .header-actions a { width: 100%; margin: 0; }
             .scan-area { flex-direction: column; align-items: stretch; gap: 10px; }
-            .input-group { margin-bottom: 10px; width: 100%; }
-            .qty-input { max-width: 100%; }
+            .scan-input, .qty-input { width: 100%; max-width: 100%; }
+            .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
+            
             .list-header { display: none; }
             .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; }
             .item-code { grid-column: 1 / -1; font-size: 16px; }
-            .item-name { grid-column: 1 / -1; padding-right: 0; margin-bottom: 10px; }
-            .item-qty { text-align: left; font-size: 24px; }
+            .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
+            .item-action { grid-column: 1 / -1; justify-content: space-between; margin-top: 10px; }
+            .item-qty, .item-sys, .item-diff { font-size: 16px; text-align: left; }
             .legal-footer { font-size: 8px; padding: 6px 10px; }
         }
     </style>
@@ -93,26 +129,32 @@
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">SAYIM MODÜLÜ</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <a href="index.html" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;">WMS GEÇİŞ</a>
+            <a href="index.html" class="btn-secondary" style="margin:0; border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
         </div>
     </header>
 
     <main>
-        <div id="setup-screen" class="setup-container">
-            <div class="setup-title">YENİ SAYIM OLUŞTUR</div>
-            <div class="input-group">
-                <label>SAYIM SAYFASI İSMİ (Örn: Raf-A Sayımı)</label>
-                <input type="text" id="setup-name" placeholder="Sayım adını giriniz..." autocomplete="off">
+        <div id="home-screen">
+            <div class="setup-container">
+                <div class="setup-title">YENİ SAYIM OLUŞTUR</div>
+                <div class="input-group">
+                    <label>SAYIM SAYFASI İSMİ</label>
+                    <input type="text" id="setup-name" placeholder="Örn: MOR LİSTE, AYLIK SAYIM" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>SAYIM KATEGORİSİ</label>
+                    <select id="setup-type">
+                        <option value="ANA DEPO">ANA DEPO</option>
+                        <option value="AMELİYATHANE">AMELİYATHANE</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="startCountSession()">SAYIMI BAŞLAT</button>
             </div>
-            <div class="input-group">
-                <label>SAYIM KATEGORİSİ</label>
-                <select id="setup-type">
-                    <option value="ANA DEPO">ANA DEPO</option>
-                    <option value="AMELİYATHANE">AMELİYATHANE</option>
-                </select>
+
+            <div class="history-container" id="history-container" style="display:none;">
+                <div class="history-title">MEVCUT VE GEÇMİŞ SAYIMLAR</div>
+                <div class="history-list" id="history-list"></div>
             </div>
-            <button class="btn-primary" onclick="startCountSession()">SAYIMI BAŞLAT</button>
-            <button class="btn-secondary" onclick="checkActiveSession()" id="btn-resume" style="display:none; color:#00ff00; border-color:#00ff00;">AÇIK SAYIMA DEVAM ET</button>
         </div>
 
         <div id="active-screen" style="display: none;">
@@ -121,10 +163,16 @@
                     <div class="session-name" id="ui-session-name">-</div>
                     <div class="session-details" id="ui-session-details">-</div>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-secondary" style="margin:0; background:#ff3333; color:#fff; border-color:#ff3333;" onclick="endAndClearSession()">SAYIMI İPTAL ET</button>
-                    <button class="btn-primary" style="margin:0;" onclick="exportToExcel()">BİTİR VE EXCEL İNDİR</button>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="closeActiveScreen()">ANA EKRANA DÖN</button>
+                    <button class="btn-danger" onclick="promptCancelSession()">İPTAL ET</button>
+                    <button class="btn-primary" style="background:#00ccff; color:#000;" onclick="promptFinishSession()">SAYIMI BİTİR</button>
                 </div>
+            </div>
+
+            <div class="system-stock-bar">
+                <label for="sys-upload" class="btn-secondary upload-label" style="background:#111; color:#ffbc00; border-color:#ffbc00; font-size:10px;">FARK RAPORU İÇİN SİSTEM STOĞU YÜKLE (EXCEL)</label>
+                <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processSystemStock(event)">
             </div>
 
             <div class="scan-area">
@@ -132,30 +180,74 @@
                     <label>ASG KOD, BARKOD VEYA REF NO</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1;">
-                        <button class="btn-scan" onclick="openScanner()">📷 TARA</button>
+                        <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     </div>
                 </div>
                 <div class="input-group qty-input" style="margin:0;">
                     <label>EKLENECEK MİKTAR</label>
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
-                <button class="btn-add" onclick="addItem()">EKLE</button>
+                <button class="btn-add" onclick="addItem()">EKLE / OKUT</button>
             </div>
 
             <div class="list-container">
-                <div class="list-header">
-                    <div>ASG KOD / BARKOD</div>
-                    <div>ÜRÜN İSMİ</div>
-                    <div style="text-align:center;">FİZİKİ STOK</div>
-                    <div style="text-align:right;">İŞLEM</div>
+                <div class="list-header" id="list-header-ui">
+                    
                 </div>
                 <div id="counted-list"></div>
             </div>
         </div>
     </main>
 
+    <div id="custom-alert" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="alert-title">UYARI</div>
+            <div class="modal-desc" id="alert-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-primary" style="width: 150px;" onclick="closeCustomAlert()">TAMAM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
+            <div class="modal-desc" id="confirm-desc">-</div>
+            <div class="modal-actions">
+                <button class="btn-secondary" style="width: 120px;" onclick="closeCustomConfirm()">VAZGEÇ</button>
+                <button class="btn-danger" style="width: 120px;" id="confirm-yes-btn">ONAYLIYORUM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="qty-modal" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title">FİZİKİ STOK DÜZENLE</div>
+            <div class="modal-desc" id="qty-item-name" style="color:#00ff00; font-family:monospace; margin-bottom:15px;">-</div>
+            <div class="input-group" style="text-align:left;">
+                <input type="number" id="edit-qty-input" style="text-align:center; font-size:24px;">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" style="width: 120px;" onclick="closeQtyModal()">İPTAL</button>
+                <button class="btn-primary" style="width: 120px;" id="qty-save-btn">KAYDET</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="finish-modal" class="custom-modal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-title" style="color:#00ccff;">SAYIM İŞLEMİNİ BİTİR</div>
+            <div class="modal-desc">Sayıma ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sayım kapatılacaktır.</div>
+            <div class="modal-actions" style="flex-direction:column; gap:15px;">
+                <button class="btn-primary" style="background:#fff;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
+            </div>
+        </div>
+    </div>
+
     <div id="scanner-modal">
-        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">BARKOD TARA</div>
+        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
         <div id="reader"></div>
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
@@ -181,9 +273,35 @@
         const db = getFirestore(app);
 
         let catalogDb = {};
-        let activeSession = null;
+        let allSessions = [];
+        let currentSessionId = null;
         let html5QrCode = null;
+        let confirmActionCallback = null;
+        let editItemKey = null;
 
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
+
+        window.showCustomConfirm = (title, desc, callback) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = desc;
+            confirmActionCallback = callback;
+            document.getElementById('custom-confirm').style.display = 'flex';
+        };
+        window.closeCustomConfirm = () => {
+            document.getElementById('custom-confirm').style.display = 'none';
+            confirmActionCallback = null;
+        };
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if(confirmActionCallback) confirmActionCallback();
+            closeCustomConfirm();
+        });
+
+        // Initialize App
         const loadCatalog = async () => {
             try {
                 const [anaSnap, amSnap] = await Promise.all([
@@ -196,85 +314,116 @@
                         const d = doc.data();
                         const key = d.urunKodu;
                         if (!catalogDb[key]) {
-                            catalogDb[key] = {
-                                urunKodu: d.urunKodu,
-                                urunAdi: d.urunAdi || "İsimsiz Ürün",
-                                barkod: d.barkod || "",
-                                refNo: d.refNo || ""
-                            };
+                            catalogDb[key] = { urunKodu: d.urunKodu, urunAdi: d.urunAdi || "İsimsiz Ürün", barkod: d.barkod || "", refNo: d.refNo || "" };
                         }
                     });
                 };
                 
-                processSnap(anaSnap);
-                processSnap(amSnap);
-                
+                processSnap(anaSnap); processSnap(amSnap);
                 document.getElementById('loading-overlay').style.display = 'none';
-                initLocalSession();
+                loadSessions();
             } catch (err) {
-                alert("Veritabanı bağlantı hatası. Sayfayı yenileyin.");
+                showCustomAlert("HATA", "Veritabanı bağlantı hatası. Lütfen sayfayı yenileyin.");
             }
         };
 
-        const initLocalSession = () => {
-            const saved = localStorage.getItem('terminux_active_count');
+        const loadSessions = () => {
+            const saved = localStorage.getItem('terminux_count_sessions_v2');
             if (saved) {
-                activeSession = JSON.parse(saved);
-                document.getElementById('btn-resume').style.display = 'block';
+                allSessions = JSON.parse(saved);
             }
+            renderHomeList();
+        };
+
+        const saveSessions = () => {
+            localStorage.setItem('terminux_count_sessions_v2', JSON.stringify(allSessions));
+            renderHomeList();
+        };
+
+        const renderHomeList = () => {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+            
+            if (allSessions.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = allSessions.map(s => {
+                const statusColor = s.status === 'active' ? '#00ff00' : '#888';
+                const statusText = s.status === 'active' ? 'DEVAM EDİYOR' : 'TAMAMLANDI';
+                const itemCount = Object.keys(s.items).length;
+                
+                return `
+                    <div class="history-card">
+                        <div class="history-info">
+                            <div class="history-name" style="color:${statusColor}">${s.name}</div>
+                            <div class="history-detail">${s.type} | ${s.date} | ${itemCount} Çeşit Ürün | Durum: ${statusText}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn-danger" style="padding: 10px;" onclick="deleteSession('${s.id}')">SİL</button>
+                            <button class="btn-secondary" style="padding: 10px; margin:0;" onclick="resumeSession('${s.id}')">DÜZENLE / DEVAM ET</button>
+                        </div>
+                    </div>
+                `;
+            }).reverse().join('');
         };
 
         window.startCountSession = () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
-            if (!name) return alert("Lütfen sayım sayfası için bir isim belirleyin.");
+            if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sayım sayfası için bir isim belirleyin.");
 
             const now = new Date();
             const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
+            const newId = 'SYM-' + Date.now();
 
-            activeSession = {
-                id: 'SYM-' + Date.now(),
-                name: name,
-                type: type,
-                date: dateStr,
-                items: {} 
-            };
+            const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', hasSystemStock: false, items: {} };
+            allSessions.push(newSession);
+            saveSessions();
             
-            saveSession();
-            renderActiveScreen();
+            resumeSession(newId);
         };
 
-        window.checkActiveSession = () => {
-            if (activeSession) renderActiveScreen();
-        };
-
-        const saveSession = () => {
-            localStorage.setItem('terminux_active_count', JSON.stringify(activeSession));
-        };
-
-        window.endAndClearSession = () => {
-            if(confirm("DİKKAT: Sayımı iptal ederseniz okutulan tüm veriler silinir. Onaylıyor musunuz?")) {
-                localStorage.removeItem('terminux_active_count');
-                activeSession = null;
-                document.getElementById('setup-screen').style.display = 'block';
-                document.getElementById('active-screen').style.display = 'none';
-                document.getElementById('setup-name').value = '';
-                document.getElementById('btn-resume').style.display = 'none';
-            }
-        };
-
-        const renderActiveScreen = () => {
-            document.getElementById('setup-screen').style.display = 'none';
+        window.resumeSession = (id) => {
+            currentSessionId = id;
+            document.getElementById('home-screen').style.display = 'none';
             document.getElementById('active-screen').style.display = 'block';
             
-            document.getElementById('ui-session-name').innerText = activeSession.name;
-            document.getElementById('ui-session-details').innerText = `${activeSession.type} KATEGORİSİ | BAŞLANGIÇ: ${activeSession.date}`;
+            const session = allSessions.find(s => s.id === id);
+            document.getElementById('ui-session-name').innerText = session.name;
+            document.getElementById('ui-session-details').innerText = `${session.type} | OLUŞTURULMA: ${session.date}`;
             
             document.getElementById('scan-code').focus();
             updateListUI();
         };
 
+        window.closeActiveScreen = () => {
+            document.getElementById('home-screen').style.display = 'block';
+            document.getElementById('active-screen').style.display = 'none';
+            currentSessionId = null;
+            document.getElementById('setup-name').value = '';
+            renderHomeList();
+        };
+
+        window.promptCancelSession = () => {
+            showCustomConfirm("SAYIMI İPTAL ET", "Bu işlem sayımı ve içindeki tüm verileri tamamen silecektir. Onaylıyor musunuz?", () => {
+                allSessions = allSessions.filter(s => s.id !== currentSessionId);
+                saveSessions();
+                closeActiveScreen();
+            });
+        };
+
+        window.deleteSession = (id) => {
+            showCustomConfirm("SAYIMI SİL", "Geçmiş sayım kaydı tamamen silinecektir. Onaylıyor musunuz?", () => {
+                allSessions = allSessions.filter(s => s.id !== id);
+                saveSessions();
+            });
+        };
+
         window.addItem = () => {
+            const session = allSessions.find(s => s.id === currentSessionId);
             const codeInput = document.getElementById('scan-code');
             const qtyInput = document.getElementById('scan-qty');
             
@@ -301,17 +450,13 @@
 
             const finalKey = matchedKey || searchCode;
 
-            if (activeSession.items[finalKey]) {
-                activeSession.items[finalKey].qty += qty;
+            if (session.items[finalKey]) {
+                session.items[finalKey].qty += qty;
             } else {
-                activeSession.items[finalKey] = {
-                    code: finalKey,
-                    name: matchedName,
-                    qty: qty
-                };
+                session.items[finalKey] = { code: finalKey, name: matchedName, qty: qty, sysQty: 0 };
             }
 
-            saveSession();
+            saveSessions();
             updateListUI();
             
             codeInput.value = '';
@@ -319,64 +464,193 @@
             codeInput.focus();
         };
 
-        document.getElementById('scan-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addItem();
-        });
+        document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
 
         window.removeItem = (key) => {
-            if(confirm("Bu satırı sayım listesinden silmek istediğinize emin misiniz?")) {
-                delete activeSession.items[key];
-                saveSession();
+            showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", () => {
+                const session = allSessions.find(s => s.id === currentSessionId);
+                delete session.items[key];
+                saveSessions();
+                updateListUI();
+            });
+        };
+
+        window.openEditQty = (key) => {
+            editItemKey = key;
+            const session = allSessions.find(s => s.id === currentSessionId);
+            const item = session.items[key];
+            
+            document.getElementById('qty-item-name').innerText = item.name;
+            document.getElementById('edit-qty-input').value = item.qty;
+            document.getElementById('qty-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('edit-qty-input').focus(), 100);
+        };
+        window.closeQtyModal = () => { document.getElementById('qty-modal').style.display = 'none'; editItemKey = null; };
+        
+        document.getElementById('qty-save-btn').addEventListener('click', () => {
+            const newQty = parseInt(document.getElementById('edit-qty-input').value) || 0;
+            if (editItemKey) {
+                const session = allSessions.find(s => s.id === currentSessionId);
+                session.items[editItemKey].qty = newQty;
+                saveSessions();
                 updateListUI();
             }
+            closeQtyModal();
+        });
+
+        const normalizeStr = (str) => { if (!str) return ""; return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const getCol = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
+                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                }
+            }
+            return "";
+        };
+
+        window.processSystemStock = (event) => {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const session = allSessions.find(s => s.id === currentSessionId);
+                
+                let addedCount = 0;
+
+                rows.forEach(r => {
+                    const code = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod"]);
+                    const sysQtyStr = getCol(r, ["stok miktarı", "stok", "miktar", "sistem stok"]);
+                    const sysQty = parseInt(sysQtyStr) || 0;
+                    let name = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim"]) || "Tanımsız Sistem Ürünü";
+                    
+                    if(code) {
+                        if (catalogDb[code] && name === "Tanımsız Sistem Ürünü") name = catalogDb[code].urunAdi;
+                        
+                        if(session.items[code]) {
+                            session.items[code].sysQty = sysQty;
+                        } else {
+                            session.items[code] = { code: code, name: name, qty: 0, sysQty: sysQty };
+                            addedCount++;
+                        }
+                    }
+                });
+
+                session.hasSystemStock = true;
+                saveSessions();
+                updateListUI();
+                showCustomAlert("BAŞARILI", `Sistem stoğu yüklendi ve eşleştirildi. Listede olmayan ${addedCount} sistem ürünü "0" fiziki stok olarak eklendi.`);
+                document.getElementById('sys-upload').value = '';
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         const updateListUI = () => {
+            const session = allSessions.find(s => s.id === currentSessionId);
             const container = document.getElementById('counted-list');
-            const items = Object.values(activeSession.items).reverse(); 
+            const headerUI = document.getElementById('list-header-ui');
+            const items = Object.values(session.items); 
 
             if (items.length === 0) {
-                container.innerHTML = `<div style="padding:30px; text-align:center; color:#555; font-weight:bold;">Henüz ürün okutulmadı.</div>`;
+                headerUI.style.display = 'none';
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:#555; font-size:16px; font-weight:bold;">Henüz ürün okutulmadı veya yüklenmedi.</div>`;
                 return;
             }
 
-            container.innerHTML = items.map(item => `
-                <div class="list-item">
-                    <div class="item-code">${item.code}</div>
-                    <div class="item-name">${item.name}</div>
-                    <div class="item-qty">${item.qty}</div>
-                    <div class="item-action">
-                        <button class="btn-delete" onclick="removeItem('${item.code}')">SİL</button>
+            headerUI.style.display = 'grid';
+            
+            if (session.hasSystemStock) {
+                headerUI.className = 'list-header grid-cols-reconcile';
+                headerUI.innerHTML = `<div>ASG KOD</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
+            } else {
+                headerUI.className = 'list-header grid-cols-normal';
+                headerUI.innerHTML = `<div>ASG KOD</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
+            }
+
+            container.innerHTML = items.map(item => {
+                let extraCols = '';
+                if (session.hasSystemStock) {
+                    const diff = item.qty - (item.sysQty || 0);
+                    let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
+                    let diffText = diff > 0 ? `+${diff}` : diff;
+                    
+                    extraCols = `
+                        <div class="item-sys">${item.sysQty || 0}</div>
+                        <div class="item-diff ${diffClass}">${diffText}</div>
+                    `;
+                }
+
+                return `
+                    <div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'}">
+                        <div class="item-code">${item.code}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-qty">${item.qty}</div>
+                        ${extraCols}
+                        <div class="item-action">
+                            <button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button>
+                            <button class="btn-action-sm btn-action-del" onclick="removeItem('${item.code}')">SİL</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         };
 
-        window.exportToExcel = () => {
-            if (Object.keys(activeSession.items).length === 0) {
-                return alert("Dışa aktarılacak sayım verisi bulunmuyor.");
+        // Export Actions
+        window.promptFinishSession = () => {
+            const session = allSessions.find(s => s.id === currentSessionId);
+            if (Object.keys(session.items).length === 0) return showCustomAlert("UYARI", "Dışa aktarılacak boş bir sayım bulunuyor.");
+            document.getElementById('finish-modal').style.display = 'flex';
+        };
+        window.closeFinishModal = () => document.getElementById('finish-modal').style.display = 'none';
+
+        window.executeFinish = (format) => {
+            closeFinishModal();
+            const session = allSessions.find(s => s.id === currentSessionId);
+            const safeName = session.name.replace(/[^a-z0-9]/gi, '_');
+            const items = Object.values(session.items);
+            
+            if (format === 'excel') {
+                let exportData = [];
+                if(session.hasSystemStock) {
+                    exportData = items.map(i => ({ "ASG KOD": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty, "SİSTEM STOK": i.sysQty || 0, "FARK": i.qty - (i.sysQty || 0) }));
+                } else {
+                    exportData = items.map(i => ({ "ASG KOD": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty }));
+                }
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "SAYIM");
+                XLSX.writeFile(wb, `Terminux_Sayim_${safeName}.xlsx`);
+            } 
+            else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(16);
+                doc.text(`TERMINUX SAYIM RAPORU`, 14, 15);
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text(`Sayim Adi: ${session.name} | Kategori: ${session.type} | Tarih: ${session.date}`, 14, 22);
+                
+                let head = session.hasSystemStock ? [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK', 'SISTEM STOK', 'FARK']] : [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK']];
+                let body = items.map(i => {
+                    let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, "");
+                    if (session.hasSystemStock) return [i.code, cleanName, i.qty, i.sysQty || 0, i.qty - (i.sysQty || 0)];
+                    return [i.code, cleanName, i.qty];
+                });
+
+                doc.autoTable({ startY: 30, head: head, body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [40, 40, 40] } });
+                doc.save(`Terminux_Sayim_${safeName}.pdf`);
             }
 
-            const exportData = Object.values(activeSession.items).map(item => ({
-                "ASG KOD": item.code,
-                "ÜRÜN İSMİ": item.name,
-                "STOK MİKTARI": item.qty
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "SAYIM RAPORU");
-
-            const safeName = activeSession.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const fileName = `Terminux_Sayim_${safeName}_${Date.now()}.xlsx`;
-
-            XLSX.writeFile(wb, fileName);
-
-            if(confirm("Excel dosyası indirildi. Sayım oturumunu kapatıp verileri sıfırlamak istiyor musunuz?")) {
-                localStorage.removeItem('terminux_active_count');
-                activeSession = null;
-                window.location.reload();
-            }
+            showCustomConfirm("SAYIM KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu sayım oturumunu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", () => {
+                session.status = 'finished';
+                saveSessions();
+                closeActiveScreen();
+            });
         };
 
         window.openScanner = () => {
@@ -391,7 +665,7 @@
                 },
                 (errorMessage) => {}
             ).catch((err) => {
-                alert("Kamera başlatılamadı.");
+                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
                 closeScanner();
             });
         };
