@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | WMS Terminal</title>
     <script>
+
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
@@ -13,10 +14,27 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; overflow: hidden; }
+        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; overflow: hidden; }  
+
         .hidden { display: none !important; }
 
-        #loading-screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000; font-size: 24px; font-weight: 800; letter-spacing: 5px; color: #333; position: absolute; z-index: 9999; }
+        #loading-screen { 
+            width: 100%; height: 100%; 
+            display: flex; justify-content: center; align-items: center; 
+            background: #000000; position: absolute; z-index: 9999; 
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            display: flex !important;
+            pointer-events: none;
+        }
+        .loader-text { 
+            font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; 
+            animation: pulseLoad 1.5s infinite; 
+        }
+        @keyframes pulseLoad { 0% { color: #333; } 50% { color: #ffffff; } 100% { color: #333; } }
 
         .split-layout { display: flex; width: 100%; height: 100%; }
         .brand-section { flex: 1; background-color: #050505; background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; display: flex; flex-direction: column; justify-content: center; padding: 10%; border-right: 1px solid #1a1a1a; }
@@ -61,7 +79,9 @@
 </head>
 <body>
 
-    <div id="loading-screen">TERMINUX YÜKLENİYOR...</div>
+    <div id="loading-screen">
+        <div class="loader-text">TERMINUX YÜKLENİYOR...</div>
+    </div>
 
     <div id="login-screen" class="split-layout hidden">
         <div class="brand-section">
