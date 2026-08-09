@@ -118,11 +118,11 @@
             <div class="input-group">
                 <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
                 <div class="scan-wrapper">
-                    <input type="text" id="scan-code" class="scan-input" placeholder="Aramak veya eklemek için yazın..." autocomplete="off">
+                    <input type="text" id="scan-code" maxlength="50" class="scan-input" placeholder="Aramak veya eklemek için yazın..." autocomplete="off">
                     <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     <button class="btn-add" onclick="processScan()">BUL VE EKLE</button>
                 </div>
-                
+
                 <div id="dropdown-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-top: 5px;"></div>
             </div>
         </div>
@@ -464,7 +464,8 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    scanInput.value = decodedText;
+                    const inputEl = document.getElementById('scan-code');
+                    inputEl.value = decodedText;
                     closeScanner();
                     processScan(); 
                 },
