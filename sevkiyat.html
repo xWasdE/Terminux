@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -15,7 +15,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -50,16 +50,12 @@
         .session-details { font-size: 12px; color: #888; font-family: monospace; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
         
-        .scan-area { display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
         .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
-
-        .search-area { display: flex; gap: 15px; margin-bottom: 20px; }
-        .search-area input { flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
-        .search-area input:focus { border-color: #00ccff; }
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
@@ -71,7 +67,7 @@
         .status-complete { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); }
         .status-over { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.08) 0%, transparent 100%); }
 
-        .item-code { font-family: monospace; font-size: 14px; font-weight: bold; }
+        .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
         
@@ -81,20 +77,23 @@
         .val-over { color: #ffbc00; }
         .val-label { color: #00ccff; }
         
-        .item-action { display: flex; gap: 5px; justify-content: flex-end; }
-        .btn-action-sm { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; letter-spacing: 1px; text-transform: uppercase; }
-        .btn-action-sm:hover { border-color: #00ccff; color: #00ccff; }
+        .inline-input-wrapper { display: flex; align-items: center; justify-content: center; }
+        .inline-input { width: 100%; max-width: 80px; background: #000; border: 1px solid #444; color: #00ff00; padding: 10px 5px; font-size: 16px; font-family: monospace; text-align: center; border-radius: 6px; outline: none; transition: 0.2s; }
+        .inline-input:focus { border-color: #00ccff; }
+        .inline-input.lbl { color: #00ccff; }
+
+        .item-action { display: flex; gap: 5px; justify-content: flex-end; align-items: center; }
+        .btn-edit { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-edit:hover { border-color: #00ccff; color: #00ccff; }
+        .btn-check { background: #00ff00; color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-check:hover { opacity: 0.8; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
 
         .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
-        
-        .modal-inputs-wrapper { display: flex; gap: 15px; margin-bottom: 25px; width: 100%; }
-        .modal-inputs-wrapper .input-group { flex: 1; margin: 0; }
-        
         .modal-actions { display: flex; gap: 15px; justify-content: center; }
-        .modal-actions button { flex: 1; max-width: 200px; white-space: normal; }
+        .modal-actions button { flex: 1; white-space: normal; padding: 15px 20px; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -118,17 +117,19 @@
             .scan-area .input-group { min-width: 100%; }
             .scan-area > div { flex-direction: column; }
             .scan-area button { width: 100%; height: 50px; }
-
-            .modal-inputs-wrapper { flex-direction: column; gap: 15px; }
             
             .list-header { display: none; }
-            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
             .item-code { grid-column: 1 / -1; font-size: 16px; }
             .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
             .item-action { grid-column: 1 / -1; margin-top: 10px; }
             .item-val { font-size: 16px; text-align: left; display: flex; flex-direction: column; gap: 5px; }
             .item-val::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
             
+            .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+            .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
+            .inline-input { max-width: 100%; text-align: left; padding: 10px; }
+
             .modal-actions { flex-direction: column; }
             .modal-actions button { max-width: 100%; }
             .legal-footer { font-size: 8px; padding: 6px 10px; }
@@ -138,7 +139,7 @@
 <body>
 
     <div id="loading-overlay">
-        <div class="loader-text">VERİTABANI EŞİTLENİYOR...</div>
+        <div class="loader-text">VERİLER İŞLENİYOR...</div>
     </div>
 
     <header>
@@ -148,7 +149,7 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <div id="home-screen">
             <div class="setup-container">
                 <div class="setup-title">YENİ SEVKİYAT LİSTESİ YÜKLE</div>
@@ -191,22 +192,18 @@
 
             <div class="scan-area">
                 <div class="input-group scan-input">
-                    <label>KOD, BARKOD VEYA REF NO OKUT / ARA</label>
+                    <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1; border-color:#333; padding:15px; font-size:16px;">
+                        <input type="text" id="scan-code" placeholder="Aramak veya eklemek için yazın..." autocomplete="off" style="flex:1; border-color:#333; padding:15px; font-size:16px;" oninput="filterShipmentList()">
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                         <button class="btn-add" onclick="processScan()">BUL VE İŞLE</button>
                     </div>
                 </div>
             </div>
 
-            <div class="search-area">
-                <input type="text" id="search-input" placeholder="Aşağıdaki listede ara: Ürün Kodu, İsim..." oninput="filterShipmentList()">
-            </div>
-
             <div class="list-container">
                 <div class="list-header">
-                    <div>ASG KOD / REF NO</div>
+                    <div>ÜRÜN KODU</div>
                     <div>ÜRÜN İSMİ</div>
                     <div style="text-align:center;">BEKLENEN</div>
                     <div style="text-align:center;">TESLİM ALINAN</div>
@@ -239,29 +236,6 @@
         </div>
     </div>
 
-    <div id="input-modal" class="custom-modal">
-        <div class="modal-box">
-            <div class="modal-title">SEVKİYAT KONTROL GİRİŞİ</div>
-            <div class="modal-desc" id="input-item-name" style="color:#00ccff; font-family:monospace; margin-bottom:25px; font-size:14px; font-weight:bold;">-</div>
-            
-            <div class="modal-inputs-wrapper">
-                <div class="input-group">
-                    <label style="color:#00ff00;">TESLİM ALINAN MİKTAR</label>
-                    <input type="number" id="input-received" style="text-align:center; font-size:24px; color:#00ff00; border-color:#00ff00;" min="0">
-                </div>
-                <div class="input-group">
-                    <label style="color:#ffbc00;">ETİKET YAZDIR ADETİ</label>
-                    <input type="number" id="input-label" style="text-align:center; font-size:24px; color:#ffbc00; border-color:#ffbc00;" min="0">
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeInputModal()">İPTAL</button>
-                <button class="btn-success" id="input-save-btn">GÜNCELLE</button>
-            </div>
-        </div>
-    </div>
-
     <div id="scanner-modal">
         <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
         <div id="reader"></div>
@@ -275,6 +249,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -287,11 +262,11 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         let catalogDb = {};
         let allShipments = [];
         let currentShipmentId = null;
-        let editItemCode = null;
         let confirmActionCallback = null;
         let html5QrCode = null;
 
@@ -318,6 +293,15 @@
         document.getElementById('confirm-yes-btn').addEventListener('click', () => {
             if(confirmActionCallback) confirmActionCallback();
             closeCustomConfirm();
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('main-content').style.display = 'block';
+                loadCatalog();
+            } else {
+                window.location.href = 'index.html';
+            }
         });
 
         const loadCatalog = async () => {
@@ -347,13 +331,13 @@
         };
 
         const loadData = () => {
-            const saved = localStorage.getItem('terminux_shipments_v2');
+            const saved = localStorage.getItem('terminux_shipments_v3');
             if (saved) allShipments = JSON.parse(saved);
             renderHomeList();
         };
 
         const saveData = () => {
-            localStorage.setItem('terminux_shipments_v2', JSON.stringify(allShipments));
+            localStorage.setItem('terminux_shipments_v3', JSON.stringify(allShipments));
             renderHomeList();
         };
 
@@ -445,7 +429,14 @@
                             if (shipmentItems[finalCode]) {
                                 shipmentItems[finalCode].expectedQty += expectedQty;
                             } else {
-                                shipmentItems[finalCode] = { code: finalCode, name: finalName, expectedQty: expectedQty, receivedQty: 0, labelQty: 0 };
+                                shipmentItems[finalCode] = { 
+                                    code: finalCode, 
+                                    name: finalName, 
+                                    expectedQty: expectedQty, 
+                                    receivedQty: 0, 
+                                    labelQty: 0,
+                                    confirmed: false
+                                };
                             }
                             addedCount++;
                         }
@@ -489,7 +480,7 @@
             document.getElementById('ui-session-name').innerText = shipment.name;
             document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
             
-            document.getElementById('search-input').value = '';
+            document.getElementById('scan-code').value = '';
             document.getElementById('scan-code').focus();
             renderShipmentList();
         };
@@ -531,12 +522,12 @@
                     name: matchedName,
                     expectedQty: 0,
                     receivedQty: 0,
-                    labelQty: 0
+                    labelQty: 0,
+                    confirmed: false
                 };
+                saveData();
+                renderShipmentList();
             }
-            
-            inputEl.value = '';
-            openInputModal(finalKey);
         };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => {
@@ -546,7 +537,7 @@
         const renderShipmentList = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             const container = document.getElementById('shipment-list');
-            const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+            const searchVal = document.getElementById('scan-code').value.trim().toLowerCase();
             
             let items = Object.values(shipment.items);
             
@@ -561,10 +552,33 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                if (item.receivedQty > 0) {
+                if (item.confirmed) {
                     if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
                     else if (item.receivedQty < item.expectedQty) { statusClass = 'status-missing'; valClass = 'val-missing'; }
                     else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
+                }
+
+                let dynamicCols = '';
+                if (!item.confirmed) {
+                    dynamicCols = `
+                        <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
+                            <input type="number" id="rec-${item.code}" class="inline-input" value="${item.receivedQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.receivedQty}" min="0">
+                        </div>
+                        <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
+                            <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${item.labelQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.labelQty}" min="0">
+                        </div>
+                        <div class="item-action">
+                            <button class="btn-check" onclick="confirmItem('${item.code}')">✔</button>
+                        </div>
+                    `;
+                } else {
+                    dynamicCols = `
+                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
+                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        <div class="item-action">
+                            <button class="btn-edit" onclick="editItem('${item.code}')">DÜZENLE</button>
+                        </div>
+                    `;
                 }
 
                 return `
@@ -572,11 +586,7 @@
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name}</div>
                         <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
-                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
-                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
-                        <div class="item-action">
-                            <button class="btn-action-sm" onclick="openInputModal('${item.code}')">KONTROL GİRİŞİ</button>
-                        </div>
+                        ${dynamicCols}
                     </div>
                 `;
             }).join('');
@@ -584,50 +594,23 @@
 
         window.filterShipmentList = () => renderShipmentList();
 
-        window.openInputModal = (code) => {
-            editItemCode = code;
+        window.confirmItem = (code) => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
-            const item = shipment.items[code];
-            
-            document.getElementById('input-item-name').innerText = `[${item.code}] ${item.name}`;
-            
-            const rInput = document.getElementById('input-received');
-            const lInput = document.getElementById('input-label');
-            
-            rInput.value = item.receivedQty === 0 ? item.expectedQty : item.receivedQty; 
-            lInput.value = item.labelQty === 0 ? item.expectedQty : item.labelQty;
-            
-            document.getElementById('input-modal').style.display = 'flex';
-            setTimeout(() => rInput.focus(), 100);
+            const rVal = parseInt(document.getElementById(`rec-${code}`).value) || 0;
+            const lVal = parseInt(document.getElementById(`lbl-${code}`).value) || 0;
+            shipment.items[code].receivedQty = rVal;
+            shipment.items[code].labelQty = lVal;
+            shipment.items[code].confirmed = true;
+            saveData();
+            renderShipmentList();
         };
-        
-        window.closeInputModal = () => { 
-            document.getElementById('input-modal').style.display = 'none'; 
-            editItemCode = null; 
-            setTimeout(() => document.getElementById('scan-code').focus(), 100);
-        };
-        
-        document.getElementById('input-received').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('input-label').focus();
-        });
-        
-        document.getElementById('input-label').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('input-save-btn').click();
-        });
 
-        document.getElementById('input-save-btn').addEventListener('click', () => {
-            const recVal = parseInt(document.getElementById('input-received').value) || 0;
-            const lblVal = parseInt(document.getElementById('input-label').value) || 0;
-            
-            if (editItemCode) {
-                const shipment = allShipments.find(s => s.id === currentShipmentId);
-                shipment.items[editItemCode].receivedQty = recVal;
-                shipment.items[editItemCode].labelQty = lblVal;
-                saveData();
-                renderShipmentList();
-            }
-            closeInputModal();
-        });
+        window.editItem = (code) => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            shipment.items[code].confirmed = false;
+            saveData();
+            renderShipmentList();
+        };
 
         window.exportLabels = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
@@ -655,8 +638,14 @@
             
             const missingItems = items.filter(i => i.receivedQty < i.expectedQty);
             const overItems = items.filter(i => i.receivedQty > i.expectedQty);
+            const unconfirmed = items.filter(i => !i.confirmed);
             
             let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
+            
+            if (unconfirmed.length > 0) {
+                return showCustomAlert("ONAYLANMAMIŞ ÜRÜNLER", `Listede henüz kontrol edilip onaylanmamış ${unconfirmed.length} ürün var. Lütfen tüm listeyi kontrol edin.`);
+            }
+
             if (missingItems.length > 0 || overItems.length > 0) {
                 msg = `DİKKAT: Listede ${missingItems.length} kalem eksik, ${overItems.length} kalem fazla ürün girişi var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
             }
@@ -674,9 +663,12 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    document.getElementById('scan-code').value = decodedText;
+                    const inputEl = document.getElementById('scan-code');
+                    inputEl.value = decodedText;
                     closeScanner();
-                    processScan(); 
+                    
+                    const inputEvent = new Event('input', { bubbles: true });
+                    inputEl.dispatchEvent(inputEvent);
                 },
                 (errorMessage) => {}
             ).catch((err) => {
@@ -692,7 +684,6 @@
             }
         };
 
-        loadCatalog();
     </script>
 </body>
 </html>
