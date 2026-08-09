@@ -33,6 +33,8 @@
         .btn-secondary:hover { background: #222; border-color: #555; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-danger:hover { background: #ff3333; color: #000; }
+        .btn-success { background: #00ff00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-success:hover { opacity: 0.8; }
 
         .history-container { max-width: 1000px; margin: 0 auto; }
         .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
@@ -88,7 +90,8 @@
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
-        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-actions { display: flex; gap: 15px; justify-content: center; }
+        .modal-actions button { flex: 1; max-width: 200px; white-space: normal; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -105,7 +108,7 @@
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
-            .header-actions button, .header-actions a { width: 100%; margin: 0; }
+            .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .scan-area { flex-direction: column; align-items: stretch; gap: 10px; }
             .scan-input, .qty-input { width: 100%; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
@@ -117,6 +120,8 @@
             .item-action { grid-column: 1 / -1; justify-content: space-between; margin-top: 10px; }
             .item-qty, .item-sys, .item-diff { font-size: 16px; text-align: left; }
             .legal-footer { font-size: 8px; padding: 6px 10px; }
+            .modal-actions { flex-direction: column; }
+            .modal-actions button { max-width: 100%; }
         }
     </style>
 </head>
@@ -192,19 +197,20 @@
 
             <div class="list-container">
                 <div class="list-header" id="list-header-ui">
-                    
+                    <!-- Dinamik olarak doldurulacak -->
                 </div>
                 <div id="counted-list"></div>
             </div>
         </div>
     </main>
 
+    <!-- ÖZEL MODALLAR (ALERT / CONFIRM / PROMPT) -->
     <div id="custom-alert" class="custom-modal">
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
             <div class="modal-desc" id="alert-desc">-</div>
             <div class="modal-actions">
-                <button class="btn-primary" style="width: 150px;" onclick="closeCustomAlert()">TAMAM</button>
+                <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
         </div>
     </div>
@@ -214,8 +220,8 @@
             <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
             <div class="modal-desc" id="confirm-desc">-</div>
             <div class="modal-actions">
-                <button class="btn-secondary" style="width: 120px;" onclick="closeCustomConfirm()">VAZGEÇ</button>
-                <button class="btn-danger" style="width: 120px;" id="confirm-yes-btn">ONAYLIYORUM</button>
+                <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
+                <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
         </div>
     </div>
@@ -228,8 +234,8 @@
                 <input type="number" id="edit-qty-input" style="text-align:center; font-size:24px;">
             </div>
             <div class="modal-actions">
-                <button class="btn-secondary" style="width: 120px;" onclick="closeQtyModal()">İPTAL</button>
-                <button class="btn-primary" style="width: 120px;" id="qty-save-btn">KAYDET</button>
+                <button class="btn-secondary" onclick="closeQtyModal()">İPTAL</button>
+                <button class="btn-success" id="qty-save-btn">KAYDET</button>
             </div>
         </div>
     </div>
@@ -241,7 +247,7 @@
             <div class="modal-actions" style="flex-direction:column; gap:15px;">
                 <button class="btn-primary" style="background:#fff;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
                 <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
-                <button class="btn-secondary" style="margin-top:10px;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
+                <button class="btn-secondary" style="margin-top:10px; max-width: 100%;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
             </div>
         </div>
     </div>
@@ -286,9 +292,12 @@
         };
         window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
 
-        window.showCustomConfirm = (title, desc, callback) => {
+        window.showCustomConfirm = (title, desc, confirmBtnText, confirmBtnClass, callback) => {
             document.getElementById('confirm-title').innerText = title;
             document.getElementById('confirm-desc').innerText = desc;
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            yesBtn.innerText = confirmBtnText;
+            yesBtn.className = confirmBtnClass;
             confirmActionCallback = callback;
             document.getElementById('custom-confirm').style.display = 'flex';
         };
@@ -301,7 +310,6 @@
             closeCustomConfirm();
         });
 
-        // Initialize App
         const loadCatalog = async () => {
             try {
                 const [anaSnap, amSnap] = await Promise.all([
@@ -362,8 +370,8 @@
                             <div class="history-detail">${s.type} | ${s.date} | ${itemCount} Çeşit Ürün | Durum: ${statusText}</div>
                         </div>
                         <div class="history-actions">
-                            <button class="btn-danger" style="padding: 10px;" onclick="deleteSession('${s.id}')">SİL</button>
-                            <button class="btn-secondary" style="padding: 10px; margin:0;" onclick="resumeSession('${s.id}')">DÜZENLE / DEVAM ET</button>
+                            <button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button>
+                            <button class="btn-secondary" style="margin:0;" onclick="resumeSession('${s.id}')">DÜZENLE / DEVAM ET</button>
                         </div>
                     </div>
                 `;
@@ -408,7 +416,7 @@
         };
 
         window.promptCancelSession = () => {
-            showCustomConfirm("SAYIMI İPTAL ET", "Bu işlem sayımı ve içindeki tüm verileri tamamen silecektir. Onaylıyor musunuz?", () => {
+            showCustomConfirm("SAYIMI İPTAL ET", "Bu işlem sayımı ve içindeki tüm verileri tamamen silecektir. Onaylıyor musunuz?", "İPTALİ ONAYLA", "btn-danger", () => {
                 allSessions = allSessions.filter(s => s.id !== currentSessionId);
                 saveSessions();
                 closeActiveScreen();
@@ -416,7 +424,7 @@
         };
 
         window.deleteSession = (id) => {
-            showCustomConfirm("SAYIMI SİL", "Geçmiş sayım kaydı tamamen silinecektir. Onaylıyor musunuz?", () => {
+            showCustomConfirm("SAYIMI SİL", "Geçmiş sayım kaydı tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", () => {
                 allSessions = allSessions.filter(s => s.id !== id);
                 saveSessions();
             });
@@ -467,7 +475,7 @@
         document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
 
         window.removeItem = (key) => {
-            showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", () => {
+            showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", "SATIRI SİL", "btn-danger", () => {
                 const session = allSessions.find(s => s.id === currentSessionId);
                 delete session.items[key];
                 saveSessions();
@@ -596,10 +604,9 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).reverse().join('');
         };
 
-        // Export Actions
         window.promptFinishSession = () => {
             const session = allSessions.find(s => s.id === currentSessionId);
             if (Object.keys(session.items).length === 0) return showCustomAlert("UYARI", "Dışa aktarılacak boş bir sayım bulunuyor.");
@@ -637,7 +644,7 @@
                 
                 let head = session.hasSystemStock ? [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK', 'SISTEM STOK', 'FARK']] : [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK']];
                 let body = items.map(i => {
-                    let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, "");
+                    let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
                     if (session.hasSystemStock) return [i.code, cleanName, i.qty, i.sysQty || 0, i.qty - (i.sysQty || 0)];
                     return [i.code, cleanName, i.qty];
                 });
@@ -646,7 +653,7 @@
                 doc.save(`Terminux_Sayim_${safeName}.pdf`);
             }
 
-            showCustomConfirm("SAYIM KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu sayım oturumunu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", () => {
+            showCustomConfirm("SAYIM KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu sayım oturumunu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", "SAYIMI KAPAT", "btn-success", () => {
                 session.status = 'finished';
                 saveSessions();
                 closeActiveScreen();
