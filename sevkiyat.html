@@ -11,6 +11,32 @@
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
+
+        window.playBeep = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        };
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -108,16 +134,19 @@
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px 15px 80px 15px; }
+            main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            .scan-area { flex-direction: column; align-items: stretch; }
-            .scan-area .input-group { min-width: 100%; }
-            .scan-area > div { flex-direction: column; }
+            #active-screen { display: flex; flex-direction: column; height: 100%; }
+            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+            .scan-area .input-group { width: 100%; min-width: 100%; margin: 0; }
+            .scan-area > div > div { flex-direction: column; gap: 10px; }
             .scan-area button { width: 100%; height: 50px; }
             
             .list-header { display: none; }
@@ -134,7 +163,7 @@
 
             .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; max-width: 100%; }
-            .legal-footer { font-size: 8px; padding: 6px 10px; }
+            .legal-footer { display: none; }
         }
     </style>
 </head>
@@ -188,17 +217,6 @@
                 </div>
             </div>
 
-            <div class="scan-area">
-                <div class="input-group scan-input">
-                    <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="scan-code" placeholder="Aramak veya eklemek için yazın..." autocomplete="off" style="flex:1; border-color:#333; padding:15px; font-size:16px;" oninput="filterShipmentList()">
-                        <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
-                        <button class="btn-add" onclick="processScan()">BUL VE İŞLE</button>
-                    </div>
-                </div>
-            </div>
-
             <div class="list-container">
                 <div class="list-header">
                     <div>ÜRÜN KODU</div>
@@ -209,6 +227,17 @@
                     <div style="text-align:right;">KONTROL</div>
                 </div>
                 <div id="shipment-list"></div>
+            </div>
+
+            <div class="scan-area">
+                <div class="input-group scan-input">
+                    <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="scan-code" placeholder="Aramak veya eklemek için yazın..." autocomplete="off" style="flex:1; border-color:#333; padding:15px; font-size:16px;">
+                        <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
+                    </div>
+                </div>
+                <button class="btn-add" onclick="processScan()">BUL VE İŞLE</button>
             </div>
         </div>
     </main>
@@ -238,10 +267,6 @@
         <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
         <div id="reader"></div>
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
-    </div>
-
-    <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <script type="module">
@@ -348,7 +373,6 @@
                 
                 processSnap(anaSnap); processSnap(amSnap);
             } catch (err) {
-                console.warn(err);
             } finally {
                 setupRealtimeShipments();
             }
@@ -366,9 +390,7 @@
         const saveShipmentToDb = async (shipment) => {
             try {
                 await setDoc(doc(db, "sevkiyat_sessions", shipment.id), shipment);
-            } catch(e) {
-                showCustomAlert("HATA", "Kayıt sırasında bağlantı sorunu oluştu.");
-            }
+            } catch(e) {}
         };
 
         const renderHomeList = () => {
@@ -499,7 +521,7 @@
         window.resumeShipment = (id) => {
             currentShipmentId = id;
             document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('active-screen').style.display = 'block';
+            document.getElementById('active-screen').style.display = 'flex';
             
             const shipment = allShipments.find(s => s.id === id);
             if(shipment) {
@@ -531,7 +553,7 @@
                 matchedName = catalogDb[searchCode].urunAdi;
             } else {
                 for (const key in catalogDb) {
-                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || catalogDb[key].urunAdi.toLowerCase() === searchCode.toLowerCase()) {
+                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode) {
                         matchedKey = key;
                         matchedName = catalogDb[key].urunAdi;
                         break;
@@ -542,6 +564,12 @@
             const finalKey = matchedKey || searchCode;
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
+
+            if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") {
+                window.playBeep('error');
+            } else {
+                window.playBeep('success');
+            }
 
             if(!shipment.items) shipment.items = {};
 
@@ -556,6 +584,9 @@
                 };
                 await saveShipmentToDb(shipment);
             }
+            
+            inputEl.value = '';
+            inputEl.focus();
         };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => {
@@ -567,17 +598,8 @@
             if(!shipment) return;
 
             const container = document.getElementById('shipment-list');
-            const searchVal = document.getElementById('scan-code').value.trim().toLowerCase();
-            
             let items = Object.values(shipment.items || {});
             
-            if (searchVal) {
-                items = items.filter(i => 
-                    i.code.toLowerCase().includes(searchVal) || 
-                    i.name.toLowerCase().includes(searchVal)
-                );
-            }
-
             container.innerHTML = items.map(item => {
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
@@ -621,8 +643,6 @@
                 `;
             }).join('');
         };
-
-        window.filterShipmentList = () => renderShipmentList();
 
         window.confirmItem = async (code) => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
@@ -699,9 +719,11 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    const inputEl = document.getElementById('scan-code');
-                    inputEl.value = decodedText;
+                    document.getElementById('scan-code').value = decodedText;
                     closeScanner();
+                    
+                    const inputEvent = new Event('input', { bubbles: true });
+                    document.getElementById('scan-code').dispatchEvent(inputEvent);
                 },
                 (errorMessage) => {}
             ).catch((err) => {
