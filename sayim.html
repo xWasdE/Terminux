@@ -13,6 +13,32 @@
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
+
+        window.playBeep = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        };
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -110,21 +136,26 @@
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px 15px 80px 15px; }
+            main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            /* Mobilde Tarayıcı/Ekleme kısmını alta sabitlemek için main içeriğini düzenleme */
+            #active-screen { display: flex; flex-direction: column; height: 100%; }
+            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+            
             .scan-wrapper { flex-direction: column; }
             .scan-wrapper button { width: 100%; height: 50px; }
             .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
-            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
             .item-code { grid-column: 1 / -1; font-size: 16px; }
             .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
             .item-action { grid-column: 1 / -1; justify-content: space-between; margin-top: 10px; }
@@ -134,7 +165,7 @@
             
             .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; max-width: 100%; }
-            .legal-footer { font-size: 8px; padding: 6px 10px; }
+            .legal-footer { display: none; }
         }
     </style>
 </head>
@@ -189,9 +220,14 @@
                 <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processSystemStock(event)">
             </div>
 
+            <div class="list-container">
+                <div class="list-header" id="list-header-ui"></div>
+                <div id="counted-list"></div>
+            </div>
+
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
-                    <label>ASG KOD, BARKOD VEYA REF NO</label>
+                    <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
                     <div class="scan-wrapper">
                         <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1;">
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
@@ -201,12 +237,7 @@
                     <label>EKLENECEK MİKTAR</label>
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
-                <button class="btn-add" onclick="addItem()">EKLE / OKUT</button>
-            </div>
-
-            <div class="list-container">
-                <div class="list-header" id="list-header-ui"></div>
-                <div id="counted-list"></div>
+                <button class="btn-add" onclick="addItem()">EKLE / KAYDET</button>
             </div>
         </div>
     </main>
@@ -373,7 +404,6 @@
                 
                 processSnap(anaSnap); processSnap(amSnap);
             } catch (err) {
-                console.warn(err);
             } finally {
                 setupRealtimeSessions();
             }
@@ -421,9 +451,7 @@
         const saveSessionToDb = async (session) => {
             try {
                 await setDoc(doc(db, "sayim_sessions", session.id), session);
-            } catch(e) {
-                showCustomAlert("HATA", "Kayıt sırasında bağlantı sorunu oluştu.");
-            }
+            } catch(e) {}
         };
 
         window.startCountSession = async () => {
@@ -509,6 +537,12 @@
 
             const finalKey = matchedKey || searchCode;
             if(!session.items) session.items = {};
+
+            if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") {
+                window.playBeep('error');
+            } else {
+                window.playBeep('success');
+            }
 
             if (session.items[finalKey]) {
                 session.items[finalKey].qty += qty;
@@ -630,10 +664,10 @@
             
             if (session.hasSystemStock) {
                 headerUI.className = 'list-header grid-cols-reconcile';
-                headerUI.innerHTML = `<div>ASG KOD</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
+                headerUI.innerHTML = `<div>Ürün Kodu</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
             } else {
                 headerUI.className = 'list-header grid-cols-normal';
-                headerUI.innerHTML = `<div>ASG KOD</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
+                headerUI.innerHTML = `<div>Ürün Kodu</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
             }
 
             let itemsToRender = [...items].reverse();
