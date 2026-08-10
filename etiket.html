@@ -11,6 +11,32 @@
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
         });
+
+        window.playBeep = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        };
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -20,7 +46,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
         
         .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px 25px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary:hover { opacity: 0.8; }
@@ -34,12 +60,13 @@
         .top-title { font-size: 20px; font-weight: 800; color: #ffbc00; }
         .top-desc { font-size: 12px; color: #888; }
         
-        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: stretch; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
-        .scan-area .input-group { flex: 2; min-width: 250px; margin: 0; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; }
+        .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; }
         .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
-        .scan-input { flex: 1; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
-        .scan-input:focus { border-color: #ffbc00; }
+        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .scan-area input:focus { border-color: #ffbc00; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ffbc00; color: #ffbc00; }
         .btn-add { background: #ffbc00; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
@@ -54,8 +81,8 @@
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
         
         .qty-wrapper { display: flex; justify-content: center; }
-        .qty-input { width: 100%; max-width: 120px; background: #000; border: 1px solid #444; color: #ffbc00; padding: 12px 10px; font-size: 18px; font-weight: 900; font-family: monospace; text-align: center; border-radius: 6px; outline: none; transition: 0.2s; }
-        .qty-input:focus { border-color: #ffbc00; }
+        .qty-input-list { width: 100%; max-width: 120px; background: #000; border: 1px solid #444; color: #ffbc00; padding: 12px 10px; font-size: 18px; font-weight: 900; font-family: monospace; text-align: center; border-radius: 6px; outline: none; transition: 0.2s; }
+        .qty-input-list:focus { border-color: #ffbc00; }
 
         .item-action { display: flex; justify-content: flex-end; }
 
@@ -70,35 +97,32 @@
 
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
-        #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-        .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { color: #333; } 50% { color: #ffbc00; } 100% { color: #333; } }
-
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px 15px 80px 15px; }
+            main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
             
             .top-bar { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .top-actions { display: flex; flex-direction: column; gap: 10px; }
             
+            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
             .scan-wrapper { flex-direction: column; }
-            .scan-wrapper button { width: 100%; }
+            .scan-wrapper button { width: 100%; height: 50px; }
+            .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
+            .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
             .list-item { grid-template-columns: 1fr; gap: 10px; padding: 20px 15px; text-align: center; }
             .qty-wrapper { margin: 10px 0; }
             .qty-wrapper::before { content: "ETİKET ADETİ"; display: block; font-size: 10px; color: #666; margin-bottom: 5px; width: 100%; text-align: center; font-weight: bold; }
-            .qty-input { max-width: 100%; }
+            .qty-input-list { max-width: 100%; }
             
-            .legal-footer { font-size: 8px; padding: 6px 10px; }
+            .legal-footer { display: none; }
         }
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">
-        <div class="loader-text">SİSTEM HAZIRLANIYOR...</div>
-    </div>
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">ETİKET MODÜLÜ</span></div>
@@ -119,18 +143,6 @@
             </div>
         </div>
 
-        <div class="scan-area">
-            <div class="input-group">
-                <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT / ARA</label>
-                <div class="scan-wrapper">
-                    <input type="text" id="scan-code" maxlength="50" class="scan-input" placeholder="Aramak veya eklemek için yazın..." autocomplete="off">
-                    <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
-                    <button class="btn-add" onclick="processScan()">BUL VE EKLE</button>
-                </div>
-                <div id="dropdown-results" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #0a0a0a; border: 1px solid #333; z-index: 100; max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); margin-top: 5px;"></div>
-            </div>
-        </div>
-
         <div class="list-container">
             <div class="list-header" id="list-header">
                 <div>ÜRÜN KODU</div>
@@ -139,6 +151,21 @@
                 <div style="text-align:right;">İŞLEM</div>
             </div>
             <div id="print-list"></div>
+        </div>
+
+        <div class="scan-area">
+            <div class="scan-input">
+                <label>ÜRÜN KODU, İSİM VEYA BARKOD OKUT</label>
+                <div class="scan-wrapper">
+                    <input type="text" id="scan-code" maxlength="50" placeholder="Tam kodu okutun veya yazın..." autocomplete="off">
+                    <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
+                </div>
+            </div>
+            <div class="qty-input">
+                <label>ETİKET ADETİ</label>
+                <input type="number" id="scan-qty" value="1" min="1">
+            </div>
+            <button class="btn-add" onclick="processScan()">EKLE / KAYDET</button>
         </div>
     </main>
 
@@ -192,26 +219,12 @@
         const auth = getAuth(app);
 
         let catalogDb = {};
-        let catalogArray = [];
         let printItems = {};
         let html5QrCode = null;
         let confirmActionCallback = null;
-        let searchTimeout = null;
 
         const scanInput = document.getElementById('scan-code');
-        const dropdown = document.getElementById('dropdown-results');
-
-        const trToLower = (text) => {
-            if (!text) return "";
-            return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
-        };
-
-        window.hideLoader = () => {
-            const loader = document.getElementById('loading-overlay');
-            if (loader) loader.style.display = 'none';
-            const main = document.getElementById('main-content');
-            if (main) main.style.display = 'block';
-        };
+        const qtyInput = document.getElementById('scan-qty');
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -234,10 +247,6 @@
             if(confirmActionCallback) confirmActionCallback();
             closeCustomConfirm();
         });
-
-        const emergencyTimer = setTimeout(() => {
-            window.hideLoader();
-        }, 2500);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -265,9 +274,6 @@
                                     refNo: String(item.refNo || "") 
                                 };
                             });
-                            catalogArray = Object.values(catalogDb);
-                            clearTimeout(emergencyTimer);
-                            window.hideLoader();
                             loadLocalList();
                             return;
                         }
@@ -298,13 +304,8 @@
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
-                catalogArray = Object.values(catalogDb);
-                
             } catch (err) {
-                console.warn(err);
             } finally {
-                clearTimeout(emergencyTimer);
-                window.hideLoader();
                 loadLocalList();
             }
         };
@@ -327,57 +328,12 @@
             localStorage.setItem('terminux_print_list', JSON.stringify(printItems));
         };
 
-        scanInput.addEventListener('input', (e) => {
-            try {
-                const val = trToLower(e.target.value.trim());
-                clearTimeout(searchTimeout);
-                if (val.length < 2) { dropdown.style.display = 'none'; return; }
-
-                searchTimeout = setTimeout(() => {
-                    dropdown.innerHTML = '<div style="padding: 15px; color: #666; font-size: 14px;">Sorgulanıyor...</div>';
-                    dropdown.style.display = 'block';
-
-                    const terms = val.split(/\s+/);
-                    let matches = catalogArray.filter(m => {
-                        const searchStr = trToLower(`${m.urunAdi} ${m.urunKodu} ${m.barkod} ${m.refNo}`);
-                        return terms.every(t => searchStr.includes(t));
-                    }).slice(0, 15);
-
-                    if (matches.length > 0) {
-                        dropdown.innerHTML = matches.map(m => `
-                            <div class="search-item" data-code="${m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition:0.2s;">
-                                <div style="color: #fff; font-size: 14px; font-weight: 600;">${m.urunAdi}</div>
-                                <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:4px;">KOD: <span style="color:#ffbc00;">${m.urunKodu}</span> | REF: ${m.refNo || '-'}</div>
-                            </div>
-                        `).join('');
-
-                        document.querySelectorAll('.search-item').forEach(item => {
-                            item.addEventListener('click', () => {
-                                scanInput.value = item.getAttribute('data-code');
-                                dropdown.style.display = 'none';
-                                processScan(); 
-                            });
-                            item.addEventListener('mouseover', () => item.style.background = '#111');
-                            item.addEventListener('mouseout', () => item.style.background = 'transparent');
-                        });
-                    } else {
-                        dropdown.innerHTML = '<div style="padding: 15px; color: #f33; font-size: 14px;">Kayıt bulunamadı.</div>';
-                    }
-                }, 150);
-            } catch(err) {}
-        });
-
-        document.addEventListener('click', (e) => {
-            if (scanInput && dropdown && !scanInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
-                dropdown.style.display = 'none';
-            }
-        });
-
         window.processScan = () => {
             try {
                 const searchCode = scanInput.value.trim();
+                const addQty = parseInt(qtyInput.value) || 1;
+                
                 if(!searchCode) return;
-                dropdown.style.display = 'none';
 
                 let matchedKey = null;
                 let matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)";
@@ -386,10 +342,8 @@
                     matchedKey = searchCode;
                     matchedName = catalogDb[searchCode].urunAdi;
                 } else {
-                    const searchLower = trToLower(searchCode);
                     for (const key in catalogDb) {
-                        const dbAd = trToLower(catalogDb[key].urunAdi);
-                        if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode || dbAd === searchLower) {
+                        if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode) {
                             matchedKey = key;
                             matchedName = catalogDb[key].urunAdi;
                             break;
@@ -399,24 +353,29 @@
 
                 const finalKey = matchedKey || searchCode;
 
+                if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") {
+                    window.playBeep('error');
+                } else {
+                    window.playBeep('success');
+                }
+
                 if (printItems[finalKey]) {
-                    printItems[finalKey].qty += 1;
+                    printItems[finalKey].qty += addQty;
                 } else {
                     printItems[finalKey] = {
                         code: finalKey,
                         name: matchedName,
-                        qty: 1
+                        qty: addQty
                     };
                 }
                 
                 scanInput.value = '';
+                qtyInput.value = '1';
                 scanInput.focus();
                 
                 saveLocalList();
                 renderList();
-            } catch(e) {
-                showCustomAlert("HATA", "İşlem sırasında bir sorun oluştu.");
-            }
+            } catch(e) {}
         };
 
         scanInput.addEventListener('keypress', (e) => {
@@ -467,7 +426,7 @@
                     <div class="item-code">${item.code}</div>
                     <div class="item-name">${item.name}</div>
                     <div class="qty-wrapper">
-                        <input type="number" class="qty-input" value="${item.qty}" min="0" onchange="updateQty('${item.code}', this.value)">
+                        <input type="number" class="qty-input-list" value="${item.qty}" min="0" onchange="updateQty('${item.code}', this.value)">
                     </div>
                     <div class="item-action">
                         <button class="btn-danger" onclick="removeItem('${item.code}')">SİL</button>
@@ -481,7 +440,7 @@
             if (items.length === 0) return showCustomAlert("BOŞ LİSTE", "Dışa aktarılacak ürün bulunmuyor.");
 
             const exportData = items.map(i => ({
-                "ÜRÜN KODU": i.code,
+                "Ürün Kodu": i.code,
                 "ÜRÜN İSMİ": i.name,
                 "MİKTAR": i.qty
             }));
@@ -504,7 +463,6 @@
                 (decodedText) => {
                     scanInput.value = decodedText;
                     closeScanner();
-                    processScan(); 
                 },
                 (errorMessage) => {}
             ).catch((err) => {
