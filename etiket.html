@@ -65,7 +65,7 @@
         .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; }
         .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
-        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .scan-area input { flex: 1; width: 100%; background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .scan-area input:focus { border-color: #ffbc00; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ffbc00; color: #ffbc00; }
@@ -379,7 +379,17 @@
         };
 
         scanInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') processScan();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                qtyInput.focus();
+            }
+        });
+
+        qtyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.processScan();
+            }
         });
 
         window.updateQty = (key, value) => {
@@ -463,6 +473,7 @@
                 (decodedText) => {
                     scanInput.value = decodedText;
                     closeScanner();
+                    qtyInput.focus();
                 },
                 (errorMessage) => {}
             ).catch((err) => {
