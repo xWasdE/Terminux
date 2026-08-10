@@ -59,6 +59,7 @@
         
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-input { flex: 2; min-width: 250px; }
+        .scan-wrapper { display: flex; gap: 10px; width: 100%; }
         .qty-input { flex: 1; max-width: 150px; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ff00; color: #00ff00; }
@@ -70,9 +71,12 @@
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
-        .list-item { display: grid; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
+        .list-item { display: grid; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; border-left: 6px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
         
+        .row-match { background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); border-left-color: #00ff00; }
+        .row-diff { background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); border-left-color: #ff3333; }
+
         .grid-cols-normal { grid-template-columns: 2fr 3fr 1fr 1fr; gap: 15px; }
         .grid-cols-reconcile { grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; gap: 15px; }
 
@@ -95,8 +99,9 @@
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
-        .modal-actions { display: flex; gap: 15px; justify-content: center; }
-        .modal-actions button { flex: 1; max-width: 200px; white-space: normal; }
+        
+        .modal-actions { display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; flex-direction: row; }
+        .modal-actions button { flex: 1; white-space: normal; padding: 15px 20px; width: 100%; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -110,19 +115,26 @@
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
-            .scan-area { flex-direction: column; align-items: stretch; gap: 10px; }
-            .scan-input, .qty-input { width: 100%; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            .scan-wrapper { flex-direction: column; }
+            .scan-wrapper button { width: 100%; height: 50px; }
+            .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
+            .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
             .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; }
             .item-code { grid-column: 1 / -1; font-size: 16px; }
             .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
             .item-action { grid-column: 1 / -1; justify-content: space-between; margin-top: 10px; }
-            .item-qty, .item-sys, .item-diff { font-size: 16px; text-align: left; }
-            .legal-footer { font-size: 8px; padding: 6px 10px; }
+            
+            .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; gap: 4px; text-align: left; font-size: 16px; }
+            .item-qty::before, .item-sys::before, .item-diff::before { content: attr(data-label); font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
+            
             .modal-actions { flex-direction: column; }
-            .modal-actions button { max-width: 100%; }
+            .modal-actions button { width: 100%; max-width: 100%; }
+            .legal-footer { font-size: 8px; padding: 6px 10px; }
         }
     </style>
 </head>
@@ -180,7 +192,7 @@
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
                     <label>ASG KOD, BARKOD VEYA REF NO</label>
-                    <div style="display: flex; gap: 10px;">
+                    <div class="scan-wrapper">
                         <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1;">
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     </div>
@@ -238,10 +250,10 @@
         <div class="modal-box" style="max-width: 500px;">
             <div class="modal-title" style="color:#00ccff;">SAYIM İŞLEMİNİ BİTİR</div>
             <div class="modal-desc">Sayıma ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sayım kapatılacaktır.</div>
-            <div class="modal-actions" style="flex-direction:column; gap:15px;">
-                <button class="btn-primary" style="background:#fff;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
-                <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
-                <button class="btn-secondary" style="margin-top:10px; max-width: 100%;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
+            <div class="modal-actions" style="flex-direction:column; gap:15px; align-items:center; width:100%;">
+                <button class="btn-primary" style="background:#fff; width:100%;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff; width:100%;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
             </div>
         </div>
     </div>
@@ -624,24 +636,36 @@
                 headerUI.innerHTML = `<div>ASG KOD</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
             }
 
-            container.innerHTML = items.map(item => {
+            let itemsToRender = [...items].reverse();
+            if (session.hasSystemStock) {
+                itemsToRender.sort((a, b) => {
+                    const diffA = (a.qty - (a.sysQty || 0)) !== 0 ? 1 : 0;
+                    const diffB = (b.qty - (b.sysQty || 0)) !== 0 ? 1 : 0;
+                    return diffB - diffA; 
+                });
+            }
+
+            container.innerHTML = itemsToRender.map(item => {
                 let extraCols = '';
+                let rowClass = '';
                 if (session.hasSystemStock) {
                     const diff = item.qty - (item.sysQty || 0);
                     let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                     let diffText = diff > 0 ? `+${diff}` : diff;
                     
+                    rowClass = diff === 0 ? 'row-match' : 'row-diff';
+                    
                     extraCols = `
-                        <div class="item-sys">${item.sysQty || 0}</div>
-                        <div class="item-diff ${diffClass}">${diffText}</div>
+                        <div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div>
+                        <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
                     `;
                 }
 
                 return `
-                    <div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'}">
+                    <div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'} ${rowClass}">
                         <div class="item-code">${item.code}</div>
                         <div class="item-name">${item.name}</div>
-                        <div class="item-qty">${item.qty}</div>
+                        <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
                         ${extraCols}
                         <div class="item-action">
                             <button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button>
@@ -649,7 +673,7 @@
                         </div>
                     </div>
                 `;
-            }).reverse().join('');
+            }).join('');
         };
 
         window.promptFinishSession = () => {
@@ -671,9 +695,9 @@
             if (format === 'excel') {
                 let exportData = [];
                 if(session.hasSystemStock) {
-                    exportData = items.map(i => ({ "ASG KOD": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty, "SİSTEM STOK": i.sysQty || 0, "FARK": i.qty - (i.sysQty || 0) }));
+                    exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty, "SİSTEM STOK": i.sysQty || 0, "FARK": i.qty - (i.sysQty || 0) }));
                 } else {
-                    exportData = items.map(i => ({ "ASG KOD": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty }));
+                    exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty }));
                 }
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
@@ -690,7 +714,7 @@
                 doc.setTextColor(100);
                 doc.text(`Sayim Adi: ${session.name} | Kategori: ${session.type} | Tarih: ${session.date}`, 14, 22);
                 
-                let head = session.hasSystemStock ? [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK', 'SISTEM STOK', 'FARK']] : [['ASG KOD', 'URUN ISMI', 'FIZIKI STOK']];
+                let head = session.hasSystemStock ? [['Ürün Kodu', 'URUN ISMI', 'FIZIKI STOK', 'SISTEM STOK', 'FARK']] : [['Ürün Kodu', 'URUN ISMI', 'FIZIKI STOK']];
                 let body = items.map(i => {
                     let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
                     if (session.hasSystemStock) return [i.code, cleanName, i.qty, i.sysQty || 0, i.qty - (i.sysQty || 0)];
@@ -716,7 +740,6 @@
                 (decodedText) => {
                     document.getElementById('scan-code').value = decodedText;
                     closeScanner();
-                    addItem(); 
                 },
                 (errorMessage) => {}
             ).catch((err) => {
