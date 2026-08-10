@@ -20,7 +20,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -90,7 +90,7 @@
         .item-action { display: flex; gap: 5px; justify-content: flex-end; align-items: center; }
         .btn-edit { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; letter-spacing: 1px; text-transform: uppercase; }
         .btn-edit:hover { border-color: #00ccff; color: #00ccff; }
-        .btn-check { background: #00ff00; color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-check { background: #00ff00; color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%; }
         .btn-check:hover { opacity: 0.8; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
 
         .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
@@ -104,10 +104,6 @@
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
 
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
-
-        #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-        .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { color: #333; } 50% { color: #00ccff; } 100% { color: #333; } }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
@@ -142,10 +138,6 @@
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">
-        <div class="loader-text">VERİLER İŞLENİYOR...</div>
-    </div>
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">SEVKİYAT KONTROL</span></div>
@@ -253,7 +245,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -274,13 +266,6 @@
         let currentShipmentId = null;
         let confirmActionCallback = null;
         let html5QrCode = null;
-
-        window.hideLoader = () => {
-            const loader = document.getElementById('loading-overlay');
-            if (loader) loader.style.display = 'none';
-            const main = document.getElementById('main-content');
-            if (main) main.style.display = 'block';
-        };
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -306,10 +291,6 @@
             if(confirmActionCallback) confirmActionCallback();
             closeCustomConfirm();
         });
-
-        const emergencyTimer = setTimeout(() => {
-            window.hideLoader();
-        }, 2500);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -337,9 +318,7 @@
                                     refNo: String(item.refNo || "") 
                                 };
                             });
-                            clearTimeout(emergencyTimer);
-                            window.hideLoader();
-                            loadData();
+                            setupRealtimeShipments();
                             return;
                         }
                     } catch(e) { }
@@ -370,23 +349,25 @@
             } catch (err) {
                 console.warn(err);
             } finally {
-                clearTimeout(emergencyTimer);
-                window.hideLoader();
-                loadData();
+                setupRealtimeShipments();
             }
         };
 
-        const loadData = () => {
-            const saved = localStorage.getItem('terminux_shipments_v3');
-            if (saved) {
-                try { allShipments = JSON.parse(saved) || []; } catch(e) { allShipments = []; }
-            }
-            renderHomeList();
+        const setupRealtimeShipments = () => {
+            onSnapshot(collection(db, "sevkiyat_sessions"), (snapshot) => {
+                allShipments = [];
+                snapshot.forEach(doc => allShipments.push(doc.data()));
+                renderHomeList();
+                if (currentShipmentId) renderShipmentList();
+            });
         };
 
-        const saveData = () => {
-            localStorage.setItem('terminux_shipments_v3', JSON.stringify(allShipments));
-            renderHomeList();
+        const saveShipmentToDb = async (shipment) => {
+            try {
+                await setDoc(doc(db, "sevkiyat_sessions", shipment.id), shipment);
+            } catch(e) {
+                showCustomAlert("HATA", "Kayıt sırasında bağlantı sorunu oluştu.");
+            }
         };
 
         const renderHomeList = () => {
@@ -407,7 +388,7 @@
                     <div class="history-card">
                         <div class="history-info">
                             <div class="history-name" style="color:${statusColor}">${s.name}</div>
-                            <div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items).length} Kalem Ürün | Durum: ${statusText}</div>
+                            <div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items || {}).length} Kalem Ürün | Durum: ${statusText}</div>
                         </div>
                         <div class="history-actions">
                             <button class="btn-danger" onclick="deleteShipment('${s.id}')">SİL</button>
@@ -437,11 +418,9 @@
             
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat için bir isim belirleyin.");
             if (!fileInput.files[0]) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat listesini içeren Excel dosyasını seçin.");
-
-            document.getElementById('loading-overlay').style.display = 'flex';
             
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
@@ -491,21 +470,17 @@
                     });
 
                     if (addedCount === 0) {
-                        document.getElementById('loading-overlay').style.display = 'none';
                         return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen Excel dosyasında ürün kodu veya miktar sütunları bulunamadı.");
                     }
 
                     const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems };
-                    allShipments.push(newShipment);
-                    saveData();
+                    await saveShipmentToDb(newShipment);
                     
                     document.getElementById('setup-name').value = '';
                     fileInput.value = '';
-                    document.getElementById('loading-overlay').style.display = 'none';
                     resumeShipment(newId);
 
                 } catch(err) {
-                    document.getElementById('loading-overlay').style.display = 'none';
                     showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
                 }
             };
@@ -513,9 +488,10 @@
         };
 
         window.deleteShipment = (id) => {
-            showCustomConfirm("SEVKİYATI SİL", "Geçmiş sevkiyat listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", () => {
-                allShipments = allShipments.filter(s => s.id !== id);
-                saveData();
+            showCustomConfirm("SEVKİYATI SİL", "Geçmiş sevkiyat listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", async () => {
+                try {
+                    await deleteDoc(doc(db, "sevkiyat_sessions", id));
+                } catch(e) {}
             });
         };
 
@@ -525,12 +501,13 @@
             document.getElementById('active-screen').style.display = 'block';
             
             const shipment = allShipments.find(s => s.id === id);
-            document.getElementById('ui-session-name').innerText = shipment.name;
-            document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
-            
-            document.getElementById('scan-code').value = '';
-            document.getElementById('scan-code').focus();
-            renderShipmentList();
+            if(shipment) {
+                document.getElementById('ui-session-name').innerText = shipment.name;
+                document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
+                document.getElementById('scan-code').value = '';
+                document.getElementById('scan-code').focus();
+                renderShipmentList();
+            }
         };
 
         window.closeActiveScreen = () => {
@@ -540,7 +517,7 @@
             renderHomeList();
         };
 
-        window.processScan = () => {
+        window.processScan = async () => {
             const inputEl = document.getElementById('scan-code');
             const searchCode = inputEl.value.trim();
             if(!searchCode) return;
@@ -563,6 +540,9 @@
 
             const finalKey = matchedKey || searchCode;
             const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
+            if(!shipment.items) shipment.items = {};
 
             if (!shipment.items[finalKey]) {
                 shipment.items[finalKey] = {
@@ -573,8 +553,7 @@
                     labelQty: 0,
                     confirmed: false
                 };
-                saveData();
-                renderShipmentList();
+                await saveShipmentToDb(shipment);
             }
         };
 
@@ -584,10 +563,12 @@
 
         const renderShipmentList = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
             const container = document.getElementById('shipment-list');
             const searchVal = document.getElementById('scan-code').value.trim().toLowerCase();
             
-            let items = Object.values(shipment.items);
+            let items = Object.values(shipment.items || {});
             
             if (searchVal) {
                 items = items.filter(i => 
@@ -642,27 +623,32 @@
 
         window.filterShipmentList = () => renderShipmentList();
 
-        window.confirmItem = (code) => {
+        window.confirmItem = async (code) => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
             const rVal = parseInt(document.getElementById(`rec-${code}`).value) || 0;
             const lVal = parseInt(document.getElementById(`lbl-${code}`).value) || 0;
-            shipment.items[code].receivedQty = rVal;
-            shipment.items[code].labelQty = lVal;
-            shipment.items[code].confirmed = true;
-            saveData();
-            renderShipmentList();
+            if(shipment.items[code]) {
+                shipment.items[code].receivedQty = rVal;
+                shipment.items[code].labelQty = lVal;
+                shipment.items[code].confirmed = true;
+                await saveShipmentToDb(shipment);
+            }
         };
 
-        window.editItem = (code) => {
+        window.editItem = async (code) => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
-            shipment.items[code].confirmed = false;
-            saveData();
-            renderShipmentList();
+            if(shipment && shipment.items[code]) {
+                shipment.items[code].confirmed = false;
+                await saveShipmentToDb(shipment);
+            }
         };
 
         window.exportLabels = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
-            const itemsToPrint = Object.values(shipment.items).filter(i => i.labelQty > 0);
+            if(!shipment) return;
+            const itemsToPrint = Object.values(shipment.items || {}).filter(i => i.labelQty > 0);
             
             if (itemsToPrint.length === 0) return showCustomAlert("ETİKET YOK", "Listede etiket adeti 0'dan büyük olan hiçbir ürün bulunmuyor.");
 
@@ -682,7 +668,8 @@
 
         window.promptFinishShipment = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
-            const items = Object.values(shipment.items);
+            if(!shipment) return;
+            const items = Object.values(shipment.items || {});
             
             const missingItems = items.filter(i => i.receivedQty < i.expectedQty);
             const overItems = items.filter(i => i.receivedQty > i.expectedQty);
@@ -698,9 +685,9 @@
                 msg = `DİKKAT: Listede ${missingItems.length} kalem eksik, ${overItems.length} kalem fazla ürün girişi var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
             }
 
-            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", () => {
+            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
                 shipment.status = 'finished';
-                saveData();
+                await saveShipmentToDb(shipment);
                 closeActiveScreen();
             });
         };
