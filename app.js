@@ -217,6 +217,9 @@ document.body.insertAdjacentHTML('beforeend', `
         <div id="reader" style="width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333;"></div>
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
 `);
 
 window.lightboxImages = [];
@@ -331,8 +334,8 @@ let searchTimeout = null;
 window.currentRenderedProduct = null;
 
 const trToLower = (text) => {
-    if (!text) return "";
-    return text.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+    if (text === null || text === undefined) return "";
+    return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 };
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
@@ -468,14 +471,20 @@ async function buildCatalog(forceUpdate = false) {
         const now = Date.now();
 
         if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
-            productCatalog = JSON.parse(cachedData);
-            return;
+            try {
+                productCatalog = JSON.parse(cachedData);
+                if (!Array.isArray(productCatalog)) throw new Error("Invalid Cache");
+                return;
+            } catch(e) {
+                localStorage.removeItem(CACHE_KEY);
+                localStorage.removeItem(CACHE_TIME_KEY);
+            }
         }
 
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
         
-        const processDoc = (doc, isAna) => {
+        const processDoc = (doc) => {
             const data = doc.data();
             if (!tempMap.has(doc.id)) {
                 tempMap.set(doc.id, {
@@ -486,42 +495,14 @@ async function buildCatalog(forceUpdate = false) {
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
                     surecTipi: String(data.surecTipi || ""),
-                    miatTarihi: String(data.miatTarihi || ""),
-                    minAlert: parseInt(data.minAlert || 0),
-                    max: parseInt(data.max || 0),
                     utsGorseller: data.utsGorseller || [],
-                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`),
-                    hasAna: isAna,
-                    anaMiktar: isAna ? parseInt(data.miktar || 0) : 0,
-                    anaStokAdresi: isAna ? String(data.stokAdresi || "-") : "-",
-                    anaDummy: isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                    anaReuse: isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL",
-                    hasAm: !isAna,
-                    amMiktar: !isAna ? parseInt(data.miktar || 0) : 0,
-                    amStokAdresi: !isAna ? String(data.stokAdresi || "-") : "-",
-                    amDummy: !isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                    amReuse: !isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`)
                 });
-            } else {
-                const existing = tempMap.get(doc.id);
-                if (isAna) {
-                    existing.hasAna = true;
-                    existing.anaMiktar = parseInt(data.miktar || 0);
-                    existing.anaStokAdresi = String(data.stokAdresi || "-");
-                    existing.anaDummy = String(data.dummy || "DUMMY DEĞİL");
-                    existing.anaReuse = String(data.reuse || "REUSE DEĞİL");
-                } else {
-                    existing.hasAm = true;
-                    existing.amMiktar = parseInt(data.miktar || 0);
-                    existing.amStokAdresi = String(data.stokAdresi || "-");
-                    existing.amDummy = String(data.dummy || "DUMMY DEĞİL");
-                    existing.amReuse = String(data.reuse || "REUSE DEĞİL");
-                }
             }
         };
 
-        anaSnap.forEach(d => processDoc(d, true));
-        amSnap.forEach(d => processDoc(d, false));
+        anaSnap.forEach(processDoc);
+        amSnap.forEach(processDoc);
         productCatalog = Array.from(tempMap.values());
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
@@ -555,7 +536,11 @@ if(searchInput) {
             dropdown.style.display = 'block';
 
             const terms = val.split(/\s+/);
-            let matches = productCatalog.filter(m => terms.every(t => m.searchString.includes(t))).slice(0, 15);
+
+            let matches = productCatalog.filter(m => {
+                const searchStr = m.searchString ? String(m.searchString) : trToLower(`${m.urunAdi || ""} ${m.urunKodu || ""} ${m.barkod || ""} ${m.refNo || ""} ${m.altGrup || ""}`);
+                return terms.every(t => searchStr.includes(t));
+            }).slice(0, 15);
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
@@ -836,56 +821,75 @@ function createEditUI(id, type, val, placeholder, colorClass) {
 }
 
 window.fetchAndDisplayProduct = async (code) => {
-    if(resultContainer) resultContainer.style.display = 'block';
-
-    const searchCode = trToLower(code).trim();
-    let mergedData = productCatalog.find(m => 
-        (trToLower(m.docId) === searchCode) || 
-        (trToLower(m.urunKodu) === searchCode) || 
-        (trToLower(m.barkod) === searchCode) || 
-        (trToLower(m.refNo) === searchCode)
-    );
-
-    if (mergedData) {
-        renderCard(mergedData);
-
-        Promise.all([getDoc(doc(db, "ana_depo", mergedData.docId)), getDoc(doc(db, "ameliyathane", mergedData.docId))])
-            .then(([anaDoc, amDoc]) => {
-                let updated = false;
-                if(anaDoc.exists()) {
-                    mergedData.anaMiktar = parseInt(anaDoc.data().miktar || 0);
-                    mergedData.hasAna = true;
-                    updated = true;
-                }
-                if(amDoc.exists()) {
-                    mergedData.amMiktar = parseInt(amDoc.data().miktar || 0);
-                    mergedData.hasAm = true;
-                    updated = true;
-                }
-                
-                if(updated && window.currentRenderedProduct && window.currentRenderedProduct.docId === mergedData.docId) {
-                    renderCard(mergedData); 
-                }
-            }).catch(e => {});
-
-        let targetBarcode = mergedData.urunKodu;
-        const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-        if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
-
-        if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-            if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                window.autoFetchCentral(mergedData, targetBarcode);
-            }
-        }
-
-    } else {
-        if(resultContainer) resultContainer.innerHTML = `
-            <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
-                <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
-            </div>
-        `;
+    if(resultContainer) {
+        resultContainer.style.display = 'block';
+        resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
     }
+
+    try {
+        const [anaDoc, amDoc] = await Promise.all([getDoc(doc(db, "ana_depo", code)), getDoc(doc(db, "ameliyathane", code))]);
+
+        if (anaDoc.exists() || amDoc.exists()) {
+            const anaData = anaDoc.exists() ? anaDoc.data() : null;
+            const amData = amDoc.exists() ? amDoc.data() : null;
+            const baseData = anaData || amData; 
+
+            const mergedData = {
+                docId: code, 
+                urunKodu: code,
+                barkod: baseData.barkod || "",
+                urunAdi: baseData.urunAdi || "-",
+                refNo: baseData.refNo || "BULUNAMADI",
+                altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
+                surecTipi: baseData.surecTipi || "-",
+                miatTarihi: baseData.miatTarihi || "-",
+                utsGorseller: baseData.utsGorseller || [],
+                minAlert: baseData.minAlert || 0,
+                max: baseData.max || 0,
+                hasAna: anaDoc.exists(),
+                anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
+                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
+                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
+                hasAm: amDoc.exists(),
+                amMiktar: amData ? parseInt(amData.miktar) : 0,
+                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
+                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+            };
+
+            let crossRefText = "";
+            let exactName = trToLower(mergedData.urunAdi).trim();
+            if (mergedData.surecTipi === "R") {
+                const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
+                if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
+            } else {
+                const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
+                if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
+            }
+            mergedData.crossRefText = crossRefText;
+
+            renderCard(mergedData);
+
+            let targetBarcode = mergedData.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
+
+            if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
+                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
+                    window.autoFetchCentral(mergedData, targetBarcode);
+                }
+            }
+
+        } else {
+            if(resultContainer) resultContainer.innerHTML = `
+                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
+                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
+                </div>
+            `;
+        }
+    } catch (err) { if(resultContainer) resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
 };
 
 function renderCard(data) {
@@ -905,17 +909,6 @@ function renderCard(data) {
 
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref Numarası', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
-
-    let crossRefText = "";
-    let exactName = trToLower(data.urunAdi).trim();
-    if (data.surecTipi === "R") {
-        const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
-        if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
-    } else {
-        const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
-        if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
-    }
-    data.crossRefText = crossRefText;
 
     let gorselHTML = '';
 
