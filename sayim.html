@@ -55,7 +55,7 @@
         
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ff00; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ff00; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
         .input-group input:focus, .input-group select:focus { border-color: #ffbc00; }
         
         .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
@@ -144,11 +144,10 @@
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
             #active-screen { display: flex; flex-direction: column; height: 100%; }
-            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
             
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
-            
-            .scan-wrapper { flex-direction: column; }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
+            .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
             .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
@@ -164,7 +163,7 @@
             
             .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; max-width: 100%; }
-            .legal-footer { display: none; }
+            .legal-footer { font-size: 8px; padding: 6px 10px; }
         }
     </style>
 </head>
@@ -219,14 +218,9 @@
                 <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processSystemStock(event)">
             </div>
 
-            <div class="list-container">
-                <div class="list-header" id="list-header-ui"></div>
-                <div id="counted-list"></div>
-            </div>
-
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
-                    <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
+                    <label>ASG KOD, BARKOD VEYA REF NO</label>
                     <div class="scan-wrapper">
                         <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1;">
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
@@ -236,7 +230,12 @@
                     <label>EKLENECEK MİKTAR</label>
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
-                <button class="btn-add" onclick="addItem()">EKLE / KAYDET</button>
+                <button class="btn-add" onclick="addItem()">EKLE / OKUT</button>
+            </div>
+
+            <div class="list-container">
+                <div class="list-header" id="list-header-ui"></div>
+                <div id="counted-list"></div>
             </div>
         </div>
     </main>
@@ -281,7 +280,7 @@
             <div class="modal-title" style="color:#00ccff;">SAYIM İŞLEMİNİ BİTİR</div>
             <div class="modal-desc">Sayıma ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sayım kapatılacaktır.</div>
             <div class="modal-actions" style="flex-direction:column; gap:15px; align-items:center; width:100%;">
-                <button class="btn-primary" style="background:#fff; width:100%;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#fff; width:100%; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
                 <button class="btn-primary" style="background:#217346; color:#fff; width:100%;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
                 <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
             </div>
@@ -359,52 +358,74 @@
         });
 
         const loadCatalog = async () => {
-            try {
-                const cachedData = localStorage.getItem('terminux_catalog_cache');
-                if (cachedData) {
-                    try {
-                        const parsed = JSON.parse(cachedData);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(item => {
-                                const uKodu = String(item.urunKodu || item.docId || "");
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || "") 
-                                };
-                            });
-                            setupRealtimeSessions();
-                            return;
-                        }
-                    } catch(e) { }
-                }
+            const cachedData = localStorage.getItem('terminux_catalog_cache');
+            const cacheTime = localStorage.getItem('terminux_cache_time');
+            const now = Date.now();
+            let hasValidCache = false;
 
+            const populateFromCache = () => {
+                const parsed = JSON.parse(cachedData);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(item => {
+                        const uKodu = String(item.urunKodu || item.docId || "");
+                        catalogDb[uKodu] = { 
+                            urunKodu: uKodu, 
+                            urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                            barkod: String(item.barkod || ""), 
+                            refNo: String(item.refNo || "") 
+                        };
+                    });
+                }
+            };
+
+            if (cachedData) {
+                try {
+                    populateFromCache();
+                    hasValidCache = true;
+                    setupRealtimeSessions();
+                } catch(e) { }
+            }
+
+            if (hasValidCache && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
+                return;
+            }
+
+            try {
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
+                const tempDb = {};
+                const catalogArr = [];
                 const processSnap = (snap) => {
                     if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        if (!catalogDb[key]) {
-                            catalogDb[key] = { 
+                        if (!tempDb[key]) {
+                            tempDb[key] = { 
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
                                 refNo: String(d.refNo || "") 
                             };
+                            catalogArr.push(tempDb[key]);
                         }
                     });
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
+                catalogDb = tempDb;
+                
+                localStorage.setItem('terminux_catalog_cache', JSON.stringify(catalogArr));
+                localStorage.setItem('terminux_cache_time', now.toString());
+
+                if (!hasValidCache) {
+                    setupRealtimeSessions();
+                }
             } catch (err) {
-            } finally {
-                setupRealtimeSessions();
+                if (!hasValidCache) setupRealtimeSessions();
             }
         };
 
@@ -663,10 +684,10 @@
             
             if (session.hasSystemStock) {
                 headerUI.className = 'list-header grid-cols-reconcile';
-                headerUI.innerHTML = `<div>Ürün Kodu</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
+                headerUI.innerHTML = `<div>ÜRÜN KODU</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
             } else {
                 headerUI.className = 'list-header grid-cols-normal';
-                headerUI.innerHTML = `<div>Ürün Kodu</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
+                headerUI.innerHTML = `<div>ÜRÜN KODU</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:right;">İŞLEM</div>`;
             }
 
             let itemsToRender = [...items].reverse();
