@@ -53,7 +53,7 @@
         
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ccff; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ccff; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
         .input-group input:focus, .input-group select:focus { border-color: #00ccff; }
         
         .btn-primary { background: #00ccff; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
@@ -82,15 +82,12 @@
         .header-actions { display: flex; gap: 10px; align-items: center; }
         
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
-        .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; }
-        .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; }
-        .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
+        .scan-input { flex: 2; min-width: 250px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
-        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
-        .scan-area input:focus { border-color: #00ccff; }
-        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .qty-input { flex: 1; max-width: 150px; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
-        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
@@ -150,7 +147,8 @@
             .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
             
             .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
-            .scan-wrapper { flex-direction: column; }
+            .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
+            .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
             .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
@@ -247,7 +245,7 @@
                     <label>EKLENECEK MİKTAR</label>
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
-                <button class="btn-add" onclick="processScan()">BUL VE İŞLE</button>
+                <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
             </div>
         </div>
     </main>
@@ -273,10 +271,26 @@
         </div>
     </div>
 
+    <div id="finish-modal" class="custom-modal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-title" style="color:#00ccff;">SEVKİYAT İŞLEMİNİ BİTİR</div>
+            <div class="modal-desc">Sevkiyata ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sevkiyat kapatılacaktır.</div>
+            <div class="modal-actions" style="flex-direction:column; gap:15px; align-items:center; width:100%;">
+                <button class="btn-primary" style="background:#fff; width:100%; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff; width:100%;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
+            </div>
+        </div>
+    </div>
+
     <div id="scanner-modal">
         <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
         <div id="reader"></div>
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <script type="module">
@@ -339,52 +353,74 @@
         });
 
         const loadCatalog = async () => {
-            try {
-                const cachedData = localStorage.getItem('terminux_catalog_cache');
-                if (cachedData) {
-                    try {
-                        const parsed = JSON.parse(cachedData);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(item => {
-                                const uKodu = String(item.urunKodu || item.docId || "");
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || "") 
-                                };
-                            });
-                            setupRealtimeShipments();
-                            return;
-                        }
-                    } catch(e) { }
-                }
+            const cachedData = localStorage.getItem('terminux_catalog_cache');
+            const cacheTime = localStorage.getItem('terminux_cache_time');
+            const now = Date.now();
+            let hasValidCache = false;
 
+            const populateFromCache = () => {
+                const parsed = JSON.parse(cachedData);
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(item => {
+                        const uKodu = String(item.urunKodu || item.docId || "");
+                        catalogDb[uKodu] = { 
+                            urunKodu: uKodu, 
+                            urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                            barkod: String(item.barkod || ""), 
+                            refNo: String(item.refNo || "") 
+                        };
+                    });
+                }
+            };
+
+            if (cachedData) {
+                try {
+                    populateFromCache();
+                    hasValidCache = true;
+                    setupRealtimeShipments();
+                } catch(e) { }
+            }
+
+            if (hasValidCache && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
+                return;
+            }
+
+            try {
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
+                const tempDb = {};
+                const catalogArr = [];
                 const processSnap = (snap) => {
                     if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        if (!catalogDb[key]) {
-                            catalogDb[key] = { 
+                        if (!tempDb[key]) {
+                            tempDb[key] = { 
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
                                 refNo: String(d.refNo || "") 
                             };
+                            catalogArr.push(tempDb[key]);
                         }
                     });
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
+                catalogDb = tempDb;
+                
+                localStorage.setItem('terminux_catalog_cache', JSON.stringify(catalogArr));
+                localStorage.setItem('terminux_cache_time', now.toString());
+
+                if (!hasValidCache) {
+                    setupRealtimeShipments();
+                }
             } catch (err) {
-            } finally {
-                setupRealtimeShipments();
+                if (!hasValidCache) setupRealtimeShipments();
             }
         };
 
@@ -682,6 +718,54 @@
             }
         };
 
+        window.promptFinishShipment = () => {
+            document.getElementById('finish-modal').style.display = 'flex';
+        };
+        window.closeFinishModal = () => document.getElementById('finish-modal').style.display = 'none';
+
+        window.executeFinish = async (format) => {
+            closeFinishModal();
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+            const items = Object.values(shipment.items || {});
+            
+            const safeName = shipment.name.replace(/[^a-z0-9]/gi, '_');
+
+            if (format === 'excel') {
+                const exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "BEKLENEN": i.expectedQty, "TESLİM ALINAN": i.receivedQty }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "SEVKIYAT");
+                XLSX.writeFile(wb, `Terminux_Sevkiyat_${safeName}.xlsx`);
+            } else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFontSize(16);
+                doc.text(`TERMINUX SEVKIYAT RAPORU`, 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Sevkiyat: ${shipment.name} | Tarih: ${shipment.date}`, 14, 22);
+                
+                let body = items.map(i => {
+                    let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
+                    return [i.code, cleanName, i.expectedQty, i.receivedQty];
+                });
+                doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'BEKLENEN', 'TESLIM ALINAN']], body: body, theme: 'grid', styles: { fontSize: 8 } });
+                doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
+            }
+
+            const unconfirmed = items.filter(i => !i.confirmed);
+            let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
+            if (unconfirmed.length > 0) {
+                msg = `DİKKAT: Onaylanmamış ${unconfirmed.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
+            }
+
+            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
+                shipment.status = 'finished';
+                await saveShipmentToDb(shipment);
+                closeActiveScreen();
+            });
+        };
+
         window.exportLabels = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
@@ -690,7 +774,7 @@
             if (itemsToPrint.length === 0) return showCustomAlert("ETİKET YOK", "Listede etiket adeti 0'dan büyük olan hiçbir ürün bulunmuyor.");
 
             const exportData = itemsToPrint.map(i => ({
-                "ÜRÜN KODU": i.code,
+                "Ürün Kodu": i.code,
                 "ÜRÜN İSMİ": i.name,
                 "ETİKET ADETİ": i.labelQty
             }));
@@ -703,32 +787,6 @@
             XLSX.writeFile(wb, `Terminux_Etiket_${safeName}.xlsx`);
         };
 
-        window.promptFinishShipment = () => {
-            const shipment = allShipments.find(s => s.id === currentShipmentId);
-            if(!shipment) return;
-            const items = Object.values(shipment.items || {});
-            
-            const missingItems = items.filter(i => i.receivedQty < i.expectedQty);
-            const overItems = items.filter(i => i.receivedQty > i.expectedQty);
-            const unconfirmed = items.filter(i => !i.confirmed);
-            
-            let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
-            
-            if (unconfirmed.length > 0) {
-                return showCustomAlert("ONAYLANMAMIŞ ÜRÜNLER", `Listede henüz kontrol edilip onaylanmamış ${unconfirmed.length} ürün var. Lütfen tüm listeyi kontrol edin.`);
-            }
-
-            if (missingItems.length > 0 || overItems.length > 0) {
-                msg = `DİKKAT: Listede ${missingItems.length} kalem eksik, ${overItems.length} kalem fazla ürün girişi var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
-            }
-
-            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
-                shipment.status = 'finished';
-                await saveShipmentToDb(shipment);
-                closeActiveScreen();
-            });
-        };
-
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
@@ -737,9 +795,6 @@
                 (decodedText) => {
                     document.getElementById('scan-code').value = decodedText;
                     closeScanner();
-                    
-                    const inputEvent = new Event('input', { bubbles: true });
-                    document.getElementById('scan-code').dispatchEvent(inputEvent);
                 },
                 (errorMessage) => {}
             ).catch((err) => {
