@@ -22,7 +22,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; display: none; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -103,10 +103,6 @@
 
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
-        #loading-overlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-        .loader-text { font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #333; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { color: #333; } 50% { color: #ffbc00; } 100% { color: #333; } }
-
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px 15px 80px 15px; }
@@ -131,10 +127,6 @@
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">
-        <div class="loader-text">VERİTABANI EŞİTLENİYOR...</div>
-    </div>
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">SAYIM MODÜLÜ</span></div>
@@ -266,7 +258,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -288,13 +280,6 @@
         let html5QrCode = null;
         let confirmActionCallback = null;
         let editItemKey = null;
-
-        window.hideLoader = () => {
-            const loader = document.getElementById('loading-overlay');
-            if (loader) loader.style.display = 'none';
-            const main = document.getElementById('main-content');
-            if (main) main.style.display = 'block';
-        };
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -320,10 +305,6 @@
             if(confirmActionCallback) confirmActionCallback();
             closeCustomConfirm();
         });
-
-        const emergencyTimer = setTimeout(() => {
-            window.hideLoader();
-        }, 2500);
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -351,9 +332,7 @@
                                     refNo: String(item.refNo || "") 
                                 };
                             });
-                            clearTimeout(emergencyTimer);
-                            window.hideLoader();
-                            loadSessions();
+                            setupRealtimeSessions();
                             return;
                         }
                     } catch(e) { }
@@ -384,23 +363,17 @@
             } catch (err) {
                 console.warn(err);
             } finally {
-                clearTimeout(emergencyTimer);
-                window.hideLoader();
-                loadSessions();
+                setupRealtimeSessions();
             }
         };
 
-        const loadSessions = () => {
-            const saved = localStorage.getItem('terminux_count_sessions_v2');
-            if (saved) {
-                try { allSessions = JSON.parse(saved) || []; } catch(e) { allSessions = []; }
-            }
-            renderHomeList();
-        };
-
-        const saveSessions = () => {
-            localStorage.setItem('terminux_count_sessions_v2', JSON.stringify(allSessions));
-            renderHomeList();
+        const setupRealtimeSessions = () => {
+            onSnapshot(collection(db, "sayim_sessions"), (snapshot) => {
+                allSessions = [];
+                snapshot.forEach(doc => allSessions.push(doc.data()));
+                renderHomeList();
+                if (currentSessionId) updateListUI();
+            });
         };
 
         const renderHomeList = () => {
@@ -416,7 +389,7 @@
             list.innerHTML = allSessions.map(s => {
                 const statusColor = s.status === 'active' ? '#00ff00' : '#888';
                 const statusText = s.status === 'active' ? 'DEVAM EDİYOR' : 'TAMAMLANDI';
-                const itemCount = Object.keys(s.items).length;
+                const itemCount = Object.keys(s.items || {}).length;
                 
                 return `
                     <div class="history-card">
@@ -433,7 +406,15 @@
             }).reverse().join('');
         };
 
-        window.startCountSession = () => {
+        const saveSessionToDb = async (session) => {
+            try {
+                await setDoc(doc(db, "sayim_sessions", session.id), session);
+            } catch(e) {
+                showCustomAlert("HATA", "Kayıt sırasında bağlantı sorunu oluştu.");
+            }
+        };
+
+        window.startCountSession = async () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sayım sayfası için bir isim belirleyin.");
@@ -443,9 +424,7 @@
             const newId = 'SYM-' + Date.now();
 
             const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', hasSystemStock: false, items: {} };
-            allSessions.push(newSession);
-            saveSessions();
-            
+            await saveSessionToDb(newSession);
             resumeSession(newId);
         };
 
@@ -455,11 +434,12 @@
             document.getElementById('active-screen').style.display = 'block';
             
             const session = allSessions.find(s => s.id === id);
-            document.getElementById('ui-session-name').innerText = session.name;
-            document.getElementById('ui-session-details').innerText = `${session.type} | OLUŞTURULMA: ${session.date}`;
-            
-            document.getElementById('scan-code').focus();
-            updateListUI();
+            if(session) {
+                document.getElementById('ui-session-name').innerText = session.name;
+                document.getElementById('ui-session-details').innerText = `${session.type} | OLUŞTURULMA: ${session.date}`;
+                document.getElementById('scan-code').focus();
+                updateListUI();
+            }
         };
 
         window.closeActiveScreen = () => {
@@ -471,22 +451,26 @@
         };
 
         window.promptCancelSession = () => {
-            showCustomConfirm("SAYIMI İPTAL ET", "Bu işlem sayımı ve içindeki tüm verileri tamamen silecektir. Onaylıyor musunuz?", "İPTALİ ONAYLA", "btn-danger", () => {
-                allSessions = allSessions.filter(s => s.id !== currentSessionId);
-                saveSessions();
-                closeActiveScreen();
+            showCustomConfirm("SAYIMI İPTAL ET", "Bu işlem sayımı ve içindeki tüm verileri tamamen silecektir. Onaylıyor musunuz?", "İPTALİ ONAYLA", "btn-danger", async () => {
+                try {
+                    await deleteDoc(doc(db, "sayim_sessions", currentSessionId));
+                    closeActiveScreen();
+                } catch(e) {}
             });
         };
 
         window.deleteSession = (id) => {
-            showCustomConfirm("SAYIMI SİL", "Geçmiş sayım kaydı tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", () => {
-                allSessions = allSessions.filter(s => s.id !== id);
-                saveSessions();
+            showCustomConfirm("SAYIMI SİL", "Geçmiş sayım kaydı tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", async () => {
+                try {
+                    await deleteDoc(doc(db, "sayim_sessions", id));
+                } catch(e) {}
             });
         };
 
-        window.addItem = () => {
+        window.addItem = async () => {
             const session = allSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
+
             const codeInput = document.getElementById('scan-code');
             const qtyInput = document.getElementById('scan-qty');
             
@@ -512,6 +496,7 @@
             }
 
             const finalKey = matchedKey || searchCode;
+            if(!session.items) session.items = {};
 
             if (session.items[finalKey]) {
                 session.items[finalKey].qty += qty;
@@ -519,28 +504,29 @@
                 session.items[finalKey] = { code: finalKey, name: matchedName, qty: qty, sysQty: 0 };
             }
 
-            saveSessions();
-            updateListUI();
-            
             codeInput.value = '';
             qtyInput.value = '1';
             codeInput.focus();
+
+            await saveSessionToDb(session);
         };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
 
         window.removeItem = (key) => {
-            showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", "SATIRI SİL", "btn-danger", () => {
+            showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", "SATIRI SİL", "btn-danger", async () => {
                 const session = allSessions.find(s => s.id === currentSessionId);
-                delete session.items[key];
-                saveSessions();
-                updateListUI();
+                if(session && session.items[key]) {
+                    delete session.items[key];
+                    await saveSessionToDb(session);
+                }
             });
         };
 
         window.openEditQty = (key) => {
             editItemKey = key;
             const session = allSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
             const item = session.items[key];
             
             document.getElementById('qty-item-name').innerText = item.name;
@@ -550,13 +536,14 @@
         };
         window.closeQtyModal = () => { document.getElementById('qty-modal').style.display = 'none'; editItemKey = null; };
         
-        document.getElementById('qty-save-btn').addEventListener('click', () => {
+        document.getElementById('qty-save-btn').addEventListener('click', async () => {
             const newQty = parseInt(document.getElementById('edit-qty-input').value) || 0;
             if (editItemKey) {
                 const session = allSessions.find(s => s.id === currentSessionId);
-                session.items[editItemKey].qty = newQty;
-                saveSessions();
-                updateListUI();
+                if(session && session.items[editItemKey]) {
+                    session.items[editItemKey].qty = newQty;
+                    await saveSessionToDb(session);
+                }
             }
             closeQtyModal();
         });
@@ -577,11 +564,13 @@
             const file = event.target.files[0];
             if(!file) return;
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const session = allSessions.find(s => s.id === currentSessionId);
+                if(!session) return;
+                if(!session.items) session.items = {};
                 
                 let addedCount = 0;
 
@@ -604,8 +593,7 @@
                 });
 
                 session.hasSystemStock = true;
-                saveSessions();
-                updateListUI();
+                await saveSessionToDb(session);
                 showCustomAlert("BAŞARILI", `Sistem stoğu yüklendi. Listede olmayan ${addedCount} sistem ürünü "0" fiziki stok olarak eklendi.`);
                 document.getElementById('sys-upload').value = '';
             };
@@ -614,9 +602,11 @@
 
         const updateListUI = () => {
             const session = allSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
+
             const container = document.getElementById('counted-list');
             const headerUI = document.getElementById('list-header-ui');
-            const items = Object.values(session.items); 
+            const items = Object.values(session.items || {}); 
 
             if (items.length === 0) {
                 headerUI.style.display = 'none';
@@ -664,16 +654,19 @@
 
         window.promptFinishSession = () => {
             const session = allSessions.find(s => s.id === currentSessionId);
-            if (Object.keys(session.items).length === 0) return showCustomAlert("UYARI", "Dışa aktarılacak boş bir sayım bulunuyor.");
+            if(!session) return;
+            if (Object.keys(session.items || {}).length === 0) return showCustomAlert("UYARI", "Dışa aktarılacak boş bir sayım bulunuyor.");
             document.getElementById('finish-modal').style.display = 'flex';
         };
         window.closeFinishModal = () => document.getElementById('finish-modal').style.display = 'none';
 
-        window.executeFinish = (format) => {
+        window.executeFinish = async (format) => {
             closeFinishModal();
             const session = allSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
+
             const safeName = session.name.replace(/[^a-z0-9]/gi, '_');
-            const items = Object.values(session.items);
+            const items = Object.values(session.items || {});
             
             if (format === 'excel') {
                 let exportData = [];
@@ -708,9 +701,9 @@
                 doc.save(`Terminux_Sayim_${safeName}.pdf`);
             }
 
-            showCustomConfirm("SAYIM KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu sayım oturumunu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", "SAYIMI KAPAT", "btn-success", () => {
+            showCustomConfirm("SAYIM KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu sayım oturumunu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", "SAYIMI KAPAT", "btn-success", async () => {
                 session.status = 'finished';
-                saveSessions();
+                await saveSessionToDb(session);
                 closeActiveScreen();
             });
         };
