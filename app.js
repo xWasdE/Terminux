@@ -29,12 +29,11 @@ const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
     body, html { overflow-x: hidden; max-width: 100vw; width: 100%; margin: 0; padding: 0; background: #000; font-family: sans-serif; }
-    body { padding-bottom: 0 !important; }
+    body { padding-bottom: 80px !important; }
     
     .hidden { display: none !important; }
 
     #main-search { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; transition: 0.3s; }
-    #app-screen > main { padding-bottom: 100px !important; }
     
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -80,8 +79,7 @@ style.innerHTML = `
     .lightbox-next { right: 20px; }
 
     @media (max-width: 900px) {
-        body { padding: 0 !important; }
-        #app-screen > main { padding: 15px 15px 100px 15px !important; }
+        body { padding: 10px !important; padding-bottom: 120px !important; }
         
         #app-screen > header { 
             display: flex !important;
@@ -424,21 +422,36 @@ onAuthStateChanged(auth, (user) => {
         if(loginScreen) loginScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.remove('hidden');
 
+        try {
+            const cachedData = localStorage.getItem('terminux_catalog_cache');
+            if (cachedData) {
+                const parsed = JSON.parse(cachedData);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    productCatalog = parsed;
+                    if(searchInput) {
+                        searchInput.disabled = false;
+                        searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
+                    }
+                }
+            }
+        } catch(e) {}
+
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
                 const data = snapshot.data();
                 const cacheTime = localStorage.getItem('terminux_catalog_time');
                 if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
                     buildCatalog(true, data.lastUpdate);
+                } else if (productCatalog.length === 0) {
+                    buildCatalog(false);
                 }
             } else {
                 if (productCatalog.length === 0) buildCatalog(false);
             }
         });
 
-        buildCatalog(false).then(() => {
-            if(searchInput && !searchInput.disabled) searchInput.focus();
-        });
+        if(searchInput && !searchInput.disabled && productCatalog.length > 0) searchInput.focus();
+
     } else {
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.add('hidden');
@@ -484,44 +497,22 @@ if(loginForm) {
 
 async function buildCatalog(forceUpdate = false, newVersionTime = null) {
     if (isFetchingCatalog) return;
-    
+    isFetchingCatalog = true;
+
     try {
         const CACHE_KEY = 'terminux_catalog_cache';
         const CACHE_TIME_KEY = 'terminux_catalog_time';
-        const CACHE_EXPIRY_MS = 14400000;
 
-        const cachedData = localStorage.getItem(CACHE_KEY);
-        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
-        const now = Date.now();
-        
-        let isFirstLoad = !cachedData;
-
-        if (!forceUpdate && !isFirstLoad && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
-            try {
-                const parsed = JSON.parse(cachedData);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    productCatalog = parsed;
-                    return;
-                }
-            } catch(e) {
-                localStorage.removeItem(CACHE_KEY);
-                localStorage.removeItem(CACHE_TIME_KEY);
-                isFirstLoad = true;
-            }
-        }
-
-        isFetchingCatalog = true;
-
-        if (searchInput && (isFirstLoad || forceUpdate)) {
+        if (searchInput) {
             searchInput.disabled = true;
             searchInput.placeholder = "SİSTEM VERİTABANI YÜKLENİYOR...";
-            showToast("Veritabanı Güncelleniyor, Lütfen Bekleyin...");
+            if (forceUpdate) showToast("Veritabanı Güncelleniyor, Lütfen Bekleyin...");
         }
 
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
         
-        const processDoc = (doc, isAna) => {
+        const processDoc = (doc) => {
             const data = doc.data();
             if (!tempMap.has(doc.id)) {
                 tempMap.set(doc.id, {
@@ -533,41 +524,13 @@ async function buildCatalog(forceUpdate = false, newVersionTime = null) {
                     altGrup: String(data.altGrup || ""),
                     surecTipi: String(data.surecTipi || ""),
                     utsGorseller: data.utsGorseller || [],
-                    miatTarihi: String(data.miatTarihi || ""),
-                    minAlert: parseInt(data.minAlert || 0),
-                    max: parseInt(data.max || 0),
-                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`),
-                    hasAna: isAna,
-                    anaMiktar: isAna ? parseInt(data.miktar || 0) : 0,
-                    anaStokAdresi: isAna ? String(data.stokAdresi || "-") : "-",
-                    anaDummy: isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                    anaReuse: isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL",
-                    hasAm: !isAna,
-                    amMiktar: !isAna ? parseInt(data.miktar || 0) : 0,
-                    amStokAdresi: !isAna ? String(data.stokAdresi || "-") : "-",
-                    amDummy: !isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                    amReuse: !isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`)
                 });
-            } else {
-                const existing = tempMap.get(doc.id);
-                if (isAna) {
-                    existing.hasAna = true;
-                    existing.anaMiktar = parseInt(data.miktar || 0);
-                    existing.anaStokAdresi = String(data.stokAdresi || "-");
-                    existing.anaDummy = String(data.dummy || "DUMMY DEĞİL");
-                    existing.anaReuse = String(data.reuse || "REUSE DEĞİL");
-                } else {
-                    existing.hasAm = true;
-                    existing.amMiktar = parseInt(data.miktar || 0);
-                    existing.amStokAdresi = String(data.stokAdresi || "-");
-                    existing.amDummy = String(data.dummy || "DUMMY DEĞİL");
-                    existing.amReuse = String(data.reuse || "REUSE DEĞİL");
-                }
             }
         };
 
-        anaSnap.forEach(d => processDoc(d, true));
-        amSnap.forEach(d => processDoc(d, false));
+        anaSnap.forEach(processDoc);
+        amSnap.forEach(processDoc);
         
         const newCatalog = Array.from(tempMap.values());
         
@@ -578,25 +541,22 @@ async function buildCatalog(forceUpdate = false, newVersionTime = null) {
             const saveTime = newVersionTime ? newVersionTime : Date.now();
             localStorage.setItem(CACHE_TIME_KEY, saveTime.toString());
             
-            if (searchInput && (isFirstLoad || forceUpdate)) {
-                searchInput.disabled = false;
-                searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
+            if (forceUpdate && document.getElementById('main-search')) {
                 showToast("Sistem Veritabanı Başarıyla Güncellendi!");
-                searchInput.focus();
             }
         }
-        
-        isFetchingCatalog = false;
 
     } catch (error) {
+        const oldCache = localStorage.getItem('terminux_catalog_cache');
+        if (oldCache && productCatalog.length === 0) {
+            try { productCatalog = JSON.parse(oldCache); } catch(e) {}
+        }
+    } finally {
         isFetchingCatalog = false;
         if (searchInput) {
             searchInput.disabled = false;
             searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
-        }
-        const oldCache = localStorage.getItem('terminux_catalog_cache');
-        if (oldCache && productCatalog.length === 0) {
-            try { productCatalog = JSON.parse(oldCache); } catch(e) {}
+            searchInput.focus();
         }
     }
 }
@@ -625,7 +585,7 @@ if(searchInput) {
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
-                    <div class="search-item" data-id="${m.docId || m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
+                    <div class="search-item" data-id="${m.docId}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
                         <div style="color: #fff; font-size: 15px; font-weight: 600;">${m.urunAdi}</div>
                         <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:6px;">KOD: <span style="color:#0f0;">${m.urunKodu}</span> | REF: ${m.refNo}</div>
                     </div>
@@ -663,12 +623,8 @@ if(searchInput) {
                 (trToLower(m.refNo) === searchCode)
             );
 
-            if (directMatch) {
-                const validId = directMatch.docId || directMatch.urunKodu;
-                fetchAndDisplayProduct(String(validId));
-            } else {
-                fetchAndDisplayProduct(rawCode); 
-            }
+            if (directMatch) fetchAndDisplayProduct(directMatch.docId);
+            else fetchAndDisplayProduct(rawCode); 
         }
     });
 }
@@ -906,94 +862,75 @@ function createEditUI(id, type, val, placeholder, colorClass) {
 }
 
 window.fetchAndDisplayProduct = async (code) => {
-    if (!code) return;
-    const safeCode = String(code).trim();
-    const searchCode = trToLower(safeCode);
-
     if(resultContainer) {
         resultContainer.style.display = 'block';
         resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
     }
 
     try {
-        let mergedData = productCatalog.find(m => 
-            (trToLower(m.docId) === searchCode) || 
-            (trToLower(m.urunKodu) === searchCode) || 
-            (trToLower(m.barkod) === searchCode) || 
-            (trToLower(m.refNo) === searchCode)
-        );
+        const [anaDoc, amDoc] = await Promise.all([getDoc(doc(db, "ana_depo", code)), getDoc(doc(db, "ameliyathane", code))]);
 
-        let actualDocId = mergedData ? mergedData.docId : safeCode;
+        if (anaDoc.exists() || amDoc.exists()) {
+            const anaData = anaDoc.exists() ? anaDoc.data() : null;
+            const amData = amDoc.exists() ? amDoc.data() : null;
+            const baseData = anaData || amData; 
 
-        let [anaDoc, amDoc] = await Promise.all([
-            getDoc(doc(db, "ana_depo", actualDocId)).catch(()=>({exists:()=>false})), 
-            getDoc(doc(db, "ameliyathane", actualDocId)).catch(()=>({exists:()=>false}))
-        ]);
+            const mergedData = {
+                docId: code, 
+                urunKodu: code,
+                barkod: baseData.barkod || "",
+                urunAdi: baseData.urunAdi || "-",
+                refNo: baseData.refNo || "BULUNAMADI",
+                altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
+                surecTipi: baseData.surecTipi || "-",
+                miatTarihi: baseData.miatTarihi || "-",
+                utsGorseller: baseData.utsGorseller || [],
+                minAlert: baseData.minAlert || 0,
+                max: baseData.max || 0,
+                hasAna: anaDoc.exists(),
+                anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
+                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
+                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
+                hasAm: amDoc.exists(),
+                amMiktar: amData ? parseInt(amData.miktar) : 0,
+                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
+                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+            };
 
-        if (!anaDoc.exists() && !amDoc.exists() && !mergedData) {
+            let crossRefText = "";
+            let exactName = trToLower(mergedData.urunAdi).trim();
+            if (mergedData.surecTipi === "R") {
+                const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
+                if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
+            } else {
+                const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
+                if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
+            }
+            mergedData.crossRefText = crossRefText;
+
+            renderCard(mergedData);
+
+            let targetBarcode = mergedData.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
+
+            if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
+                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
+                    window.autoFetchCentral(mergedData, targetBarcode);
+                }
+            }
+
+        } else {
             if(resultContainer) resultContainer.innerHTML = `
                 <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
                     <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${safeCode}</span></div>
+                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
                 </div>
             `;
-            return;
         }
-
-        const anaData = anaDoc.exists() ? anaDoc.data() : null;
-        const amData = amDoc.exists() ? amDoc.data() : null;
-        const baseData = anaData || amData; 
-
-        mergedData = {
-            docId: actualDocId, 
-            urunKodu: actualDocId,
-            barkod: baseData.barkod || "",
-            urunAdi: baseData.urunAdi || "-",
-            refNo: baseData.refNo || "BULUNAMADI",
-            altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
-            surecTipi: baseData.surecTipi || "-",
-            miatTarihi: baseData.miatTarihi || "-",
-            utsGorseller: baseData.utsGorseller || [],
-            minAlert: baseData.minAlert || 0,
-            max: baseData.max || 0,
-            hasAna: anaDoc.exists(),
-            anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
-            anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
-            anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-            anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
-            hasAm: amDoc.exists(),
-            amMiktar: amData ? parseInt(amData.miktar) : 0,
-            amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
-            amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-            amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
-        };
-
-        let crossRefText = "";
-        let exactName = trToLower(mergedData.urunAdi).trim();
-        if (mergedData.surecTipi === "R") {
-            const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
-            if (sifirUrun) crossRefText = `<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">${sifirUrun.urunKodu}</b></div>`;
-        } else {
-            const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
-            if (reuseUrun) crossRefText = `<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">${reuseUrun.urunKodu}</b></div>`;
-        }
-        mergedData.crossRefText = crossRefText;
-
-        renderCard(mergedData);
-
-        let targetBarcode = mergedData.urunKodu;
-        const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-        if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
-
-        if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-            if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
-                window.autoFetchCentral(mergedData, targetBarcode);
-            }
-        }
-
-    } catch (err) { 
-        if(resultContainer) resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; 
-    }
+    } catch (err) { if(resultContainer) resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
 };
 
 function renderCard(data) {
