@@ -29,11 +29,12 @@ const style = document.createElement('style');
 style.innerHTML = `
     * { box-sizing: border-box; }
     body, html { overflow-x: hidden; max-width: 100vw; width: 100%; margin: 0; padding: 0; background: #000; font-family: sans-serif; }
-    body { padding-bottom: 80px !important; }
+    body { padding-bottom: 0 !important; }
     
     .hidden { display: none !important; }
 
     #main-search { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; transition: 0.3s; }
+    #app-screen > main { padding-bottom: 100px !important; }
     
     .card-wrapper { display: flex; gap: 40px; width: 100%; align-items: stretch; }
     .card-main { flex: 1.3; background: #080808; border: 1px solid #1a1a1a; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -79,7 +80,8 @@ style.innerHTML = `
     .lightbox-next { right: 20px; }
 
     @media (max-width: 900px) {
-        body { padding: 10px !important; padding-bottom: 120px !important; }
+        body { padding: 0 !important; }
+        #app-screen > main { padding: 15px 15px 100px 15px !important; }
         
         #app-screen > header { 
             display: flex !important;
@@ -332,10 +334,28 @@ if (loginForm) {
 let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
+let isFetchingCatalog = false;
 
 const trToLower = (text) => {
     if (text === null || text === undefined) return "";
     return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
+};
+
+const showToast = (msg) => {
+    let existing = document.querySelector('.toast-msg');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg';
+    toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:12px 25px; border-radius:20px; font-weight:bold; font-size:13px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3); text-align:center; min-width:250px;";
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
 };
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
@@ -409,13 +429,15 @@ onAuthStateChanged(auth, (user) => {
                 const data = snapshot.data();
                 const cacheTime = localStorage.getItem('terminux_catalog_time');
                 if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
-                    buildCatalog(true);
+                    buildCatalog(true, data.lastUpdate);
                 }
+            } else {
+                if (productCatalog.length === 0) buildCatalog(false);
             }
         });
 
-        buildCatalog().then(() => {
-            if(searchInput) searchInput.focus();
+        buildCatalog(false).then(() => {
+            if(searchInput && !searchInput.disabled) searchInput.focus();
         });
     } else {
         if(loadingScreen) loadingScreen.classList.add('hidden');
@@ -460,14 +482,9 @@ if(loginForm) {
     });
 }
 
-setInterval(() => {
-    const cacheTime = localStorage.getItem('terminux_catalog_time');
-    if (cacheTime && (Date.now() - parseInt(cacheTime) > 14400000)) {
-        buildCatalog(false);
-    }
-}, 600000); 
-
-async function buildCatalog(forceUpdate = false) {
+async function buildCatalog(forceUpdate = false, newVersionTime = null) {
+    if (isFetchingCatalog) return;
+    
     try {
         const CACHE_KEY = 'terminux_catalog_cache';
         const CACHE_TIME_KEY = 'terminux_catalog_time';
@@ -476,21 +493,35 @@ async function buildCatalog(forceUpdate = false) {
         const cachedData = localStorage.getItem(CACHE_KEY);
         const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
         const now = Date.now();
+        
+        let isFirstLoad = !cachedData;
 
-        if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
+        if (!forceUpdate && !isFirstLoad && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
             try {
                 const parsed = JSON.parse(cachedData);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     productCatalog = parsed;
                     return;
                 }
-            } catch(e) {}
+            } catch(e) {
+                localStorage.removeItem(CACHE_KEY);
+                localStorage.removeItem(CACHE_TIME_KEY);
+                isFirstLoad = true;
+            }
+        }
+
+        isFetchingCatalog = true;
+
+        if (searchInput && (isFirstLoad || forceUpdate)) {
+            searchInput.disabled = true;
+            searchInput.placeholder = "SİSTEM VERİTABANI YÜKLENİYOR...";
+            showToast("Veritabanı Güncelleniyor, Lütfen Bekleyin...");
         }
 
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
         
-        const processDoc = (doc) => {
+        const processDoc = (doc, isAna) => {
             const data = doc.data();
             if (!tempMap.has(doc.id)) {
                 tempMap.set(doc.id, {
@@ -501,31 +532,68 @@ async function buildCatalog(forceUpdate = false) {
                     refNo: String(data.refNo || "BULUNAMADI"),
                     altGrup: String(data.altGrup || ""),
                     surecTipi: String(data.surecTipi || ""),
-                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`)
+                    utsGorseller: data.utsGorseller || [],
+                    miatTarihi: String(data.miatTarihi || ""),
+                    minAlert: parseInt(data.minAlert || 0),
+                    max: parseInt(data.max || 0),
+                    searchString: trToLower(`${data.urunAdi || ""} ${data.urunKodu || ""} ${data.barkod || ""} ${data.refNo || ""} ${data.altGrup || ""}`),
+                    hasAna: isAna,
+                    anaMiktar: isAna ? parseInt(data.miktar || 0) : 0,
+                    anaStokAdresi: isAna ? String(data.stokAdresi || "-") : "-",
+                    anaDummy: isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                    anaReuse: isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL",
+                    hasAm: !isAna,
+                    amMiktar: !isAna ? parseInt(data.miktar || 0) : 0,
+                    amStokAdresi: !isAna ? String(data.stokAdresi || "-") : "-",
+                    amDummy: !isAna ? String(data.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
+                    amReuse: !isAna ? String(data.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
                 });
+            } else {
+                const existing = tempMap.get(doc.id);
+                if (isAna) {
+                    existing.hasAna = true;
+                    existing.anaMiktar = parseInt(data.miktar || 0);
+                    existing.anaStokAdresi = String(data.stokAdresi || "-");
+                    existing.anaDummy = String(data.dummy || "DUMMY DEĞİL");
+                    existing.anaReuse = String(data.reuse || "REUSE DEĞİL");
+                } else {
+                    existing.hasAm = true;
+                    existing.amMiktar = parseInt(data.miktar || 0);
+                    existing.amStokAdresi = String(data.stokAdresi || "-");
+                    existing.amDummy = String(data.dummy || "DUMMY DEĞİL");
+                    existing.amReuse = String(data.reuse || "REUSE DEĞİL");
+                }
             }
         };
 
-        anaSnap.forEach(processDoc);
-        amSnap.forEach(processDoc);
+        anaSnap.forEach(d => processDoc(d, true));
+        amSnap.forEach(d => processDoc(d, false));
         
         const newCatalog = Array.from(tempMap.values());
         
         if (newCatalog.length > 0) {
             productCatalog = newCatalog;
             localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
-            localStorage.setItem(CACHE_TIME_KEY, now.toString());
             
-            if (forceUpdate && document.getElementById('main-search')) {
-                const toast = document.createElement('div');
-                toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
-                toast.innerText = "Sistem Veritabanı Güncellendi";
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
+            const saveTime = newVersionTime ? newVersionTime : Date.now();
+            localStorage.setItem(CACHE_TIME_KEY, saveTime.toString());
+            
+            if (searchInput && (isFirstLoad || forceUpdate)) {
+                searchInput.disabled = false;
+                searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
+                showToast("Sistem Veritabanı Başarıyla Güncellendi!");
+                searchInput.focus();
             }
         }
+        
+        isFetchingCatalog = false;
 
     } catch (error) {
+        isFetchingCatalog = false;
+        if (searchInput) {
+            searchInput.disabled = false;
+            searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
+        }
         const oldCache = localStorage.getItem('terminux_catalog_cache');
         if (oldCache && productCatalog.length === 0) {
             try { productCatalog = JSON.parse(oldCache); } catch(e) {}
@@ -557,7 +625,7 @@ if(searchInput) {
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
-                    <div class="search-item" data-id="${m.docId}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
+                    <div class="search-item" data-id="${m.docId || m.urunKodu}" style="padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer;">
                         <div style="color: #fff; font-size: 15px; font-weight: 600;">${m.urunAdi}</div>
                         <div style="color: #888; font-size: 11px; font-family: monospace; margin-top:6px;">KOD: <span style="color:#0f0;">${m.urunKodu}</span> | REF: ${m.refNo}</div>
                     </div>
@@ -595,8 +663,12 @@ if(searchInput) {
                 (trToLower(m.refNo) === searchCode)
             );
 
-            if (directMatch) fetchAndDisplayProduct(directMatch.docId);
-            else fetchAndDisplayProduct(rawCode); 
+            if (directMatch) {
+                const validId = directMatch.docId || directMatch.urunKodu;
+                fetchAndDisplayProduct(String(validId));
+            } else {
+                fetchAndDisplayProduct(rawCode); 
+            }
         }
     });
 }
