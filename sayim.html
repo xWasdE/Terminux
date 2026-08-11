@@ -108,6 +108,8 @@
 
         .item-code { font-family: monospace; color: #00ff00; font-size: 14px; font-weight: bold; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        
+        .qty-grid { display: contents; }
         .item-qty { font-size: 20px; font-weight: 900; color: #fff; text-align: center; }
         .item-sys { font-size: 18px; font-weight: 700; color: #666; text-align: center; font-family: monospace; }
         .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
@@ -126,8 +128,8 @@
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
         
-        .modal-actions { display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; flex-direction: row; }
-        .modal-actions button { flex: 1; white-space: normal; padding: 15px 20px; width: 100%; }
+        .modal-actions { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
+        .modal-actions button { width: 100%; max-width: 300px; padding: 15px 20px; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -145,7 +147,10 @@
             
             #active-screen { display: flex; flex-direction: column; height: 100%; }
             
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            /* LİSTE ALTINDA KALMA DÜZELTMESİ (200px Padding) */
+            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; padding-bottom: 200px !important; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
@@ -153,17 +158,18 @@
             .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
-            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
-            .item-code { grid-column: 1 / -1; font-size: 16px; }
-            .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
-            .item-action { grid-column: 1 / -1; justify-content: space-between; margin-top: 10px; }
+            .list-item { display: flex; flex-direction: column; gap: 10px; padding: 20px 15px; border-left-width: 4px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
+            .item-code { font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
+            .item-name { font-size: 14px; margin-bottom: 5px; color: #ccc; }
             
-            .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; gap: 4px; text-align: left; font-size: 16px; }
-            .item-qty::before, .item-sys::before, .item-diff::before { content: attr(data-label); font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
+            .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
+            .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
+            .item-qty::before, .item-sys::before, .item-diff::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
             
-            .modal-actions { flex-direction: column; }
-            .modal-actions button { width: 100%; max-width: 100%; }
-            .legal-footer { font-size: 8px; padding: 6px 10px; }
+            .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
+            .item-action button { flex: 1; padding: 12px; font-size: 12px; }
+            
+            .legal-footer { display: none; }
         }
     </style>
 </head>
@@ -218,11 +224,16 @@
                 <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processSystemStock(event)">
             </div>
 
+            <div class="list-container">
+                <div class="list-header" id="list-header-ui"></div>
+                <div id="counted-list"></div>
+            </div>
+
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
-                    <label>ASG KOD, BARKOD VEYA REF NO</label>
+                    <label>Ürün Kodu, Barkod veya Ref No</label>
                     <div class="scan-wrapper">
-                        <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off" style="flex:1;">
+                        <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off">
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     </div>
                 </div>
@@ -230,12 +241,7 @@
                     <label>EKLENECEK MİKTAR</label>
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
-                <button class="btn-add" onclick="addItem()">EKLE / OKUT</button>
-            </div>
-
-            <div class="list-container">
-                <div class="list-header" id="list-header-ui"></div>
-                <div id="counted-list"></div>
+                <button class="btn-add" onclick="processScan()">EKLE / KAYDET</button>
             </div>
         </div>
     </main>
@@ -244,7 +250,7 @@
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
             <div class="modal-desc" id="alert-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
         </div>
@@ -254,7 +260,7 @@
         <div class="modal-box">
             <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
             <div class="modal-desc" id="confirm-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
                 <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
@@ -268,7 +274,7 @@
             <div class="input-group" style="text-align:left;">
                 <input type="number" id="edit-qty-input" style="text-align:center; font-size:24px;">
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-secondary" onclick="closeQtyModal()">İPTAL</button>
                 <button class="btn-success" id="qty-save-btn">KAYDET</button>
             </div>
@@ -276,13 +282,13 @@
     </div>
 
     <div id="finish-modal" class="custom-modal">
-        <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-box">
             <div class="modal-title" style="color:#00ccff;">SAYIM İŞLEMİNİ BİTİR</div>
             <div class="modal-desc">Sayıma ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sayım kapatılacaktır.</div>
-            <div class="modal-actions" style="flex-direction:column; gap:15px; align-items:center; width:100%;">
-                <button class="btn-primary" style="background:#fff; width:100%; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
-                <button class="btn-primary" style="background:#217346; color:#fff; width:100%;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
-                <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
+            <div class="modal-actions">
+                <button class="btn-primary" style="background:#fff; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px;" onclick="closeFinishModal()">İPTAL ET VE SAYIMA DÖN</button>
             </div>
         </div>
     </div>
@@ -358,74 +364,52 @@
         });
 
         const loadCatalog = async () => {
-            const cachedData = localStorage.getItem('terminux_catalog_cache');
-            const cacheTime = localStorage.getItem('terminux_cache_time');
-            const now = Date.now();
-            let hasValidCache = false;
-
-            const populateFromCache = () => {
-                const parsed = JSON.parse(cachedData);
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(item => {
-                        const uKodu = String(item.urunKodu || item.docId || "");
-                        catalogDb[uKodu] = { 
-                            urunKodu: uKodu, 
-                            urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                            barkod: String(item.barkod || ""), 
-                            refNo: String(item.refNo || "") 
-                        };
-                    });
-                }
-            };
-
-            if (cachedData) {
-                try {
-                    populateFromCache();
-                    hasValidCache = true;
-                    setupRealtimeSessions();
-                } catch(e) { }
-            }
-
-            if (hasValidCache && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
-                return;
-            }
-
             try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || "") 
+                                };
+                            });
+                            setupRealtimeSessions();
+                            return;
+                        }
+                    } catch(e) { }
+                }
+
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
-                const tempDb = {};
-                const catalogArr = [];
                 const processSnap = (snap) => {
                     if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        if (!tempDb[key]) {
-                            tempDb[key] = { 
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { 
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
                                 refNo: String(d.refNo || "") 
                             };
-                            catalogArr.push(tempDb[key]);
                         }
                     });
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
-                catalogDb = tempDb;
-                
-                localStorage.setItem('terminux_catalog_cache', JSON.stringify(catalogArr));
-                localStorage.setItem('terminux_cache_time', now.toString());
-
-                if (!hasValidCache) {
-                    setupRealtimeSessions();
-                }
             } catch (err) {
-                if (!hasValidCache) setupRealtimeSessions();
+            } finally {
+                setupRealtimeSessions();
             }
         };
 
@@ -527,7 +511,7 @@
             });
         };
 
-        window.addItem = async () => {
+        window.processScan = async () => {
             const session = allSessions.find(s => s.id === currentSessionId);
             if(!session) return;
 
@@ -577,7 +561,19 @@
             await saveSessionToDb(session);
         };
 
-        document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
+        document.getElementById('scan-code').addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('scan-qty').focus();
+            }
+        });
+        
+        document.getElementById('scan-qty').addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.processScan();
+            }
+        });
 
         window.removeItem = (key) => {
             showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", "SATIRI SİL", "btn-danger", async () => {
@@ -614,13 +610,13 @@
             closeQtyModal();
         });
 
-        const normalizeStr = (str) => { if (!str) return ""; return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const normalizeStr = (str) => { if (!str) return ""; return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
                 const normK = normalizeStr(k);
                 if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
-                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
                 }
             }
             return "";
@@ -693,25 +689,38 @@
             let itemsToRender = [...items].reverse();
             if (session.hasSystemStock) {
                 itemsToRender.sort((a, b) => {
-                    const diffA = (a.qty - (a.sysQty || 0)) !== 0 ? 1 : 0;
-                    const diffB = (b.qty - (b.sysQty || 0)) !== 0 ? 1 : 0;
-                    return diffB - diffA; 
+                    const diffA = Math.abs((a.qty || 0) - (a.sysQty || 0));
+                    const diffB = Math.abs((b.qty || 0) - (b.sysQty || 0));
+                    const isDiffA = diffA !== 0 ? 1 : 0;
+                    const isDiffB = diffB !== 0 ? 1 : 0;
+                    return isDiffB - isDiffA; 
                 });
             }
 
             container.innerHTML = itemsToRender.map(item => {
                 let extraCols = '';
                 let rowClass = '';
+                let mobileExtraCols = '';
+                
                 if (session.hasSystemStock) {
-                    const diff = item.qty - (item.sysQty || 0);
+                    const diff = (item.qty || 0) - (item.sysQty || 0);
                     let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                     let diffText = diff > 0 ? `+${diff}` : diff;
                     
                     rowClass = diff === 0 ? 'row-match' : 'row-diff';
                     
                     extraCols = `
-                        <div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div>
-                        <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                        <div class="qty-grid">
+                            <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
+                            <div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div>
+                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                        </div>
+                    `;
+                } else {
+                    extraCols = `
+                        <div class="qty-grid">
+                            <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
+                        </div>
                     `;
                 }
 
@@ -719,7 +728,6 @@
                     <div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'} ${rowClass}">
                         <div class="item-code">${item.code}</div>
                         <div class="item-name">${item.name}</div>
-                        <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
                         ${extraCols}
                         <div class="item-action">
                             <button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button>
@@ -788,24 +796,29 @@
 
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: "environment" }, config,
                 (decodedText) => {
                     document.getElementById('scan-code').value = decodedText;
-                    closeScanner();
+                    window.closeScanner();
+                    document.getElementById('scan-qty').focus();
                 },
                 (errorMessage) => {}
             ).catch((err) => {
                 showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
-                closeScanner();
+                window.closeScanner();
             });
         };
 
         window.closeScanner = () => {
             document.getElementById('scanner-modal').style.display = 'none';
             if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch((err) => {});
             }
         };
 
