@@ -7,8 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
@@ -88,7 +86,7 @@
         .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
         .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
-        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; width: 100%; flex: 1; }
         .scan-area input:focus { border-color: #00ccff; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
@@ -107,8 +105,6 @@
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
-        
-        .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
         
         .val-expected { color: #888; }
@@ -133,8 +129,8 @@
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
         
-        .modal-actions { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
-        .modal-actions button { width: 100%; max-width: 300px; padding: 15px 20px; }
+        .modal-actions { display: flex; flex-direction: row; gap: 15px; justify-content: center; align-items: center; width: 100%; }
+        .modal-actions button { flex: 1; padding: 15px 20px; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -143,38 +139,37 @@
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px 15px 20px 15px; }
+            main { padding: 15px; display: block; }
+            
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            #active-screen { display: flex; flex-direction: column; height: 100%; }
-            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
+            #active-screen { display: block; }
             
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; margin-bottom: 30px; }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
-            .scan-area .input-group { min-width: 100%; margin: 0; }
+            .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
             
+            .list-container { overflow: visible; }
             .list-header { display: none; }
-            .list-item { display: flex; flex-direction: column; gap: 10px; padding: 20px 15px; border-left-width: 8px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
-            .item-code { font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
-            .item-name { font-size: 14px; margin-bottom: 5px; color: #ccc; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; border-bottom: none; }
+            .item-code { grid-column: 1 / -1; font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
+            .item-name { grid-column: 1 / -1; margin-bottom: 10px; color: #ccc; }
+            .item-action { grid-column: 1 / -1; margin-top: 10px; display: flex; justify-content: space-between; gap: 10px; width: 100%; }
+            .item-action button { flex: 1; padding: 12px; font-size: 12px; }
             
-            .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
             .item-val { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
             .item-val::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
             
             .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 100%; }
             .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; }
             .inline-input { max-width: 100%; text-align: center; padding: 12px; }
-
-            .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
-            .item-action button { flex: 1; padding: 12px; font-size: 12px; }
 
             .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; max-width: 100%; }
@@ -232,18 +227,6 @@
                 </div>
             </div>
 
-            <div class="list-container">
-                <div class="list-header">
-                    <div>ÜRÜN KODU</div>
-                    <div>ÜRÜN İSMİ</div>
-                    <div style="text-align:center;">BEKLENEN</div>
-                    <div style="text-align:center;">TESLİM ALINAN</div>
-                    <div style="text-align:center;">ETİKET ADETİ</div>
-                    <div style="text-align:right;">KONTROL</div>
-                </div>
-                <div id="shipment-list"></div>
-            </div>
-
             <div class="scan-area">
                 <div class="scan-input">
                     <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
@@ -258,6 +241,18 @@
                 </div>
                 <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
             </div>
+
+            <div class="list-container">
+                <div class="list-header">
+                    <div>ÜRÜN KODU</div>
+                    <div>ÜRÜN İSMİ</div>
+                    <div style="text-align:center;">BEKLENEN</div>
+                    <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">ETİKET ADETİ</div>
+                    <div style="text-align:right;">KONTROL</div>
+                </div>
+                <div id="shipment-list"></div>
+            </div>
         </div>
     </main>
 
@@ -265,7 +260,7 @@
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
             <div class="modal-desc" id="alert-desc">-</div>
-            <div class="modal-actions" style="flex-direction:row;">
+            <div class="modal-actions">
                 <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
         </div>
@@ -275,9 +270,9 @@
         <div class="modal-box">
             <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
             <div class="modal-desc" id="confirm-desc">-</div>
-            <div class="modal-actions" style="flex-direction:row;">
+            <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
-                <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
+                <button class="btn-primary" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
         </div>
     </div>
@@ -289,7 +284,7 @@
             <div class="modal-actions">
                 <button class="btn-primary" style="background:#fff; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
                 <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
-                <button class="btn-secondary" style="margin-top:10px;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
+                <button class="btn-secondary" style="margin-top:10px; width: 100%;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
             </div>
         </div>
     </div>
@@ -581,7 +576,7 @@
         window.resumeShipment = (id) => {
             currentShipmentId = id;
             document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('active-screen').style.display = 'flex';
+            document.getElementById('active-screen').style.display = 'block';
             
             const shipment = allShipments.find(s => s.id === id);
             if(shipment) {
@@ -649,6 +644,7 @@
                 };
             } else {
                 shipment.items[finalKey].receivedQty += addQty;
+                shipment.items[finalKey].confirmed = false;
             }
             
             await saveShipmentToDb(shipment);
@@ -679,6 +675,19 @@
             const container = document.getElementById('shipment-list');
             let items = Object.values(shipment.items || {});
             
+            const getState = (item) => {
+                if (!item.confirmed) return 1; 
+                if (item.receivedQty !== item.expectedQty) return 0; 
+                return 2; 
+            };
+            
+            items.sort((a, b) => {
+                const stateA = getState(a);
+                const stateB = getState(b);
+                if (stateA !== stateB) return stateA - stateB;
+                return a.code.localeCompare(b.code);
+            });
+            
             container.innerHTML = items.map(item => {
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
@@ -691,17 +700,15 @@
 
                 let dynamicCols = '';
                 if (!item.confirmed) {
-                    const defaultRec = item.receivedQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.receivedQty;
-                    const defaultLbl = item.labelQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.labelQty;
+                    const defaultRec = item.receivedQty || 0;
+                    const defaultLbl = item.labelQty || 0;
                     
                     dynamicCols = `
-                        <div class="qty-grid">
-                            <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
-                            </div>
-                            <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
-                            </div>
+                        <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
+                            <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
+                        </div>
+                        <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
+                            <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
                         </div>
                         <div class="item-action">
                             <button class="btn-check" onclick="confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
@@ -709,10 +716,8 @@
                     `;
                 } else {
                     dynamicCols = `
-                        <div class="qty-grid">
-                            <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
-                            <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
-                        </div>
+                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
+                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
                         <div class="item-action">
                             <button class="btn-edit" onclick="editItem('${item.code}')">DÜZENLE</button>
                         </div>
@@ -723,13 +728,11 @@
                     <div class="list-item ${statusClass}">
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name}</div>
-                        <div class="qty-grid">
-                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
-                        </div>
+                        <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                         ${dynamicCols}
                     </div>
                 `;
-            }).reverse().join('');
+            }).join('');
         };
 
         window.confirmItem = async (code) => {
