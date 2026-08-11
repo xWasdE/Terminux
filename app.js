@@ -261,11 +261,26 @@ window.openScanner = () => {
                 searchInputEl.value = decodedText;
                 window.closeScanner();
                 
-                const inputEvent = new Event('input', { bubbles: true });
-                searchInputEl.dispatchEvent(inputEvent);
+                const rawCode = decodedText.trim();
+                if(!rawCode) return;
                 
-                const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-                searchInputEl.dispatchEvent(enterEvent);
+                const dropdown = document.getElementById('dropdown-results');
+                if(dropdown) dropdown.style.display = 'none';
+                
+                const searchCode = trToLower(rawCode);
+                const directMatch = productCatalog.find(m => 
+                    (trToLower(m.docId) === searchCode) || 
+                    (trToLower(m.urunKodu) === searchCode) || 
+                    (trToLower(m.barkod) === searchCode) || 
+                    (trToLower(m.refNo) === searchCode)
+                );
+
+                if (directMatch) {
+                    const validId = directMatch.docId || directMatch.urunKodu;
+                    fetchAndDisplayProduct(String(validId));
+                } else {
+                    fetchAndDisplayProduct(rawCode); 
+                }
             }
         },
         (errorMessage) => {}
@@ -332,28 +347,10 @@ if (loginForm) {
 let productCatalog = [];
 let searchTimeout = null;
 window.currentRenderedProduct = null;
-let isFetchingCatalog = false;
 
 const trToLower = (text) => {
     if (text === null || text === undefined) return "";
     return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
-};
-
-const showToast = (msg) => {
-    let existing = document.querySelector('.toast-msg');
-    if (existing) existing.remove();
-    
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:12px 25px; border-radius:20px; font-weight:bold; font-size:13px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3); text-align:center; min-width:250px;";
-    toast.innerText = msg;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.5s ease';
-        setTimeout(() => toast.remove(), 500);
-    }, 3000);
 };
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
@@ -422,36 +419,19 @@ onAuthStateChanged(auth, (user) => {
         if(loginScreen) loginScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.remove('hidden');
 
-        try {
-            const cachedData = localStorage.getItem('terminux_catalog_cache');
-            if (cachedData) {
-                const parsed = JSON.parse(cachedData);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    productCatalog = parsed;
-                    if(searchInput) {
-                        searchInput.disabled = false;
-                        searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
-                    }
-                }
-            }
-        } catch(e) {}
-
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
                 const data = snapshot.data();
                 const cacheTime = localStorage.getItem('terminux_catalog_time');
                 if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
-                    buildCatalog(true, data.lastUpdate);
-                } else if (productCatalog.length === 0) {
-                    buildCatalog(false);
+                    buildCatalog(true);
                 }
-            } else {
-                if (productCatalog.length === 0) buildCatalog(false);
             }
         });
 
-        if(searchInput && !searchInput.disabled && productCatalog.length > 0) searchInput.focus();
-
+        buildCatalog().then(() => {
+            if(searchInput) searchInput.focus();
+        });
     } else {
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.add('hidden');
@@ -471,7 +451,7 @@ if(loginForm) {
         }
 
         if (!usernameInput || !passwordInput) return;
-        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.includes('@') ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
+        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
         const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
 
         if (loginBtn) {
@@ -495,18 +475,19 @@ if(loginForm) {
     });
 }
 
-async function buildCatalog(forceUpdate = false, newVersionTime = null) {
-    if (isFetchingCatalog) return;
-    isFetchingCatalog = true;
-
+async function buildCatalog(forceUpdate = false) {
     try {
         const CACHE_KEY = 'terminux_catalog_cache';
         const CACHE_TIME_KEY = 'terminux_catalog_time';
+        const CACHE_EXPIRY_MS = 14400000;
 
-        if (searchInput) {
-            searchInput.disabled = true;
-            searchInput.placeholder = "SİSTEM VERİTABANI YÜKLENİYOR...";
-            if (forceUpdate) showToast("Veritabanı Güncelleniyor, Lütfen Bekleyin...");
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
+        const now = Date.now();
+
+        if (!forceUpdate && cachedData && cacheTime && (now - parseInt(cacheTime) < CACHE_EXPIRY_MS)) {
+            productCatalog = JSON.parse(cachedData);
+            return;
         }
 
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
@@ -531,34 +512,20 @@ async function buildCatalog(forceUpdate = false, newVersionTime = null) {
 
         anaSnap.forEach(processDoc);
         amSnap.forEach(processDoc);
-        
-        const newCatalog = Array.from(tempMap.values());
-        
-        if (newCatalog.length > 0) {
-            productCatalog = newCatalog;
-            localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
-            
-            const saveTime = newVersionTime ? newVersionTime : Date.now();
-            localStorage.setItem(CACHE_TIME_KEY, saveTime.toString());
-            
-            if (forceUpdate && document.getElementById('main-search')) {
-                showToast("Sistem Veritabanı Başarıyla Güncellendi!");
-            }
+        productCatalog = Array.from(tempMap.values());
+
+        localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
+        localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
+        if (forceUpdate && document.getElementById('main-search')) {
+            const toast = document.createElement('div');
+            toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
+            toast.innerText = "Sistem Veritabanı Güncellendi";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
 
-    } catch (error) {
-        const oldCache = localStorage.getItem('terminux_catalog_cache');
-        if (oldCache && productCatalog.length === 0) {
-            try { productCatalog = JSON.parse(oldCache); } catch(e) {}
-        }
-    } finally {
-        isFetchingCatalog = false;
-        if (searchInput) {
-            searchInput.disabled = false;
-            searchInput.placeholder = "BARKOD, REF NO VEYA ÜRÜN İSMİ YAZIN...";
-            searchInput.focus();
-        }
-    }
+    } catch (error) {}
 }
 
 document.addEventListener('click', (e) => {
@@ -578,10 +545,7 @@ if(searchInput) {
             dropdown.style.display = 'block';
 
             const terms = val.split(/\s+/);
-            let matches = productCatalog.filter(m => {
-                const searchStr = m.searchString ? String(m.searchString) : trToLower(`${m.urunAdi || ""} ${m.urunKodu || ""} ${m.barkod || ""} ${m.refNo || ""} ${m.altGrup || ""}`);
-                return terms.every(t => searchStr.includes(t));
-            }).slice(0, 15);
+            let matches = productCatalog.filter(m => terms.every(t => m.searchString.indexOf(t) !== -1)).slice(0, 15);
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.map(m => `
@@ -899,6 +863,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             let crossRefText = "";
             let exactName = trToLower(mergedData.urunAdi).trim();
             if (mergedData.surecTipi === "R") {
@@ -913,11 +878,10 @@ window.fetchAndDisplayProduct = async (code) => {
             renderCard(mergedData);
 
             let targetBarcode = mergedData.urunKodu;
-            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-            if (mergedData.barkod && !invalidCodes.includes(mergedData.barkod)) targetBarcode = mergedData.barkod;
+            if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.includes(noImageSvg)) {
+                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.indexOf(noImageSvg) !== -1) {
                     window.autoFetchCentral(mergedData, targetBarcode);
                 }
             }
@@ -943,7 +907,7 @@ function renderCard(data) {
     const sAm = getS(data.amMiktar, data.hasAm);
 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-    const hasValidBarcode = data.barkod && !invalidCodes.includes(data.barkod);
+    const hasValidBarcode = data.barkod && invalidCodes.indexOf(data.barkod) === -1;
 
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc');
     const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
@@ -1050,8 +1014,8 @@ function renderCard(data) {
 
     setTimeout(() => {
         if(window.JsBarcode) {
-            JsBarcode("#ui-barcode-urunkodu", data.urunKodu, { format: "CODE128", width: 1.5, height: 40, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
-            if (hasValidBarcode) JsBarcode("#ui-barcode-real", data.barkod, { format: "CODE128", width: 1.2, height: 28, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
+            if (data.urunKodu) JsBarcode("#ui-barcode-urunkodu", data.urunKodu, { format: "CODE128", width: 1.5, height: 40, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
+            if (hasValidBarcode && data.barkod) JsBarcode("#ui-barcode-real", data.barkod, { format: "CODE128", width: 1.2, height: 28, displayValue: false, lineColor: "#000", background: "transparent", margin: 0 });
         }
     }, 150);
 }
