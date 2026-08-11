@@ -48,7 +48,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; position: relative; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -86,6 +86,7 @@
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
         .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+        .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
         .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .scan-area input:focus { border-color: #00ccff; }
@@ -106,6 +107,8 @@
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        
+        .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
         
         .val-expected { color: #888; }
@@ -131,7 +134,7 @@
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
         
         .modal-actions { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
-        .modal-actions button { width: 100%; max-width: 100%; padding: 15px 20px; }
+        .modal-actions button { width: 100%; max-width: 300px; padding: 15px 20px; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
@@ -147,7 +150,10 @@
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            #active-screen { display: flex; flex-direction: column; height: 100%; }
+            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
+            
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
@@ -155,17 +161,23 @@
             .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
-            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
-            .item-code { grid-column: 1 / -1; font-size: 16px; }
-            .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
-            .item-action { grid-column: 1 / -1; margin-top: 10px; }
-            .item-val { font-size: 16px; text-align: left; display: flex; flex-direction: column; gap: 5px; }
-            .item-val::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
+            .list-item { display: flex; flex-direction: column; gap: 10px; padding: 20px 15px; border-left-width: 8px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
+            .item-code { font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
+            .item-name { font-size: 14px; margin-bottom: 5px; color: #ccc; }
             
-            .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-            .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
-            .inline-input { max-width: 100%; text-align: left; padding: 10px; }
+            .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
+            .item-val { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
+            .item-val::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
+            
+            .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 100%; }
+            .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; }
+            .inline-input { max-width: 100%; text-align: center; padding: 12px; }
 
+            .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
+            .item-action button { flex: 1; padding: 12px; font-size: 12px; }
+
+            .modal-actions { flex-direction: column; }
+            .modal-actions button { width: 100%; max-width: 100%; }
             .legal-footer { font-size: 8px; padding: 10px 15px; display: block; }
         }
     </style>
@@ -220,6 +232,18 @@
                 </div>
             </div>
 
+            <div class="list-container">
+                <div class="list-header">
+                    <div>ÜRÜN KODU</div>
+                    <div>ÜRÜN İSMİ</div>
+                    <div style="text-align:center;">BEKLENEN</div>
+                    <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">ETİKET ADETİ</div>
+                    <div style="text-align:right;">KONTROL</div>
+                </div>
+                <div id="shipment-list"></div>
+            </div>
+
             <div class="scan-area">
                 <div class="scan-input">
                     <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
@@ -234,18 +258,6 @@
                 </div>
                 <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
             </div>
-
-            <div class="list-container">
-                <div class="list-header">
-                    <div>ÜRÜN KODU</div>
-                    <div>ÜRÜN İSMİ</div>
-                    <div style="text-align:center;">BEKLENEN</div>
-                    <div style="text-align:center;">TESLİM ALINAN</div>
-                    <div style="text-align:center;">ETİKET ADETİ</div>
-                    <div style="text-align:right;">KONTROL</div>
-                </div>
-                <div id="shipment-list"></div>
-            </div>
         </div>
     </main>
 
@@ -253,7 +265,7 @@
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
             <div class="modal-desc" id="alert-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
         </div>
@@ -263,9 +275,9 @@
         <div class="modal-box">
             <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
             <div class="modal-desc" id="confirm-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
-                <button class="btn-primary" id="confirm-yes-btn">ONAYLIYORUM</button>
+                <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
         </div>
     </div>
@@ -445,16 +457,34 @@
             }).reverse().join('');
         };
 
-        const normalizeStr = (str) => { if (!str) return ""; return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const normalizeStr = (str) => { 
+            if (!str) return ""; 
+            return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); 
+        };
+
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
                 const normK = normalizeStr(k);
                 if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
-                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+                }
+            }
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => {
+                    const normSearch = normalizeStr(searchKey);
+                    return normSearch.length > 2 && normK.includes(normSearch);
+                })) {
+                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
                 }
             }
             return "";
+        };
+
+        const trToLower = (text) => {
+            if (text === null || text === undefined) return "";
+            return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
         };
 
         window.createShipment = () => {
@@ -470,7 +500,8 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
                     
                     const now = new Date();
                     const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
@@ -479,19 +510,25 @@
 
                     let addedCount = 0;
                     rows.forEach(r => {
-                        const excelCode = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod", "ref no"]);
-                        const expectedQty = parseInt(getCol(r, ["beklenen", "miktar", "adet", "stok miktarı"])) || 0;
-                        let excelName = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim", "açıklama"]);
+                        const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                        const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                        let rawName = getCol(r, ["ürünismi", "ürünadı", "urunadi", "isim", "açıklama", "malzemeadı", "malzeme", "tanım", "adı", "adi"]);
                         
-                        if(excelCode) {
+                        if(rawCode) {
+                            let excelCode = String(rawCode).trim();
+                            let expectedQty = rawQty !== "" ? (parseInt(rawQty) || 0) : 1;
+                            let excelName = rawName ? String(rawName).trim() : "İsimsiz Excel Ürünü";
+                            
                             let finalCode = excelCode;
-                            let finalName = excelName || "İsimsiz Excel Ürünü";
+                            let finalName = excelName;
+                            
+                            const searchCode = trToLower(excelCode);
                             
                             if (catalogDb[excelCode]) {
                                 finalName = catalogDb[excelCode].urunAdi;
                             } else {
                                 for (const key in catalogDb) {
-                                    if (catalogDb[key].barkod === excelCode || catalogDb[key].refNo === excelCode) {
+                                    if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
                                         finalCode = key;
                                         finalName = catalogDb[key].urunAdi;
                                         break;
@@ -516,7 +553,7 @@
                     });
 
                     if (addedCount === 0) {
-                        return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen Excel dosyasında ürün kodu veya miktar sütunları bulunamadı.");
+                        return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen Excel dosyasında ürün kodu bulunamadı. Lütfen sütun isimlerini kontrol edin.");
                     }
 
                     const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems };
@@ -526,7 +563,9 @@
                     fileInput.value = '';
                     resumeShipment(newId);
 
-                } catch(err) {}
+                } catch(err) {
+                    showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
+                }
             };
             reader.readAsArrayBuffer(fileInput.files[0]);
         };
@@ -542,7 +581,7 @@
         window.resumeShipment = (id) => {
             currentShipmentId = id;
             document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('active-screen').style.display = 'block';
+            document.getElementById('active-screen').style.display = 'flex';
             
             const shipment = allShipments.find(s => s.id === id);
             if(shipment) {
@@ -577,8 +616,9 @@
                 matchedKey = searchCode;
                 matchedName = catalogDb[searchCode].urunAdi;
             } else {
+                const searchCodeLower = trToLower(searchCode);
                 for (const key in catalogDb) {
-                    if (catalogDb[key].barkod === searchCode || catalogDb[key].refNo === searchCode) {
+                    if (trToLower(key) === searchCodeLower || trToLower(catalogDb[key].barkod) === searchCodeLower || trToLower(catalogDb[key].refNo) === searchCodeLower) {
                         matchedKey = key;
                         matchedName = catalogDb[key].urunAdi;
                         break;
@@ -651,21 +691,28 @@
 
                 let dynamicCols = '';
                 if (!item.confirmed) {
+                    const defaultRec = item.receivedQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.receivedQty;
+                    const defaultLbl = item.labelQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.labelQty;
+                    
                     dynamicCols = `
-                        <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                            <input type="number" id="rec-${item.code}" class="inline-input" value="${item.receivedQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.receivedQty}" min="0">
-                        </div>
-                        <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                            <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${item.labelQty === 0 && item.expectedQty > 0 ? item.expectedQty : item.labelQty}" min="0">
+                        <div class="qty-grid">
+                            <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
+                            </div>
+                            <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
+                            </div>
                         </div>
                         <div class="item-action">
-                            <button class="btn-check" onclick="confirmItem('${item.code}')">✔</button>
+                            <button class="btn-check" onclick="confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
                         </div>
                     `;
                 } else {
                     dynamicCols = `
-                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
-                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        <div class="qty-grid">
+                            <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
+                            <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        </div>
                         <div class="item-action">
                             <button class="btn-edit" onclick="editItem('${item.code}')">DÜZENLE</button>
                         </div>
@@ -676,7 +723,9 @@
                     <div class="list-item ${statusClass}">
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name}</div>
-                        <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                        <div class="qty-grid">
+                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                        </div>
                         ${dynamicCols}
                     </div>
                 `;
@@ -706,6 +755,8 @@
         };
 
         window.promptFinishShipment = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
             document.getElementById('finish-modal').style.display = 'flex';
         };
         window.closeFinishModal = () => document.getElementById('finish-modal').style.display = 'none';
