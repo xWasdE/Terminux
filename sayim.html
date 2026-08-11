@@ -145,12 +145,7 @@
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            #active-screen { display: flex; flex-direction: column; height: 100%; }
-            
-            /* LİSTE ALTINDA KALMA DÜZELTMESİ (200px Padding) */
-            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; padding-bottom: 200px !important; }
-            
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
@@ -158,9 +153,12 @@
             .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
-            .list-item { display: flex; flex-direction: column; gap: 10px; padding: 20px 15px; border-left-width: 4px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
-            .item-code { font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
-            .item-name { font-size: 14px; margin-bottom: 5px; color: #ccc; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
+            .item-code { grid-column: 1 / -1; font-size: 16px; }
+            .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
+            .item-action { grid-column: 1 / -1; margin-top: 10px; }
+            .item-val { font-size: 16px; text-align: left; display: flex; flex-direction: column; gap: 5px; }
+            .item-val::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
             
             .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
             .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
@@ -169,6 +167,8 @@
             .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
             .item-action button { flex: 1; padding: 12px; font-size: 12px; }
             
+            .modal-actions { flex-direction: column; }
+            .modal-actions button { width: 100%; max-width: 100%; }
             .legal-footer { display: none; }
         }
     </style>
@@ -224,11 +224,6 @@
                 <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processSystemStock(event)">
             </div>
 
-            <div class="list-container">
-                <div class="list-header" id="list-header-ui"></div>
-                <div id="counted-list"></div>
-            </div>
-
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
                     <label>Ürün Kodu, Barkod veya Ref No</label>
@@ -242,6 +237,11 @@
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
                 <button class="btn-add" onclick="processScan()">EKLE / KAYDET</button>
+            </div>
+
+            <div class="list-container">
+                <div class="list-header" id="list-header-ui"></div>
+                <div id="counted-list"></div>
             </div>
         </div>
     </main>
@@ -610,13 +610,13 @@
             closeQtyModal();
         });
 
-        const normalizeStr = (str) => { if (!str) return ""; return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const normalizeStr = (str) => { if (!str) return ""; return str.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
                 const normK = normalizeStr(k);
                 if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
-                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
                 }
             }
             return "";
@@ -700,7 +700,6 @@
             container.innerHTML = itemsToRender.map(item => {
                 let extraCols = '';
                 let rowClass = '';
-                let mobileExtraCols = '';
                 
                 if (session.hasSystemStock) {
                     const diff = (item.qty || 0) - (item.sysQty || 0);
@@ -796,29 +795,25 @@
 
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: "environment" }, config,
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
                     document.getElementById('scan-code').value = decodedText;
-                    window.closeScanner();
+                    closeScanner();
                     document.getElementById('scan-qty').focus();
                 },
                 (errorMessage) => {}
             ).catch((err) => {
                 showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
-                window.closeScanner();
+                closeScanner();
             });
         };
 
         window.closeScanner = () => {
             document.getElementById('scanner-modal').style.display = 'none';
             if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                }).catch((err) => {});
+                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
             }
         };
 
