@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
@@ -46,7 +48,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
+        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; position: relative; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -82,12 +84,14 @@
         .header-actions { display: flex; gap: 10px; align-items: center; }
         
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
-        .scan-input { flex: 2; min-width: 250px; }
+        .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+        .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
-        .qty-input { flex: 1; max-width: 150px; }
-        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .scan-area input:focus { border-color: #00ccff; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
-        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
@@ -126,31 +130,28 @@
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
         
-        .modal-actions { display: flex; gap: 15px; justify-content: center; align-items: center; width: 100%; flex-direction: row; }
-        .modal-actions button { flex: 1; white-space: normal; padding: 15px 20px; width: 100%; }
+        .modal-actions { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
+        .modal-actions button { width: 100%; max-width: 100%; padding: 15px 20px; }
         
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
 
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; border-top: 1px solid #1a1a1a; line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
+            main { padding: 15px 15px 20px 15px; }
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
-            #active-screen { display: flex; flex-direction: column; height: 100%; }
-            .list-container { flex: 1; margin-bottom: 20px; overflow-y: auto; }
-            
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; order: 3; position: sticky; bottom: 0; background: #050505; z-index: 10; margin-bottom: 0; padding-bottom: 25px; border-radius: 12px 12px 0 0; border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
-            .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
+            .scan-area .input-group { min-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
             
             .list-header { display: none; }
@@ -165,9 +166,7 @@
             .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
             .inline-input { max-width: 100%; text-align: left; padding: 10px; }
 
-            .modal-actions { flex-direction: column; }
-            .modal-actions button { width: 100%; max-width: 100%; }
-            .legal-footer { display: none; }
+            .legal-footer { font-size: 8px; padding: 10px 15px; display: block; }
         }
     </style>
 </head>
@@ -221,18 +220,6 @@
                 </div>
             </div>
 
-            <div class="list-container">
-                <div class="list-header">
-                    <div>ÜRÜN KODU</div>
-                    <div>ÜRÜN İSMİ</div>
-                    <div style="text-align:center;">BEKLENEN</div>
-                    <div style="text-align:center;">TESLİM ALINAN</div>
-                    <div style="text-align:center;">ETİKET ADETİ</div>
-                    <div style="text-align:right;">KONTROL</div>
-                </div>
-                <div id="shipment-list"></div>
-            </div>
-
             <div class="scan-area">
                 <div class="scan-input">
                     <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
@@ -246,6 +233,18 @@
                     <input type="number" id="scan-qty" value="1" min="1">
                 </div>
                 <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
+            </div>
+
+            <div class="list-container">
+                <div class="list-header">
+                    <div>ÜRÜN KODU</div>
+                    <div>ÜRÜN İSMİ</div>
+                    <div style="text-align:center;">BEKLENEN</div>
+                    <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">ETİKET ADETİ</div>
+                    <div style="text-align:right;">KONTROL</div>
+                </div>
+                <div id="shipment-list"></div>
             </div>
         </div>
     </main>
@@ -266,7 +265,7 @@
             <div class="modal-desc" id="confirm-desc">-</div>
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
-                <button class="" id="confirm-yes-btn">ONAYLIYORUM</button>
+                <button class="btn-primary" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
         </div>
     </div>
@@ -275,10 +274,10 @@
         <div class="modal-box" style="max-width: 500px;">
             <div class="modal-title" style="color:#00ccff;">SEVKİYAT İŞLEMİNİ BİTİR</div>
             <div class="modal-desc">Sevkiyata ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sevkiyat kapatılacaktır.</div>
-            <div class="modal-actions" style="flex-direction:column; gap:15px; align-items:center; width:100%;">
-                <button class="btn-primary" style="background:#fff; width:100%; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
-                <button class="btn-primary" style="background:#217346; color:#fff; width:100%;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
-                <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
+            <div class="modal-actions">
+                <button class="btn-primary" style="background:#fff; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
             </div>
         </div>
     </div>
@@ -329,7 +328,7 @@
             document.getElementById('confirm-desc').innerText = desc;
             const yesBtn = document.getElementById('confirm-yes-btn');
             yesBtn.innerText = confirmBtnText;
-            yesBtn.className = confirmBtnClass;
+            yesBtn.className = "btn-primary " + confirmBtnClass;
             confirmActionCallback = callback;
             document.getElementById('custom-confirm').style.display = 'flex';
         };
@@ -353,74 +352,52 @@
         });
 
         const loadCatalog = async () => {
-            const cachedData = localStorage.getItem('terminux_catalog_cache');
-            const cacheTime = localStorage.getItem('terminux_cache_time');
-            const now = Date.now();
-            let hasValidCache = false;
-
-            const populateFromCache = () => {
-                const parsed = JSON.parse(cachedData);
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(item => {
-                        const uKodu = String(item.urunKodu || item.docId || "");
-                        catalogDb[uKodu] = { 
-                            urunKodu: uKodu, 
-                            urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                            barkod: String(item.barkod || ""), 
-                            refNo: String(item.refNo || "") 
-                        };
-                    });
-                }
-            };
-
-            if (cachedData) {
-                try {
-                    populateFromCache();
-                    hasValidCache = true;
-                    setupRealtimeShipments();
-                } catch(e) { }
-            }
-
-            if (hasValidCache && cacheTime && (now - parseInt(cacheTime) < 3600000)) {
-                return;
-            }
-
             try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || "") 
+                                };
+                            });
+                            setupRealtimeShipments();
+                            return;
+                        }
+                    } catch(e) { }
+                }
+
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
-                const tempDb = {};
-                const catalogArr = [];
                 const processSnap = (snap) => {
                     if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        if (!tempDb[key]) {
-                            tempDb[key] = { 
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { 
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
                                 refNo: String(d.refNo || "") 
                             };
-                            catalogArr.push(tempDb[key]);
                         }
                     });
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
-                catalogDb = tempDb;
-                
-                localStorage.setItem('terminux_catalog_cache', JSON.stringify(catalogArr));
-                localStorage.setItem('terminux_cache_time', now.toString());
-
-                if (!hasValidCache) {
-                    setupRealtimeShipments();
-                }
             } catch (err) {
-                if (!hasValidCache) setupRealtimeShipments();
+            } finally {
+                setupRealtimeShipments();
             }
         };
 
@@ -565,7 +542,7 @@
         window.resumeShipment = (id) => {
             currentShipmentId = id;
             document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('active-screen').style.display = 'flex';
+            document.getElementById('active-screen').style.display = 'block';
             
             const shipment = allShipments.find(s => s.id === id);
             if(shipment) {
@@ -642,7 +619,17 @@
         };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') processScan();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('scan-qty').focus();
+            }
+        });
+
+        document.getElementById('scan-qty').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.processScan();
+            }
         });
 
         const renderShipmentList = () => {
@@ -795,6 +782,7 @@
                 (decodedText) => {
                     document.getElementById('scan-code').value = decodedText;
                     closeScanner();
+                    document.getElementById('scan-qty').focus();
                 },
                 (errorMessage) => {}
             ).catch((err) => {
