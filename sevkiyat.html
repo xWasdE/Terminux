@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
         window.addEventListener('pageshow', function (event) {
             if (event.persisted) { window.location.reload(); }
@@ -94,8 +96,8 @@
         .btn-add:hover { opacity: 0.8; }
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
-        .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
-        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
+        .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
+        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
         
         .status-pending { border-left-color: #444; }
@@ -105,7 +107,13 @@
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        
+        .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        .diff-pos { color: #00ff00; }
+        .diff-neg { color: #ff3333; }
+        .diff-zero { color: #555; }
         
         .val-expected { color: #888; }
         .val-missing { color: #ff3333; }
@@ -153,7 +161,7 @@
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
-            .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
+            .scan-area .input-group { min-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
             
             .list-container { overflow: visible; }
@@ -164,8 +172,9 @@
             .item-action { grid-column: 1 / -1; margin-top: 10px; display: flex; justify-content: space-between; gap: 10px; width: 100%; }
             .item-action button { flex: 1; padding: 12px; font-size: 12px; }
             
-            .item-val { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
-            .item-val::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
+            .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
+            .item-val, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
+            .item-val::before, .item-diff::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
             
             .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 100%; }
             .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; }
@@ -248,6 +257,7 @@
                     <div>ÜRÜN İSMİ</div>
                     <div style="text-align:center;">BEKLENEN</div>
                     <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">FARK</div>
                     <div style="text-align:center;">ETİKET ADETİ</div>
                     <div style="text-align:right;">KONTROL</div>
                 </div>
@@ -260,7 +270,7 @@
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
             <div class="modal-desc" id="alert-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
         </div>
@@ -270,7 +280,7 @@
         <div class="modal-box">
             <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
             <div class="modal-desc" id="confirm-desc">-</div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
                 <button class="btn-primary" id="confirm-yes-btn">ONAYLIYORUM</button>
             </div>
@@ -668,6 +678,30 @@
             }
         });
 
+        const getSortedItems = (items) => {
+            const getSortScore = (item) => {
+                if (item.confirmed) {
+                    if (item.receivedQty === item.expectedQty) return 3;
+                    return 1;
+                }
+                return 2;
+            };
+            
+            return [...items].sort((a, b) => {
+                const scoreA = getSortScore(a);
+                const scoreB = getSortScore(b);
+                if (scoreA !== scoreB) return scoreA - scoreB;
+                
+                if (scoreA === 1) {
+                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
+                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
+                    if (diffA !== diffB) return diffB - diffA; 
+                }
+                
+                return a.code.localeCompare(b.code);
+            });
+        };
+
         const renderShipmentList = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
@@ -675,20 +709,9 @@
             const container = document.getElementById('shipment-list');
             let items = Object.values(shipment.items || {});
             
-            const getState = (item) => {
-                if (!item.confirmed) return 1; 
-                if (item.receivedQty !== item.expectedQty) return 0; 
-                return 2; 
-            };
+            const sortedItems = getSortedItems(items);
             
-            items.sort((a, b) => {
-                const stateA = getState(a);
-                const stateB = getState(b);
-                if (stateA !== stateB) return stateA - stateB;
-                return a.code.localeCompare(b.code);
-            });
-            
-            container.innerHTML = items.map(item => {
+            container.innerHTML = sortedItems.map(item => {
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
@@ -698,17 +721,27 @@
                     else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
                 }
 
+                let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
+                let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
+                let diffText = diff > 0 ? `+${diff}` : diff;
+                
+                if (!item.confirmed) diffClass = 'diff-zero';
+
                 let dynamicCols = '';
                 if (!item.confirmed) {
                     const defaultRec = item.receivedQty || 0;
                     const defaultLbl = item.labelQty || 0;
                     
                     dynamicCols = `
-                        <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                            <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
-                        </div>
-                        <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                            <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
+                        <div class="qty-grid">
+                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                            <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
+                            </div>
+                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
+                            </div>
                         </div>
                         <div class="item-action">
                             <button class="btn-check" onclick="confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
@@ -716,8 +749,12 @@
                     `;
                 } else {
                     dynamicCols = `
-                        <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
-                        <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        <div class="qty-grid">
+                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                            <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
+                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
+                        </div>
                         <div class="item-action">
                             <button class="btn-edit" onclick="editItem('${item.code}')">DÜZENLE</button>
                         </div>
@@ -728,7 +765,6 @@
                     <div class="list-item ${statusClass}">
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name}</div>
-                        <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                         ${dynamicCols}
                     </div>
                 `;
@@ -769,11 +805,21 @@
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
             const items = Object.values(shipment.items || {});
+            const sortedItems = getSortedItems(items);
             
             const safeName = shipment.name.replace(/[^a-z0-9]/gi, '_');
 
             if (format === 'excel') {
-                const exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "BEKLENEN": i.expectedQty, "TESLİM ALINAN": i.receivedQty }));
+                const exportData = sortedItems.map(i => {
+                    let diff = (i.receivedQty || 0) - (i.expectedQty || 0);
+                    return {
+                        "Ürün Kodu": i.code, 
+                        "ÜRÜN İSMİ": i.name, 
+                        "BEKLENEN": i.expectedQty, 
+                        "TESLİM ALINAN": i.receivedQty,
+                        "FARK": diff
+                    };
+                });
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "SEVKIYAT");
@@ -786,11 +832,13 @@
                 doc.setFontSize(10);
                 doc.text(`Sevkiyat: ${shipment.name} | Tarih: ${shipment.date}`, 14, 22);
                 
-                let body = items.map(i => {
+                let body = sortedItems.map(i => {
                     let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
-                    return [i.code, cleanName, i.expectedQty, i.receivedQty];
+                    let diff = (i.receivedQty || 0) - (i.expectedQty || 0);
+                    let diffText = diff > 0 ? `+${diff}` : diff.toString();
+                    return [i.code, cleanName, i.expectedQty, i.receivedQty, diffText];
                 });
-                doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'BEKLENEN', 'TESLIM ALINAN']], body: body, theme: 'grid', styles: { fontSize: 8 } });
+                doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'BEKLENEN', 'TESLIM ALINAN', 'FARK']], body: body, theme: 'grid', styles: { fontSize: 8 } });
                 doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
             }
 
@@ -813,6 +861,8 @@
             const itemsToPrint = Object.values(shipment.items || {}).filter(i => i.labelQty > 0);
             
             if (itemsToPrint.length === 0) return showCustomAlert("ETİKET YOK", "Listede etiket adeti 0'dan büyük olan hiçbir ürün bulunmuyor.");
+
+            itemsToPrint.sort((a, b) => b.labelQty - a.labelQty);
 
             const exportData = itemsToPrint.map(i => ({
                 "Ürün Kodu": i.code,
