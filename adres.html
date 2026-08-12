@@ -38,28 +38,28 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        /* YENİ KROKİ YERLEŞİMİ (16/10 Oran, 5 Sütun x 3 Satır Raflar) */
+        /* KROKİ CSS */
         .map-wrapper { width: 100%; max-width: 1000px; aspect-ratio: 16/10; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin-bottom: 50px; }
         
-        /* Kapı Sol Üst */
-        .map-door { position: absolute; top: 0; left: 0; width: 15%; height: 12%; border-right: 2px dashed #333; border-bottom: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #555; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
-        .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; }
+        /* Kapı - Sol Üst */
+        .map-door { position: absolute; top: 0; left: 0; width: 20%; height: 12%; border-right: 2px dashed #444; border-bottom: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
+        .map-door::after { content: '↓'; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #888; }
         
-        /* Masa Sağ Üst */
-        .map-desk { position: absolute; top: 2%; right: 2%; width: 12%; height: 20%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 5px; letter-spacing: 2px; }
+        /* Masa - Sağ Üst (Enlemesine Genişletildi) */
+        .map-desk { position: absolute; top: 4%; right: 4%; width: 22%; height: 12%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
         .map-desk-sub { font-size: 9px; }
 
-        /* Lens Rafı - Sol Duvar (Sadece 05 ve 04 yan yana) */
-        .map-lens { position: absolute; top: 15%; left: 2%; width: 42%; height: 10%; background: #080808; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        /* Ayrı İki Raf (05 ve 04) - Sol Duvara Dayalı */
+        .map-lens { position: absolute; top: 16%; left: 2%; width: 42%; height: 8%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        /* Sol Büyük Raf (3 Satır x 5 Sütun) */
-        .map-shelf-1 { position: absolute; top: 28%; bottom: 4%; left: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        /* Sol Büyük Raf (Duvara Dayalı) */
+        .map-shelf-1 { position: absolute; top: 26%; bottom: 4%; left: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 2px; border: 2px solid #333; border-radius: 4px; }
         
-        /* Sağ Büyük Raf (3 Satır x 5 Sütun) */
-        .map-shelf-2 { position: absolute; top: 28%; bottom: 4%; right: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        /* Sağ Büyük Raf (Duvara Dayalı) */
+        .map-shelf-2 { position: absolute; top: 26%; bottom: 4%; right: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 2px; border: 2px solid #333; border-radius: 4px; }
         
-        .cell { background: #000; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 2px; text-align: center; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-hidden { visibility: hidden; }
 
         .cell.active { 
@@ -67,7 +67,7 @@
             background: #ff0000; 
             color: #fff; 
             font-weight: 900; 
-            font-size: 13px; 
+            font-size: 14px; 
             box-shadow: 0 0 20px #ff0000; 
             z-index: 10; 
             position: relative; 
@@ -98,8 +98,8 @@
             .cell { font-size: 8px; }
             .cell.active { font-size: 11px; }
             .map-door { font-size: 12px; width: 25%; height: 8%; }
-            .map-desk { width: 20%; height: 12%; }
-            .map-desk-title { font-size: 12px; }
+            .map-desk { width: 25%; height: 8%; }
+            .map-desk-title { font-size: 10px; }
         }
     </style>
 </head>
@@ -129,7 +129,7 @@
         </div>
 
         <div class="map-wrapper" id="map-area">
-            <!-- Ok z-index: 9999 olarak ayarlandı, her şeyin üstünde kalacak -->
+            <!-- Ok z-index: 9999 ile en üstte -->
             <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
             <div class="map-door" id="main-door">KAPI</div>
@@ -140,11 +140,11 @@
             </div>
             
             <div class="map-lens">
-                <div id="cell-05.01.01" class="cell">05.01.01</div>
-                <div id="cell-04.01.01" class="cell">04.01.01</div>
+                <div id="cell-05.01.01" class="cell" style="border: 2px solid #333;">05.01.01</div>
+                <div id="cell-04.01.01" class="cell" style="border: 2px solid #333;">04.01.01</div>
             </div>
 
-            <!-- SOL RAF (3 Satır x 5 Sütun - Yan Çevrilmiş) -->
+            <!-- SOL RAF (Koridor Ortada -> .01'ler Sağda (Koridorda), .05'ler Solda (Duvarda)) -->
             <div class="map-shelf-1">
                 <div id="cell-07.01.05" class="cell">07.01.05</div>
                 <div id="cell-07.01.04" class="cell">07.01.04</div>
@@ -165,25 +165,25 @@
                 <div id="cell-01.02.01" class="cell">01.02.01</div>
             </div>
 
-            <!-- SAĞ RAF (3 Satır x 5 Sütun - Yan Çevrilmiş) -->
+            <!-- SAĞ RAF (Koridor Ortada -> .01'ler Solda (Koridorda), .05'ler Sağda (Duvarda)) -->
             <div class="map-shelf-2">
-                <div id="cell-02.01.05" class="cell">02.01.05</div>
-                <div id="cell-02.01.04" class="cell">02.01.04</div>
-                <div id="cell-02.01.03" class="cell">02.01.03</div>
-                <div id="cell-02.01.02" class="cell">02.01.02</div>
                 <div id="cell-02.01.01" class="cell">02.01.01</div>
+                <div id="cell-02.01.02" class="cell">02.01.02</div>
+                <div id="cell-02.01.03" class="cell">02.01.03</div>
+                <div id="cell-02.01.04" class="cell">02.01.04</div>
+                <div id="cell-02.01.05" class="cell">02.01.05</div>
 
-                <div id="cell-03.01.05" class="cell">03.01.05</div>
-                <div id="cell-03.01.04" class="cell">03.01.04</div>
-                <div id="cell-03.01.03" class="cell">03.01.03</div>
-                <div id="cell-03.01.02" class="cell">03.01.02</div>
                 <div id="cell-03.01.01" class="cell">03.01.01</div>
+                <div id="cell-03.01.02" class="cell">03.01.02</div>
+                <div id="cell-03.01.03" class="cell">03.01.03</div>
+                <div id="cell-03.01.04" class="cell">03.01.04</div>
+                <div id="cell-03.01.05" class="cell">03.01.05</div>
 
-                <div class="cell cell-hidden"></div> <!-- 06.01.05 Yok (4 Katlı) -->
-                <div id="cell-06.01.04" class="cell">06.01.04</div>
-                <div id="cell-06.01.03" class="cell">06.01.03</div>
-                <div id="cell-06.01.02" class="cell">06.01.02</div>
                 <div id="cell-06.01.01" class="cell">06.01.01</div>
+                <div id="cell-06.01.02" class="cell">06.01.02</div>
+                <div id="cell-06.01.03" class="cell">06.01.03</div>
+                <div id="cell-06.01.04" class="cell">06.01.04</div>
+                <div class="cell cell-hidden"></div> <!-- 06.01 Rafı 4 Katlı olduğu için boşluk -->
             </div>
         </div>
     </main>
@@ -294,18 +294,18 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            // Başlangıç: Kapının alt ortası
+            // Kapının alt çizgisinin tam ortası
             const dX = (doorRect.left + doorRect.width / 2) - mapRect.left;
-            const dY = (doorRect.bottom - mapRect.top) + 10;
+            const dY = doorRect.bottom - mapRect.top;
 
-            // Hedef: Hücrenin ortası
+            // Hedef hücrenin ortası
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
-            // Koridor X Ekseni (Haritanın tam ortası)
+            // Koridorun tam ortası (Haritanın merkezi)
             const cX = mapRect.width / 2;
 
-            // Okun kırmızı hücrenin altında kalmaması için, hücre sınırından önce durduruyoruz (Lazer mantığı)
+            // Okun ucu hücrenin tam ortasına girmesin, hücrenin sınırında dursun
             let endX = tX;
             if (tX < cX) {
                 endX = (targetRect.right - mapRect.left) + 20; 
@@ -318,10 +318,10 @@
             svgEl.innerHTML = `
                 <defs>
                     <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                        <polygon points="0 0, 8 4, 0 8" fill="#ff3333" />
+                        <polygon points="0 0, 8 4, 0 8" fill="#ff0000" />
                     </marker>
                 </defs>
-                <path d="${pathStr}" fill="none" stroke="#ff3333" stroke-width="4" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" class="path-animation" />
+                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="4" stroke-dasharray="12, 12" marker-end="url(#arrowhead)" class="path-animation" />
             `;
         };
 
@@ -372,7 +372,6 @@
                         addressEl.innerText = product.adres;
                         bannerEl.style.display = 'block';
                         
-                        // Küçük bir gecikme ekleyerek SVG'nin doğru hesaplanmasını sağlıyoruz
                         setTimeout(() => { drawPath(product.adres); }, 50);
                         
                         window.playBeep('success');
