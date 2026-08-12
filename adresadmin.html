@@ -113,9 +113,7 @@
             </form>
         </div>
 
-        <div class="list-container" id="mapping-list">
-            <!-- Akordeon Liste Buraya Gelecek -->
-        </div>
+        <div class="list-container" id="mapping-list"></div>
     </main>
 
     <div id="scanner-modal">
@@ -403,10 +401,7 @@
 
                     for (let r of rows) {
                         const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
-                        
-                        // Olası tüm sütun isimlerini destekleyecek şekilde genişletildi.
                         const name = r['Ürün Adı'] || r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'] || r['İsim'] || r['Isim'];
-                        
                         let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
                         
                         if (code && addr) {
