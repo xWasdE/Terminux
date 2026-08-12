@@ -38,32 +38,34 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        /* YATAY KAYDIRMA - MOBİLDE NETLİK İÇİN */
-        .map-scroll-container { width: 100%; max-width: 1100px; overflow-x: auto; overflow-y: hidden; margin-bottom: 50px; padding-bottom: 10px; }
+        /* MOBİL İÇİN YATAY KAYDIRMA ALANI - YAZILAR KÜÇÜLMEYECEK */
+        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; margin-bottom: 50px; padding-bottom: 10px; }
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 2/1; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
+        /* KROKİ CSS - TAM DUVAR YASLI YERLEŞİM */
+        .map-wrapper { width: 100%; min-width: 1000px; aspect-ratio: 16/8; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        /* Kapı - Sol Üst (Ok Sağdan Çıkacak) */
-        .map-door { position: absolute; top: 3%; left: 4%; width: 14%; height: 12%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
-        .map-door::after { content: '→'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
+        /* Kapı - Sol Üst Duvar */
+        .map-door { position: absolute; top: 4%; left: 2%; width: 12%; height: 12%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        /* Lens Rafı - Sol Duvar */
-        .map-lens { position: absolute; top: 30%; left: 2%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+        /* Lens Rafı (05/04) - Sol Duvar (Kapının hemen altında, Büyük rafın yanında) */
+        .map-lens { position: absolute; top: 20%; left: 2%; width: 12%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
         
-        /* Sol Büyük Raf */
-        .map-shelf-1 { position: absolute; top: 25%; bottom: 6%; left: 14%; width: 34%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 3px; border: 2px solid #333; border-radius: 4px; }
+        /* Sol Büyük Raf - Lens rafına bitişik */
+        .map-shelf-1 { position: absolute; top: 20%; bottom: 4%; left: 15%; width: 34%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        /* Sağ Büyük Raf */
-        .map-shelf-2 { position: absolute; top: 25%; bottom: 6%; right: 12%; width: 34%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 3px; border: 2px solid #333; border-radius: 4px; }
+        /* Sağ Büyük Raf - Masa rafına bitişik */
+        .map-shelf-2 { position: absolute; top: 20%; bottom: 4%; right: 15%; width: 34%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        /* Masa - Sağ Üst */
-        .map-desk { position: absolute; top: 8%; right: 2%; width: 8%; height: 22%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
-        
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 10px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
-        .cell-lens { font-size: 12px; border: 2px solid #333; }
+        /* Masa - Sağ Üst Duvar (Sağ büyük rafın hemen yanında) */
+        .map-desk { position: absolute; top: 20%; right: 2%; width: 12%; height: 25%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
+        .map-desk-sub { font-size: 9px; }
+
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
+        .cell-lens { border: 2px solid #333; font-size: 12px; }
         .cell-hidden { visibility: hidden; }
 
         .cell.active { 
@@ -83,21 +85,22 @@
             to { background: rgba(255,0,0,1); box-shadow: 0 0 30px red; transform: scale(1.1); }
         }
 
+        /* Lazer Ok Animasyonu */
         .path-animation { stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; }
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
         
+        .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
-            /* MOBİLDE YAZILARI SAKLAMAK YERİNE OKUNUR BOYUTTA TUTUP KAYDIRMA VERDİK */
-            .map-scroll-container { overflow-x: auto; }
-            .cell { font-size: 9px !important; color: #888; }
-            .cell.active { font-size: 12px !important; color: #fff; }
+            /* Mobilde yazılar kalsın, scroll edilsin diye font küçültme kodları kaldırıldı. */
         }
     </style>
 </head>
@@ -134,6 +137,7 @@
                 
                 <div class="map-desk">
                     <div class="map-desk-title">MASA</div>
+                    <div class="map-desk-sub">Bilgisayarlar</div>
                 </div>
                 
                 <div class="map-lens">
@@ -141,7 +145,7 @@
                     <div id="cell-04.01.01" class="cell cell-lens">04.01.01</div>
                 </div>
 
-                <!-- SOL RAF (07, 01.01, 01.02) -->
+                <!-- SOL RAF -->
                 <div class="map-shelf-1">
                     <div id="cell-07.01.05" class="cell">07.01.05</div>
                     <div id="cell-07.01.04" class="cell">07.01.04</div>
@@ -162,7 +166,7 @@
                     <div id="cell-01.02.01" class="cell">01.02.01</div>
                 </div>
 
-                <!-- SAĞ RAF (02, 03, 06) -->
+                <!-- SAĞ RAF -->
                 <div class="map-shelf-2">
                     <div id="cell-02.01.01" class="cell">02.01.01</div>
                     <div id="cell-02.01.02" class="cell">02.01.02</div>
@@ -192,6 +196,14 @@
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
 
+    <div id="custom-alert" class="custom-alert">
+        <div class="modal-box">
+            <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px;">UYARI</div>
+            <div id="alert-desc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px;">-</div>
+            <button onclick="closeAlert()" style="background: #ff3333; color: #fff; border: none; padding: 15px 30px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px;">TAMAM</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -212,6 +224,12 @@
         let searchTimeout = null;
         let html5QrCode = null;
 
+        window.showAlert = (desc) => {
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeAlert = () => document.getElementById('custom-alert').style.display = 'none';
+
         window.playBeep = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -227,6 +245,13 @@
                     osc.start();
                     gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
                     osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
+                    osc.stop(ctx.currentTime + 0.4);
                 }
             } catch(e) {}
         };
@@ -259,12 +284,9 @@
             const map = document.getElementById('map-area');
             const shelf1 = document.querySelector('.map-shelf-1');
             const shelf2 = document.querySelector('.map-shelf-2');
+            const lens = document.querySelector('.map-lens');
 
             if(!targetCell || !door || !map || !shelf1 || !shelf2) return;
-
-            const isMobile = window.innerWidth <= 900;
-            const strokeW = isMobile ? 3 : 4;
-            const offset = isMobile ? 8 : 15;
 
             const mapRect = map.getBoundingClientRect();
             const doorRect = door.getBoundingClientRect();
@@ -272,39 +294,41 @@
             const shelf1Rect = shelf1.getBoundingClientRect();
             const shelf2Rect = shelf2.getBoundingClientRect();
 
-            // Yeni Lazer Ok Çıkış Noktası: Kapının sağ merkezi
-            const dX = (doorRect.right - mapRect.left) + 15;
+            // Kapının sağ kenarından çıkış
+            const dX = (doorRect.right - mapRect.left);
             const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
-            
-            // Ana Koridor
+
             const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
 
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
-                // Lens rafı solda. Kapıdan sağa çık, hizaya in, hedefe dön.
-                const endX = (targetRect.right - mapRect.left) + offset;
-                pathStr = `M ${dX} ${dY} L ${dX + 20} ${dY} L ${dX + 20} ${tY} L ${endX} ${tY}`;
+                // Kapının sağından çık, Lens ve Shelf1 arasındaki boşluktan aşağı in, Hedefe sola dön
+                const gapX = dX + 15;
+                const endX = (targetRect.right - mapRect.left) + 15;
+                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
             } else {
-                // Kutu içine girmeden dur
+                // Kapının sağından çık -> Düz koridora (cX) git -> Hedef Y'ye in -> Hedefe sağ/sola dön
                 let endX = tX;
                 if (tX < cX) {
-                    endX = (targetRect.right - mapRect.left) + offset; 
+                    endX = (targetRect.right - mapRect.left) + 15; 
                 } else {
-                    endX = (targetRect.left - mapRect.left) - offset;
+                    endX = (targetRect.left - mapRect.left) - 15;
                 }
-
-                // Kapının sağından çık -> Koridora git -> Aşağı in -> Hedefe dön
+                
+                // Kapı dY'si zaten rafların üstündeki boşluk olduğu için (10% civarı) rafları kesmez.
                 pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
+            const strokeW = window.innerWidth <= 900 ? 3 : 4;
+
             document.getElementById('path-svg').innerHTML = `
                 <defs>
-                    <marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto">
-                        <polygon points="0 0, ${isMobile ? 6 : 8} ${isMobile ? 3 : 4}, 0 ${isMobile ? 6 : 8}" fill="#ff0000" />
+                    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                        <polygon points="0 0, 8 4, 0 8" fill="#ff0000" />
                     </marker>
                 </defs>
                 <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" class="path-animation" />
@@ -314,19 +338,19 @@
         const executeSearch = (val) => {
             clearTimeout(searchTimeout);
             clearHighlights();
-            const dropdownEl = document.getElementById('search-dropdown');
 
             if (val.length < 3) {
-                dropdownEl.style.display = 'none';
+                document.getElementById('search-dropdown').style.display = 'none';
                 return;
             }
 
             searchTimeout = setTimeout(() => {
                 const terms = val.split(/\s+/);
                 const matches = mappingData.filter(m => terms.every(t => m.searchStr.includes(t))).slice(0, 15);
+                const dropdown = document.getElementById('search-dropdown');
 
                 if (matches.length > 0) {
-                    dropdownEl.innerHTML = matches.map(m => {
+                    dropdown.innerHTML = matches.map(m => {
                         const refText = m.refNo ? ` | REF: ${m.refNo}` : '';
                         return `
                             <div class="dropdown-item" onclick="selectProduct('${m.id}')">
@@ -335,10 +359,10 @@
                             </div>
                         `;
                     }).join('');
-                    dropdownEl.style.display = 'block';
+                    dropdown.style.display = 'block';
                 } else {
-                    dropdownEl.innerHTML = '<div style="padding: 15px; color: #ff3333; text-align: center; font-size: 12px; font-weight:bold;">Sistemde haritalanmış eşleşme bulunamadı.</div>';
-                    dropdownEl.style.display = 'block';
+                    dropdown.innerHTML = '<div style="padding: 15px; color: #ff3333; text-align: center; font-size: 12px; font-weight:bold;">Sistemde haritalanmış eşleşme bulunamadı.</div>';
+                    dropdown.style.display = 'block';
                 }
             }, 250);
         };
@@ -360,14 +384,15 @@
                         document.getElementById('result-banner').style.display = 'block';
                         
                         setTimeout(() => { drawPath(product.adres); }, 50);
+                        
                         window.playBeep('success');
                     } else {
                         window.playBeep('error');
-                        alert(`Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
+                        showAlert(`Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
                     }
                 } else {
                     window.playBeep('error');
-                    alert("Bu ürüne ait bir adres tanımlanmamış.");
+                    showAlert("Bu ürüne ait bir adres tanımlanmamış.");
                 }
             }
         };
@@ -393,12 +418,15 @@
                         m.refNo === decodedText
                     );
 
-                    if (directMatch) selectProduct(directMatch.id);
-                    else executeSearch(decodedText.toLowerCase().trim());
+                    if (directMatch) {
+                        selectProduct(directMatch.id);
+                    } else {
+                        executeSearch(decodedText.toLowerCase().trim());
+                    }
                 },
                 (errorMessage) => {}
             ).catch((err) => {
-                alert("Kamera başlatılamadı.");
+                showAlert("Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
                 closeScanner();
             });
         };
@@ -414,6 +442,7 @@
             const activeCell = document.querySelector('.cell.active');
             if (activeCell) drawPath(activeCell.id.replace('cell-', ''));
         });
+
     </script>
 </body>
 </html>
