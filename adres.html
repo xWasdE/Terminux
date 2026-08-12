@@ -38,26 +38,31 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        /* KROKİ CSS */
-        .map-wrapper { width: 100%; max-width: 1000px; aspect-ratio: 16/10; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin-bottom: 50px; }
+        /* MOBİL İÇİN YATAY KAYDIRMA ALANI */
+        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; margin-bottom: 50px; padding-bottom: 10px; }
+        .map-scroll-container::-webkit-scrollbar { height: 8px; }
+        .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        /* KROKİ CSS - Sıkışmayı önlemek için min-width verildi */
+        .map-wrapper { width: 100%; min-width: 850px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
         /* Kapı - Sol Üst */
-        .map-door { position: absolute; top: 0; left: 0; width: 20%; height: 12%; border-right: 2px dashed #444; border-bottom: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
+        .map-door { position: absolute; top: 0; left: 0; width: 16%; height: 14%; border-right: 2px dashed #444; border-bottom: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
         .map-door::after { content: '↓'; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #888; }
         
-        /* Masa - Sağ Üst (Enlemesine Genişletildi) */
-        .map-desk { position: absolute; top: 4%; right: 4%; width: 22%; height: 12%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        /* Lens Rafı (Yan Döndürüldü, Kapı ile raf arasına sol duvara alındı) */
+        .map-lens { position: absolute; top: 18%; left: 1.5%; width: 11.5%; height: 35%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 4px; }
+        
+        /* Masa (Yan Döndürüldü, Sağ tarafa raflara bakacak şekilde yerleşti) */
+        .map-desk { position: absolute; top: 18%; right: 1.5%; width: 11.5%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
         .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
         .map-desk-sub { font-size: 9px; }
 
-        /* Ayrı İki Raf (05 ve 04) - Sol Duvara Dayalı */
-        .map-lens { position: absolute; top: 16%; left: 2%; width: 42%; height: 8%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* Sol Büyük Raf */
+        .map-shelf-1 { position: absolute; top: 18%; bottom: 5%; left: 15%; width: 32%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        /* Sol Büyük Raf (Duvara Dayalı) */
-        .map-shelf-1 { position: absolute; top: 26%; bottom: 4%; left: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 2px; border: 2px solid #333; border-radius: 4px; }
-        
-        /* Sağ Büyük Raf (Duvara Dayalı) */
-        .map-shelf-2 { position: absolute; top: 26%; bottom: 4%; right: 2%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 2px; border: 2px solid #333; border-radius: 4px; }
+        /* Sağ Büyük Raf */
+        .map-shelf-2 { position: absolute; top: 18%; bottom: 5%; right: 15%; width: 32%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-hidden { visibility: hidden; }
@@ -94,12 +99,6 @@
             main { padding: 15px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
-            .map-wrapper { aspect-ratio: 1/1.5; }
-            .cell { font-size: 8px; }
-            .cell.active { font-size: 11px; }
-            .map-door { font-size: 12px; width: 25%; height: 8%; }
-            .map-desk { width: 25%; height: 8%; }
-            .map-desk-title { font-size: 10px; }
         }
     </style>
 </head>
@@ -128,62 +127,64 @@
             <div id="result-address" class="result-address">-</div>
         </div>
 
-        <div class="map-wrapper" id="map-area">
-            <!-- Ok z-index: 9999 ile en üstte -->
-            <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
+        <!-- Mobil sığma problemi için eklendi -->
+        <div class="map-scroll-container">
+            <div class="map-wrapper" id="map-area">
+                <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
-            <div class="map-door" id="main-door">KAPI</div>
-            
-            <div class="map-desk">
-                <div class="map-desk-title">MASA</div>
-                <div class="map-desk-sub">Bilgisayarlar</div>
-            </div>
-            
-            <div class="map-lens">
-                <div id="cell-05.01.01" class="cell" style="border: 2px solid #333;">05.01.01</div>
-                <div id="cell-04.01.01" class="cell" style="border: 2px solid #333;">04.01.01</div>
-            </div>
+                <div class="map-door" id="main-door">KAPI</div>
+                
+                <div class="map-desk">
+                    <div class="map-desk-title">MASA</div>
+                    <div class="map-desk-sub">Bilgisayarlar</div>
+                </div>
+                
+                <div class="map-lens">
+                    <div id="cell-05.01.01" class="cell">05.01.01</div>
+                    <div id="cell-04.01.01" class="cell">04.01.01</div>
+                </div>
 
-            <!-- SOL RAF (Koridor Ortada -> .01'ler Sağda (Koridorda), .05'ler Solda (Duvarda)) -->
-            <div class="map-shelf-1">
-                <div id="cell-07.01.05" class="cell">07.01.05</div>
-                <div id="cell-07.01.04" class="cell">07.01.04</div>
-                <div id="cell-07.01.03" class="cell">07.01.03</div>
-                <div id="cell-07.01.02" class="cell">07.01.02</div>
-                <div id="cell-07.01.01" class="cell">07.01.01</div>
+                <!-- SOL RAF (Koridor Ortada -> .01'ler Sağda, .05'ler Solda) -->
+                <div class="map-shelf-1">
+                    <div id="cell-07.01.05" class="cell">07.01.05</div>
+                    <div id="cell-07.01.04" class="cell">07.01.04</div>
+                    <div id="cell-07.01.03" class="cell">07.01.03</div>
+                    <div id="cell-07.01.02" class="cell">07.01.02</div>
+                    <div id="cell-07.01.01" class="cell">07.01.01</div>
 
-                <div id="cell-01.01.05" class="cell">01.01.05</div>
-                <div id="cell-01.01.04" class="cell">01.01.04</div>
-                <div id="cell-01.01.03" class="cell">01.01.03</div>
-                <div id="cell-01.01.02" class="cell">01.01.02</div>
-                <div id="cell-01.01.01" class="cell">01.01.01</div>
+                    <div id="cell-01.01.05" class="cell">01.01.05</div>
+                    <div id="cell-01.01.04" class="cell">01.01.04</div>
+                    <div id="cell-01.01.03" class="cell">01.01.03</div>
+                    <div id="cell-01.01.02" class="cell">01.01.02</div>
+                    <div id="cell-01.01.01" class="cell">01.01.01</div>
 
-                <div id="cell-01.02.05" class="cell">01.02.05</div>
-                <div id="cell-01.02.04" class="cell">01.02.04</div>
-                <div id="cell-01.02.03" class="cell">01.02.03</div>
-                <div id="cell-01.02.02" class="cell">01.02.02</div>
-                <div id="cell-01.02.01" class="cell">01.02.01</div>
-            </div>
+                    <div id="cell-01.02.05" class="cell">01.02.05</div>
+                    <div id="cell-01.02.04" class="cell">01.02.04</div>
+                    <div id="cell-01.02.03" class="cell">01.02.03</div>
+                    <div id="cell-01.02.02" class="cell">01.02.02</div>
+                    <div id="cell-01.02.01" class="cell">01.02.01</div>
+                </div>
 
-            <!-- SAĞ RAF (Koridor Ortada -> .01'ler Solda (Koridorda), .05'ler Sağda (Duvarda)) -->
-            <div class="map-shelf-2">
-                <div id="cell-02.01.01" class="cell">02.01.01</div>
-                <div id="cell-02.01.02" class="cell">02.01.02</div>
-                <div id="cell-02.01.03" class="cell">02.01.03</div>
-                <div id="cell-02.01.04" class="cell">02.01.04</div>
-                <div id="cell-02.01.05" class="cell">02.01.05</div>
+                <!-- SAĞ RAF (Koridor Ortada -> .01'ler Solda, .05'ler Sağda) -->
+                <div class="map-shelf-2">
+                    <div id="cell-02.01.01" class="cell">02.01.01</div>
+                    <div id="cell-02.01.02" class="cell">02.01.02</div>
+                    <div id="cell-02.01.03" class="cell">02.01.03</div>
+                    <div id="cell-02.01.04" class="cell">02.01.04</div>
+                    <div id="cell-02.01.05" class="cell">02.01.05</div>
 
-                <div id="cell-03.01.01" class="cell">03.01.01</div>
-                <div id="cell-03.01.02" class="cell">03.01.02</div>
-                <div id="cell-03.01.03" class="cell">03.01.03</div>
-                <div id="cell-03.01.04" class="cell">03.01.04</div>
-                <div id="cell-03.01.05" class="cell">03.01.05</div>
+                    <div id="cell-03.01.01" class="cell">03.01.01</div>
+                    <div id="cell-03.01.02" class="cell">03.01.02</div>
+                    <div id="cell-03.01.03" class="cell">03.01.03</div>
+                    <div id="cell-03.01.04" class="cell">03.01.04</div>
+                    <div id="cell-03.01.05" class="cell">03.01.05</div>
 
-                <div id="cell-06.01.01" class="cell">06.01.01</div>
-                <div id="cell-06.01.02" class="cell">06.01.02</div>
-                <div id="cell-06.01.03" class="cell">06.01.03</div>
-                <div id="cell-06.01.04" class="cell">06.01.04</div>
-                <div class="cell cell-hidden"></div> <!-- 06.01 Rafı 4 Katlı olduğu için boşluk -->
+                    <div id="cell-06.01.01" class="cell">06.01.01</div>
+                    <div id="cell-06.01.02" class="cell">06.01.02</div>
+                    <div id="cell-06.01.03" class="cell">06.01.03</div>
+                    <div id="cell-06.01.04" class="cell">06.01.04</div>
+                    <div class="cell cell-hidden"></div> <!-- 06.01 Rafı 4 Katlı olduğu için boşluk -->
+                </div>
             </div>
         </div>
     </main>
@@ -294,26 +295,30 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            // Kapının alt çizgisinin tam ortası
+            // Kaydırma işlemlerinden etkilenmemesi için haritaya göre hesaplanır
             const dX = (doorRect.left + doorRect.width / 2) - mapRect.left;
             const dY = doorRect.bottom - mapRect.top;
 
-            // Hedef hücrenin ortası
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
-            // Koridorun tam ortası (Haritanın merkezi)
             const cX = mapRect.width / 2;
+            let pathStr = "";
 
-            // Okun ucu hücrenin tam ortasına girmesin, hücrenin sınırında dursun
-            let endX = tX;
-            if (tX < cX) {
-                endX = (targetRect.right - mapRect.left) + 20; 
+            if (targetId === "05.01.01" || targetId === "04.01.01") {
+                // Kapı altındaki Lens rafına gidiyorsa koridora girmeden dümdüz insin
+                const endY = (targetRect.top - mapRect.top) - 15;
+                pathStr = `M ${dX} ${dY} L ${tX} ${dY} L ${tX} ${endY}`;
             } else {
-                endX = (targetRect.left - mapRect.left) - 20;
+                // Ortadaki koridora in, oradan rafa dön
+                let endX = tX;
+                if (tX < cX) {
+                    endX = (targetRect.right - mapRect.left) + 15; // Sol rafın sağ duvarına
+                } else {
+                    endX = (targetRect.left - mapRect.left) - 15;  // Sağ rafın sol duvarına
+                }
+                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
-
-            const pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
 
             svgEl.innerHTML = `
                 <defs>
@@ -321,7 +326,7 @@
                         <polygon points="0 0, 8 4, 0 8" fill="#ff0000" />
                     </marker>
                 </defs>
-                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="4" stroke-dasharray="12, 12" marker-end="url(#arrowhead)" class="path-animation" />
+                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="4" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" class="path-animation" />
             `;
         };
 
@@ -392,7 +397,6 @@
             }
         });
 
-        // BARKOD TARAMA
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
