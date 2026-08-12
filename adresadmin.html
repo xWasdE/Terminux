@@ -1,4 +1,3 @@
-<!-- adresadmin.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -6,19 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Terminux | Kroki Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { background: #0a0a0a; padding: 40px; border-radius: 12px; border: 1px solid #333; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+
         header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; }
+        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; display: none; }
         
-        .setup-container { max-width: 600px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
         
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; position: relative; }
@@ -28,10 +31,13 @@
         
         .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary:hover { opacity: 0.8; }
-        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 8px 12px; border-radius: 4px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 10px; text-transform: uppercase; }
-        .btn-danger:hover { background: #ff3333; color: #000; }
+        
+        .btn-action-sm { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 10px; text-transform: uppercase; }
+        .btn-action-sm:hover { border-color: #ffbc00; color: #ffbc00; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
+        .btn-danger:hover { background: #ff3333; color: #000; border-color: #ff3333; }
 
-        .list-container { max-width: 800px; margin: 0 auto; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-container { max-width: 900px; margin: 0 auto; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
         .list-item { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
         .list-item:hover { background: #0c0c0c; }
@@ -53,18 +59,30 @@
 </head>
 <body>
 
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="color:#fff; margin-bottom:25px; letter-spacing:1px;">YÖNETİCİ GİRİŞİ</h2>
+            <input type="password" id="admin-pass" placeholder="Parola" style="width:100%; padding:15px; border-radius:6px; border:1px solid #444; background:#000; color:#fff; text-align:center; margin-bottom:20px; outline:none; font-size: 16px;">
+            <button onclick="checkLogin()" class="btn-primary" style="margin-bottom:15px;">GİRİŞ YAP</button>
+            <a href="adres.html" style="color:#888; font-size:12px; text-decoration:none;">Adres Bulucuya Dön</a>
+        </div>
+    </div>
+
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">KROKİ YÖNETİMİ</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="btn-secondary" style="border-color: #00ff00; color: #00ff00;" onclick="triggerExcel()">EXCEL İÇERİ AKTAR</button>
+            <button class="btn-secondary" onclick="exportExcel()">EXCEL İNDİR</button>
             <a href="adres.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">ADRES BULUCU</a>
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         <div id="toast" class="toast">Kayıt Başarılı!</div>
+        <input type="file" id="excel-import" style="display:none;" accept=".xlsx, .xls" onchange="importExcel(event)">
 
         <div class="setup-container">
-            <div class="setup-title">YENİ ADRES EŞLEŞTİR</div>
+            <div class="setup-title">ADRES TANIMLAMA / DÜZENLEME</div>
             <form id="mapping-form">
                 <div class="input-group">
                     <label>ÜRÜN KODU / BARKOD</label>
@@ -112,6 +130,21 @@
         const db = getFirestore(app);
 
         let catalogDb = {};
+        window.mappingData = [];
+
+        window.checkLogin = () => {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            } else {
+                alert('Hatalı parola!');
+            }
+        };
+
+        document.getElementById('admin-pass').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') checkLogin();
+        });
 
         const loadCatalog = async () => {
             try {
@@ -156,25 +189,23 @@
                 };
                 
                 processSnap(anaSnap); processSnap(amSnap);
-            } catch (err) {
-            }
+            } catch (err) { }
         };
 
         loadCatalog();
 
+        // Adres Listesinin Akıllı Alfabetik Sıralanması
         const validAddresses = [
             '05.01.01', '04.01.01',
-            '07.01.05', '01.01.05', '01.02.05',
-            '07.01.04', '01.01.04', '01.02.04',
-            '07.01.03', '01.01.03', '01.02.03',
-            '07.01.02', '01.01.02', '01.02.02',
-            '07.01.01', '01.01.01', '01.02.01',
-            '02.01.05', '03.01.05', '06.01.05',
-            '02.01.04', '03.01.04', '06.01.04',
-            '02.01.03', '03.01.03', '06.01.03',
-            '02.01.02', '03.01.02', '06.01.02',
-            '02.01.01', '03.01.01', '06.01.01'
+            '07.01.05', '07.01.04', '07.01.03', '07.01.02', '07.01.01',
+            '01.01.05', '01.01.04', '01.01.03', '01.01.02', '01.01.01',
+            '01.02.05', '01.02.04', '01.02.03', '01.02.02', '01.02.01',
+            '02.01.05', '02.01.04', '02.01.03', '02.01.02', '02.01.01',
+            '03.01.05', '03.01.04', '03.01.03', '03.01.02', '03.01.01',
+            '06.01.05', '06.01.04', '06.01.03', '06.01.02', '06.01.01'
         ];
+
+        validAddresses.sort(); // 01.01.01, 01.01.02, 01.01.03 şeklinde sıraya sokar
 
         const selectEl = document.getElementById('p-address');
         validAddresses.forEach(addr => {
@@ -184,10 +215,11 @@
             selectEl.appendChild(opt);
         });
 
-        const showToast = () => {
+        const showToast = (msg = "Kayıt Başarılı!") => {
             const t = document.getElementById('toast');
+            t.innerText = msg;
             t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2000);
+            setTimeout(() => t.style.display = 'none', 3000);
         };
 
         document.getElementById('p-code').addEventListener('input', (e) => {
@@ -228,23 +260,24 @@
         document.getElementById('mapping-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const codeEl = document.getElementById('p-code');
-            const code = codeEl.value.trim();
+            let code = codeEl.value.trim();
             const name = document.getElementById('p-name').value.trim();
             const address = document.getElementById('p-address').value;
             const barkod = codeEl.dataset.barkod || "";
             const refNo = codeEl.dataset.refNo || "";
 
-            const newDocId = `MAP-${Date.now()}`;
+            // Güvenli ID
+            const safeId = code.replace(/[^a-zA-Z0-9_-]/g, '-');
 
             try {
-                await setDoc(doc(db, "kroki_adresleri", newDocId), {
+                await setDoc(doc(db, "kroki_adresleri", safeId), {
                     urunKodu: code,
                     urunAdi: name,
                     barkod: barkod,
                     refNo: refNo,
                     adres: address,
                     timestamp: Date.now()
-                });
+                }, { merge: true });
                 
                 codeEl.value = '';
                 codeEl.dataset.barkod = '';
@@ -260,27 +293,41 @@
 
         onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
             const listEl = document.getElementById('mapping-list');
-            let items = [];
-            snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+            window.mappingData = [];
+            snapshot.forEach(doc => window.mappingData.push({ id: doc.id, ...doc.data() }));
             
-            items.sort((a, b) => b.timestamp - a.timestamp);
+            window.mappingData.sort((a, b) => b.timestamp - a.timestamp);
 
-            if (items.length === 0) {
+            if (window.mappingData.length === 0) {
                 listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Kayıtlı haritalandırma bulunamadı.</div>';
                 return;
             }
 
-            listEl.innerHTML = items.map(item => `
+            listEl.innerHTML = window.mappingData.map(item => `
                 <div class="list-item">
                     <div class="item-code">${item.urunKodu}</div>
                     <div class="item-name">${item.urunAdi}</div>
                     <div class="item-addr">${item.adres}</div>
-                    <div style="text-align:right;">
-                        <button class="btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+                    <div style="display:flex; gap:5px; justify-content:flex-end;">
+                        <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
+                        <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
                     </div>
                 </div>
             `).join('');
         });
+
+        window.editMapping = (id) => {
+            const item = window.mappingData.find(m => m.id === id);
+            if (item) {
+                const codeEl = document.getElementById('p-code');
+                codeEl.value = item.urunKodu;
+                codeEl.dataset.barkod = item.barkod || "";
+                codeEl.dataset.refNo = item.refNo || "";
+                document.getElementById('p-name').value = item.urunAdi;
+                document.getElementById('p-address').value = item.adres;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
 
         window.deleteMapping = async (id) => {
             if (confirm("Bu haritalandırmayı silmek istediğinize emin misiniz?")) {
@@ -288,6 +335,60 @@
                     await deleteDoc(doc(db, "kroki_adresleri", id));
                 } catch(e) {}
             }
+        };
+
+        window.triggerExcel = () => document.getElementById('excel-import').click();
+        
+        window.importExcel = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    
+                    let added = 0; let updated = 0; let skipped = 0;
+
+                    for (let r of rows) {
+                        const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
+                        const name = r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'];
+                        const addr = r['Adres'] || r['ADRES'] || r['adres'];
+                        
+                        if (code && addr) {
+                            const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
+                            const existing = window.mappingData.find(m => m.id === safeCode);
+                            
+                            if (existing) {
+                                if (existing.adres !== String(addr).trim() || existing.urunAdi !== String(name).trim()) {
+                                    await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: String(addr).trim(), timestamp: Date.now() }, {merge: true});
+                                    updated++;
+                                } else {
+                                    skipped++;
+                                }
+                            } else {
+                                await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: String(addr).trim(), timestamp: Date.now() });
+                                added++;
+                            }
+                        }
+                    }
+                    showToast(`İşlem Bitti! Eklenen: ${added} | Güncellenen: ${updated} | Atlanan: ${skipped}`);
+                } catch(err) {
+                    alert("Excel okunurken hata oluştu: " + err.message);
+                }
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        window.exportExcel = () => {
+            if (window.mappingData.length === 0) return alert("Dışa aktarılacak kayıt yok.");
+            const data = window.mappingData.map(m => ({ "Ürün Kodu": m.urunKodu, "Ürün İsmi": m.urunAdi, "Adres": m.adres }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ADRESLER");
+            XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
         };
 
     </script>
