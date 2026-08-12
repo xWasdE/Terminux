@@ -43,28 +43,27 @@
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        /* KROKİ CSS - Sıkışmayı önlemek için min-width verildi */
+        /* KROKİ CSS - YENİ YERLEŞİM */
         .map-wrapper { width: 100%; min-width: 850px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        /* Kapı - Sol Üst */
-        .map-door { position: absolute; top: 0; left: 0; width: 16%; height: 14%; border-right: 2px dashed #444; border-bottom: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 900; font-size: 18px; letter-spacing: 2px; }
-        .map-door::after { content: '↓'; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #888; }
+        /* 1. SÜTUN: Kapı ve 05/04 Rafları (En Sol Duvar) */
+        .map-door { position: absolute; top: 5%; left: 3%; width: 12%; height: 12%; border: 2px dashed #444; display: flex; align-items: center; justify-content: center; color: #666; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; }
+        .map-door::after { content: '↓'; position: absolute; right: -25px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #888; }
         
-        /* Lens Rafı (Yan Döndürüldü, Kapı ile raf arasına sol duvara alındı) */
-        .map-lens { position: absolute; top: 18%; left: 1.5%; width: 11.5%; height: 35%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 4px; }
+        .map-lens { position: absolute; top: 22%; left: 3%; width: 12%; height: 25%; display: grid; grid-template-rows: 1fr 1fr; gap: 8px; }
         
-        /* Masa (Yan Döndürüldü, Sağ tarafa raflara bakacak şekilde yerleşti) */
-        .map-desk { position: absolute; top: 18%; right: 1.5%; width: 11.5%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
-        .map-desk-sub { font-size: 9px; }
+        /* 2. SÜTUN: Sol Büyük Raf */
+        .map-shelf-1 { position: absolute; top: 22%; bottom: 6%; left: 18%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 3px; border: 2px solid #333; border-radius: 4px; }
+        
+        /* 3. SÜTUN: Sağ Büyük Raf */
+        .map-shelf-2 { position: absolute; top: 22%; bottom: 6%; left: 54%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 3px; border: 2px solid #333; border-radius: 4px; }
+        
+        /* 4. SÜTUN: Masa (En Sağ Duvar) */
+        .map-desk { position: absolute; top: 35%; right: 3%; width: 10%; height: 25%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; }
+        .map-desk-sub { font-size: 8px; }
 
-        /* Sol Büyük Raf */
-        .map-shelf-1 { position: absolute; top: 18%; bottom: 5%; left: 15%; width: 32%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
-        
-        /* Sağ Büyük Raf */
-        .map-shelf-2 { position: absolute; top: 18%; bottom: 5%; right: 15%; width: 32%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4px; background: #111; padding: 4px; border: 2px solid #333; border-radius: 4px; }
-        
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 10px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-hidden { visibility: hidden; }
 
         .cell.active { 
@@ -127,7 +126,6 @@
             <div id="result-address" class="result-address">-</div>
         </div>
 
-        <!-- Mobil sığma problemi için eklendi -->
         <div class="map-scroll-container">
             <div class="map-wrapper" id="map-area">
                 <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
@@ -140,11 +138,11 @@
                 </div>
                 
                 <div class="map-lens">
-                    <div id="cell-05.01.01" class="cell">05.01.01</div>
-                    <div id="cell-04.01.01" class="cell">04.01.01</div>
+                    <div id="cell-05.01.01" class="cell" style="border: 2px solid #333;">05.01.01</div>
+                    <div id="cell-04.01.01" class="cell" style="border: 2px solid #333;">04.01.01</div>
                 </div>
 
-                <!-- SOL RAF (Koridor Ortada -> .01'ler Sağda, .05'ler Solda) -->
+                <!-- SOL RAF -->
                 <div class="map-shelf-1">
                     <div id="cell-07.01.05" class="cell">07.01.05</div>
                     <div id="cell-07.01.04" class="cell">07.01.04</div>
@@ -165,7 +163,7 @@
                     <div id="cell-01.02.01" class="cell">01.02.01</div>
                 </div>
 
-                <!-- SAĞ RAF (Koridor Ortada -> .01'ler Solda, .05'ler Sağda) -->
+                <!-- SAĞ RAF -->
                 <div class="map-shelf-2">
                     <div id="cell-02.01.01" class="cell">02.01.01</div>
                     <div id="cell-02.01.02" class="cell">02.01.02</div>
@@ -183,7 +181,7 @@
                     <div id="cell-06.01.02" class="cell">06.01.02</div>
                     <div id="cell-06.01.03" class="cell">06.01.03</div>
                     <div id="cell-06.01.04" class="cell">06.01.04</div>
-                    <div class="cell cell-hidden"></div> <!-- 06.01 Rafı 4 Katlı olduğu için boşluk -->
+                    <div class="cell cell-hidden"></div>
                 </div>
             </div>
         </div>
@@ -288,36 +286,48 @@
             const targetCell = document.getElementById(`cell-${targetId}`);
             const door = document.getElementById('main-door');
             const map = document.getElementById('map-area');
+            const shelf1 = document.querySelector('.map-shelf-1');
+            const shelf2 = document.querySelector('.map-shelf-2');
 
-            if(!targetCell || !door || !map) return;
+            if(!targetCell || !door || !map || !shelf1 || !shelf2) return;
 
             const mapRect = map.getBoundingClientRect();
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
+            const shelf1Rect = shelf1.getBoundingClientRect();
+            const shelf2Rect = shelf2.getBoundingClientRect();
 
-            // Kaydırma işlemlerinden etkilenmemesi için haritaya göre hesaplanır
+            // Kapının alt çizgisinin tam ortası
             const dX = (doorRect.left + doorRect.width / 2) - mapRect.left;
             const dY = doorRect.bottom - mapRect.top;
 
+            // Hedef hücrenin ortası
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
-            const cX = mapRect.width / 2;
+            // Koridorun tam ortası (İki büyük rafın arası)
+            const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
+
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
-                // Kapı altındaki Lens rafına gidiyorsa koridora girmeden dümdüz insin
+                // Kapı altındaki raflara gidiyorsa düz in
                 const endY = (targetRect.top - mapRect.top) - 15;
-                pathStr = `M ${dX} ${dY} L ${tX} ${dY} L ${tX} ${endY}`;
+                pathStr = `M ${dX} ${dY} L ${dX} ${endY}`;
             } else {
-                // Ortadaki koridora in, oradan rafa dön
+                // Rafların üzerinden güvenli geçiş Y koordinatı
+                const safeY = dY + ((shelf1Rect.top - doorRect.bottom) / 2);
+                
+                // Lazer Ok'un hücre sınırında durması
                 let endX = tX;
                 if (tX < cX) {
-                    endX = (targetRect.right - mapRect.left) + 15; // Sol rafın sağ duvarına
+                    endX = (targetRect.right - mapRect.left) + 20; 
                 } else {
-                    endX = (targetRect.left - mapRect.left) - 15;  // Sağ rafın sol duvarına
+                    endX = (targetRect.left - mapRect.left) - 20;
                 }
-                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
+
+                // Kapıdan in -> Güvenli Y'de Koridora geç -> Koridordan in -> Rafa dön
+                pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -326,7 +336,7 @@
                         <polygon points="0 0, 8 4, 0 8" fill="#ff0000" />
                     </marker>
                 </defs>
-                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="4" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" class="path-animation" />
+                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="4" stroke-dasharray="12, 12" marker-end="url(#arrowhead)" class="path-animation" />
             `;
         };
 
