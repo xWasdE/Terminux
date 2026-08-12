@@ -407,7 +407,6 @@
             XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
         };
 
-        // BARKOD TARAMA (Admin)
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
