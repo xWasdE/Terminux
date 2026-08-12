@@ -103,8 +103,14 @@
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
-        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
+        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.3s; gap: 15px; border-left: 12px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
+        .list-item.recently-scanned { animation: flashScan 1s ease-out; }
+
+        @keyframes flashScan {
+            0% { background: rgba(0, 204, 255, 0.3); }
+            100% { background: transparent; }
+        }
         
         .status-pending { border-left-color: #444; }
         .status-missing { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); }
@@ -119,7 +125,7 @@
         .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
         .diff-pos { color: #00ff00; }
         .diff-neg { color: #ff3333; }
-        .diff-zero { color: #555; }
+        .diff-zero { color: #00ff00; }
         
         .val-expected { color: #888; }
         .val-missing { color: #ff3333; }
@@ -342,6 +348,7 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
+        let lastScannedCode = null; // En son okutulan ürünü en üstte tutmak için
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -595,6 +602,7 @@
 
         window.resumeShipment = (id) => {
             currentShipmentId = id;
+            lastScannedCode = null;
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('active-screen').style.display = 'block';
             
@@ -612,6 +620,7 @@
             document.getElementById('home-screen').style.display = 'block';
             document.getElementById('active-screen').style.display = 'none';
             currentShipmentId = null;
+            lastScannedCode = null;
             renderHomeList();
         };
 
@@ -724,6 +733,9 @@
                 shipment.items[finalKey].confirmed = false;
             }
             
+            // Okutulan son ürünü hafızaya alıp en üste taşıyacağız
+            lastScannedCode = finalKey;
+
             await saveShipmentToDb(shipment);
             
             inputEl.value = '';
@@ -746,28 +758,56 @@
             }
         });
 
+        // AKILLI SIRALAMA: OKUTULAN SON ÜRÜN EN ÜSTE GELİR
         const getSortedItems = (items) => {
-            const getSortScore = (item) => {
-                if (item.confirmed) {
-                    if (item.receivedQty === item.expectedQty) return 3;
-                    return 1;
-                }
-                return 2;
-            };
-            
             return [...items].sort((a, b) => {
-                const scoreA = getSortScore(a);
-                const scoreB = getSortScore(b);
-                if (scoreA !== scoreB) return scoreA - scoreB;
-                
-                if (scoreA === 1) {
-                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
-                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
-                    if (diffA !== diffB) return diffB - diffA; 
+                // 1. Kural: Okutulan en son ürün HER ZAMAN en üsttedir.
+                if (a.code === lastScannedCode) return -1;
+                if (b.code === lastScannedCode) return 1;
+
+                // 2. Kural: Henüz onaylanmamış/düzenlenenler önce gelsin
+                if (a.confirmed !== b.confirmed) {
+                    return a.confirmed ? 1 : -1;
                 }
-                
+
+                // 3. Kural: Tamamlanmayanlar (farklı olanlar) üstte dursun
+                const diffA = (a.receivedQty || 0) - (a.expectedQty || 0);
+                const diffB = (b.receivedQty || 0) - (b.expectedQty || 0);
+                if (diffA !== 0 && diffB === 0) return -1;
+                if (diffA === 0 && diffB !== 0) return 1;
+
                 return a.code.localeCompare(b.code);
             });
+        };
+
+        // CANLI SAKLI/TUTAR KONTROL HESAPLAMASI (Girdildikçe canlı çalışır)
+        window.handleLiveCalc = (code) => {
+            const recEl = document.getElementById(`rec-${code}`);
+            const diffEl = document.getElementById(`diff-${code}`);
+            const itemRow = document.getElementById(`row-${code}`);
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+
+            if (!recEl || !diffEl || !shipment || !shipment.items[code]) return;
+
+            const recVal = parseInt(recEl.value) || 0;
+            const expVal = shipment.items[code].expectedQty || 0;
+            const diff = recVal - expVal;
+
+            // Canlı metin güncellemesi
+            diffEl.innerText = diff > 0 ? `+${diff}` : diff;
+
+            // Canlı Renk ve Sol Çizgi Güncellemesi
+            diffEl.className = 'item-diff ' + (diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero'));
+
+            if (itemRow) {
+                if (diff === 0) {
+                    itemRow.style.borderLeftColor = '#00ff00';
+                } else if (diff < 0) {
+                    itemRow.style.borderLeftColor = '#ff3333';
+                } else {
+                    itemRow.style.borderLeftColor = '#ffbc00';
+                }
+            }
         };
 
         const renderShipmentList = () => {
@@ -780,20 +820,19 @@
             const sortedItems = getSortedItems(items);
             
             container.innerHTML = sortedItems.map(item => {
+                let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                if (item.confirmed) {
-                    if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
-                    else if (item.receivedQty < item.expectedQty) { statusClass = 'status-missing'; valClass = 'val-missing'; }
-                    else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
-                }
+                // Renk Durumu
+                if (diff === 0 && item.receivedQty > 0) { statusClass = 'status-complete'; valClass = 'val-complete'; }
+                else if (diff < 0) { statusClass = 'status-missing'; valClass = 'val-missing'; }
+                else if (diff > 0) { statusClass = 'status-over'; valClass = 'val-over'; }
 
-                let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff;
                 
-                if (!item.confirmed) diffClass = 'diff-zero';
+                const isRecentlyScanned = item.code === lastScannedCode ? 'recently-scanned' : '';
 
                 let dynamicCols = '';
                 if (!item.confirmed) {
@@ -804,9 +843,9 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" oninput="handleLiveCalc('${item.code}')">
                             </div>
-                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
                                 <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
                             </div>
@@ -830,7 +869,7 @@
                 }
 
                 return `
-                    <div class="list-item ${statusClass}">
+                    <div class="list-item ${statusClass} ${isRecentlyScanned}" id="row-${item.code}">
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name}</div>
                         ${dynamicCols}
@@ -849,6 +888,10 @@
                 shipment.items[code].receivedQty = rVal;
                 shipment.items[code].labelQty = lVal;
                 shipment.items[code].confirmed = true;
+                
+                // Kontrol bitince de bu ürün üstte kalsın
+                lastScannedCode = code;
+
                 await saveShipmentToDb(shipment);
             }
         };
@@ -857,6 +900,7 @@
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
+                lastScannedCode = code; // Düzenlenen ürünü üst sıraya getir
                 await saveShipmentToDb(shipment);
             }
         };
