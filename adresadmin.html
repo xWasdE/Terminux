@@ -19,6 +19,8 @@
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
+        .btn-danger-main { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
+        .btn-danger-main:hover { background: #ff3333; color: #000; }
         
         main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; display: none; }
         
@@ -40,26 +42,26 @@
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         .btn-danger:hover { background: #ff3333; color: #000; border-color: #ff3333; }
 
-        .list-container { max-width: 900px; margin: 0 auto; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
-        .list-header { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
-        .list-item { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
-        .list-item:hover { background: #0c0c0c; }
-        .item-code { font-family: monospace; color: #888; font-size: 12px; }
-        .item-name { font-size: 13px; color: #fff; }
-        .item-addr { font-size: 14px; font-weight: bold; color: #00ff00; font-family: monospace; text-align: center; }
+        .list-container { max-width: 900px; margin: 0 auto; }
+        
+        /* Akordeon Tasarımı (Performans için) */
+        .accordion-item { margin-bottom: 10px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        .accordion-header { padding: 15px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: #ffbc00; transition: 0.2s; }
+        .accordion-header:hover { background: #1a1a1a; }
+        .accordion-body { display: none; padding: 10px; border-top: 1px solid #222; }
+        .accordion-row { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; }
+        .accordion-row:last-child { border-bottom: none; }
 
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00ff00; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; z-index: 99999; display: none; }
 
-        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px; }
             .setup-container { padding: 25px 20px; }
-            .list-header { display: none; }
-            .list-item { grid-template-columns: 1fr; gap: 10px; padding: 20px; text-align: center; border-left: 4px solid #333; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
-            .item-addr { font-size: 18px; color: #ffbc00; }
+            .accordion-row { flex-direction: column; text-align: center; gap: 10px; }
         }
     </style>
 </head>
@@ -76,7 +78,8 @@
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">KROKİ YÖNETİMİ</span></div>
-        <div style="display: flex; gap: 15px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+            <button class="btn-danger-main" onclick="deleteAllAddresses()">TÜMÜNÜ SİL</button>
             <button class="btn-secondary" style="border-color: #00ff00; color: #00ff00;" onclick="triggerExcel()">EXCEL İÇERİ AKTAR</button>
             <button class="btn-secondary" onclick="exportExcel()">EXCEL İNDİR</button>
             <a href="adres.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">ADRES BULUCU</a>
@@ -111,14 +114,8 @@
             </form>
         </div>
 
-        <div class="list-container">
-            <div class="list-header">
-                <div>KOD</div>
-                <div>ÜRÜN ADI</div>
-                <div style="text-align:center;">ADRES</div>
-                <div style="text-align:right;">İŞLEM</div>
-            </div>
-            <div id="mapping-list"></div>
+        <div class="list-container" id="mapping-list">
+            <!-- Akordeon Liste Buraya Gelecek -->
         </div>
     </main>
 
@@ -306,29 +303,51 @@
             }
         });
 
+        // AKORDEON LİSTE YAPISI
+        window.toggleAcc = (id) => {
+            const body = document.getElementById(`acc-${id}`);
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        };
+
         onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
             const listEl = document.getElementById('mapping-list');
             window.mappingData = [];
             snapshot.forEach(doc => window.mappingData.push({ id: doc.id, ...doc.data() }));
-            
-            window.mappingData.sort((a, b) => b.timestamp - a.timestamp);
 
             if (window.mappingData.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Kayıtlı haritalandırma bulunamadı.</div>';
+                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555; border: 1px solid #1a1a1a; border-radius: 8px;">Kayıtlı haritalandırma bulunamadı.</div>';
                 return;
             }
 
-            listEl.innerHTML = window.mappingData.map(item => `
-                <div class="list-item">
-                    <div class="item-code">${item.urunKodu}</div>
-                    <div class="item-name">${item.urunAdi}</div>
-                    <div class="item-addr">${item.adres}</div>
-                    <div style="display:flex; gap:5px; justify-content:flex-end;">
-                        <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
-                        <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+            const grouped = {};
+            window.mappingData.forEach(item => {
+                if (!grouped[item.adres]) grouped[item.adres] = [];
+                grouped[item.adres].push(item);
+            });
+
+            listEl.innerHTML = Object.keys(grouped).sort().map(addr => {
+                const items = grouped[addr];
+                let html = `
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAcc('${addr}')">
+                        <span>📍 RAF ADRESİ: ${addr}</span>
+                        <span>${items.length} Ürün ▼</span>
                     </div>
-                </div>
-            `).join('');
+                    <div class="accordion-body" id="acc-${addr}">
+                        ${items.map(item => `
+                            <div class="accordion-row">
+                                <div style="font-size: 12px; color: #888; font-family: monospace; width: 120px; text-align: left;">${item.urunKodu}</div>
+                                <div style="font-size: 13px; color: #fff; flex: 1; text-align: left;">${item.urunAdi}</div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
+                                    <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+                return html;
+            }).join('');
         });
 
         window.editMapping = (id) => {
@@ -352,6 +371,25 @@
             }
         };
 
+        // TÜMÜNÜ SİL FONKSİYONU
+        window.deleteAllAddresses = () => {
+            if(window.mappingData.length === 0) return alert("Silinecek kayıt bulunamadı.");
+            
+            if(confirm("DİKKAT: Veritabanındaki TÜM kroki adresleri kalıcı olarak silinecektir. Bu işlem geri alınamaz! Devam etmek istiyor musunuz?")) {
+                const pwd = prompt("Güvenlik Onayı: Lütfen yönetici parolasını girin");
+                if (pwd === "admin") {
+                    showToast("Tüm adresler siliniyor, lütfen sayfayı kapatmayın...");
+                    Promise.all(window.mappingData.map(item => deleteDoc(doc(db, "kroki_adresleri", item.id))))
+                    .then(() => {
+                        showToast("Veritabanı tamamen temizlendi!");
+                    })
+                    .catch(err => alert("Silme sırasında hata oluştu: " + err));
+                } else {
+                    alert("Parola hatalı! İşlem iptal edildi.");
+                }
+            }
+        };
+
         window.triggerExcel = () => document.getElementById('excel-import').click();
         
         window.importExcel = (e) => {
@@ -368,15 +406,20 @@
 
                     for (let r of rows) {
                         const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
-                        const name = r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'];
+                        
+                        // Ürün Adı sütünunu hatasız okumak için varyasyonları artırıldı
+                        const name = r['Ürün Adı'] || r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'] || r['İsim'] || r['Isim'];
+                        
                         let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
                         
                         if (code && addr) {
                             const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
                             
-                            // BDA ön ekini silme filtresi (Admin özelliği eklentisi)
-                            let cleanAddr = String(addr).trim();
-                            cleanAddr = cleanAddr.replace(/^BDA/i, ''); 
+                            // BDA ön ekini silme filtresi
+                            let cleanAddr = String(addr).trim().toUpperCase();
+                            if (cleanAddr.startsWith('BDA')) {
+                                cleanAddr = cleanAddr.substring(3).trim();
+                            }
 
                             const existing = window.mappingData.find(m => m.id === safeCode);
                             
