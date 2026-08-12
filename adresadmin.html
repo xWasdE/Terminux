@@ -44,7 +44,6 @@
 
         .list-container { max-width: 900px; margin: 0 auto; }
         
-        /* Akordeon Tasarımı (Performans için) */
         .accordion-item { margin-bottom: 10px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
         .accordion-header { padding: 15px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: #ffbc00; transition: 0.2s; }
         .accordion-header:hover { background: #1a1a1a; }
@@ -303,7 +302,6 @@
             }
         });
 
-        // AKORDEON LİSTE YAPISI
         window.toggleAcc = (id) => {
             const body = document.getElementById(`acc-${id}`);
             body.style.display = body.style.display === 'none' ? 'block' : 'none';
@@ -371,7 +369,6 @@
             }
         };
 
-        // TÜMÜNÜ SİL FONKSİYONU
         window.deleteAllAddresses = () => {
             if(window.mappingData.length === 0) return alert("Silinecek kayıt bulunamadı.");
             
@@ -407,7 +404,7 @@
                     for (let r of rows) {
                         const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
                         
-                        // Ürün Adı sütünunu hatasız okumak için varyasyonları artırıldı
+                        // Olası tüm sütun isimlerini destekleyecek şekilde genişletildi.
                         const name = r['Ürün Adı'] || r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'] || r['İsim'] || r['Isim'];
                         
                         let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
@@ -415,7 +412,6 @@
                         if (code && addr) {
                             const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
                             
-                            // BDA ön ekini silme filtresi
                             let cleanAddr = String(addr).trim().toUpperCase();
                             if (cleanAddr.startsWith('BDA')) {
                                 cleanAddr = cleanAddr.substring(3).trim();
@@ -454,7 +450,6 @@
             XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
         };
 
-        // BARKOD TARAMA (Admin)
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
