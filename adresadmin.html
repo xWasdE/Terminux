@@ -1,4 +1,4 @@
-<!-- kroki-admin.html (DEPO ADRES YÖNETİM PANELİ) -->
+<!-- adresadmin.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -13,6 +13,8 @@
         header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary:hover { background: #222; border-color: #555; }
         
         main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; }
         
@@ -53,6 +55,9 @@
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">KROKİ YÖNETİMİ</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="adres.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">ADRES BULUCU</a>
+        </div>
     </header>
 
     <main>
@@ -63,17 +68,16 @@
             <form id="mapping-form">
                 <div class="input-group">
                     <label>ÜRÜN KODU / BARKOD</label>
-                    <input type="text" id="p-code" required autocomplete="off" placeholder="Örn: 61530328">
+                    <input type="text" id="p-code" required autocomplete="off" placeholder="Örn: 61530328" data-barkod="" data-refno="">
                 </div>
                 <div class="input-group">
-                    <label>ÜRÜN İSMİ (Kroki ekranında görünecek)</label>
+                    <label>ÜRÜN İSMİ (Otomatik Dolar)</label>
                     <input type="text" id="p-name" required autocomplete="off" placeholder="Örn: Ağrı Bandı Mavi">
                 </div>
                 <div class="input-group">
                     <label>RAF ADRESİ (Krokideki ID)</label>
                     <select id="p-address" required>
                         <option value="" disabled selected>Adres Seçin...</option>
-                        <!-- JS ile doldurulacak -->
                     </select>
                 </div>
                 <button type="submit" class="btn-primary">SİSTEME KAYDET</button>
@@ -93,7 +97,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -107,7 +111,57 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Krokideki tam adres listesi
+        let catalogDb = {};
+
+        const loadCatalog = async () => {
+            try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || "") 
+                                };
+                            });
+                            return;
+                        }
+                    } catch(e) { }
+                }
+
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
+                    getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
+                ]);
+                
+                const processSnap = (snap) => {
+                    if (!snap || typeof snap.forEach !== 'function') return;
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const key = String(d.urunKodu || doc.id || "");
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { 
+                                urunKodu: key, 
+                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
+                                barkod: String(d.barkod || ""), 
+                                refNo: String(d.refNo || "") 
+                            };
+                        }
+                    });
+                };
+                
+                processSnap(anaSnap); processSnap(amSnap);
+            } catch (err) {
+            }
+        };
+
+        loadCatalog();
+
         const validAddresses = [
             '05.01.01', '04.01.01',
             '07.01.05', '01.01.05', '01.02.05',
@@ -136,12 +190,49 @@
             setTimeout(() => t.style.display = 'none', 2000);
         };
 
-        // Form Gönderme İşlemi
+        document.getElementById('p-code').addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            const codeInput = document.getElementById('p-code');
+            const nameInput = document.getElementById('p-name');
+            
+            if (!val) {
+                nameInput.value = '';
+                codeInput.dataset.barkod = '';
+                codeInput.dataset.refNo = '';
+                return;
+            }
+
+            let matchedProduct = null;
+            if (catalogDb[val]) {
+                matchedProduct = catalogDb[val];
+            } else {
+                for (const key in catalogDb) {
+                    if (catalogDb[key].barkod.toLowerCase() === val || catalogDb[key].refNo.toLowerCase() === val) {
+                        matchedProduct = catalogDb[key];
+                        break;
+                    }
+                }
+            }
+
+            if (matchedProduct) {
+                nameInput.value = matchedProduct.urunAdi;
+                codeInput.dataset.barkod = matchedProduct.barkod || "";
+                codeInput.dataset.refNo = matchedProduct.refNo || "";
+            } else {
+                nameInput.value = '';
+                codeInput.dataset.barkod = '';
+                codeInput.dataset.refNo = '';
+            }
+        });
+
         document.getElementById('mapping-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const code = document.getElementById('p-code').value.trim();
+            const codeEl = document.getElementById('p-code');
+            const code = codeEl.value.trim();
             const name = document.getElementById('p-name').value.trim();
             const address = document.getElementById('p-address').value;
+            const barkod = codeEl.dataset.barkod || "";
+            const refNo = codeEl.dataset.refNo || "";
 
             const newDocId = `MAP-${Date.now()}`;
 
@@ -149,21 +240,24 @@
                 await setDoc(doc(db, "kroki_adresleri", newDocId), {
                     urunKodu: code,
                     urunAdi: name,
+                    barkod: barkod,
+                    refNo: refNo,
                     adres: address,
                     timestamp: Date.now()
                 });
                 
-                document.getElementById('p-code').value = '';
+                codeEl.value = '';
+                codeEl.dataset.barkod = '';
+                codeEl.dataset.refNo = '';
                 document.getElementById('p-name').value = '';
                 document.getElementById('p-address').value = '';
-                document.getElementById('p-code').focus();
+                codeEl.focus();
                 showToast();
             } catch (error) {
                 alert("Kayıt Hatası: " + error.message);
             }
         });
 
-        // Listeyi Çek ve Oluştur
         onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
             const listEl = document.getElementById('mapping-list');
             let items = [];
