@@ -1,0 +1,201 @@
+<!-- kroki-admin.html (DEPO ADRES YÖNETİM PANELİ) -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Kroki Yönetimi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        
+        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; }
+        
+        .setup-container { max-width: 600px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; position: relative; }
+        .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ff00; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
+        .input-group input:focus, .input-group select:focus { border-color: #ffbc00; }
+        
+        .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 8px 12px; border-radius: 4px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 10px; text-transform: uppercase; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+
+        .list-container { max-width: 800px; margin: 0 auto; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-header { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
+        .list-item { display: grid; grid-template-columns: 1fr 3fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; }
+        .list-item:hover { background: #0c0c0c; }
+        .item-code { font-family: monospace; color: #888; font-size: 12px; }
+        .item-name { font-size: 13px; color: #fff; }
+        .item-addr { font-size: 14px; font-weight: bold; color: #00ff00; font-family: monospace; text-align: center; }
+
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00ff00; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; z-index: 99999; display: none; }
+
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px; }
+            .setup-container { padding: 25px 20px; }
+            .list-header { display: none; }
+            .list-item { grid-template-columns: 1fr; gap: 10px; padding: 20px; text-align: center; border-left: 4px solid #333; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; }
+            .item-addr { font-size: 18px; color: #ffbc00; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">KROKİ YÖNETİMİ</span></div>
+    </header>
+
+    <main>
+        <div id="toast" class="toast">Kayıt Başarılı!</div>
+
+        <div class="setup-container">
+            <div class="setup-title">YENİ ADRES EŞLEŞTİR</div>
+            <form id="mapping-form">
+                <div class="input-group">
+                    <label>ÜRÜN KODU / BARKOD</label>
+                    <input type="text" id="p-code" required autocomplete="off" placeholder="Örn: 61530328">
+                </div>
+                <div class="input-group">
+                    <label>ÜRÜN İSMİ (Kroki ekranında görünecek)</label>
+                    <input type="text" id="p-name" required autocomplete="off" placeholder="Örn: Ağrı Bandı Mavi">
+                </div>
+                <div class="input-group">
+                    <label>RAF ADRESİ (Krokideki ID)</label>
+                    <select id="p-address" required>
+                        <option value="" disabled selected>Adres Seçin...</option>
+                        <!-- JS ile doldurulacak -->
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">SİSTEME KAYDET</button>
+            </form>
+        </div>
+
+        <div class="list-container">
+            <div class="list-header">
+                <div>KOD</div>
+                <div>ÜRÜN ADI</div>
+                <div style="text-align:center;">ADRES</div>
+                <div style="text-align:right;">İŞLEM</div>
+            </div>
+            <div id="mapping-list"></div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Krokideki tam adres listesi
+        const validAddresses = [
+            '05.01.01', '04.01.01',
+            '07.01.05', '01.01.05', '01.02.05',
+            '07.01.04', '01.01.04', '01.02.04',
+            '07.01.03', '01.01.03', '01.02.03',
+            '07.01.02', '01.01.02', '01.02.02',
+            '07.01.01', '01.01.01', '01.02.01',
+            '02.01.05', '03.01.05', '06.01.05',
+            '02.01.04', '03.01.04', '06.01.04',
+            '02.01.03', '03.01.03', '06.01.03',
+            '02.01.02', '03.01.02', '06.01.02',
+            '02.01.01', '03.01.01', '06.01.01'
+        ];
+
+        const selectEl = document.getElementById('p-address');
+        validAddresses.forEach(addr => {
+            const opt = document.createElement('option');
+            opt.value = addr;
+            opt.textContent = addr;
+            selectEl.appendChild(opt);
+        });
+
+        const showToast = () => {
+            const t = document.getElementById('toast');
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
+        };
+
+        // Form Gönderme İşlemi
+        document.getElementById('mapping-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('p-code').value.trim();
+            const name = document.getElementById('p-name').value.trim();
+            const address = document.getElementById('p-address').value;
+
+            const newDocId = `MAP-${Date.now()}`;
+
+            try {
+                await setDoc(doc(db, "kroki_adresleri", newDocId), {
+                    urunKodu: code,
+                    urunAdi: name,
+                    adres: address,
+                    timestamp: Date.now()
+                });
+                
+                document.getElementById('p-code').value = '';
+                document.getElementById('p-name').value = '';
+                document.getElementById('p-address').value = '';
+                document.getElementById('p-code').focus();
+                showToast();
+            } catch (error) {
+                alert("Kayıt Hatası: " + error.message);
+            }
+        });
+
+        // Listeyi Çek ve Oluştur
+        onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
+            const listEl = document.getElementById('mapping-list');
+            let items = [];
+            snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+            
+            items.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (items.length === 0) {
+                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">Kayıtlı haritalandırma bulunamadı.</div>';
+                return;
+            }
+
+            listEl.innerHTML = items.map(item => `
+                <div class="list-item">
+                    <div class="item-code">${item.urunKodu}</div>
+                    <div class="item-name">${item.urunAdi}</div>
+                    <div class="item-addr">${item.adres}</div>
+                    <div style="text-align:right;">
+                        <button class="btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        window.deleteMapping = async (id) => {
+            if (confirm("Bu haritalandırmayı silmek istediğinize emin misiniz?")) {
+                try {
+                    await deleteDoc(doc(db, "kroki_adresleri", id));
+                } catch(e) {}
+            }
+        };
+
+    </script>
+</body>
+</html>
