@@ -1,4 +1,3 @@
-<!-- adresadmin.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -218,7 +217,7 @@
             '01.02.05', '01.02.04', '01.02.03', '01.02.02', '01.02.01',
             '02.01.05', '02.01.04', '02.01.03', '02.01.02', '02.01.01',
             '03.01.05', '03.01.04', '03.01.03', '03.01.02', '03.01.01',
-            '06.01.05', '06.01.04', '06.01.03', '06.01.02', '06.01.01'
+            '06.01.04', '06.01.03', '06.01.02', '06.01.01'
         ];
 
         validAddresses.sort(); 
@@ -407,6 +406,7 @@
             XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
         };
 
+        // BARKOD TARAMA (Admin)
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
