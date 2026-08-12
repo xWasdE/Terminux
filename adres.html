@@ -1,3 +1,4 @@
+<!-- adres.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -34,7 +35,6 @@
         .di-name { color: #fff; font-size: 14px; font-weight: 600; }
         .di-code { color: #888; font-size: 12px; font-family: monospace; }
 
-        /* KROKİ CSS */
         .map-wrapper { width: 100%; max-width: 900px; aspect-ratio: 4/3; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin-bottom: 50px; }
         
         .map-door { position: absolute; top: 0; left: 0; width: 25%; height: 20%; border-right: 2px dashed #333; border-bottom: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #444; font-weight: 900; font-size: 20px; letter-spacing: 2px; }
@@ -118,7 +118,6 @@
                 </div>
             </div>
 
-            <!-- SOL RAF (Sütunlar: 07.01, 01.01, 01.02 | Satırlar: 05 -> 01) -->
             <div class="map-shelf-1">
                 <div id="cell-07.01.05" class="cell">07.01.05</div>
                 <div id="cell-01.01.05" class="cell">01.01.05</div>
@@ -141,7 +140,6 @@
                 <div id="cell-01.02.01" class="cell">01.02.01</div>
             </div>
 
-            <!-- SAĞ RAF (Sütunlar: 02.01, 03.01, 06.01 | Satırlar: 05 -> 01) Doğru Oryantasyon -->
             <div class="map-shelf-2">
                 <div id="cell-02.01.05" class="cell">02.01.05</div>
                 <div id="cell-03.01.05" class="cell">03.01.05</div>
@@ -225,8 +223,10 @@
                     id: doc.id,
                     urunKodu: data.urunKodu || "",
                     urunAdi: data.urunAdi || "",
+                    barkod: data.barkod || "",
+                    refNo: data.refNo || "",
                     adres: data.adres || "",
-                    searchStr: `${data.urunKodu} ${data.urunAdi}`.toLowerCase()
+                    searchStr: `${data.urunKodu} ${data.urunAdi} ${data.barkod || ""} ${data.refNo || ""}`.toLowerCase()
                 });
             });
         });
@@ -251,12 +251,15 @@
                 const matches = mappingData.filter(m => terms.every(t => m.searchStr.includes(t))).slice(0, 10);
 
                 if (matches.length > 0) {
-                    dropdownEl.innerHTML = matches.map(m => `
-                        <div class="dropdown-item" onclick="selectProduct('${m.id}')">
-                            <div class="di-name">${m.urunAdi}</div>
-                            <div class="di-code">${m.urunKodu}</div>
-                        </div>
-                    `).join('');
+                    dropdownEl.innerHTML = matches.map(m => {
+                        const refText = m.refNo ? ` | REF: ${m.refNo}` : '';
+                        return `
+                            <div class="dropdown-item" onclick="selectProduct('${m.id}')">
+                                <div class="di-name">${m.urunAdi}</div>
+                                <div class="di-code">KOD: ${m.urunKodu}${refText}</div>
+                            </div>
+                        `;
+                    }).join('');
                     dropdownEl.style.display = 'block';
                 } else {
                     dropdownEl.innerHTML = '<div style="padding: 15px; color: #ff3333; text-align: center; font-size: 12px; font-weight:bold;">Sistemde haritalanmış eşleşme bulunamadı.</div>';
