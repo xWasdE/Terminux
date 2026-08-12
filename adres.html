@@ -1,0 +1,262 @@
+<!-- kroki.html (DEPO ADRES BULUCU - KULLANICI EKRANI) -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Depo Adres Bulucu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        
+        main { flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; }
+
+        .search-container { width: 100%; max-width: 900px; margin-bottom: 20px; position: relative; }
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 20px; font-size: 18px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; text-align: center; }
+        .search-input:focus { border-color: #ff3333; }
+        
+        .result-banner { display: none; width: 100%; max-width: 900px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; animation: fadeIn 0.3s ease; }
+        .result-title { font-size: 14px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .result-name { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+        .result-address { font-size: 36px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 5px; }
+        .dropdown-item { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-item:hover { background: #111; border-color: #ff3333; border-left: 4px solid #ff3333; }
+        .di-name { color: #fff; font-size: 14px; font-weight: 600; }
+        .di-code { color: #888; font-size: 12px; font-family: monospace; }
+
+        /* KROKİ CSS */
+        .map-wrapper { width: 100%; max-width: 900px; aspect-ratio: 4/3; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin-bottom: 50px; }
+        
+        .map-door { position: absolute; top: 0; left: 0; width: 25%; height: 20%; border-right: 2px dashed #333; border-bottom: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #444; font-weight: 900; font-size: 20px; letter-spacing: 2px; }
+        .map-door::after { content: '↓'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 30px; }
+        
+        .map-desk { position: absolute; top: 5%; right: 5%; width: 25%; height: 25%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; }
+        .map-desk-title { font-weight: 900; font-size: 18px; margin-bottom: 5px; letter-spacing: 2px; }
+        .map-desk-sub { font-size: 10px; }
+
+        .map-lens { position: absolute; top: 25%; left: 0; width: 45%; height: 20%; border-top: 2px solid #333; border-right: 2px solid #333; border-bottom: 2px solid #333; background: #080808; display: flex; flex-direction: column; }
+        .map-lens-title { background: #111; color: #888; font-size: 10px; font-weight: bold; text-align: center; padding: 5px; text-transform: uppercase; border-bottom: 1px solid #222; }
+        .map-lens-grid { display: grid; grid-template-columns: 1fr 1fr; flex: 1; gap: 2px; background: #222; padding: 2px; }
+        
+        .map-shelf-1 { position: absolute; bottom: 0; left: 0; width: 45%; height: 50%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, 1fr); gap: 2px; background: #222; padding: 2px; border-top: 2px solid #333; border-right: 2px solid #333; }
+        .map-shelf-2 { position: absolute; bottom: 0; right: 5%; width: 45%; height: 50%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(5, 1fr); gap: 2px; background: #222; padding: 2px; border-top: 2px solid #333; border-left: 2px solid #333; border-right: 2px solid #333; }
+        
+        .cell { background: #0a0a0a; display: flex; align-items: center; justify-content: center; color: #555; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 2px; text-align: center; }
+        
+        .cell.active { 
+            animation: flashRed 0.8s infinite alternate; 
+            background: #ff0000; 
+            color: #fff; 
+            font-weight: 900; 
+            font-size: 14px; 
+            box-shadow: 0 0 20px #ff0000; 
+            z-index: 10; 
+            position: relative; 
+        }
+
+        @keyframes flashRed {
+            from { background: rgba(255,0,0,0.5); box-shadow: 0 0 10px red; transform: scale(1); }
+            to { background: rgba(255,0,0,1); box-shadow: 0 0 30px red; transform: scale(1.05); }
+        }
+
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px; }
+            .map-wrapper { min-height: 400px; aspect-ratio: auto; }
+            .cell { font-size: 8px; }
+            .cell.active { font-size: 10px; }
+            .map-door { font-size: 14px; }
+            .map-desk-title { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">DEPO ADRES BULUCU</span></div>
+    </header>
+
+    <main>
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-input" placeholder="Ürün Adı, Barkod veya Kod ile arayın..." autocomplete="off">
+            <div id="search-dropdown" class="dropdown"></div>
+        </div>
+
+        <div id="result-banner" class="result-banner">
+            <div class="result-title">EŞLEŞEN ÜRÜN BULUNDU</div>
+            <div id="result-name" class="result-name">-</div>
+            <div id="result-address" class="result-address">-</div>
+        </div>
+
+        <div class="map-wrapper">
+            <div class="map-door">KAPI</div>
+            <div class="map-desk">
+                <div class="map-desk-title">MASA</div>
+                <div class="map-desk-sub">Bilgisayarlar</div>
+            </div>
+            
+            <div class="map-lens">
+                <div class="map-lens-title">Lens ve Göz M. / Süturlar</div>
+                <div class="map-lens-grid">
+                    <div id="cell-05.01.01" class="cell">05.01.01</div>
+                    <div id="cell-04.01.01" class="cell">04.01.01</div>
+                </div>
+            </div>
+
+            <!-- SOL RAF (Sütunlar: 07.01, 01.01, 01.02 | Satırlar: 05 -> 01) -->
+            <div class="map-shelf-1">
+                <div id="cell-07.01.05" class="cell">07.01.05</div>
+                <div id="cell-01.01.05" class="cell">01.01.05</div>
+                <div id="cell-01.02.05" class="cell">01.02.05</div>
+
+                <div id="cell-07.01.04" class="cell">07.01.04</div>
+                <div id="cell-01.01.04" class="cell">01.01.04</div>
+                <div id="cell-01.02.04" class="cell">01.02.04</div>
+
+                <div id="cell-07.01.03" class="cell">07.01.03</div>
+                <div id="cell-01.01.03" class="cell">01.01.03</div>
+                <div id="cell-01.02.03" class="cell">01.02.03</div>
+
+                <div id="cell-07.01.02" class="cell">07.01.02</div>
+                <div id="cell-01.01.02" class="cell">01.01.02</div>
+                <div id="cell-01.02.02" class="cell">01.02.02</div>
+
+                <div id="cell-07.01.01" class="cell">07.01.01</div>
+                <div id="cell-01.01.01" class="cell">01.01.01</div>
+                <div id="cell-01.02.01" class="cell">01.02.01</div>
+            </div>
+
+            <!-- SAĞ RAF (Sütunlar: 02.01, 03.01, 06.01 | Satırlar: 05 -> 01) Düzeltilmiş Oryantasyon -->
+            <div class="map-shelf-2">
+                <div id="cell-02.01.05" class="cell">02.01.05</div>
+                <div id="cell-03.01.05" class="cell">03.01.05</div>
+                <div id="cell-06.01.05" class="cell">06.01.05</div>
+
+                <div id="cell-02.01.04" class="cell">02.01.04</div>
+                <div id="cell-03.01.04" class="cell">03.01.04</div>
+                <div id="cell-06.01.04" class="cell">06.01.04</div>
+
+                <div id="cell-02.01.03" class="cell">02.01.03</div>
+                <div id="cell-03.01.03" class="cell">03.01.03</div>
+                <div id="cell-06.01.03" class="cell">06.01.03</div>
+
+                <div id="cell-02.01.02" class="cell">02.01.02</div>
+                <div id="cell-03.01.02" class="cell">03.01.02</div>
+                <div id="cell-06.01.02" class="cell">06.01.02</div>
+
+                <div id="cell-02.01.01" class="cell">02.01.01</div>
+                <div id="cell-03.01.01" class="cell">03.01.01</div>
+                <div id="cell-06.01.01" class="cell">06.01.01</div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let mappingData = [];
+        let searchTimeout = null;
+
+        const inputEl = document.getElementById('search-input');
+        const dropdownEl = document.getElementById('search-dropdown');
+        const bannerEl = document.getElementById('result-banner');
+        const nameEl = document.getElementById('result-name');
+        const addressEl = document.getElementById('result-address');
+
+        // Firestore'dan eşleşme listesini canlı çek
+        onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
+            mappingData = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                mappingData.push({
+                    id: doc.id,
+                    urunKodu: data.urunKodu || "",
+                    urunAdi: data.urunAdi || "",
+                    adres: data.adres || "",
+                    searchStr: `${data.urunKodu} ${data.urunAdi}`.toLowerCase()
+                });
+            });
+        });
+
+        const clearHighlights = () => {
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
+            bannerEl.style.display = 'none';
+        };
+
+        inputEl.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            clearTimeout(searchTimeout);
+            clearHighlights();
+
+            if (val.length < 2) {
+                dropdownEl.style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                const terms = val.split(/\s+/);
+                const matches = mappingData.filter(m => terms.every(t => m.searchStr.includes(t))).slice(0, 10);
+
+                if (matches.length > 0) {
+                    dropdownEl.innerHTML = matches.map(m => `
+                        <div class="dropdown-item" onclick="selectProduct('${m.id}')">
+                            <div class="di-name">${m.urunAdi}</div>
+                            <div class="di-code">${m.urunKodu}</div>
+                        </div>
+                    `).join('');
+                    dropdownEl.style.display = 'block';
+                } else {
+                    dropdownEl.innerHTML = '<div style="padding: 15px; color: #ff3333; text-align: center; font-size: 12px; font-weight:bold;">Sistemde haritalanmış eşleşme bulunamadı.</div>';
+                    dropdownEl.style.display = 'block';
+                }
+            }, 150);
+        });
+
+        window.selectProduct = (id) => {
+            const product = mappingData.find(m => m.id === id);
+            dropdownEl.style.display = 'none';
+            inputEl.value = product.urunAdi;
+
+            if (product && product.adres) {
+                const targetCell = document.getElementById(`cell-${product.adres}`);
+                if (targetCell) {
+                    targetCell.classList.add('active');
+                    nameEl.innerText = product.urunAdi;
+                    addressEl.innerText = product.adres;
+                    bannerEl.style.display = 'block';
+                    window.playBeep('success');
+                }
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+                dropdownEl.style.display = 'none';
+            }
+        });
+
+    </script>
+</body>
+</html>
