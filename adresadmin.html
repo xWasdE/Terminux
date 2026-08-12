@@ -369,21 +369,26 @@
                     for (let r of rows) {
                         const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
                         const name = r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'];
-                        const addr = r['Adres'] || r['ADRES'] || r['adres'];
+                        let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
                         
                         if (code && addr) {
                             const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
+                            
+                            // BDA ön ekini silme filtresi (Admin özelliği eklentisi)
+                            let cleanAddr = String(addr).trim();
+                            cleanAddr = cleanAddr.replace(/^BDA/i, ''); 
+
                             const existing = window.mappingData.find(m => m.id === safeCode);
                             
                             if (existing) {
-                                if (existing.adres !== String(addr).trim() || existing.urunAdi !== String(name).trim()) {
-                                    await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: String(addr).trim(), timestamp: Date.now() }, {merge: true});
+                                if (existing.adres !== cleanAddr || existing.urunAdi !== String(name).trim()) {
+                                    await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() }, {merge: true});
                                     updated++;
                                 } else {
                                     skipped++;
                                 }
                             } else {
-                                await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: String(addr).trim(), timestamp: Date.now() });
+                                await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() });
                                 added++;
                             }
                         }
@@ -406,6 +411,7 @@
             XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
         };
 
+        // BARKOD TARAMA (Admin)
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
