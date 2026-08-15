@@ -16,7 +16,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
+        main { flex: 1; padding: 20px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
         .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -54,14 +54,14 @@
 
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
 
-        /* AMELİYATHANE MANUEL YERLEŞİM CSS */
+        /* AMELİYATHANE MANUEL YERLEŞİM CSS (SABİT) */
         .map-wrapper-am { min-width: 950px; }
-        .map-wrapper-am .map-door-am { position: absolute; top: 10%; left: 4%; width: 12%; height: 14%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; z-index: 2; }
+        .map-wrapper-am .map-door-am { position: absolute; top: 0.2%; left: 2.3%; width: 9.9%; height: 11.9%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; z-index: 2; }
         .map-wrapper-am .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
-        .map-wrapper-am .map-lens-am { position: absolute; top: 30%; left: 4%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
-        .map-wrapper-am .map-shelf-1-am { position: absolute; top: 25%; bottom: 6%; left: 16%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-shelf-2-am { position: absolute; top: 25%; bottom: 6%; left: 52%; width: 38%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-desk-am { position: absolute; top: 25%; right: 4%; width: 6%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
+        .map-wrapper-am .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 10.7%; height: 19.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
+        .map-wrapper-am .map-shelf-1-am { position: absolute; top: 31.6%; left: 0.1%; width: 44.6%; height: 67.0%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
+        .map-wrapper-am .map-shelf-2-am { position: absolute; top: 25.9%; left: 54.5%; width: 44.6%; height: 72.8%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
+        .map-wrapper-am .map-desk-am { position: absolute; top: 0.0%; left: 90.2%; width: 8.9%; height: 25.8%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
         .map-wrapper-am .map-desk-title-am { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
@@ -91,7 +91,7 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
         .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
@@ -140,7 +140,7 @@
         </div>
 
         <div class="map-scroll-container">
-            <!-- AMELİYATHANE HARİTASI (MANUEL YERLEŞİM) -->
+            <!-- AMELİYATHANE HARİTASI (MANUEL YERLEŞİM - CSS UYUMLU) -->
             <div class="map-wrapper map-wrapper-am" id="map-area-am" style="display: block;">
                 <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
@@ -150,12 +150,12 @@
                     <div class="map-desk-title-am">MASA</div>
                 </div>
                 
-                <div class="map-lens-am" id="lens-am">
+                <div class="map-lens-am">
                     <div id="cell-05.01.01" class="cell cell-lens">05.01.01</div>
                     <div id="cell-04.01.01" class="cell cell-lens">04.01.01</div>
                 </div>
 
-                <div class="map-shelf-1-am" id="shelf-1-am">
+                <div class="map-shelf-1-am">
                     <div id="cell-07.01.05" class="cell">07.01.05</div>
                     <div id="cell-07.01.04" class="cell">07.01.04</div>
                     <div id="cell-07.01.03" class="cell">07.01.03</div>
@@ -175,7 +175,7 @@
                     <div id="cell-01.02.01" class="cell">01.02.01</div>
                 </div>
 
-                <div class="map-shelf-2-am" id="shelf-2-am">
+                <div class="map-shelf-2-am">
                     <div id="cell-02.01.01" class="cell">02.01.01</div>
                     <div id="cell-02.01.02" class="cell">02.01.02</div>
                     <div id="cell-02.01.03" class="cell">02.01.03</div>
@@ -199,7 +199,7 @@
                 </div>
             </div>
 
-            <!-- ANA DEPO HARİTASI (TASARLAYICIDAN ÇIKAN KOD) -->
+            <!-- ANA DEPO HARİTASI (Tasarlayıcıdan Alınan Kod) -->
             <div class="map-wrapper" id="map-area-ana" style="display: none; min-width: 1200px;">
                 <svg id="path-svg-ana" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
@@ -638,41 +638,43 @@
             let pathStr = "";
 
             if (isAm) {
-                // AMELİYATHANE MANUEL ZİGZAG ALGORİTMASI
-                const shelf1 = document.getElementById('shelf-1-am');
-                const shelf2 = document.getElementById('shelf-2-am');
-                const lens = document.getElementById('lens-am');
+                const shelf1 = map.querySelector('.map-shelf-1-am');
+                const shelf2 = map.querySelector('.map-shelf-2-am');
+                const lens = map.querySelector('.map-lens-am');
                 
-                if(!shelf1 || !shelf2 || !lens) return;
-
-                const shelf1Rect = shelf1.getBoundingClientRect();
-                const shelf2Rect = shelf2.getBoundingClientRect();
-                const lensRect = lens.getBoundingClientRect();
-
-                const dX = (doorRect.right - mapRect.left) + 10;
-                const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
-                const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
-                const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
-
-                const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
-                const gapX = ((lensRect.right + shelf1Rect.left) / 2) - mapRect.left;
-                const offset = window.innerWidth <= 900 ? 12 : 20;
-
-                if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
-                    const endX = (targetRect.right - mapRect.left) + offset;
-                    pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                if(!shelf1 || !shelf2 || !lens) {
+                    const startX = doorRect.left + doorRect.width / 2 - mapRect.left;
+                    const startY = doorRect.top + doorRect.height / 2 - mapRect.top;
+                    const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
+                    const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
+                    pathStr = `M ${startX} ${startY} L ${endX} ${endY}`;
                 } else {
+                    const shelf1Rect = shelf1.getBoundingClientRect();
+                    const shelf2Rect = shelf2.getBoundingClientRect();
+                    
+                    const startX = (doorRect.right - mapRect.left) + 15;
+                    const startY = (doorRect.top + doorRect.height / 2) - mapRect.top;
+                    const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
+                    const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
+
+                    const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
                     const safeY = ((doorRect.bottom + shelf1Rect.top) / 2) - mapRect.top;
-                    let endX = tX;
-                    if (tX < cX) {
-                        endX = (targetRect.right - mapRect.left) + offset;
+                    const offset = window.innerWidth <= 900 ? 12 : 20;
+
+                    if (targetIdRaw.startsWith("05.") || targetIdRaw.startsWith("04.")) {
+                        const endX = (targetRect.right - mapRect.left) + offset;
+                        pathStr = `M ${startX} ${startY} L ${startX} ${tY} L ${endX} ${tY}`;
                     } else {
-                        endX = (targetRect.left - mapRect.left) - offset;
+                        let endX = tX;
+                        if (tX < cX) {
+                            endX = (targetRect.right - mapRect.left) + offset;
+                        } else {
+                            endX = (targetRect.left - mapRect.left) - offset;
+                        }
+                        pathStr = `M ${startX} ${startY} L ${startX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
                     }
-                    pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
                 }
             } else {
-                // ANA DEPO A* ALGORİTMASI
                 const startX = doorRect.left + doorRect.width / 2 - mapRect.left;
                 const startY = doorRect.top + doorRect.height / 2 - mapRect.top;
                 const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
