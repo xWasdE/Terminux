@@ -16,7 +16,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
+        main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
         .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -54,14 +54,14 @@
 
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
 
-        /* AMELİYATHANE YENİ TASARLAYICI CSS'LERİ */
+        /* AMELİYATHANE MANUEL YERLEŞİM CSS */
         .map-wrapper-am { min-width: 950px; }
-        .map-wrapper-am .map-door-am { position: absolute; top: -0.2%; left: 2.4%; width: 13.9%; height: 12.4%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; z-index: 2; }
+        .map-wrapper-am .map-door-am { position: absolute; top: 10%; left: 4%; width: 12%; height: 14%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; z-index: 2; }
         .map-wrapper-am .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
-        .map-wrapper-am .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 12.5%; height: 23.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
-        .map-wrapper-am .map-shelf-1-am { position: absolute; top: 35.5%; left: 0.2%; width: 45.1%; height: 62.5%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-shelf-2-am { position: absolute; top: 26.6%; left: 53.9%; width: 45.1%; height: 71.4%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-desk-am { position: absolute; top: 0.5%; left: 87.2%; width: 11.7%; height: 25.6%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
+        .map-wrapper-am .map-lens-am { position: absolute; top: 30%; left: 4%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
+        .map-wrapper-am .map-shelf-1-am { position: absolute; top: 25%; bottom: 6%; left: 16%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
+        .map-wrapper-am .map-shelf-2-am { position: absolute; top: 25%; bottom: 6%; left: 52%; width: 38%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
+        .map-wrapper-am .map-desk-am { position: absolute; top: 25%; right: 4%; width: 6%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
         .map-wrapper-am .map-desk-title-am { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
@@ -91,7 +91,8 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { flex-shrink: 0; width: 100%; background-color: #050505; color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
@@ -139,7 +140,7 @@
         </div>
 
         <div class="map-scroll-container">
-            <!-- AMELİYATHANE HARİTASI (Güncellenmiş Tasarım) -->
+            <!-- AMELİYATHANE HARİTASI (MANUEL YERLEŞİM) -->
             <div class="map-wrapper map-wrapper-am" id="map-area-am" style="display: block;">
                 <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
@@ -198,10 +199,11 @@
                 </div>
             </div>
 
-            <!-- ANA DEPO HARİTASI -->
+            <!-- ANA DEPO HARİTASI (TASARLAYICIDAN ÇIKAN KOD) -->
             <div class="map-wrapper" id="map-area-ana" style="display: none; min-width: 1200px;">
                 <svg id="path-svg-ana" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
+                <div class="map-door" id="door-ana" style="position:absolute; top:-0.2%; left:2.4%; width:13.9%; height:12.4%; transform:rotate(0deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#888; font-weight:900; font-size:16px; letter-spacing:2px; border-right:2px dashed #666; border-bottom:2px dashed #666; z-index:5;">KAPI <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:20px; color:#aaa;">↓</span></div>
                 <div class="map-grey-cabinet" style="position:absolute; top:81.84%; left:0%; width:5.08%; height:8.05%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
@@ -213,7 +215,7 @@
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
-                <div class="map-shelf-1" style="position:absolute; top:71.89%; left:0%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
+                <div class="map-shelf-1" style="position:absolute; top:71.75%; left:0%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
@@ -257,7 +259,6 @@
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
-                <div id="door-ana" style="position:absolute; top:26.31%; left:82.67%; width:5.25%; height:7.29%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
                 <div style="position:absolute; top:34.13%; left:86.02%; width:0.33%; height:66%; transform:rotate(0deg); box-sizing:border-box; background:#1a1a1a; border:1px solid #111;"></div>
                 <div class="map-cabinet" style="position:absolute; top:35.06%; left:76.92%; width:8.83%; height:14.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
@@ -381,6 +382,9 @@
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
+                <div style="position:absolute; top:0.8%; left:37.03%; width:48.83%; height:17.65%; transform:rotate(0deg); box-sizing:border-box; border:4px solid #333; background:rgba(255,255,255,0.02); display:flex; align-items:flex-start; justify-content:flex-start; padding:10px; pointer-events:none;">
+                    <div style="color:#555; font-size:14px; font-weight:900; letter-spacing:2px; text-transform:uppercase;"></div>
+                </div>
                 <div style="position:absolute; top:19.29%; left:69.42%; width:13.08%; height:4.6%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
                 <div style="position:absolute; top:23.53%; left:74.33%; width:3%; height:3.1%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#1a1a1a; border-radius:50%; z-index:5;"></div>
                 <div style="position:absolute; top:4.25%; left:67.5%; width:13.08%; height:4.6%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
@@ -400,7 +404,7 @@
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
                 <div style="position:absolute; top:18.71%; left:39.25%; width:8.5%; height:4.82%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
-                <div class="map-cabinet" style="position:absolute; top:39.88%; left:58.92%; width:5.58%; height:13.76%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(2, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
+                <div class="map-cabinet" style="position:absolute; top:33.17%; left:58.75%; width:6%; height:6.35%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(2, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
@@ -410,7 +414,7 @@
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                 </div>
-                <div class="map-cabinet" style="position:absolute; top:34.12%; left:33.42%; width:15.08%; height:5.29%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
+                <div class="map-cabinet" style="position:absolute; top:32.95%; left:23.5%; width:35%; height:6.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
                     <div class="cell cell-hidden" style="visibility:hidden;"></div>
@@ -631,95 +635,131 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            const startX = doorRect.right - mapRect.left + 15;
-            const startY = doorRect.top + doorRect.height / 2 - mapRect.top;
-            
-            const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
-            const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
-
-            const cellSize = 10;
-            const gridW = Math.ceil(mapRect.width / cellSize);
-            const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1));
-
-            const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
-            
-            obstacles.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
-                const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
-                const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
-                const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
-
-                for(let y = sy; y <= ey; y++) {
-                    for(let x = sx; x <= ex; x++) {
-                        if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                            grid[y][x] = 0;
-                        }
-                    }
-                }
-            });
-
-            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
-            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
-            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
-            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 20) / cellSize));
-
-            for(let y = tsy; y <= tey; y++) {
-                for(let x = tsx; x <= tex; x++) {
-                    if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1;
-                }
-            }
-
-            const sNode = {x: Math.floor(startX / cellSize), y: Math.floor(startY / cellSize)};
-            const eNode = {x: Math.floor(endX / cellSize), y: Math.floor(endY / cellSize)};
-            
-            if(sNode.y >= 0 && sNode.y < gridH && sNode.x >= 0 && sNode.x < gridW) grid[sNode.y][sNode.x] = 1;
-            if(eNode.y >= 0 && eNode.y < gridH && eNode.x >= 0 && eNode.x < gridW) grid[eNode.y][eNode.x] = 1;
-
-            const q = [sNode];
-            const cameFrom = {};
-            const visited = new Set();
-            visited.add(sNode.x + ',' + sNode.y);
-            let found = false;
-
-            while(q.length > 0) {
-                const curr = q.shift();
-                if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
-                
-                for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
-                    const nx = curr.x + d[0];
-                    const ny = curr.y + d[1];
-                    if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 1) {
-                        const key = nx + ',' + ny;
-                        if (!visited.has(key)) {
-                            visited.add(key);
-                            cameFrom[key] = curr;
-                            q.push({x: nx, y: ny});
-                        }
-                    }
-                }
-            }
-
             let pathStr = "";
 
-            if (found) {
-                let curr = eNode; 
-                const path = [];
-                while(curr) { path.push(curr); curr = cameFrom[curr.x + ',' + curr.y]; }
-                path.reverse();
+            if (isAm) {
+                // AMELİYATHANE MANUEL ZİGZAG ALGORİTMASI
+                const shelf1 = document.getElementById('shelf-1-am');
+                const shelf2 = document.getElementById('shelf-2-am');
+                const lens = document.getElementById('lens-am');
                 
-                let simp = [path[0]];
-                for(let i = 1; i < path.length - 1; i++) {
-                    if ((path[i-1].x === path[i].x && path[i].x === path[i+1].x) || 
-                        (path[i-1].y === path[i].y && path[i].y === path[i+1].y)) continue;
-                    simp.push(path[i]);
+                if(!shelf1 || !shelf2 || !lens) return;
+
+                const shelf1Rect = shelf1.getBoundingClientRect();
+                const shelf2Rect = shelf2.getBoundingClientRect();
+                const lensRect = lens.getBoundingClientRect();
+
+                const dX = (doorRect.right - mapRect.left) + 10;
+                const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
+                const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
+                const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
+
+                const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
+                const gapX = ((lensRect.right + shelf1Rect.left) / 2) - mapRect.left;
+                const offset = window.innerWidth <= 900 ? 12 : 20;
+
+                if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
+                    const endX = (targetRect.right - mapRect.left) + offset;
+                    pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                } else {
+                    const safeY = ((doorRect.bottom + shelf1Rect.top) / 2) - mapRect.top;
+                    let endX = tX;
+                    if (tX < cX) {
+                        endX = (targetRect.right - mapRect.left) + offset;
+                    } else {
+                        endX = (targetRect.left - mapRect.left) - offset;
+                    }
+                    pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
                 }
-                simp.push(path[path.length - 1]);
-                
-                pathStr = `M ${doorRect.right - mapRect.left} ${startY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
             } else {
-                pathStr = `M ${doorRect.right - mapRect.left} ${startY} L ${endX} ${endY}`;
+                // ANA DEPO A* ALGORİTMASI
+                const startX = doorRect.left + doorRect.width / 2 - mapRect.left;
+                const startY = doorRect.top + doorRect.height / 2 - mapRect.top;
+                const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
+                const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
+
+                const cellSize = 10;
+                const gridW = Math.ceil(mapRect.width / cellSize);
+                const gridH = Math.ceil(mapRect.height / cellSize);
+                const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1));
+
+                const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
+                
+                obstacles.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
+                    const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
+                    const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
+                    const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
+
+                    for(let y = sy; y <= ey; y++) {
+                        for(let x = sx; x <= ex; x++) {
+                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
+                                grid[y][x] = 0;
+                            }
+                        }
+                    }
+                });
+
+                const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
+                const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
+                const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
+                const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 20) / cellSize));
+
+                for(let y = tsy; y <= tey; y++) {
+                    for(let x = tsx; x <= tex; x++) {
+                        if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1;
+                    }
+                }
+
+                const sNode = {x: Math.floor(startX / cellSize), y: Math.floor(startY / cellSize)};
+                const eNode = {x: Math.floor(endX / cellSize), y: Math.floor(endY / cellSize)};
+                
+                if(sNode.y >= 0 && sNode.y < gridH && sNode.x >= 0 && sNode.x < gridW) grid[sNode.y][sNode.x] = 1;
+                if(eNode.y >= 0 && eNode.y < gridH && eNode.x >= 0 && eNode.x < gridW) grid[eNode.y][eNode.x] = 1;
+
+                const q = [sNode];
+                const cameFrom = {};
+                const visited = new Set();
+                visited.add(sNode.x + ',' + sNode.y);
+                let found = false;
+
+                while(q.length > 0) {
+                    const curr = q.shift();
+                    if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
+                    
+                    for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
+                        const nx = curr.x + d[0];
+                        const ny = curr.y + d[1];
+                        if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 1) {
+                            const key = nx + ',' + ny;
+                            if (!visited.has(key)) {
+                                visited.add(key);
+                                cameFrom[key] = curr;
+                                q.push({x: nx, y: ny});
+                            }
+                        }
+                    }
+                }
+
+                if (found) {
+                    let curr = eNode; 
+                    const path = [];
+                    while(curr) { path.push(curr); curr = cameFrom[curr.x + ',' + curr.y]; }
+                    path.reverse();
+                    
+                    let simp = [path[0]];
+                    for(let i = 1; i < path.length - 1; i++) {
+                        if ((path[i-1].x === path[i].x && path[i].x === path[i+1].x) || 
+                            (path[i-1].y === path[i].y && path[i].y === path[i+1].y)) continue;
+                        simp.push(path[i]);
+                    }
+                    simp.push(path[path.length - 1]);
+                    
+                    pathStr = `M ${startX} ${startY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
+                } else {
+                    pathStr = `M ${startX} ${startY} L ${startX} ${endY} L ${endX} ${endY}`;
+                }
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
