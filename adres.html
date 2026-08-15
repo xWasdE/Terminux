@@ -16,7 +16,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; }
+        main { flex: 1; padding: 20px 20px 80px 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; }
         .depo-btn { padding: 10px 18px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -26,10 +26,10 @@
 
         .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; }
         .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
-        .search-input-box { flex: 1; position: relative; }
-        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 18px 100px 18px 18px; font-size: 16px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
+        .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 18px 110px 18px 18px; font-size: 16px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
-        .clear-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
+        .clear-icon { position: absolute; right: 15px; background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
         
         .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 25px; font-size: 14px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
@@ -48,24 +48,25 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; margin-bottom: 50px; padding-bottom: 10px; }
+        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; margin-bottom: 20px; padding-bottom: 10px; }
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
         .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        .map-door { position: absolute; top: 4%; left: 4%; width: 12%; height: 10%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        .map-door { position: absolute; top: 3%; left: 4%; width: 14%; height: 11%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
         .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        .map-lens { position: absolute; top: 20%; left: 4%; width: 12%; height: 16%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+        .map-lens { position: absolute; top: 18%; left: 4%; width: 12%; height: 12%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 6px; }
         
-        .map-shelf-1 { position: absolute; top: 20%; bottom: 6%; left: 18%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-1 { position: absolute; top: 34%; bottom: 4%; left: 4%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-shelf-2 { position: absolute; top: 20%; bottom: 6%; right: 14%; width: 33%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
-        
-        .map-desk { position: absolute; top: 20%; right: 4%; width: 8%; height: 26%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
+        .map-desk { position: absolute; top: 3%; right: 4%; width: 12%; height: 26%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
+        .map-desk-sub { font-size: 9px; }
 
+        .map-shelf-2 { position: absolute; top: 34%; bottom: 4%; right: 4%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
         .cell-hidden { visibility: hidden; }
@@ -103,7 +104,6 @@
             main { padding: 15px; padding-bottom: 80px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
-            .clear-icon { right: 15px; top: 25px; } 
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -121,7 +121,7 @@
     <main>
         <div class="depo-tabs">
             <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki entegrasyonu şu anda geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
+            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki sistemi henüz geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
         </div>
 
         <div class="search-container">
@@ -149,6 +149,7 @@
                 
                 <div class="map-desk">
                     <div class="map-desk-title">MASA</div>
+                    <div class="map-desk-sub">Bilgisayarlar</div>
                 </div>
                 
                 <div class="map-lens">
@@ -182,20 +183,17 @@
                     <div id="cell-02.01.03" class="cell">02.01.03</div>
                     <div id="cell-02.01.04" class="cell">02.01.04</div>
                     <div id="cell-02.01.05" class="cell">02.01.05</div>
-                    <div id="cell-02.01.06" class="cell">02.01.06</div>
 
                     <div id="cell-03.01.01" class="cell">03.01.01</div>
                     <div id="cell-03.01.02" class="cell">03.01.02</div>
                     <div id="cell-03.01.03" class="cell">03.01.03</div>
                     <div id="cell-03.01.04" class="cell">03.01.04</div>
                     <div id="cell-03.01.05" class="cell">03.01.05</div>
-                    <div class="cell cell-hidden"></div>
 
                     <div id="cell-06.01.01" class="cell">06.01.01</div>
                     <div id="cell-06.01.02" class="cell">06.01.02</div>
                     <div id="cell-06.01.03" class="cell">06.01.03</div>
                     <div id="cell-06.01.04" class="cell">06.01.04</div>
-                    <div class="cell cell-hidden"></div>
                     <div class="cell cell-hidden"></div>
                 </div>
             </div>
@@ -311,11 +309,7 @@
         };
 
         const drawPath = (targetId) => {
-            let targetCell = document.getElementById(`cell-${targetId}`);
-            if(!targetCell && (targetId === "02.01.06" || targetId === "03.01.06")) {
-                targetCell = document.getElementById(`cell-${targetId.replace('.06', '.05')}`);
-            }
-
+            const targetCell = document.getElementById(`cell-${targetId}`);
             const door = document.getElementById('main-door');
             const map = document.getElementById('map-area');
             const shelf1 = document.querySelector('.map-shelf-1');
@@ -327,16 +321,15 @@
             const isMobile = window.innerWidth <= 900;
             const strokeW = isMobile ? 3 : 4;
             const dashArr = isMobile ? "8, 8" : "12, 12";
-            const offset = isMobile ? 12 : 20;
+            const offset = isMobile ? 8 : 15;
 
             const mapRect = map.getBoundingClientRect();
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
             const shelf1Rect = shelf1.getBoundingClientRect();
             const shelf2Rect = shelf2.getBoundingClientRect();
-            const lensRect = lens.getBoundingClientRect();
 
-            const dX = (doorRect.right - mapRect.left);
+            const dX = (doorRect.right - mapRect.left) + 5; 
             const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
@@ -347,13 +340,10 @@
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
-                const gapX = ((lensRect.right + shelf1Rect.left) / 2) - mapRect.left;
-                const safeY = dY + 15;
+                const gapX = ((lens.getBoundingClientRect().right + shelf1Rect.left) / 2) - mapRect.left;
                 const endX = (targetRect.right - mapRect.left) + offset;
-                pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${gapX} ${safeY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
             } else {
-                const safeY = dY + 15; 
-                
                 let endX = tX;
                 if (tX < cX) {
                     endX = (targetRect.right - mapRect.left) + offset; 
@@ -361,7 +351,7 @@
                     endX = (targetRect.left - mapRect.left) - offset;
                 }
 
-                pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -418,10 +408,7 @@
                 inputEl.value = product.urunAdi;
                 clearIcon.style.display = 'block';
                 if (product.adres) {
-                    let targetCellId = product.adres;
-                    if(targetCellId === "02.01.06" || targetCellId === "03.01.06") targetCellId = targetCellId.replace(".06", ".05");
-                    
-                    const targetCell = document.getElementById(`cell-${targetCellId}`);
+                    const targetCell = document.getElementById(`cell-${product.adres}`);
                     if (targetCell) {
                         targetCell.classList.add('active');
                         nameEl.innerText = product.urunAdi;
@@ -430,17 +417,17 @@
                         
                         setTimeout(() => { 
                             drawPath(product.adres); 
-                            bannerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            document.getElementById('result-banner').scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 50);
                         
                         window.playBeep('success');
                     } else {
                         window.playBeep('error');
-                        showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
+                        showCustomAlert('HATA', `Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
                     }
                 } else {
                     window.playBeep('error');
-                    showCustomAlert("HATA", "Bu ürüne ait bir adres tanımlanmamış.");
+                    showCustomAlert('HATA', "Bu ürüne ait bir adres tanımlanmamış.");
                 }
             }
         };
@@ -474,7 +461,7 @@
                 },
                 (errorMessage) => {}
             ).catch((err) => {
-                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
+                showCustomAlert('HATA', "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
                 closeScanner();
             });
         };
@@ -488,7 +475,10 @@
 
         window.addEventListener('resize', () => {
             const activeCell = document.querySelector('.cell.active');
-            if (activeCell) drawPath(activeCell.id.replace('cell-', ''));
+            if (activeCell) {
+                const addrId = activeCell.id.replace('cell-', '');
+                drawPath(addrId);
+            }
         });
 
     </script>
