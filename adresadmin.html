@@ -23,6 +23,12 @@
         .btn-danger-main:hover { background: #ff3333; color: #000; }
         
         main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; display: none; }
+
+        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin: 0 auto 30px auto; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; }
+        .depo-btn { padding: 10px 18px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
+        .depo-btn.active { background: #00ccff; color: #000; }
+        .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
+        .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
         
         .setup-container { max-width: 600px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -89,6 +95,11 @@
         <div id="toast" class="toast">Kayıt Başarılı!</div>
         <input type="file" id="excel-import" style="display:none;" accept=".xlsx, .xls" onchange="importExcel(event)">
 
+        <div class="depo-tabs">
+            <button class="depo-btn active" id="tab-am" onclick="switchAdminDepo('am')">AMELİYATHANE DEPOSU</button>
+            <button class="depo-btn inactive" id="tab-ana" onclick="switchAdminDepo('ana')">ANA DEPO</button>
+        </div>
+
         <div class="setup-container">
             <div class="setup-title">ADRES TANIMLAMA / DÜZENLEME</div>
             <form id="mapping-form">
@@ -104,10 +115,8 @@
                     <input type="text" id="p-name" required autocomplete="off" placeholder="Örn: Ağrı Bandı Mavi">
                 </div>
                 <div class="input-group">
-                    <label>RAF ADRESİ (Krokideki ID)</label>
-                    <select id="p-address" required>
-                        <option value="" disabled selected>Adres Seçin...</option>
-                    </select>
+                    <label>RAF ADRESİ (Manuel Yazın)</label>
+                    <input type="text" id="p-address" required autocomplete="off" placeholder="Örn: 01.01.01">
                 </div>
                 <button type="submit" class="btn-primary">SİSTEME KAYDET</button>
             </form>
@@ -141,6 +150,23 @@
         let catalogDb = {};
         window.mappingData = [];
         let html5QrCode = null;
+
+        let currentDepo = 'am';
+        let currentCollection = 'kroki_adresleri';
+
+        window.switchAdminDepo = (depo) => {
+            currentDepo = depo;
+            if(depo === 'am') {
+                document.getElementById('tab-am').classList.replace('inactive', 'active');
+                document.getElementById('tab-ana').classList.replace('active', 'inactive');
+                currentCollection = 'kroki_adresleri';
+            } else {
+                document.getElementById('tab-ana').classList.replace('inactive', 'active');
+                document.getElementById('tab-am').classList.replace('active', 'inactive');
+                currentCollection = 'kroki_adresleri_ana';
+            }
+            loadMappingData();
+        }
 
         window.checkLogin = () => {
             const pass = document.getElementById('admin-pass').value;
@@ -204,26 +230,6 @@
 
         loadCatalog();
 
-        const validAddresses = [
-            '05.01.01', '04.01.01',
-            '07.01.05', '07.01.04', '07.01.03', '07.01.02', '07.01.01',
-            '01.01.05', '01.01.04', '01.01.03', '01.01.02', '01.01.01',
-            '01.02.05', '01.02.04', '01.02.03', '01.02.02', '01.02.01',
-            '02.01.01', '02.01.02', '02.01.03', '02.01.04', '02.01.05', '02.01.06',
-            '03.01.01', '03.01.02', '03.01.03', '03.01.04', '03.01.05',
-            '06.01.01', '06.01.02', '06.01.03', '06.01.04'
-        ];
-
-        validAddresses.sort(); 
-
-        const selectEl = document.getElementById('p-address');
-        validAddresses.forEach(addr => {
-            const opt = document.createElement('option');
-            opt.value = addr;
-            opt.textContent = addr;
-            selectEl.appendChild(opt);
-        });
-
         const showToast = (msg = "Kayıt Başarılı!") => {
             const t = document.getElementById('toast');
             t.innerText = msg;
@@ -272,14 +278,14 @@
             const codeEl = document.getElementById('p-code');
             let code = codeEl.value.trim();
             const name = document.getElementById('p-name').value.trim();
-            const address = document.getElementById('p-address').value;
+            const address = document.getElementById('p-address').value.trim();
             const barkod = codeEl.dataset.barkod || "";
             const refNo = codeEl.dataset.refNo || "";
 
             const safeId = code.replace(/[^a-zA-Z0-9_-]/g, '-');
 
             try {
-                await setDoc(doc(db, "kroki_adresleri", safeId), {
+                await setDoc(doc(db, currentCollection, safeId), {
                     urunKodu: code,
                     urunAdi: name,
                     barkod: barkod,
@@ -305,46 +311,51 @@
             body.style.display = body.style.display === 'none' ? 'block' : 'none';
         };
 
-        onSnapshot(collection(db, "kroki_adresleri"), (snapshot) => {
-            const listEl = document.getElementById('mapping-list');
-            window.mappingData = [];
-            snapshot.forEach(doc => window.mappingData.push({ id: doc.id, ...doc.data() }));
+        let unsub = null;
+        function loadMappingData() {
+            if(unsub) unsub();
+            unsub = onSnapshot(collection(db, currentCollection), (snapshot) => {
+                const listEl = document.getElementById('mapping-list');
+                window.mappingData = [];
+                snapshot.forEach(doc => window.mappingData.push({ id: doc.id, ...doc.data() }));
 
-            if (window.mappingData.length === 0) {
-                listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555; border: 1px solid #1a1a1a; border-radius: 8px;">Kayıtlı haritalandırma bulunamadı.</div>';
-                return;
-            }
+                if (window.mappingData.length === 0) {
+                    listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555; border: 1px solid #1a1a1a; border-radius: 8px;">Kayıtlı haritalandırma bulunamadı.</div>';
+                    return;
+                }
 
-            const grouped = {};
-            window.mappingData.forEach(item => {
-                if (!grouped[item.adres]) grouped[item.adres] = [];
-                grouped[item.adres].push(item);
-            });
+                const grouped = {};
+                window.mappingData.forEach(item => {
+                    if (!grouped[item.adres]) grouped[item.adres] = [];
+                    grouped[item.adres].push(item);
+                });
 
-            listEl.innerHTML = Object.keys(grouped).sort().map(addr => {
-                const items = grouped[addr];
-                let html = `
-                <div class="accordion-item">
-                    <div class="accordion-header" onclick="toggleAcc('${addr}')">
-                        <span>📍 RAF ADRESİ: ${addr}</span>
-                        <span>${items.length} Ürün ▼</span>
-                    </div>
-                    <div class="accordion-body" id="acc-${addr}">
-                        ${items.map(item => `
-                            <div class="accordion-row">
-                                <div style="font-size: 12px; color: #888; font-family: monospace; width: 120px; text-align: left;">${item.urunKodu}</div>
-                                <div style="font-size: 13px; color: #fff; flex: 1; text-align: left;">${item.urunAdi}</div>
-                                <div style="display: flex; gap: 5px;">
-                                    <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
-                                    <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+                listEl.innerHTML = Object.keys(grouped).sort().map(addr => {
+                    const items = grouped[addr];
+                    let html = `
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAcc('${addr}')">
+                            <span>📍 RAF ADRESİ: ${addr}</span>
+                            <span>${items.length} Ürün ▼</span>
+                        </div>
+                        <div class="accordion-body" id="acc-${addr}">
+                            ${items.map(item => `
+                                <div class="accordion-row">
+                                    <div style="font-size: 12px; color: #888; font-family: monospace; width: 120px; text-align: left;">${item.urunKodu}</div>
+                                    <div style="font-size: 13px; color: #fff; flex: 1; text-align: left;">${item.urunAdi}</div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
+                                        <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-                return html;
-            }).join('');
-        });
+                            `).join('')}
+                        </div>
+                    </div>`;
+                    return html;
+                }).join('');
+            });
+        }
+        loadMappingData();
 
         window.editMapping = (id) => {
             const item = window.mappingData.find(m => m.id === id);
@@ -362,7 +373,7 @@
         window.deleteMapping = async (id) => {
             if (confirm("Bu haritalandırmayı silmek istediğinize emin misiniz?")) {
                 try {
-                    await deleteDoc(doc(db, "kroki_adresleri", id));
+                    await deleteDoc(doc(db, currentCollection, id));
                 } catch(e) {}
             }
         };
@@ -374,7 +385,7 @@
                 const pwd = prompt("Güvenlik Onayı: Lütfen yönetici parolasını girin");
                 if (pwd === "admin") {
                     showToast("Tüm adresler siliniyor, lütfen sayfayı kapatmayın...");
-                    Promise.all(window.mappingData.map(item => deleteDoc(doc(db, "kroki_adresleri", item.id))))
+                    Promise.all(window.mappingData.map(item => deleteDoc(doc(db, currentCollection, item.id))))
                     .then(() => {
                         showToast("Veritabanı tamamen temizlendi!");
                     })
@@ -416,13 +427,13 @@
                             
                             if (existing) {
                                 if (existing.adres !== cleanAddr || existing.urunAdi !== String(name).trim()) {
-                                    await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() }, {merge: true});
+                                    await setDoc(doc(db, currentCollection, safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() }, {merge: true});
                                     updated++;
                                 } else {
                                     skipped++;
                                 }
                             } else {
-                                await setDoc(doc(db, "kroki_adresleri", safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() });
+                                await setDoc(doc(db, currentCollection, safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() });
                                 added++;
                             }
                         }
@@ -442,7 +453,7 @@
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "ADRESLER");
-            XLSX.writeFile(wb, `Terminux_DepoAdresleri.xlsx`);
+            XLSX.writeFile(wb, `Terminux_DepoAdresleri_${currentDepo}.xlsx`);
         };
 
         window.openScanner = () => {
