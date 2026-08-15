@@ -16,10 +16,10 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px 20px 80px 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; }
+        main { flex: 1; padding: 20px; padding-bottom: 120px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; }
 
-        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 20px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; }
-        .depo-btn { padding: 10px 18px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
+        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; }
+        .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
         .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
@@ -27,18 +27,19 @@
         .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; }
         .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
         .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
-        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 18px 110px 18px 18px; font-size: 16px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 110px 16px 16px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
-        .clear-icon { position: absolute; right: 15px; background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
+        .clear-icon { position: absolute; right: 15px; background: #ff3333; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
         
-        .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 25px; font-size: 14px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ff3333; color: #ff3333; }
 
-        .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; }
-        .result-title { font-size: 12px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .result-name { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 5px; }
-        .result-address { font-size: 30px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
+        /* KÜÇÜLTÜLMÜŞ KIRMIZI BANNER */
+        .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 10px 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; }
+        .result-title { font-size: 10px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .result-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .result-address { font-size: 24px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -48,26 +49,25 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; margin-bottom: 20px; padding-bottom: 10px; }
+        .map-scroll-container { width: 100%; max-width: 1000px; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
+        .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/8; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        .map-door { position: absolute; top: 3%; left: 4%; width: 14%; height: 11%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        .map-door { position: absolute; top: 8%; left: 4%; width: 12%; height: 14%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
         .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        .map-lens { position: absolute; top: 18%; left: 4%; width: 12%; height: 12%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 6px; }
+        .map-lens { position: absolute; top: 30%; left: 4%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
         
-        .map-shelf-1 { position: absolute; top: 34%; bottom: 4%; left: 4%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-1 { position: absolute; top: 25%; bottom: 6%; left: 16%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-desk { position: absolute; top: 3%; right: 4%; width: 12%; height: 26%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
-        .map-desk-sub { font-size: 9px; }
+        .map-shelf-2 { position: absolute; top: 25%; bottom: 6%; left: 52%; width: 38%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        
+        .map-desk { position: absolute; top: 25%; right: 4%; width: 6%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
 
-        .map-shelf-2 { position: absolute; top: 34%; bottom: 4%; right: 4%; width: 42%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
-        
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
         .cell-hidden { visibility: hidden; }
 
@@ -97,13 +97,14 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
 
         @media (max-width: 900px) {
-            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px; padding-bottom: 80px; }
+            header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
+            main { padding: 15px; padding-bottom: 100px; }
             .search-wrapper { flex-direction: column; }
-            .btn-scan { height: 50px; padding: 0; width: 100%; }
+            .btn-scan { height: 45px; padding: 0; width: 100%; }
+            .clear-icon { right: 10px; }
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -118,10 +119,10 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content-scroll">
         <div class="depo-tabs">
             <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki sistemi henüz geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
+            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki entegrasyonu şu anda geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
         </div>
 
         <div class="search-container">
@@ -149,7 +150,6 @@
                 
                 <div class="map-desk">
                     <div class="map-desk-title">MASA</div>
-                    <div class="map-desk-sub">Bilgisayarlar</div>
                 </div>
                 
                 <div class="map-lens">
@@ -183,17 +183,20 @@
                     <div id="cell-02.01.03" class="cell">02.01.03</div>
                     <div id="cell-02.01.04" class="cell">02.01.04</div>
                     <div id="cell-02.01.05" class="cell">02.01.05</div>
+                    <div id="cell-02.01.06" class="cell">02.01.06</div>
 
                     <div id="cell-03.01.01" class="cell">03.01.01</div>
                     <div id="cell-03.01.02" class="cell">03.01.02</div>
                     <div id="cell-03.01.03" class="cell">03.01.03</div>
                     <div id="cell-03.01.04" class="cell">03.01.04</div>
                     <div id="cell-03.01.05" class="cell">03.01.05</div>
+                    <div class="cell cell-hidden"></div>
 
                     <div id="cell-06.01.01" class="cell">06.01.01</div>
                     <div id="cell-06.01.02" class="cell">06.01.02</div>
                     <div id="cell-06.01.03" class="cell">06.01.03</div>
                     <div id="cell-06.01.04" class="cell">06.01.04</div>
+                    <div class="cell cell-hidden"></div>
                     <div class="cell cell-hidden"></div>
                 </div>
             </div>
@@ -206,6 +209,7 @@
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
 
+    <!-- SİSTEM CUSTOM ALERT -->
     <div id="custom-alert" class="custom-alert">
         <div class="modal-box">
             <div style="font-size: 18px; font-weight: 900; color: #ffbc00; margin-bottom: 15px; letter-spacing: 1px;" id="alert-title">UYARI</div>
@@ -309,7 +313,11 @@
         };
 
         const drawPath = (targetId) => {
-            const targetCell = document.getElementById(`cell-${targetId}`);
+            let targetCell = document.getElementById(`cell-${targetId}`);
+            if(!targetCell && (targetId === "02.01.06" || targetId === "03.01.06")) {
+                targetCell = document.getElementById(`cell-${targetId.replace('.06', '.05')}`);
+            }
+
             const door = document.getElementById('main-door');
             const map = document.getElementById('map-area');
             const shelf1 = document.querySelector('.map-shelf-1');
@@ -328,22 +336,32 @@
             const targetRect = targetCell.getBoundingClientRect();
             const shelf1Rect = shelf1.getBoundingClientRect();
             const shelf2Rect = shelf2.getBoundingClientRect();
+            const lensRect = lens.getBoundingClientRect();
 
-            const dX = (doorRect.right - mapRect.left) + 5; 
-            const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
+            // Lazer Ok Çıkış Noktası: Kapının Sağ Kenarı
+            const startX = (doorRect.right - mapRect.left);
+            const startY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
+            // Hedef Noktası: Hücrenin Merkezi
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
+            // Ana Koridor Merkezi
             const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
+            // Lens ile Ana Raf Arasındaki Ara Koridor
+            const gapX = ((doorRect.right + shelf1Rect.left) / 2) - mapRect.left;
 
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
-                const gapX = ((lens.getBoundingClientRect().right + shelf1Rect.left) / 2) - mapRect.left;
                 const endX = (targetRect.right - mapRect.left) + offset;
-                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                // Kapıdan sağa çık -> Ara koridordan aşağı in -> Sola dön hedefe git
+                pathStr = `M ${startX} ${startY} L ${gapX} ${startY} L ${gapX} ${tY} L ${endX} ${tY}`;
             } else {
+                // Güvenli Geçiş Yüksekliği (Kapının altı, Rafların üstü)
+                const safeY = ((doorRect.bottom + shelf1Rect.top) / 2) - mapRect.top;
+                
+                // Kutu İçine Girmeden Durma Noktası
                 let endX = tX;
                 if (tX < cX) {
                     endX = (targetRect.right - mapRect.left) + offset; 
@@ -351,7 +369,8 @@
                     endX = (targetRect.left - mapRect.left) - offset;
                 }
 
-                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
+                // Rota: Kapıdan Sağ Çık -> Ara Koridora (gapX) -> Aşağı Güvenli Boşluğa (safeY) -> Ana Koridora (cX) -> Aşağı Hedefe -> Kutuya (endX)
+                pathStr = `M ${startX} ${startY} L ${gapX} ${startY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -408,7 +427,10 @@
                 inputEl.value = product.urunAdi;
                 clearIcon.style.display = 'block';
                 if (product.adres) {
-                    const targetCell = document.getElementById(`cell-${product.adres}`);
+                    let targetCellId = product.adres;
+                    if(targetCellId === "02.01.06" || targetCellId === "03.01.06") targetCellId = targetCellId.replace(".06", ".05");
+                    
+                    const targetCell = document.getElementById(`cell-${targetCellId}`);
                     if (targetCell) {
                         targetCell.classList.add('active');
                         nameEl.innerText = product.urunAdi;
@@ -417,17 +439,21 @@
                         
                         setTimeout(() => { 
                             drawPath(product.adres); 
-                            document.getElementById('result-banner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Harita bulunduğunda sayfanın altına doğru pürüzsüzce kaydır (Haritanın tam görülmesi için)
+                            document.getElementById('main-content-scroll').scrollTo({
+                                top: document.getElementById('main-content-scroll').scrollHeight,
+                                behavior: 'smooth'
+                            });
                         }, 50);
                         
                         window.playBeep('success');
                     } else {
                         window.playBeep('error');
-                        showCustomAlert('HATA', `Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
+                        showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
                     }
                 } else {
                     window.playBeep('error');
-                    showCustomAlert('HATA', "Bu ürüne ait bir adres tanımlanmamış.");
+                    showCustomAlert("HATA", "Bu ürüne ait bir adres tanımlanmamış.");
                 }
             }
         };
@@ -461,7 +487,7 @@
                 },
                 (errorMessage) => {}
             ).catch((err) => {
-                showCustomAlert('HATA', "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
+                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
                 closeScanner();
             });
         };
