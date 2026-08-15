@@ -35,7 +35,6 @@
         .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ff3333; color: #ff3333; }
 
-        /* KÜÇÜLTÜLMÜŞ KIRMIZI BANNER */
         .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 10px 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; }
         .result-title { font-size: 10px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
         .result-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
@@ -55,16 +54,52 @@
 
         .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/8; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        .map-door { position: absolute; top: 8%; left: 4%; width: 12%; height: 14%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        /* TASARLAYICI İLE ÜRETİLEN YENİ CSS YERLEŞİMLERİ */
+        .map-door {
+            position: absolute;
+            top: 0.5%;
+            left: 0.3%;
+            width: 9.3%;
+            height: 9.6%;
+            display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666;
+        }
         .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        .map-lens { position: absolute; top: 30%; left: 4%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+        .map-lens {
+            position: absolute;
+            top: 10.3%;
+            left: 0.3%;
+            width: 9.2%;
+            height: 25.4%;
+            display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px;
+        }
         
-        .map-shelf-1 { position: absolute; top: 25%; bottom: 6%; left: 16%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-1 {
+            position: absolute;
+            top: 36.4%;
+            left: 0.2%;
+            width: 46.6%;
+            height: 61.6%;
+            display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px;
+        }
         
-        .map-shelf-2 { position: absolute; top: 25%; bottom: 6%; left: 52%; width: 38%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-2 {
+            position: absolute;
+            top: 31.3%;
+            left: 55.0%;
+            width: 43.9%;
+            height: 66.6%;
+            display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px;
+        }
         
-        .map-desk { position: absolute; top: 25%; right: 4%; width: 6%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk {
+            position: absolute;
+            top: 1.2%;
+            left: 88.1%;
+            width: 10.4%;
+            height: 28.8%;
+            border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center;
+        }
         .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
@@ -122,7 +157,7 @@
     <main id="main-content-scroll">
         <div class="depo-tabs">
             <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki entegrasyonu şu anda geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
+            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki sistemi henüz geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
         </div>
 
         <div class="search-container">
@@ -146,7 +181,7 @@
             <div class="map-wrapper" id="map-area">
                 <svg id="path-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
-                <div class="map-door" id="main-door">KAPI</div>
+                <div class="map-door" id="main-door"></div>
                 
                 <div class="map-desk">
                     <div class="map-desk-title">MASA</div>
@@ -209,7 +244,6 @@
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
 
-    <!-- SİSTEM CUSTOM ALERT -->
     <div id="custom-alert" class="custom-alert">
         <div class="modal-box">
             <div style="font-size: 18px; font-weight: 900; color: #ffbc00; margin-bottom: 15px; letter-spacing: 1px;" id="alert-title">UYARI</div>
@@ -338,30 +372,21 @@
             const shelf2Rect = shelf2.getBoundingClientRect();
             const lensRect = lens.getBoundingClientRect();
 
-            // Lazer Ok Çıkış Noktası: Kapının Sağ Kenarı
-            const startX = (doorRect.right - mapRect.left);
-            const startY = (doorRect.top + doorRect.height / 2) - mapRect.top;
+            const dX = (doorRect.right - mapRect.left) + 15; 
+            const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
-            // Hedef Noktası: Hücrenin Merkezi
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
-            // Ana Koridor Merkezi
             const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
-            // Lens ile Ana Raf Arasındaki Ara Koridor
-            const gapX = ((doorRect.right + shelf1Rect.left) / 2) - mapRect.left;
 
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
+                const safeX = (lensRect.right - mapRect.left) + 20;
                 const endX = (targetRect.right - mapRect.left) + offset;
-                // Kapıdan sağa çık -> Ara koridordan aşağı in -> Sola dön hedefe git
-                pathStr = `M ${startX} ${startY} L ${gapX} ${startY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${safeX} ${dY} L ${safeX} ${tY} L ${endX} ${tY}`;
             } else {
-                // Güvenli Geçiş Yüksekliği (Kapının altı, Rafların üstü)
-                const safeY = ((doorRect.bottom + shelf1Rect.top) / 2) - mapRect.top;
-                
-                // Kutu İçine Girmeden Durma Noktası
                 let endX = tX;
                 if (tX < cX) {
                     endX = (targetRect.right - mapRect.left) + offset; 
@@ -369,8 +394,7 @@
                     endX = (targetRect.left - mapRect.left) - offset;
                 }
 
-                // Rota: Kapıdan Sağ Çık -> Ara Koridora (gapX) -> Aşağı Güvenli Boşluğa (safeY) -> Ana Koridora (cX) -> Aşağı Hedefe -> Kutuya (endX)
-                pathStr = `M ${startX} ${startY} L ${gapX} ${startY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -439,7 +463,6 @@
                         
                         setTimeout(() => { 
                             drawPath(product.adres); 
-                            // Harita bulunduğunda sayfanın altına doğru pürüzsüzce kaydır (Haritanın tam görülmesi için)
                             document.getElementById('main-content-scroll').scrollTo({
                                 top: document.getElementById('main-content-scroll').scrollHeight,
                                 behavior: 'smooth'
