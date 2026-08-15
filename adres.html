@@ -18,14 +18,22 @@
         
         main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; }
 
+        /* DEPO SEKMELERİ */
+        .depo-tabs { display: flex; gap: 10px; width: 100%; max-width: 1000px; margin-bottom: 15px; background: #080808; padding: 10px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-wrap: wrap; }
+        .depo-btn { padding: 12px 25px; border-radius: 6px; font-weight: 800; font-size: 13px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
+        .depo-btn.active { background: #00ccff; color: #000; }
+        .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
+        .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
+
         .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; }
-        .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
-        .search-input { flex: 1; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 18px 45px 18px 18px; font-size: 16px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; width: 100%; }
+        .search-wrapper { display: flex; gap: 10px; width: 100%; }
+        .search-input-box { flex: 1; position: relative; }
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 18px 100px 18px 18px; font-size: 16px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
+        .clear-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; }
+        
         .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 25px; font-size: 14px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ff3333; color: #ff3333; }
-        
-        .clear-icon { position: absolute; right: 150px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #ff3333; cursor: pointer; display: none; font-weight: bold; background: rgba(255, 51, 51, 0.1); padding: 5px 10px; border-radius: 4px; }
 
         .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; }
         .result-title { font-size: 12px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
@@ -44,21 +52,28 @@
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
+        /* KROKİ CSS - TAM DUVARA YASLI YERLEŞİM (Fotoğraftaki gibi) */
         .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        .map-door { position: absolute; top: 5%; left: 3%; width: 12%; height: 12%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        /* Kapı - Sol Üst Duvar */
+        .map-door { position: absolute; top: 5%; left: 4%; width: 14%; height: 11%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
         .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        .map-lens { position: absolute; top: 25%; left: 3%; width: 10%; height: 15%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+        /* Lens Rafı - Sol Duvar (Uzatıldı, Kapının hemen altında) */
+        .map-lens { position: absolute; top: 20%; left: 4%; width: 19%; height: 18%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
         
-        .map-shelf-1 { position: absolute; top: 20%; bottom: 6%; left: 16%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        /* Sol Büyük Raf - Sol Duvara Tam Yaslı */
+        .map-shelf-1 { position: absolute; top: 40%; bottom: 4%; left: 4%; width: 44%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-shelf-2 { position: absolute; top: 20%; bottom: 6%; left: 52%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        /* Sağ Büyük Raf - Sağ Duvara Tam Yaslı (02.01.06 İçin 6 Sütun) */
+        .map-shelf-2 { position: absolute; top: 20%; bottom: 4%; right: 4%; width: 44%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-desk { position: absolute; top: 35%; right: 3%; width: 8%; height: 25%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
-        .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
+        /* Masa - Sağ Üst Duvar */
+        .map-desk { position: absolute; top: 5%; right: 4%; width: 12%; height: 13%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk-title { font-weight: 900; font-size: 16px; margin-bottom: 2px; letter-spacing: 2px; }
+        .map-desk-sub { font-size: 9px; }
 
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 10px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
         .cell-hidden { visibility: hidden; }
 
@@ -82,15 +97,17 @@
         .path-animation { stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; }
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
-        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+        
+        .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
-            .clear-icon { right: 15px; top: 25px; } 
         }
     </style>
 </head>
@@ -105,10 +122,18 @@
     </header>
 
     <main>
+        <!-- DEPO SEKMELERİ -->
+        <div class="depo-tabs">
+            <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
+            <button class="depo-btn inactive" onclick="alert('Ana Depo kroki entegrasyonu geliştirme aşamasındadır.')">ANA DEPO (Yakında)</button>
+        </div>
+
         <div class="search-container">
             <div class="search-wrapper">
-                <input type="text" id="search-input" class="search-input" placeholder="Ürün Adı, Barkod veya Kod ile arayın..." autocomplete="off">
-                <span class="clear-icon" id="clear-search" onclick="clearSearch()">✕</span>
+                <div class="search-input-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="Ürün Adı, Barkod veya Kod ile arayın..." autocomplete="off">
+                    <span class="clear-icon" id="clear-search" onclick="clearSearch()">✕ TEMİZLE</span>
+                </div>
                 <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
             </div>
             <div id="search-dropdown" class="dropdown"></div>
@@ -128,6 +153,7 @@
                 
                 <div class="map-desk">
                     <div class="map-desk-title">MASA</div>
+                    <div class="map-desk-sub">Bilgisayarlar</div>
                 </div>
                 
                 <div class="map-lens">
@@ -135,7 +161,7 @@
                     <div id="cell-04.01.01" class="cell cell-lens">04.01.01</div>
                 </div>
 
-
+                <!-- SOL RAF (Koridor Ortada -> .01'ler Sağda, .05'ler Solda Duvarda) -->
                 <div class="map-shelf-1">
                     <div id="cell-07.01.05" class="cell">07.01.05</div>
                     <div id="cell-07.01.04" class="cell">07.01.04</div>
@@ -156,25 +182,28 @@
                     <div id="cell-01.02.01" class="cell">01.02.01</div>
                 </div>
 
-
+                <!-- SAĞ RAF (Koridor Ortada -> 6 Sütun -> .01'ler Solda Koridorda, .06'lar Sağda Duvarda) -->
                 <div class="map-shelf-2">
                     <div id="cell-02.01.01" class="cell">02.01.01</div>
                     <div id="cell-02.01.02" class="cell">02.01.02</div>
                     <div id="cell-02.01.03" class="cell">02.01.03</div>
                     <div id="cell-02.01.04" class="cell">02.01.04</div>
-                    <div id="cell-02.01.05" class="cell" style="grid-column: span 2;">02.01.05 / 02.01.06</div>
+                    <div id="cell-02.01.05" class="cell">02.01.05</div>
+                    <div id="cell-02.01.06" class="cell">02.01.06</div>
 
                     <div id="cell-03.01.01" class="cell">03.01.01</div>
                     <div id="cell-03.01.02" class="cell">03.01.02</div>
                     <div id="cell-03.01.03" class="cell">03.01.03</div>
                     <div id="cell-03.01.04" class="cell">03.01.04</div>
-                    <div id="cell-03.01.05" class="cell" style="grid-column: span 2;">03.01.05 / 03.01.06</div>
+                    <div id="cell-03.01.05" class="cell">03.01.05</div>
+                    <div class="cell cell-hidden"></div>
 
                     <div id="cell-06.01.01" class="cell">06.01.01</div>
                     <div id="cell-06.01.02" class="cell">06.01.02</div>
                     <div id="cell-06.01.03" class="cell">06.01.03</div>
                     <div id="cell-06.01.04" class="cell">06.01.04</div>
-                    <div class="cell cell-hidden" style="grid-column: span 2;"></div>
+                    <div class="cell cell-hidden"></div>
+                    <div class="cell cell-hidden"></div>
                 </div>
             </div>
         </div>
@@ -184,6 +213,14 @@
         <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
         <div id="reader"></div>
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
+
+    <div id="custom-alert" class="custom-alert">
+        <div class="modal-box">
+            <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px;">UYARI</div>
+            <div id="alert-desc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px;">-</div>
+            <button onclick="closeAlert()" style="background: #ff3333; color: #fff; border: none; padding: 15px 30px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 14px;">TAMAM</button>
+        </div>
     </div>
 
     <script type="module">
@@ -213,6 +250,12 @@
         const nameEl = document.getElementById('result-name');
         const addressEl = document.getElementById('result-address');
         const svgEl = document.getElementById('path-svg');
+
+        window.showAlert = (desc) => {
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeAlert = () => document.getElementById('custom-alert').style.display = 'none';
 
         window.playBeep = (type) => {
             try {
@@ -270,18 +313,13 @@
         };
 
         const drawPath = (targetId) => {
-            let targetCell = document.getElementById(`cell-${targetId}`);
-            if(!targetCell && (targetId === "02.01.06" || targetId === "03.01.06")) {
-                targetCell = document.getElementById(`cell-${targetId.replace('.06', '.05')}`);
-            }
-
+            const targetCell = document.getElementById(`cell-${targetId}`);
             const door = document.getElementById('main-door');
             const map = document.getElementById('map-area');
             const shelf1 = document.querySelector('.map-shelf-1');
             const shelf2 = document.querySelector('.map-shelf-2');
-            const lens = document.querySelector('.map-lens');
 
-            if(!targetCell || !door || !map || !shelf1 || !shelf2 || !lens) return;
+            if(!targetCell || !door || !map || !shelf1 || !shelf2) return;
 
             const isMobile = window.innerWidth <= 900;
             const strokeW = isMobile ? 3 : 4;
@@ -294,29 +332,39 @@
             const shelf1Rect = shelf1.getBoundingClientRect();
             const shelf2Rect = shelf2.getBoundingClientRect();
 
-            // Kapının sağ kenarından çıkış
-            const dX = (doorRect.right - mapRect.left) + 15;
+            // Lazer Ok'un Çıkış Noktası (Kapının Sağ Kenarı)
+            const dX = (doorRect.right - mapRect.left);
             const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
+            // Hedef Noktası (Hücre Merkezi)
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
+            // Ana Koridor Merkezi (İki büyük rafın arası)
             const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
 
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
-                const gapX = dX;
-                const endX = (targetRect.right - mapRect.left) + 15;
+                // Kutu içinden geçmesin diye kapı sağından azıcık daha sağa (koridora) çık, aşağı in, hedefe dön.
+                const gapX = dX + 40; 
+                const endX = (targetRect.right - mapRect.left) + offset;
                 pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
             } else {
+                // Rafları kesmeden koridora geçiş yüksekliği (Rafların hemen üstü)
+                const safeY = dY + ((shelf1Rect.top - mapRect.top) - dY) / 2;
+                const gapX = dX + 40; // Kapıdan çıkıp güvenli bir şekilde sağa (koridora doğru) kırılma noktası
+                
+                // Lazer Ok Hücre Sınırında (Dışında) Dursun
                 let endX = tX;
                 if (tX < cX) {
-                    endX = (targetRect.right - mapRect.left) + 15; 
+                    endX = (targetRect.right - mapRect.left) + offset; 
                 } else {
-                    endX = (targetRect.left - mapRect.left) - 15;
+                    endX = (targetRect.left - mapRect.left) - offset;
                 }
-                pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
+
+                // Rota: Kapı Sağı -> Sağa Yönel -> Koridora İn (Güvenli Y) -> Koridoru Ortalayıp Hedefe İn -> Hücreye Dön
+                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -373,10 +421,7 @@
                 inputEl.value = product.urunAdi;
                 clearIcon.style.display = 'block';
                 if (product.adres) {
-                    let targetCellId = product.adres;
-                    if(targetCellId === "02.01.06" || targetCellId === "03.01.06") targetCellId = targetCellId.replace(".06", ".05");
-                    
-                    const targetCell = document.getElementById(`cell-${targetCellId}`);
+                    const targetCell = document.getElementById(`cell-${product.adres}`);
                     if (targetCell) {
                         targetCell.classList.add('active');
                         nameEl.innerText = product.urunAdi;
@@ -388,17 +433,17 @@
                         window.playBeep('success');
                     } else {
                         window.playBeep('error');
-                        alert(`Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
+                        showAlert(`Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
                     }
                 } else {
                     window.playBeep('error');
-                    alert("Bu ürüne ait bir adres tanımlanmamış.");
+                    showAlert("Bu ürüne ait bir adres tanımlanmamış.");
                 }
             }
         };
 
         document.addEventListener('click', (e) => {
-            if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+            if (!document.querySelector('.search-input-box').contains(e.target) && !dropdownEl.contains(e.target)) {
                 dropdownEl.style.display = 'none';
             }
         });
@@ -423,7 +468,7 @@
                 },
                 (errorMessage) => {}
             ).catch((err) => {
-                alert("Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
+                showAlert("Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
                 closeScanner();
             });
         };
@@ -439,6 +484,7 @@
             const activeCell = document.querySelector('.cell.active');
             if (activeCell) drawPath(activeCell.id.replace('cell-', ''));
         });
+
     </script>
 </body>
 </html>
