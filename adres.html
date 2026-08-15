@@ -54,19 +54,19 @@
 
         .map-wrapper { width: 100%; min-width: 950px; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; }
         
-        .map-door { position: absolute; top: 5%; left: 4%; width: 12%; height: 12%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
+        .map-door { position: absolute; top: 4%; left: 4%; width: 12%; height: 10%; border-right: 2px dashed #666; border-bottom: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; }
         .map-door::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         
-        .map-lens { position: absolute; top: 25%; left: 4%; width: 10%; height: 20%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
+        .map-lens { position: absolute; top: 20%; left: 4%; width: 12%; height: 16%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; }
         
-        .map-shelf-1 { position: absolute; top: 20%; bottom: 6%; left: 16%; width: 32%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-1 { position: absolute; top: 20%; bottom: 6%; left: 18%; width: 33%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-shelf-2 { position: absolute; top: 20%; bottom: 6%; left: 52%; width: 38%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
+        .map-shelf-2 { position: absolute; top: 20%; bottom: 6%; right: 14%; width: 33%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; }
         
-        .map-desk { position: absolute; top: 25%; right: 3%; width: 6%; height: 35%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
+        .map-desk { position: absolute; top: 20%; right: 4%; width: 8%; height: 26%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; }
         .map-desk-title { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
 
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #666; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
         .cell-hidden { visibility: hidden; }
 
@@ -96,11 +96,15 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px; }
+            main { padding: 15px; padding-bottom: 80px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
+            .clear-icon { right: 15px; top: 25px; } 
+            .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
 </head>
@@ -117,7 +121,7 @@
     <main>
         <div class="depo-tabs">
             <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" onclick="showCustomAlert('ÇOK YAKINDA', 'Ana Depo kroki sistemi henüz geliştirme aşamasındadır.')">ANA DEPO (Yakında)</button>
+            <button class="depo-btn inactive" onclick="showCustomAlert('GELİŞTİRME AŞAMASINDA', 'Ana Depo kroki entegrasyonu şu anda geliştirme aşamasındadır. Yakında aktif olacaktır.')">ANA DEPO (Yakında)</button>
         </div>
 
         <div class="search-container">
@@ -210,6 +214,10 @@
             <div id="alert-desc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px;">-</div>
             <button onclick="closeAlert()" style="background: #fff; color: #000; border: none; padding: 12px 30px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 12px;">ANLADIM</button>
         </div>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <script type="module">
@@ -328,22 +336,23 @@
             const shelf2Rect = shelf2.getBoundingClientRect();
             const lensRect = lens.getBoundingClientRect();
 
-            const dX = (doorRect.right - mapRect.left) + 10;
+            const dX = (doorRect.right - mapRect.left);
             const dY = (doorRect.top + doorRect.height / 2) - mapRect.top;
 
             const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
             const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
             const cX = ((shelf1Rect.right + shelf2Rect.left) / 2) - mapRect.left;
-            const gapX = ((lensRect.right + shelf1Rect.left) / 2) - mapRect.left;
 
             let pathStr = "";
 
             if (targetId === "05.01.01" || targetId === "04.01.01") {
+                const gapX = ((lensRect.right + shelf1Rect.left) / 2) - mapRect.left;
+                const safeY = dY + 15;
                 const endX = (targetRect.right - mapRect.left) + offset;
-                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${gapX} ${safeY} L ${gapX} ${tY} L ${endX} ${tY}`;
             } else {
-                const safeY = ((doorRect.bottom + shelf1Rect.top) / 2) - mapRect.top;
+                const safeY = dY + 15; 
                 
                 let endX = tX;
                 if (tX < cX) {
@@ -352,7 +361,7 @@
                     endX = (targetRect.left - mapRect.left) - offset;
                 }
 
-                pathStr = `M ${dX} ${dY} L ${gapX} ${dY} L ${gapX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
+                pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
             }
 
             svgEl.innerHTML = `
@@ -421,7 +430,7 @@
                         
                         setTimeout(() => { 
                             drawPath(product.adres); 
-                            document.getElementById('result-banner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            bannerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 50);
                         
                         window.playBeep('success');
