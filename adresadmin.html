@@ -24,12 +24,6 @@
         
         main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; display: none; }
         
-        .depo-tabs { display: flex; gap: 10px; width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: #080808; padding: 10px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-wrap: wrap; }
-        .depo-btn { padding: 12px 25px; border-radius: 6px; font-weight: 800; font-size: 13px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
-        .depo-btn.active { background: #00ccff; color: #000; }
-        .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
-        .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
-
         .setup-container { max-width: 600px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
         
@@ -95,11 +89,6 @@
         <div id="toast" class="toast">Kayıt Başarılı!</div>
         <input type="file" id="excel-import" style="display:none;" accept=".xlsx, .xls" onchange="importExcel(event)">
 
-        <div class="depo-tabs">
-            <button class="depo-btn active">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" onclick="alert('Ana Depo kroki entegrasyonu geliştirme aşamasındadır.')">ANA DEPO (Yakında)</button>
-        </div>
-
         <div class="setup-container">
             <div class="setup-title">ADRES TANIMLAMA / DÜZENLEME</div>
             <form id="mapping-form">
@@ -124,9 +113,7 @@
             </form>
         </div>
 
-        <div class="list-container" id="mapping-list">
-            <!-- Akordeon Liste Buraya Gelecek -->
-        </div>
+        <div class="list-container" id="mapping-list"></div>
     </main>
 
     <div id="scanner-modal">
@@ -414,16 +401,12 @@
 
                     for (let r of rows) {
                         const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
-                        
-                        // Sütun İsim Çekme Mantığı Geliştirildi
                         const name = r['Ürün Adı'] || r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'] || r['İsim'] || r['Isim'];
-                        
                         let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
                         
                         if (code && addr) {
                             const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
                             
-                            // BDA ön ekini silme filtresi
                             let cleanAddr = String(addr).trim().toUpperCase();
                             if (cleanAddr.startsWith('BDA')) {
                                 cleanAddr = cleanAddr.substring(3).trim();
