@@ -44,7 +44,7 @@
         .map-container { position: relative; transition: width 0.2s, height 0.2s; margin: auto; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
-        .map-wrapper-am { min-width: 1100px; }
+        .map-wrapper-am { min-width: 1050px; }
         .map-wrapper-ana { min-width: 1200px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
@@ -148,7 +148,7 @@
     </main>
 
     <div class="legal-footer">
-        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <!-- HÜCRE İÇERİĞİ MODAL -->
@@ -160,9 +160,9 @@
             </div>
             
             <div style="display: flex; gap: 5px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #222;">
-                <button class="btn-edit" style="flex:1; background:#444; color:#fff;" onclick="editVisualAddress()">KROKİDEKİ İSMİ DÜZENLE</button>
-                <button class="btn-del" style="flex:1;" onclick="resetVisualCell()">KROKİDEN SIFIRLA</button>
-                <button class="btn-edit" style="flex:1;" onclick="changeCellAddress()">DB ADRESİNİ DEĞİŞTİR</button>
+                <button class="btn-edit" style="flex:1; background:#444; color:#fff;" onclick="editVisualAddress()">KROKİ İSMİNİ DÜZENLE</button>
+                <button class="btn-del" style="flex:1;" onclick="resetVisualCell()">KROKİDEN SİL</button>
+                <button class="btn-edit" style="flex:1;" onclick="changeCellAddress()">DB ADRESİNİ TAŞI</button>
             </div>
 
             <div id="cell-loading" style="text-align:center; color:#888; padding: 20px; font-family:monospace; display:none;">Veriler getiriliyor...</div>
@@ -243,7 +243,25 @@
                 </select>
             </div>
             
-            <button class="btn-save" style="margin-top:10px;" onclick="saveBulkAddress()">KROKİYE UYGULA</button>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-save" style="background:#444; color:#fff;" onclick="saveSingleAddress()">SADECE TEK ADRES</button>
+                <button class="btn-save" onclick="saveBulkAddress()">TOPLU TANIMLA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GÖRSEL ADRES DÜZENLEME MODAL -->
+    <div id="visual-edit-modal" class="modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title">KROKİ İSMİNİ DÜZENLE</div>
+                <button class="btn-close" onclick="closeModal('visual-edit-modal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>HÜCRE İSMİNİ GİRİN</label>
+                <input type="text" id="ve-new-name" placeholder="Örn: 05.01.01">
+            </div>
+            <button class="btn-save" onclick="applyVisualAddressEdit()">UYGULA</button>
         </div>
     </div>
 
@@ -251,7 +269,7 @@
     <div id="edit-addr-modal" class="modal">
         <div class="modal-box" style="max-width: 400px;">
             <div class="modal-header">
-                <div class="modal-title">ADRESİ DEĞİŞTİR</div>
+                <div class="modal-title">DB ADRESİNİ TAŞI</div>
                 <button class="btn-close" onclick="closeModal('edit-addr-modal')">×</button>
             </div>
             <div class="form-group">
@@ -300,7 +318,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -438,12 +456,32 @@
             
             mapWrapper.style.transform = `scale(${currentScale})`;
             
-            const baseW = currentDepo === 'am' ? 1100 : 1200;
+            const baseW = currentDepo === 'am' ? 1050 : 1200;
             const baseH = (baseW * 9) / 16; 
             
             mapContainer.style.width = (baseW * currentScale) + 'px';
             mapContainer.style.height = (baseH * currentScale) + 'px';
         }
+
+        window.saveSingleAddress = () => {
+            let prefix = document.getElementById('bm-prefix').value.trim();
+            let startNum = document.getElementById('bm-start').value;
+            let numStr = startNum.padStart(2, '0');
+            let sep = (prefix === '' || prefix.endsWith('.') || prefix.endsWith('-')) ? '' : '.';
+            let fullAddr = prefix + sep + numStr;
+            if(prefix === '') fullAddr = startNum; 
+            
+            let rot = document.getElementById('bm-rot').value;
+
+            if(activeVisualCell) {
+                activeVisualCell.id = 'cell-' + fullAddr;
+                activeVisualCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
+                activeVisualCell.style.opacity = '1';
+                activeVisualCell.classList.remove('cell-hidden');
+            }
+            
+            closeModal('bulk-modal');
+        };
 
         window.saveBulkAddress = () => {
             let prefix = document.getElementById('bm-prefix').value.trim();
@@ -471,9 +509,14 @@
 
         window.editVisualAddress = () => {
             let oldName = document.getElementById('cell-modal-title').innerText;
-            let newAddr = prompt("Hücrenin yeni adres ismini girin:", oldName);
-            if(!newAddr || newAddr === oldName) return;
-            
+            document.getElementById('ve-new-name').value = oldName;
+            document.getElementById('visual-edit-modal').style.display = 'flex';
+        };
+
+        window.applyVisualAddressEdit = () => {
+            let newAddr = document.getElementById('ve-new-name').value.trim();
+            if(!newAddr) return;
+
             if(activeVisualCell) {
                 activeVisualCell.id = 'cell-' + newAddr;
                 let span = activeVisualCell.querySelector('span');
@@ -483,19 +526,20 @@
                     activeVisualCell.innerHTML = `<span style="display:inline-block; transform: rotate(0deg); white-space: nowrap; pointer-events: none;">${newAddr}</span>`; 
                 }
                 document.getElementById('cell-modal-title').innerText = newAddr;
-                showCustomAlert("BAŞARILI", "Hücre ismi krokide değiştirildi. Kalıcı olması için 'KROKİ KODUNU ÜRET' butonunu kullanın.");
+                closeModal('visual-edit-modal');
+                showCustomAlert("BAŞARILI", "Hücre ismi krokide değiştirildi. Kalıcı olması için KROKİ KODUNU ÜRET'i kullanın.");
             }
         };
 
         window.resetVisualCell = () => {
-            showConfirm("Bu hücreyi krokiden sıfırlamak istediğinize emin misiniz? (Ürünler silinmez, sadece görsel hücre boşaltılır)", () => {
+            showConfirm("Bu hücreyi krokiden silmek istediğinize emin misiniz? (Ürünler silinmez, sadece görsel hücre boşaltılır)", () => {
                 if(activeVisualCell) {
                     activeVisualCell.id = '';
                     activeVisualCell.innerText = '+';
                     activeVisualCell.style.opacity = '0.3';
                     activeVisualCell.classList.add('cell-hidden');
                     closeModal('cell-modal');
-                    showCustomAlert("SIFIRLANDI", "Hücre krokiden temizlendi. Kalıcı olması için KROKİ KODUNU ÜRET'i unutmayın.");
+                    showCustomAlert("SİLİNDİ", "Hücre krokiden temizlendi. Kalıcı olması için KROKİ KODUNU ÜRET'i unutmayın.");
                 }
             });
         };
@@ -508,7 +552,7 @@
                 if(!cell.id || cell.id.trim() === '' || cell.innerText.trim() === '+') {
                     cell.id = '';
                     cell.innerHTML = '';
-                    cell.classList.add('cell-hidden');
+                    cell.className = 'cell cell-hidden';
                     cell.style.visibility = 'hidden';
                     cell.style.opacity = '';
                 }
