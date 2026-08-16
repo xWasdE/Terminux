@@ -1,4 +1,3 @@
-<!-- adresadmin.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -38,19 +37,14 @@
         .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 35px; cursor: pointer; }
         .zoom-val { font-size: 12px; font-weight: bold; font-family: monospace; width: 50px; text-align: center; color: #00ccff; }
 
-        .search-box { display: flex; gap: 5px; }
-        .search-box input { background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; font-family: monospace; font-size: 12px; border-radius: 6px; outline: none; width: 200px; }
-        .search-box input:focus { border-color: #00ccff; }
-        .search-box button { background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-
         .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; }
         .map-container { position: relative; transition: width 0.2s, height 0.2s; margin: auto; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
-        .map-wrapper-am { min-width: 950px; }
-        .map-wrapper-ana { min-width: 1200px; }
+        .map-wrapper-am { min-width: 900px; }
+        .map-wrapper-ana { min-width: 1100px; }
 
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
         .cell-hidden { visibility: hidden; }
         .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
@@ -94,8 +88,6 @@
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
             .toolbar { flex-direction: column; padding: 15px; align-items: stretch; }
             .action-group { flex-direction: column; align-items: stretch; }
-            .search-box { width: 100%; }
-            .search-box input { flex: 1; }
             .legal-footer { font-size: 7px; padding: 5px; }
         }
     </style>
@@ -128,11 +120,6 @@
             <button class="zoom-btn" onclick="changeZoom(-0.25)">-</button>
             <div class="zoom-val" id="zoom-val">%100</div>
             <button class="zoom-btn" onclick="changeZoom(0.25)">+</button>
-        </div>
-
-        <div class="search-box">
-            <input type="text" id="manual-search-val" placeholder="Ürün veya Adres Ara...">
-            <button onclick="manualSearch()">ARA</button>
         </div>
 
         <div class="action-group">
@@ -205,16 +192,6 @@
             </div>
 
             <button class="btn-save" id="btn-save-product" onclick="saveProduct()">KAYDET</button>
-        </div>
-    </div>
-
-    <div id="search-modal" class="modal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <div class="modal-title">ARAMA SONUÇLARI</div>
-                <button class="btn-close" onclick="closeModal('search-modal')">×</button>
-            </div>
-            <div class="product-list" id="search-results-list"></div>
         </div>
     </div>
 
@@ -297,11 +274,43 @@
                     newCell.addEventListener('click', () => {
                         let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
                         if(!addr || addr === '' || addr === 'undefined') {
-                            addr = prompt("Bu rafın adresi tanımlı değil. Yeni bir adres (örn: A1-01) belirleyin:");
-                            if(!addr) return;
-                            newCell.id = 'cell-' + addr;
-                            newCell.innerText = addr;
-                            newCell.style.opacity = '1';
+                            if(confirm("Bu rafa / bloğa toplu adres tanımlamak ister misiniz?\n\nTamam = Toplu Tanımla\nİptal = Sadece bu hücreye tanımla")) {
+                                let parentGrid = newCell.parentElement;
+                                let cellsInGrid = Array.from(parentGrid.querySelectorAll('.cell'));
+                                
+                                let prefix = prompt("Adres Ön Eki (örn: A1- veya 06.01.):");
+                                if(!prefix) return;
+                                let startNum = parseInt(prompt("Başlangıç Numarası (örn: 1):", "1"));
+                                if(isNaN(startNum)) return;
+                                let count = parseInt(prompt(`Kaç adet adres tanımlanacak? (Bu raftaki hücre kapasitesi: ${cellsInGrid.length})`, cellsInGrid.length));
+                                if(isNaN(count)) return;
+                                let rot = prompt("Yazı Yönü Açısı (0, 90, -90 vb.):", "0");
+
+                                for(let i=0; i<count; i++) {
+                                    if(i < cellsInGrid.length) {
+                                        let targetCell = cellsInGrid[i];
+                                        let numStr = (startNum + i).toString().padStart(2, '0');
+                                        let sep = prefix.endsWith('.') || prefix.endsWith('-') ? '' : '.';
+                                        let fullAddr = prefix + sep + numStr;
+
+                                        targetCell.id = 'cell-' + fullAddr;
+                                        targetCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
+                                        targetCell.style.opacity = '1';
+                                        targetCell.classList.remove('cell-hidden');
+                                        
+                                        targetCell.onclick = () => { openCellModal(fullAddr); };
+                                    }
+                                }
+                                alert("Adresler tanımlandı! Değişikliklerin kalıcı olması için kod üret adımını unutmayın (Tasarlayıcıda). NOT: Bu ekran sadece geçici bir görünüm sağlar.");
+                                return;
+                            } else {
+                                addr = prompt("Yeni adres (örn: A1-01):");
+                                if(!addr) return;
+                                newCell.id = 'cell-' + addr;
+                                newCell.innerText = addr;
+                                newCell.style.opacity = '1';
+                                newCell.classList.remove('cell-hidden');
+                            }
                         }
                         openCellModal(addr);
                     });
@@ -484,52 +493,6 @@
                 }
             } catch(err) {
                 alert("Adres güncelleme hatası: " + err.message);
-            }
-        };
-
-        window.manualSearch = async () => {
-            const val = document.getElementById('manual-search-val').value.trim().toLowerCase();
-            if(val.length < 2) { alert("En az 2 karakter girin."); return; }
-            
-            document.getElementById('search-results-list').innerHTML = '<div style="color:#aaa; text-align:center;">Aranıyor...</div>';
-            document.getElementById('search-modal').style.display = 'flex';
-
-            try {
-                const q = query(collection(db, currentCollection), limit(300));
-                const snapshot = await getDocs(q);
-                
-                let found = [];
-                snapshot.forEach(docSnap => {
-                    const d = docSnap.data();
-                    const s = `${d.urunKodu} ${d.urunAdi} ${d.barkod} ${d.refNo} ${d.adres}`.toLowerCase();
-                    if(s.includes(val)) {
-                        found.push({id: docSnap.id, ...d});
-                    }
-                });
-
-                if(found.length === 0) {
-                    document.getElementById('search-results-list').innerHTML = '<div style="color:#ff3333; text-align:center; font-weight:bold;">Sonuç bulunamadı.</div>';
-                } else {
-                    let html = '';
-                    found.forEach(d => {
-                        html += `
-                            <div class="product-card" id="card-${d.id}">
-                                <div class="pc-info">
-                                    <div style="color:#ffbc00; font-size:10px; font-weight:bold;">ADRES: ${d.adres}</div>
-                                    <div class="pc-name">${d.urunAdi || '-'}</div>
-                                    <div class="pc-code">KOD: ${d.urunKodu || '-'}</div>
-                                </div>
-                                <div class="pc-actions">
-                                    <button class="btn-edit" onclick="editProduct('${d.id}', '${(d.urunAdi || '').replace(/'/g, "\\'")}', '${d.urunKodu || ''}', '${d.barkod || ''}', '${d.refNo || ''}', '${d.adres}')">DÜZENLE</button>
-                                    <button class="btn-del" onclick="deleteProduct('${d.id}')">SİL</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('search-results-list').innerHTML = html;
-                }
-            } catch (e) {
-                document.getElementById('search-results-list').innerHTML = 'Hata: ' + e.message;
             }
         };
 
