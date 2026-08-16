@@ -38,7 +38,7 @@
         
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 90px 16px 16px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         .search-input:focus { border-color: #ff3333; }
-        .clear-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
+        .clear-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
         
         .btn-scan { background: #111; border: 2px solid #333; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
@@ -95,7 +95,6 @@
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
-        .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
@@ -160,7 +159,7 @@
     </main>
 
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <div id="scanner-modal">
@@ -351,7 +350,6 @@
             };
         };
 
-        // KUSURSUZ L-ŞEKLİNDE LAZER ÇİZİM MANTIĞI
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
@@ -371,7 +369,6 @@
             const isMobile = window.innerWidth <= 900;
             const strokeW = isMobile ? 3 : 4;
             const dashArr = isMobile ? "8, 8" : "12, 12";
-            const offset = isMobile ? 8 : 15;
 
             const d = getRectCenter(door, mapRect);
             const t = getRectCenter(targetCell, mapRect);
@@ -388,10 +385,10 @@
                 const cX = (s1.right + s2.left) / 2;
 
                 if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
-                    let endX = t.right + offset;
+                    let endX = t.right;
                     pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`;
                 } else {
-                    let endX = t.cx < cX ? t.right + offset : t.left - offset;
+                    let endX = t.cx < cX ? t.right : t.left;
                     pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
                 }
             } else {
@@ -401,18 +398,20 @@
 
                 let vCorridors = [];
                 document.querySelectorAll('.map-pathway').forEach(p => {
-                    const pRect = getRectCenter(p, mapRect);
-                    if ((pRect.bottom - pRect.top) > (pRect.right - pRect.left)) { 
-                        vCorridors.push(pRect.cx);
+                    let pLeft = parseFloat(p.style.left);
+                    let pWidth = parseFloat(p.style.width);
+                    let pHeight = parseFloat(p.style.height);
+                    if (pHeight > pWidth) { 
+                        vCorridors.push((pLeft + pWidth/2) / 100 * (mapRect.width / currentScale));
                     }
                 });
 
                 if(vCorridors.length === 0) {
                     vCorridors = [
-                        0.1817 * (map.offsetWidth),
-                        0.4000 * (map.offsetWidth),
-                        0.6975 * (map.offsetWidth),
-                        0.9408 * (map.offsetWidth)
+                        0.1817 * (mapRect.width / currentScale),
+                        0.4000 * (mapRect.width / currentScale),
+                        0.6975 * (mapRect.width / currentScale),
+                        0.9408 * (mapRect.width / currentScale)
                     ];
                 }
                 
@@ -425,7 +424,7 @@
                     }
                 }
                 
-                let endX = t.cx < bestCx ? t.right + offset : t.left - offset;
+                let endX = t.cx < bestCx ? t.right : t.left;
                 pathStr = `M ${startX} ${startY} L ${bestCx} ${startY} L ${bestCx} ${t.cy} L ${endX} ${t.cy}`;
             }
 
