@@ -257,8 +257,6 @@
                     osc.frequency.setValueAtTime(300, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     osc.start();
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
                     gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0);
                     osc.stop(ctx.currentTime + 1.0);
                 }
@@ -283,6 +281,7 @@
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
+            const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
             
             let targetIdRaw = targetId.trim();
             if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
@@ -299,40 +298,43 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            // Kapının başlangıç noktasını belirliyoruz.
             let startX = doorRect.left + doorRect.width / 2 - mapRect.left;
             let startY = doorRect.top + doorRect.height / 2 - mapRect.top;
 
-            // Hedef adresin tam orta noktasını belirliyoruz.
             const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
             const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
 
             const cellSize = 10;
             const gridW = Math.ceil(mapRect.width / cellSize);
             const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); // 1: Engel var (Varsayılan olarak her yer kapalı)
+            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
 
-            // Yalnızca ".map-pathway" (Lazer Güzergahı) div'lerinin içini yürünebilir (0) yapıyoruz.
             const pathways = map.querySelectorAll('.map-pathway');
             
             if (pathways.length > 0) {
                 pathways.forEach(el => {
                     const rect = el.getBoundingClientRect();
-                    const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
-                    const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
-                    const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
-                    const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
+                    const rot = parseInt(el.style.transform.replace(/[^0-9\-]/g, '')) || 0;
+                    
+                    let actLeft = rect.left - mapRect.left;
+                    let actTop = rect.top - mapRect.top;
+                    let actRight = rect.right - mapRect.left;
+                    let actBottom = rect.bottom - mapRect.top;
+
+                    const sx = Math.max(0, Math.floor(actLeft / cellSize));
+                    const ex = Math.min(gridW - 1, Math.ceil(actRight / cellSize));
+                    const sy = Math.max(0, Math.floor(actTop / cellSize));
+                    const ey = Math.min(gridH - 1, Math.ceil(actBottom / cellSize));
 
                     for(let y = sy; y <= ey; y++) {
                         for(let x = sx; x <= ex; x++) {
                             if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                                grid[y][x] = 0; // 0: Yol açık (Lazer geçebilir)
+                                grid[y][x] = 0; 
                             }
                         }
                     }
                 });
             } else {
-                // Eğer tasarıma Pathway (Güzergah) eklenmemişse, eski sistem A* mantığı (Her yeri boşalt) çalışsın.
                 for(let y = 0; y < gridH; y++) {
                     for(let x = 0; x < gridW; x++) {
                         grid[y][x] = 0; 
@@ -348,13 +350,12 @@
 
                     for(let y = sy; y <= ey; y++) {
                         for(let x = sx; x <= ex; x++) {
-                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1; // 1: Engel
+                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1; 
                         }
                     }
                 });
             }
 
-            // Kapıdan pathway'e çıkış yapabilmesi için kapının etrafını (Pathway'e ulaşana kadar) açıyoruz.
             const dsx = Math.max(0, Math.floor((doorRect.left - mapRect.left - 30) / cellSize));
             const dex = Math.min(gridW - 1, Math.ceil((doorRect.right - mapRect.left + 30) / cellSize));
             const dsy = Math.max(0, Math.floor((doorRect.top - mapRect.top - 30) / cellSize));
@@ -366,7 +367,6 @@
                 }
             }
 
-            // Aynı şekilde Pathway'den hedef rafa/kutuya gidebilmesi için hedefin de etrafını açıyoruz.
             const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 50) / cellSize));
             const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 50) / cellSize));
             const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 50) / cellSize));
