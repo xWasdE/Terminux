@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Kroki Adres Yönetimi</title>
+    <title>Terminux | Kroki Adres Yönetimi PRO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="harita-am.js"></script>
@@ -51,6 +51,7 @@
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
         .cell-hidden { visibility: hidden; }
         .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
+        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow-y: auto; }
@@ -83,6 +84,15 @@
         .btn-cancel { background: #333; color: #fff; border: none; padding: 15px; font-weight: 900; font-size: 14px; border-radius: 6px; cursor: pointer; letter-spacing: 2px; transition: 0.2s; }
         .btn-cancel:hover { background: #444; }
 
+        /* MİNİ RAF DÜZENLEYİCİ İÇİN CSS */
+        #be-grid { display: grid; gap: 5px; overflow: auto; padding: 15px; background: #050505; border: 1px solid #222; border-radius: 8px; margin-top: 15px; max-height: 400px; }
+        .edit-cell-wrap { position: relative; background: #111; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column; transition: 0.2s; }
+        .edit-cell-wrap.over { border-color: #00ff00; background: #0a0a0a; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .edit-cell-drag { background: #222; color: #888; font-size: 10px; text-align: center; cursor: grab; padding: 4px 0; border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; }
+        .edit-cell-drag:active { cursor: grabbing; background: #333; }
+        .edit-cell { background: transparent; border: none; color: #fff; padding: 10px; text-align: center; font-family: monospace; font-size: 12px; outline: none; width: 100%; }
+        .edit-cell:focus { color: #ffbc00; }
+
         .legal-footer { padding: 8px 15px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #1a1a1a; background: #050505; flex-shrink: 0; }
 
         #password-modal { display: flex; position: fixed; z-index: 50000; top: 0; left: 0; width: 100%; height: 100%; background: #000; align-items: center; justify-content: center; }
@@ -109,7 +119,7 @@
     </div>
 
     <header>
-        <div class="header-title">TERMINUX <span class="header-subtitle">ADRES YÖNETİMİ</span></div>
+        <div class="header-title">TERMINUX <span class="header-subtitle">ADRES YÖNETİMİ PRO</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <a href="index.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
             <a href="adres.html" class="btn-secondary" style="border-color: #ff3333; color: #ff3333;">ADRES BULUCU</a>
@@ -134,7 +144,7 @@
             <input type="file" id="import-file" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
             <button class="btn-action btn-excel-in" id="btn-excel-upload" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
             <button class="btn-action btn-excel-out" id="btn-excel-download" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
-            <button class="btn-action btn-export-map" onclick="exportMapCode()">KROKİ KODUNU ÜRET</button>
+            <button class="btn-action btn-export-map" onclick="exportMapCode()">KROKİYİ KAYDET (İNDİR)</button>
         </div>
     </div>
 
@@ -154,14 +164,11 @@
     <div id="cell-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header" style="margin-bottom: 10px;">
-                <div class="modal-title">RAF: <span id="cell-modal-title">00.00.00</span></div>
-                <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
-            </div>
-            
-            <div style="display: flex; gap: 5px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #222;">
-                <button class="btn-edit" style="flex:1; background:#444; color:#fff;" onclick="editVisualAddress()">KROKİ İSMİNİ DÜZENLE</button>
-                <button class="btn-del" style="flex:1;" onclick="resetVisualCell()">KROKİDEN SİL</button>
-                <button class="btn-edit" style="flex:1;" onclick="changeCellAddress()">DB ADRESİNİ TAŞI</button>
+                <div class="modal-title">RAF İÇERİĞİ: <span id="cell-modal-title">00.00.00</span></div>
+                <div>
+                    <button class="btn-edit" style="margin-right: 5px; background:#444; color:#fff;" onclick="openBlockEditor()">BLOĞU DÜZENLE</button>
+                    <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
+                </div>
             </div>
 
             <div id="cell-loading" style="text-align:center; color:#888; padding: 20px; font-family:monospace; display:none;">Veriler getiriliyor...</div>
@@ -180,7 +187,9 @@
                 <div class="modal-title" id="pm-title">YENİ ÜRÜN EKLE</div>
                 <button class="btn-close" onclick="closeModal('product-modal')">×</button>
             </div>
+            
             <input type="hidden" id="pm-id">
+            
             <div class="form-group">
                 <label>ADRES (Zorunlu)</label>
                 <input type="text" id="pm-adres" placeholder="Örn: 05.01.01">
@@ -205,100 +214,63 @@
         </div>
     </div>
 
-    <!-- TOPLU ADRES TANIMLAMA & IZGARA DÜZENLEME MODAL -->
-    <div id="bulk-modal" class="modal">
-        <div class="modal-box">
+    <!-- MİNİ RAF KROKİSİ DÜZENLEYİCİ -->
+    <div id="block-editor-modal" class="modal">
+        <div class="modal-box" style="max-width: 800px;">
             <div class="modal-header">
-                <div class="modal-title">RAF YÖNETİMİ</div>
-                <button class="btn-close" onclick="closeModal('bulk-modal')">×</button>
+                <div class="modal-title">MİNİ RAF KROKİSİ DÜZENLEYİCİ</div>
+                <button class="btn-close" onclick="closeModal('block-editor-modal')">×</button>
             </div>
-            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">Bu rafın kapasitesini (Sütun/Satır) değiştirebilir ve adreslerini tanımlayabilirsiniz.</p>
+            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">
+                Tıkladığınız bloğun (raf, dolap vb.) satır/sütun kapasitesini dilediğiniz gibi ayarlayın. 
+                Numaraları otomatik doldurabilir ve kutucukları farenizle sürükleyerek yerlerini (örn: 01 en altta olacak şekilde) değiştirebilirsiniz.
+            </p>
             
             <div style="display:flex; gap:15px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #222;">
                 <div class="form-group" style="flex:1; margin:0;">
                     <label>SÜTUN SAYISI (Yatay)</label>
-                    <input type="number" id="bm-grid-cols" value="1" min="1" onchange="updateGridLayout()">
+                    <input type="number" id="be-cols" value="1" min="1" onchange="generateGridInputs()">
                 </div>
                 <div class="form-group" style="flex:1; margin:0;">
-                    <label>SATIR SAYISI (Dikey)</label>
-                    <input type="number" id="bm-grid-rows" value="1" min="1" onchange="updateGridLayout()">
+                    <label>SATIR SAYISI (Dikey - Katlar)</label>
+                    <input type="number" id="be-rows" value="1" min="1" onchange="generateGridInputs()">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>ADRES ÖN EKİ (Örn: A1- veya 06.01.)</label>
-                <input type="text" id="bm-prefix" placeholder="A1-">
-            </div>
-            
-            <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="display:flex; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:8px; align-items:flex-end;">
                 <div class="form-group" style="flex:1; margin:0;">
-                    <label>BAŞLANGIÇ NO</label>
-                    <input type="number" id="bm-start" value="1">
+                    <label>ÖN EK</label>
+                    <input type="text" id="be-prefix" placeholder="A1-">
                 </div>
                 <div class="form-group" style="flex:1; margin:0;">
-                    <label>KAÇ ADET? (Kapasite: <span id="bm-max-cap"></span>)</label>
-                    <input type="number" id="bm-count" value="1">
+                    <label>BAŞLANGIÇ</label>
+                    <input type="number" id="be-start" value="1">
                 </div>
+                <div class="form-group" style="flex:1; margin:0;">
+                    <label>DOLDURMA YÖNÜ</label>
+                    <select id="be-fill-dir">
+                        <option value="normal">Normal (1'den İleri)</option>
+                        <option value="reverse">Ters (Aşağıdan Yukarıya Doğru)</option>
+                    </select>
+                </div>
+                <button class="btn-action" style="padding:13px 20px;" onclick="autoFillGrid()">OTOMATİK DOLDUR</button>
             </div>
-            
-            <div class="form-group">
-                <label>YAZI YÖNÜ / AÇISI</label>
-                <select id="bm-rot">
+
+            <div class="form-group" style="margin-top:15px;">
+                <label>HÜCRE İÇİ YAZI AÇISI (Görsel)</label>
+                <select id="be-text-rot">
                     <option value="0">Yatay (0°)</option>
                     <option value="90">Dikey (Yukarıdan Aşağıya 90°)</option>
                     <option value="-90">Dikey (Aşağıdan Yukarıya -90°)</option>
                 </select>
             </div>
+
+            <label style="font-size: 11px; color: #ffbc00; font-weight: bold; margin-top: 15px; display:block;">GÖRSEL RAF DİZİLİMİ (Sürükle-Bırak ile Yönleri Ayarlayın)</label>
+            <div id="be-grid"></div>
             
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn-save" style="background:#444; color:#fff;" onclick="saveSingleAddress()">SADECE TEK ADRES</button>
-                <button class="btn-save" onclick="saveBulkAddress()">KROKİYE UYGULA</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- GÖRSEL ADRES DÜZENLEME MODAL -->
-    <div id="visual-edit-modal" class="modal">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-header">
-                <div class="modal-title">KROKİ İSMİNİ DÜZENLE</div>
-                <button class="btn-close" onclick="closeModal('visual-edit-modal')">×</button>
-            </div>
-            <div class="form-group">
-                <label>HÜCRE İSMİNİ GİRİN</label>
-                <input type="text" id="ve-new-name" placeholder="Örn: 05.01.01">
-            </div>
-            <button class="btn-save" onclick="applyVisualAddressEdit()">UYGULA</button>
-        </div>
-    </div>
-
-    <!-- ADRES DEĞİŞTİRME MODAL -->
-    <div id="edit-addr-modal" class="modal">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-header">
-                <div class="modal-title">DB ADRESİNİ TAŞI</div>
-                <button class="btn-close" onclick="closeModal('edit-addr-modal')">×</button>
-            </div>
-            <div class="form-group">
-                <label>YENİ ADRESİ GİRİN (Tüm ürünler taşınacak)</label>
-                <input type="text" id="ea-new-addr" placeholder="Örn: B2-05">
-            </div>
-            <button class="btn-save" onclick="executeAddressChange()">DEĞİŞTİR VE TAŞI</button>
-        </div>
-    </div>
-
-    <!-- KROKİ İHRACAT MODAL -->
-    <div id="map-export-modal" class="modal">
-        <div class="modal-box" style="max-width: 900px;">
-            <div class="modal-header">
-                <div class="modal-title">KROKİ KODU HAZIR</div>
-                <button class="btn-close" onclick="closeModal('map-export-modal')">×</button>
-            </div>
-            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">Aşağıdaki kodu kopyalayıp ilgili js dosyasına (<b>harita-am.js</b> veya <b>harita-ana.js</b>) tamamen yapıştırın.</p>
-            <textarea id="export-map-textarea" readonly style="height:350px; font-family:monospace; background:#000; color:#0ff; border:1px solid #333; padding:15px; border-radius:6px; outline:none; resize:none;"></textarea>
-            <div class="action-group" style="margin-top:15px; justify-content:flex-end;">
-                <button class="btn-cancel" style="width:auto; padding:10px 20px;" onclick="closeModal('map-export-modal')">KAPAT</button>
-                <button class="btn-save" style="width:auto; padding:10px 20px;" onclick="copyMapCode()">KODU KOPYALA</button>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-cancel" style="flex:1;" onclick="clearGridVisuals()">TÜM KUTULARI SİL/TEMİZLE</button>
+                <button class="btn-save" style="flex:2;" onclick="applyBlockToMap()">KROKİYE UYGULA</button>
             </div>
         </div>
     </div>
@@ -379,8 +351,9 @@
             if(e.key === 'Enter') submitPassword();
         });
 
-        let activeVisualCell = null;
-        let currentCellsInGrid = [];
+        // MİNİ DÜZENLEYİCİ DEĞİŞKENLERİ
+        let activeBlockParent = null; 
+        let draggedGridCell = null;
 
         window.switchDepo = (depo) => {
             currentDepo = depo;
@@ -431,58 +404,226 @@
                 
                 newCell.addEventListener('click', () => {
                     let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
-                    activeVisualCell = newCell;
-
                     if(!addr || addr === '' || addr === 'undefined' || newCell.innerText === '+') {
-                        currentCellsInGrid = Array.from(newCell.parentElement.querySelectorAll('.cell'));
-                        document.getElementById('bm-count').value = currentCellsInGrid.length;
-                        document.getElementById('bm-max-cap').innerText = currentCellsInGrid.length;
-                        document.getElementById('bm-count').max = currentCellsInGrid.length;
-                        
-                        let matchC = newCell.parentElement.style.gridTemplateColumns.match(/repeat\((\d+)/);
-                        let matchR = newCell.parentElement.style.gridTemplateRows.match(/repeat\((\d+)/);
-                        document.getElementById('bm-grid-cols').value = matchC ? matchC[1] : 1;
-                        document.getElementById('bm-grid-rows').value = matchR ? matchR[1] : 1;
-
-                        document.getElementById('bulk-modal').style.display = 'flex';
+                        activeBlockParent = newCell.parentElement;
+                        openBlockEditorFromParent(activeBlockParent);
                     } else {
+                        activeBlockParent = newCell.parentElement;
                         openCellModal(addr);
                     }
                 });
             });
         }
 
-        window.updateGridLayout = () => {
-            if(!activeVisualCell) return;
-            let cols = parseInt(document.getElementById('bm-grid-cols').value) || 1;
-            let rows = parseInt(document.getElementById('bm-grid-rows').value) || 1;
-            let parent = activeVisualCell.parentElement;
+        window.openBlockEditor = () => {
+            closeModal('cell-modal');
+            openBlockEditorFromParent(activeBlockParent);
+        };
 
-            parent.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            parent.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        function openBlockEditorFromParent(parent) {
+            let colMatch = parent.style.gridTemplateColumns.match(/repeat\((\d+)/);
+            let rowMatch = parent.style.gridTemplateRows.match(/repeat\((\d+)/);
+            
+            let cols = colMatch ? parseInt(colMatch[1]) : 1;
+            let rows = rowMatch ? parseInt(rowMatch[1]) : 1;
+            
+            document.getElementById('be-cols').value = cols;
+            document.getElementById('be-rows').value = rows;
 
-            let baseStyle = activeVisualCell.getAttribute('style') || '';
+            let existingData = [];
+            let cellElements = Array.from(parent.querySelectorAll('.cell'));
+            
+            // Eğer blokta daha önce tanımlanmış açı varsa yakalayalım
+            let foundRot = 0;
+            
+            cellElements.forEach(c => {
+                if(c.classList.contains('cell-hidden') || c.innerText === '+') {
+                    existingData.push('');
+                } else {
+                    existingData.push(c.innerText.trim());
+                    let span = c.querySelector('span');
+                    if(span) {
+                        let rotMatch = span.style.transform.match(/rotate\(([\d\-]+)deg\)/);
+                        if(rotMatch) foundRot = parseInt(rotMatch[1]);
+                    }
+                }
+            });
+
+            document.getElementById('be-text-rot').value = foundRot;
+
+            window.generateGridInputs(cols, rows, existingData);
+            document.getElementById('block-editor-modal').style.display = 'flex';
+        }
+
+        window.generateGridInputs = (colsOverride, rowsOverride, existingData = []) => {
+            let cols = colsOverride !== undefined ? colsOverride : parseInt(document.getElementById('be-cols').value) || 1;
+            let rows = rowsOverride !== undefined ? rowsOverride : parseInt(document.getElementById('be-rows').value) || 1;
+            
+            const container = document.getElementById('be-grid');
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            container.innerHTML = '';
+
+            const total = cols * rows;
+            for(let i=0; i<total; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'edit-cell-wrap';
+                wrap.draggable = true;
+
+                const handle = document.createElement('div');
+                handle.className = 'edit-cell-drag';
+                handle.innerHTML = '&#9776; KAYDIR';
+
+                const input = document.createElement('input');
+                input.className = 'edit-cell';
+                input.type = 'text';
+                input.placeholder = 'BOŞ (+)';
+                input.value = existingData[i] || '';
+
+                wrap.appendChild(handle);
+                wrap.appendChild(input);
+
+                wrap.addEventListener('dragstart', handleDragStart);
+                wrap.addEventListener('dragenter', handleDragEnter);
+                wrap.addEventListener('dragover', handleDragOver);
+                wrap.addEventListener('dragleave', handleDragLeave);
+                wrap.addEventListener('drop', handleDrop);
+                wrap.addEventListener('dragend', handleDragEnd);
+
+                container.appendChild(wrap);
+            }
+        };
+
+        window.autoFillGrid = () => {
+            const prefix = document.getElementById('be-prefix').value.trim(); 
+            let startNum = parseInt(document.getElementById('be-start').value) || 1;
+            const fillDir = document.getElementById('be-fill-dir').value;
+            const inputs = Array.from(document.querySelectorAll('#be-grid .edit-cell'));
+            
+            if(fillDir === 'reverse') {
+                for(let i = inputs.length - 1; i >= 0; i--) {
+                    let numStr = startNum.toString().padStart(2, '0');
+                    let sep = (prefix === '' || prefix.endsWith('.') || prefix.endsWith('-')) ? '' : '.';
+                    inputs[i].value = prefix === '' ? startNum : prefix + sep + numStr;
+                    startNum++;
+                }
+            } else {
+                for(let i = 0; i < inputs.length; i++) {
+                    let numStr = startNum.toString().padStart(2, '0');
+                    let sep = (prefix === '' || prefix.endsWith('.') || prefix.endsWith('-')) ? '' : '.';
+                    inputs[i].value = prefix === '' ? startNum : prefix + sep + numStr;
+                    startNum++;
+                }
+            }
+        };
+
+        window.clearGridVisuals = () => {
+            document.querySelectorAll('#be-grid .edit-cell').forEach(inp => inp.value = '');
+        };
+
+        window.applyBlockToMap = () => {
+            if(!activeBlockParent) return;
+
+            let cols = parseInt(document.getElementById('be-cols').value) || 1;
+            let rows = parseInt(document.getElementById('be-rows').value) || 1;
+            let rot = document.getElementById('be-text-rot').value;
+
+            activeBlockParent.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            activeBlockParent.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            let baseStyle = activeBlockParent.firstElementChild ? activeBlockParent.firstElementChild.getAttribute('style') : 'background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;';
             baseStyle = baseStyle.replace(/opacity:\s*[^;]+;/gi, '').replace(/visibility:\s*[^;]+;/gi, '');
 
-            parent.innerHTML = '';
-            let totalCells = cols * rows;
+            let inputs = Array.from(document.querySelectorAll('#be-grid .edit-cell'));
+            activeBlockParent.innerHTML = '';
 
-            for(let i=0; i<totalCells; i++) {
-                let cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.style.cssText = baseStyle;
-                cell.style.visibility = 'visible';
-                cell.style.opacity = '0.3';
-                cell.innerText = '+';
-                cell.style.pointerEvents = 'auto';
-                parent.appendChild(cell);
+            inputs.forEach(inp => {
+                let val = inp.value.trim();
+                let newCell = document.createElement('div');
+                newCell.className = 'cell';
+                newCell.style.cssText = baseStyle;
+
+                if(!val) {
+                    newCell.classList.remove('cell-hidden'); 
+                    newCell.style.visibility = 'visible';
+                    newCell.style.opacity = '0.3';
+                    newCell.innerText = '+';
+                    newCell.id = '';
+                } else {
+                    newCell.id = 'cell-' + val;
+                    newCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${val}</span>`;
+                    newCell.style.opacity = '1';
+                }
+                newCell.style.pointerEvents = 'auto';
+                activeBlockParent.appendChild(newCell);
+            });
+
+            bindCellEvents(activeBlockParent);
+            closeModal('block-editor-modal');
+            showCustomAlert("BAŞARILI", "Raf yapısı ve adresleri krokide güncellendi. Kalıcı olması için KROKİ KODUNU ÜRET (İNDİR) butonuna tıklayın ve dosyayı kaydedin.");
+        };
+
+        // Mini Grid Drag & Drop
+        function handleDragStart(e) {
+            draggedGridCell = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.style.opacity = '0.4';
+        }
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        function handleDragEnter(e) { this.classList.add('over'); }
+        function handleDragLeave(e) { this.classList.remove('over'); }
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (draggedGridCell !== this) {
+                let sourceInput = draggedGridCell.querySelector('.edit-cell');
+                let targetInput = this.querySelector('.edit-cell');
+                let tempVal = sourceInput.value;
+                sourceInput.value = targetInput.value;
+                targetInput.value = tempVal;
             }
-            bindCellEvents(parent);
-            activeVisualCell = parent.firstElementChild;
-            currentCellsInGrid = Array.from(parent.querySelectorAll('.cell'));
-            document.getElementById('bm-count').value = currentCellsInGrid.length;
-            document.getElementById('bm-max-cap').innerText = currentCellsInGrid.length;
-            document.getElementById('bm-count').max = currentCellsInGrid.length;
+            return false;
+        }
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            document.querySelectorAll('.edit-cell-wrap').forEach(item => item.classList.remove('over'));
+        }
+
+        window.exportMapCode = () => {
+            const clone = document.getElementById('admin-map-area').cloneNode(true);
+            
+            clone.querySelectorAll('.cell').forEach(cell => {
+                cell.style.pointerEvents = ''; 
+                if(!cell.id || cell.id.trim() === '' || cell.innerText.trim() === '+') {
+                    cell.id = '';
+                    cell.innerHTML = '';
+                    cell.className = 'cell cell-hidden';
+                    cell.style.visibility = 'hidden';
+                    cell.style.opacity = '';
+                }
+            });
+            
+            let html = clone.innerHTML;
+            html = html.replace(/ active"/g, '"');
+            
+            let jsVar = currentDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo';
+            let filename = currentDepo === 'am' ? 'harita-am.js' : 'harita-ana.js';
+            let finalOutput = `window.${jsVar} = \`\n${html}\n\`;`;
+            
+            const blob = new Blob([finalOutput], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            
+            showCustomAlert("İNDİRME BAŞARILI", `${filename} dosyası indirildi. Sunucudaki eski dosya ile değiştirmeniz yeterlidir.`);
         };
 
         window.changeZoom = (delta) => {
@@ -513,116 +654,64 @@
             mapContainer.style.height = (baseH * currentScale) + 'px';
         }
 
-        window.saveSingleAddress = () => {
-            let prefix = document.getElementById('bm-prefix').value.trim();
-            let startNum = document.getElementById('bm-start').value;
-            let numStr = startNum.padStart(2, '0');
-            let sep = (prefix === '' || prefix.endsWith('.') || prefix.endsWith('-')) ? '' : '.';
-            let fullAddr = prefix + sep + numStr;
-            if(prefix === '') fullAddr = startNum; 
-            
-            let rot = document.getElementById('bm-rot').value;
-
-            if(activeVisualCell) {
-                activeVisualCell.id = 'cell-' + fullAddr;
-                activeVisualCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
-                activeVisualCell.style.opacity = '1';
-                activeVisualCell.classList.remove('cell-hidden');
-            }
-            
-            closeModal('bulk-modal');
-        };
-
-        window.saveBulkAddress = () => {
-            let prefix = document.getElementById('bm-prefix').value.trim();
-            let startNum = parseInt(document.getElementById('bm-start').value) || 1;
-            let count = parseInt(document.getElementById('bm-count').value) || 1;
-            let rot = document.getElementById('bm-rot').value;
-
-            for(let i=0; i<count; i++) {
-                if(i < currentCellsInGrid.length) {
-                    let target = currentCellsInGrid[i];
-                    let numStr = (startNum + i).toString().padStart(2, '0');
-                    let sep = (prefix === '' || prefix.endsWith('.') || prefix.endsWith('-')) ? '' : '.';
-                    let fullAddr = prefix + sep + numStr;
-                    if(prefix === '') fullAddr = (startNum + i).toString();
-
-                    target.id = 'cell-' + fullAddr;
-                    target.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
-                    target.style.opacity = '1';
-                    target.classList.remove('cell-hidden');
-                }
-            }
-            closeModal('bulk-modal');
-            showCustomAlert("BAŞARILI", "Adresler haritada oluşturuldu. Kalıcı olması için KROKİ KODUNU ÜRET butonunu kullanın.");
-        };
-
-        window.editVisualAddress = () => {
-            let oldName = document.getElementById('cell-modal-title').innerText;
-            document.getElementById('ve-new-name').value = oldName;
-            document.getElementById('visual-edit-modal').style.display = 'flex';
-        };
-
-        window.applyVisualAddressEdit = () => {
-            let newAddr = document.getElementById('ve-new-name').value.trim();
-            if(!newAddr) return;
-
-            if(activeVisualCell) {
-                activeVisualCell.id = 'cell-' + newAddr;
-                let span = activeVisualCell.querySelector('span');
-                if(span) { 
-                    span.innerText = newAddr; 
-                } else { 
-                    activeVisualCell.innerHTML = `<span style="display:inline-block; transform: rotate(0deg); white-space: nowrap; pointer-events: none;">${newAddr}</span>`; 
-                }
-                document.getElementById('cell-modal-title').innerText = newAddr;
-                closeModal('visual-edit-modal');
-                showCustomAlert("BAŞARILI", "Hücre ismi krokide değiştirildi. Kalıcı olması için KROKİ KODUNU ÜRET'i kullanın.");
-            }
-        };
-
-        window.resetVisualCell = () => {
-            showConfirm("Bu hücreyi krokiden silmek istediğinize emin misiniz? (Ürünler silinmez, sadece görsel hücre boşaltılır)", () => {
-                if(activeVisualCell) {
-                    activeVisualCell.id = '';
-                    activeVisualCell.innerText = '+';
-                    activeVisualCell.style.opacity = '0.3';
-                    activeVisualCell.classList.add('cell-hidden');
-                    closeModal('cell-modal');
-                    showCustomAlert("SİLİNDİ", "Hücre krokiden temizlendi. Kalıcı olması için KROKİ KODUNU ÜRET'i unutmayın.");
-                }
-            });
-        };
-
-        window.exportMapCode = () => {
-            const clone = document.getElementById('admin-map-area').cloneNode(true);
-            
-            clone.querySelectorAll('.cell').forEach(cell => {
-                cell.style.pointerEvents = ''; 
-                if(!cell.id || cell.id.trim() === '' || cell.innerText.trim() === '+') {
-                    cell.id = '';
-                    cell.innerHTML = '';
-                    cell.className = 'cell cell-hidden';
-                    cell.style.visibility = 'hidden';
-                    cell.style.opacity = '';
-                }
+        window.exportExcel = async () => {
+            const q = query(collection(db, currentCollection));
+            const snapshot = await getDocs(q);
+            let data = [];
+            snapshot.forEach(doc => {
+                let d = doc.data();
+                data.push({
+                    "Adres": d.adres || "",
+                    "Ürün Adı": d.urunAdi || "",
+                    "Ürün Kodu": d.urunKodu || "",
+                    "Barkod": d.barkod || "",
+                    "Ref No": d.refNo || ""
+                });
             });
             
-            let html = clone.innerHTML;
-            html = html.replace(/ active"/g, '"');
+            if(data.length === 0) { showCustomAlert("UYARI", "Dışa aktarılacak veri yok."); return; }
             
-            let jsVar = currentDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo';
-            let finalOutput = `window.${jsVar} = \`\n${html}\n\`;`;
-            
-            document.getElementById('export-map-textarea').value = finalOutput;
-            document.getElementById('map-export-modal').style.display = 'flex';
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Adresler");
+            XLSX.writeFile(wb, `terminux_${currentDepo}_yedek.xlsx`);
         };
 
-        window.copyMapCode = () => {
-            const textarea = document.getElementById('export-map-textarea');
-            textarea.select();
-            document.execCommand('copy');
-            alert('KOD KOPYALANDI! Lütfen ilgili .js dosyasının içine yapıştırın.');
+        window.importExcel = (event) => {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    showConfirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`, async () => {
+                        document.getElementById('import-file').value = '';
+                        let count = 0;
+                        for(let row of rows) {
+                            let adres = row["Adres"] || row["adres"] || "";
+                            if(adres) {
+                                await addDoc(collection(db, currentCollection), {
+                                    adres: String(adres),
+                                    urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
+                                    urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
+                                    barkod: String(row["Barkod"] || row["barkod"] || ""),
+                                    refNo: String(row["Ref No"] || row["refNo"] || "")
+                                });
+                                count++;
+                            }
+                        }
+                        showCustomAlert("BAŞARILI", `${count} adet ürün başarıyla yüklendi! Lütfen sayfanın güncellenmesini bekleyin.`);
+                        switchDepo(currentDepo);
+                    });
+                } catch(err) {
+                    showCustomAlert("HATA", "Excel yükleme hatası: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         window.openCellModal = async (adres) => {
@@ -741,109 +830,6 @@
                     showCustomAlert("HATA", "Silme hatası: " + e.message);
                 }
             });
-        };
-
-        let oldAddrToChange = "";
-        window.changeCellAddress = () => {
-            oldAddrToChange = document.getElementById('cell-modal-title').innerText;
-            document.getElementById('ea-new-addr').value = "";
-            document.getElementById('edit-addr-modal').style.display = 'flex';
-        };
-
-        window.executeAddressChange = async () => {
-            const newAdres = document.getElementById('ea-new-addr').value.trim();
-            if(!newAdres || newAdres === oldAddrToChange) return;
-            
-            showConfirm(`'${oldAddrToChange}' adresindeki tüm ürünler '${newAdres}' olarak güncellenecek. Onaylıyor musunuz?`, async () => {
-                try {
-                    document.getElementById('cell-loading').style.display = 'block';
-                    document.getElementById('cell-product-list').style.display = 'none';
-
-                    const q = query(collection(db, currentCollection), where("adres", "==", oldAddrToChange));
-                    const snapshot = await getDocs(q);
-                    
-                    let promises = [];
-                    snapshot.forEach(docSnap => {
-                        promises.push(updateDoc(doc(db, currentCollection, docSnap.id), { adres: newAdres }));
-                    });
-                    
-                    await Promise.all(promises);
-                    
-                    showCustomAlert("BAŞARILI", "Adres başarıyla güncellendi ve ürünler taşındı!");
-                    closeModal('cell-modal');
-                    closeModal('edit-addr-modal');
-                    
-                    let cell = document.getElementById('cell-' + oldAddrToChange);
-                    if(cell) {
-                        cell.id = 'cell-' + newAdres;
-                        let span = cell.querySelector('span');
-                        if(span) { span.innerText = newAdres; }
-                        else { cell.innerText = newAdres; }
-                    }
-                } catch(err) {
-                    showCustomAlert("HATA", "Adres güncelleme hatası: " + err.message);
-                }
-            });
-        };
-
-        window.exportExcel = async () => {
-            const q = query(collection(db, currentCollection));
-            const snapshot = await getDocs(q);
-            let data = [];
-            snapshot.forEach(doc => {
-                let d = doc.data();
-                data.push({
-                    "Adres": d.adres || "",
-                    "Ürün Adı": d.urunAdi || "",
-                    "Ürün Kodu": d.urunKodu || "",
-                    "Barkod": d.barkod || "",
-                    "Ref No": d.refNo || ""
-                });
-            });
-            
-            if(data.length === 0) { showCustomAlert("UYARI", "Dışa aktarılacak veri yok."); return; }
-            
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Adresler");
-            XLSX.writeFile(wb, `terminux_${currentDepo}_yedek.xlsx`);
-        };
-
-        window.importExcel = (event) => {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet);
-                    
-                    showConfirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`, async () => {
-                        document.getElementById('import-file').value = '';
-                        let count = 0;
-                        for(let row of rows) {
-                            let adres = row["Adres"] || row["adres"] || "";
-                            if(adres) {
-                                await addDoc(collection(db, currentCollection), {
-                                    adres: String(adres),
-                                    urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
-                                    urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
-                                    barkod: String(row["Barkod"] || row["barkod"] || ""),
-                                    refNo: String(row["Ref No"] || row["refNo"] || "")
-                                });
-                                count++;
-                            }
-                        }
-                        showCustomAlert("BAŞARILI", `${count} adet ürün başarıyla yüklendi! Lütfen sayfanın güncellenmesini bekleyin.`);
-                        switchDepo(currentDepo);
-                    });
-                } catch(err) {
-                    showCustomAlert("HATA", "Excel yükleme hatası: " + err.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
         };
 
     </script>
