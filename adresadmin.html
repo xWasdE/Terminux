@@ -1,3 +1,4 @@
+<!-- adresadmin.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -43,7 +44,7 @@
         .search-box button { background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; }
 
         .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; }
-        .map-container { position: relative; transition: width 0.2s, height 0.2s; }
+        .map-container { position: relative; transition: width 0.2s, height 0.2s; margin: auto; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
         .map-wrapper-am { min-width: 950px; }
@@ -130,15 +131,15 @@
         </div>
 
         <div class="search-box">
-            <input type="text" id="manual-search-val" placeholder="Barkod, Kod veya Adres...">
+            <input type="text" id="manual-search-val" placeholder="Ürün veya Adres Ara...">
             <button onclick="manualSearch()">ARA</button>
         </div>
 
         <div class="action-group">
             <button class="btn-action" onclick="openProductModal()">+ SIFIRDAN ÜRÜN EKLE</button>
             <input type="file" id="import-file" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
-            <button class="btn-action btn-excel-in" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
-            <button class="btn-action btn-excel-out" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
+            <button class="btn-action btn-excel-in" id="btn-excel-upload" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
+            <button class="btn-action btn-excel-out" id="btn-excel-download" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
         </div>
     </div>
 
@@ -262,12 +263,18 @@
                 currentCollection = 'kroki_adresleri';
                 mapArea.className = 'map-wrapper map-wrapper-am';
                 mapArea.innerHTML = window.haritaAmeliyathane || "";
+                
+                document.getElementById('btn-excel-upload').innerText = 'AMELİYATHANE İÇİN EXCEL YÜKLE';
+                document.getElementById('btn-excel-download').innerText = 'AMELİYATHANE YEDEĞİ İNDİR';
             } else {
                 document.getElementById('tab-ana').classList.replace('inactive', 'active');
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
                 currentCollection = 'kroki_adresleri_ana';
                 mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
+                
+                document.getElementById('btn-excel-upload').innerText = 'ANA DEPO İÇİN EXCEL YÜKLE';
+                document.getElementById('btn-excel-download').innerText = 'ANA DEPO YEDEĞİ İNDİR';
             }
             
             const svgEl = mapArea.querySelector('svg');
@@ -276,25 +283,30 @@
             
             setTimeout(() => {
                 mapArea.querySelectorAll('.cell').forEach(cell => {
-                    if(cell.classList.contains('cell-hidden') || !cell.id) {
+                    if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') {
                         cell.style.visibility = 'visible';
                         cell.style.opacity = '0.3';
                         cell.innerText = '+';
+                        cell.classList.remove('cell-hidden');
                     }
-                    cell.addEventListener('click', () => {
-                        let addr = cell.id ? cell.id.replace('cell-', '') : '';
-                        if(!addr || addr === '') {
+                    cell.style.pointerEvents = 'auto';
+
+                    const newCell = cell.cloneNode(true);
+                    cell.parentNode.replaceChild(newCell, cell);
+                    
+                    newCell.addEventListener('click', () => {
+                        let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
+                        if(!addr || addr === '' || addr === 'undefined') {
                             addr = prompt("Bu rafın adresi tanımlı değil. Yeni bir adres (örn: A1-01) belirleyin:");
                             if(!addr) return;
-                            cell.id = 'cell-' + addr;
-                            cell.innerText = addr;
-                            cell.classList.remove('cell-hidden');
-                            cell.style.opacity = '1';
+                            newCell.id = 'cell-' + addr;
+                            newCell.innerText = addr;
+                            newCell.style.opacity = '1';
                         }
                         openCellModal(addr);
                     });
                 });
-            }, 100);
+            }, 300);
 
             applyZoom();
         };
@@ -555,7 +567,7 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    if(!confirm(`${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`)) return;
+                    if(!confirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`)) return;
                     
                     document.getElementById('import-file').value = '';
                     
