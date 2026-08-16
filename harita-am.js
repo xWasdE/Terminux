@@ -1,51 +1,56 @@
 window.haritaAmeliyathane = `
 <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
-<div id="door-am" style="position: absolute; top: 0.2%; left: 5.8%; width: 12.7%; height: 10.8%; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 5;">KAPI <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa;">↓</span></div>
+<div id="door-am" style="position: absolute; top: 0.2%; left: 5.8%; width: 13.4%; height: 10.8%; transform: rotate(0deg); box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: #ffbc00; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 3px dashed #ffbc00; border-bottom: 3px dashed #ffbc00; background: rgba(255,188,0,0.05); z-index: 5;">KAPI <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #ffbc00;">↓</span></div>
 
-<div style="position: absolute; top: -0.2%; left: 86.7%; width: 12.3%; height: 24.9%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 5;"><div style="font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg);">MASA</div></div>
-
-<div style="position: absolute; top: 11.5%; left: 0.1%; width: 14.1%; height: 20.8%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 5;">
-    <div id="cell-05.01.01" class="cell cell-lens">05.01.01</div>
-    <div id="cell-04.01.01" class="cell cell-lens">04.01.01</div>
+<div class="map-lens-am" id="lens-am" style="position: absolute; top: 11.4%; left: 0.1%; width: 16.5%; height: 20.6%; transform: rotate(0deg); box-sizing: border-box; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2;">
+    <div id="cell-05.01.01" class="cell cell-lens" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:12px; font-weight:bold; border-radius:3px; border: 2px solid #333;">05.01.01</div>
+    <div id="cell-04.01.01" class="cell cell-lens" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:12px; font-weight:bold; border-radius:3px; border: 2px solid #333;">04.01.01</div>
 </div>
 
-<div class="map-shelf" style="position: absolute; top: 33.2%; left: 0.3%; width: 43.9%; height: 65.0%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 5;">
-    <div id="cell-07.01.05" class="cell">07.01.05</div>
-    <div id="cell-07.01.04" class="cell">07.01.04</div>
-    <div id="cell-07.01.03" class="cell">07.01.03</div>
-    <div id="cell-07.01.02" class="cell">07.01.02</div>
-    <div id="cell-07.01.01" class="cell">07.01.01</div>
-    <div id="cell-01.01.05" class="cell">01.01.05</div>
-    <div id="cell-01.01.04" class="cell">01.01.04</div>
-    <div id="cell-01.01.03" class="cell">01.01.03</div>
-    <div id="cell-01.01.02" class="cell">01.01.02</div>
-    <div id="cell-01.01.01" class="cell">01.01.01</div>
-    <div id="cell-01.02.05" class="cell">01.02.05</div>
-    <div id="cell-01.02.04" class="cell">01.02.04</div>
-    <div id="cell-01.02.03" class="cell">01.02.03</div>
-    <div id="cell-01.02.02" class="cell">01.02.02</div>
-    <div id="cell-01.02.01" class="cell">01.02.01</div>
+<div class="map-shelf-1-am" id="shelf-1-am" style="position: absolute; top: 32.7%; left: 0.3%; width: 43.5%; height: 63.9%; transform: rotate(0deg); box-sizing: border-box; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2;">
+    <div id="cell-07.01.05" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">07.01.05</div>
+    <div id="cell-07.01.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">07.01.04</div>
+    <div id="cell-07.01.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">07.01.03</div>
+    <div id="cell-07.01.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">07.01.02</div>
+    <div id="cell-07.01.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">07.01.01</div>
+    <div id="cell-01.01.05" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.01.05</div>
+    <div id="cell-01.01.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.01.04</div>
+    <div id="cell-01.01.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.01.03</div>
+    <div id="cell-01.01.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.01.02</div>
+    <div id="cell-01.01.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.01.01</div>
+    <div id="cell-01.02.05" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.02.05</div>
+    <div id="cell-01.02.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.02.04</div>
+    <div id="cell-01.02.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.02.03</div>
+    <div id="cell-01.02.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.02.02</div>
+    <div id="cell-01.02.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">01.02.01</div>
 </div>
 
-<div class="map-shelf" style="position: absolute; top: 25.6%; left: 51.2%; width: 47.9%; height: 73.2%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 5;">
-    <div id="cell-02.01.01" class="cell">02.01.01</div>
-    <div id="cell-02.01.02" class="cell">02.01.02</div>
-    <div id="cell-02.01.03" class="cell">02.01.03</div>
-    <div id="cell-02.01.04" class="cell">02.01.04</div>
-    <div id="cell-02.01.05" class="cell">02.01.05</div>
-    <div id="cell-02.01.06" class="cell">02.01.06</div>
-    <div id="cell-03.01.01" class="cell">03.01.01</div>
-    <div id="cell-03.01.02" class="cell">03.01.02</div>
-    <div id="cell-03.01.03" class="cell">03.01.03</div>
-    <div id="cell-03.01.04" class="cell">03.01.04</div>
-    <div id="cell-03.01.05" class="cell">03.01.05</div>
-    <div class="cell cell-hidden"></div>
-    <div id="cell-06.01.01" class="cell">06.01.01</div>
-    <div id="cell-06.01.02" class="cell">06.01.02</div>
-    <div id="cell-06.01.03" class="cell">06.01.03</div>
-    <div id="cell-06.01.04" class="cell">06.01.04</div>
-    <div class="cell cell-hidden"></div>
-    <div class="cell cell-hidden"></div>
+<div class="map-shelf-2-am" id="shelf-2-am" style="position: absolute; top: 25.2%; left: 50.8%; width: 47.5%; height: 72.1%; transform: rotate(0deg); box-sizing: border-box; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2;">
+    <div id="cell-02.01.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.01</div>
+    <div id="cell-02.01.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.02</div>
+    <div id="cell-02.01.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.03</div>
+    <div id="cell-02.01.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.04</div>
+    <div id="cell-02.01.05" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.05</div>
+    <div id="cell-02.01.06" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">02.01.06</div>
+    <div id="cell-03.01.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">03.01.01</div>
+    <div id="cell-03.01.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">03.01.02</div>
+    <div id="cell-03.01.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">03.01.03</div>
+    <div id="cell-03.01.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">03.01.04</div>
+    <div id="cell-03.01.05" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">03.01.05</div>
+    <div class="cell cell-hidden" style="visibility:hidden;"></div>
+    <div id="cell-06.01.01" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">06.01.01</div>
+    <div id="cell-06.01.02" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">06.01.02</div>
+    <div id="cell-06.01.03" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">06.01.03</div>
+    <div id="cell-06.01.04" class="cell" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;">06.01.04</div>
+    <div class="cell cell-hidden" style="visibility:hidden;"></div>
+    <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
+
+<div class="map-desk-am" style="position: absolute; top: -0.2%; left: 86.0%; width: 12.2%; height: 24.5%; transform: rotate(0deg); box-sizing: border-box; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2;">
+    <div class="map-desk-title-am" style="font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg);">MASA</div>
+</div>
+
+<div class="map-pathway" style="position: absolute; top: 3.0%; left: 19.2%; width: 29.4%; height: 5.3%; transform: rotate(0deg); box-sizing: border-box; display: none;"></div>
+<div class="map-pathway" style="position: absolute; top: 49.6%; left: 22.4%; width: 49.8%; height: 5.3%; transform: rotate(90deg); box-sizing: border-box; display: none;"></div>
 `;
