@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Terminux | Kroki Adres Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="harita-am.js"></script>
     <script src="harita-ana.js"></script>
     <style>
@@ -26,9 +27,11 @@
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
         
-        .action-group { display: flex; gap: 10px; align-items: center; }
+        .action-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .btn-action { background: #ffbc00; color: #000; border: none; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-action:hover { background: #e0a800; }
+        .btn-excel-out { background: #00ccff; color: #000; }
+        .btn-excel-in { background: #00ff00; color: #000; }
 
         .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px; }
         .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 35px; cursor: pointer; }
@@ -39,8 +42,7 @@
         .search-box input:focus { border-color: #00ccff; }
         .search-box button { background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; }
 
-        /* KROKİ ALANI */
-        .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: flex-start; justify-content: flex-start; }
+        .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; }
         .map-container { position: relative; transition: width 0.2s, height 0.2s; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
@@ -53,7 +55,6 @@
         .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
         .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
-        /* MODALLAR */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow-y: auto; }
         
@@ -90,7 +91,8 @@
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
-            .toolbar { flex-direction: column; padding: 15px; }
+            .toolbar { flex-direction: column; padding: 15px; align-items: stretch; }
+            .action-group { flex-direction: column; align-items: stretch; }
             .search-box { width: 100%; }
             .search-box input { flex: 1; }
             .legal-footer { font-size: 7px; padding: 5px; }
@@ -134,6 +136,9 @@
 
         <div class="action-group">
             <button class="btn-action" onclick="openProductModal()">+ SIFIRDAN ÜRÜN EKLE</button>
+            <input type="file" id="import-file" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
+            <button class="btn-action btn-excel-in" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
+            <button class="btn-action btn-excel-out" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
         </div>
     </div>
 
@@ -149,12 +154,14 @@
         YASAL BİLGİLENDİRME: Kapalı devre operasyonel test sistemidir. Ticari faaliyet bulunmamaktadır.
     </div>
 
-    <!-- HÜCRE İÇERİĞİ MODAL -->
     <div id="cell-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
                 <div class="modal-title">RAF İÇERİĞİ: <span id="cell-modal-title">00.00.00</span></div>
-                <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
+                <div>
+                    <button class="btn-edit" style="margin-right: 10px;" onclick="changeCellAddress()">ADRESİ DEĞİŞTİR / TAŞI</button>
+                    <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
+                </div>
             </div>
             
             <div id="cell-loading" style="text-align:center; color:#888; padding: 20px; font-family:monospace; display:none;">Veriler getiriliyor...</div>
@@ -166,7 +173,6 @@
         </div>
     </div>
 
-    <!-- ÜRÜN EKLEME / DÜZENLEME MODAL -->
     <div id="product-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -201,7 +207,6 @@
         </div>
     </div>
 
-    <!-- ARAMA SONUÇLARI MODAL -->
     <div id="search-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -265,17 +270,27 @@
                 mapArea.innerHTML = window.haritaAnaDepo || "";
             }
             
-            // Tüm gereksiz SVG veya Pathway kodlarını gizleyelim
             const svgEl = mapArea.querySelector('svg');
             if(svgEl) svgEl.style.display = 'none';
             mapArea.querySelectorAll('.map-pathway').forEach(p => p.style.display = 'none');
             
-            // Hücrelere tıklama özelliği ekle
             setTimeout(() => {
                 mapArea.querySelectorAll('.cell').forEach(cell => {
-                    if(cell.classList.contains('cell-hidden')) return;
+                    if(cell.classList.contains('cell-hidden') || !cell.id) {
+                        cell.style.visibility = 'visible';
+                        cell.style.opacity = '0.3';
+                        cell.innerText = '+';
+                    }
                     cell.addEventListener('click', () => {
-                        const addr = cell.id.replace('cell-', '');
+                        let addr = cell.id ? cell.id.replace('cell-', '') : '';
+                        if(!addr || addr === '') {
+                            addr = prompt("Bu rafın adresi tanımlı değil. Yeni bir adres (örn: A1-01) belirleyin:");
+                            if(!addr) return;
+                            cell.id = 'cell-' + addr;
+                            cell.innerText = addr;
+                            cell.classList.remove('cell-hidden');
+                            cell.style.opacity = '1';
+                        }
                         openCellModal(addr);
                     });
                 });
@@ -309,7 +324,6 @@
             document.getElementById(id).style.display = 'none';
         };
 
-        // --- HÜCRE İÇERİĞİ ÇEKME (READ KOTASI DOSTU) ---
         window.openCellModal = async (adres) => {
             document.getElementById('cell-modal-title').innerText = adres;
             document.getElementById('cell-modal').style.display = 'flex';
@@ -336,7 +350,7 @@
                                     <div class="pc-code">KOD: ${d.urunKodu || '-'} | BARKOD: ${d.barkod || '-'}</div>
                                 </div>
                                 <div class="pc-actions">
-                                    <button class="btn-edit" onclick="editProduct('${docSnap.id}', '${d.urunAdi?.replace(/'/g, "\\'")}', '${d.urunKodu}', '${d.barkod}', '${d.refNo}', '${d.adres}')">DÜZENLE</button>
+                                    <button class="btn-edit" onclick="editProduct('${docSnap.id}', '${(d.urunAdi || '').replace(/'/g, "\\'")}', '${d.urunKodu || ''}', '${d.barkod || ''}', '${d.refNo || ''}', '${d.adres}')">DÜZENLE</button>
                                     <button class="btn-del" onclick="deleteProduct('${docSnap.id}')">SİL</button>
                                 </div>
                             </div>
@@ -350,7 +364,6 @@
             }
         };
 
-        // --- YENİ EKLME & DÜZENLEME ---
         window.openProductModal = (prefillAdres = "") => {
             document.getElementById('pm-id').value = '';
             document.getElementById('pm-adres').value = prefillAdres;
@@ -367,10 +380,10 @@
         window.editProduct = (id, isim, kod, barkod, ref, adres) => {
             document.getElementById('pm-id').value = id;
             document.getElementById('pm-adres').value = adres;
-            document.getElementById('pm-isim').value = isim !== 'undefined' ? isim : '';
-            document.getElementById('pm-kodu').value = kod !== 'undefined' ? kod : '';
-            document.getElementById('pm-barkod').value = barkod !== 'undefined' ? barkod : '';
-            document.getElementById('pm-ref').value = ref !== 'undefined' ? ref : '';
+            document.getElementById('pm-isim').value = isim;
+            document.getElementById('pm-kodu').value = kod;
+            document.getElementById('pm-barkod').value = barkod;
+            document.getElementById('pm-ref').value = ref;
             
             document.getElementById('pm-title').innerText = "ÜRÜNÜ DÜZENLE";
             document.getElementById('btn-save-product').innerText = "GÜNCELLE";
@@ -404,7 +417,6 @@
                     alert("Yeni ürün başarıyla eklendi.");
                 }
                 closeModal('product-modal');
-                // Tıklanılan raf açıksa orayı yenile
                 if(document.getElementById('cell-modal').style.display === 'flex') {
                     openCellModal(document.getElementById('cell-modal-title').innerText);
                 }
@@ -429,6 +441,40 @@
             }
         };
 
+        window.changeCellAddress = async () => {
+            const oldAdres = document.getElementById('cell-modal-title').innerText;
+            const newAdres = prompt(`'${oldAdres}' adresini hangi yeni adres ile değiştirmek istiyorsunuz?\n(İçindeki tüm ürünler de yeni adrese taşınacaktır.)`);
+            if(!newAdres || newAdres.trim() === '' || newAdres === oldAdres) return;
+            
+            if(!confirm(`Emin misiniz? '${oldAdres}' adresindeki tüm ürünler '${newAdres}' olarak güncellenecek.`)) return;
+
+            try {
+                document.getElementById('cell-loading').style.display = 'block';
+                document.getElementById('cell-product-list').style.display = 'none';
+
+                const q = query(collection(db, currentCollection), where("adres", "==", oldAdres));
+                const snapshot = await getDocs(q);
+                
+                let promises = [];
+                snapshot.forEach(docSnap => {
+                    promises.push(updateDoc(doc(db, currentCollection, docSnap.id), { adres: newAdres }));
+                });
+                
+                await Promise.all(promises);
+                
+                alert("Adres başarıyla güncellendi ve ürünler taşındı!");
+                closeModal('cell-modal');
+                
+                let cell = document.getElementById('cell-' + oldAdres);
+                if(cell) {
+                    cell.id = 'cell-' + newAdres;
+                    cell.innerText = newAdres;
+                }
+            } catch(err) {
+                alert("Adres güncelleme hatası: " + err.message);
+            }
+        };
+
         window.manualSearch = async () => {
             const val = document.getElementById('manual-search-val').value.trim().toLowerCase();
             if(val.length < 2) { alert("En az 2 karakter girin."); return; }
@@ -437,8 +483,7 @@
             document.getElementById('search-modal').style.display = 'flex';
 
             try {
-
-                const q = query(collection(db, currentCollection), limit(100));
+                const q = query(collection(db, currentCollection), limit(300));
                 const snapshot = await getDocs(q);
                 
                 let found = [];
@@ -463,7 +508,7 @@
                                     <div class="pc-code">KOD: ${d.urunKodu || '-'}</div>
                                 </div>
                                 <div class="pc-actions">
-                                    <button class="btn-edit" onclick="editProduct('${d.id}', '${d.urunAdi?.replace(/'/g, "\\'")}', '${d.urunKodu}', '${d.barkod}', '${d.refNo}', '${d.adres}')">DÜZENLE</button>
+                                    <button class="btn-edit" onclick="editProduct('${d.id}', '${(d.urunAdi || '').replace(/'/g, "\\'")}', '${d.urunKodu || ''}', '${d.barkod || ''}', '${d.refNo || ''}', '${d.adres}')">DÜZENLE</button>
                                     <button class="btn-del" onclick="deleteProduct('${d.id}')">SİL</button>
                                 </div>
                             </div>
@@ -474,6 +519,67 @@
             } catch (e) {
                 document.getElementById('search-results-list').innerHTML = 'Hata: ' + e.message;
             }
+        };
+
+        window.exportExcel = async () => {
+            const q = query(collection(db, currentCollection));
+            const snapshot = await getDocs(q);
+            let data = [];
+            snapshot.forEach(doc => {
+                let d = doc.data();
+                data.push({
+                    "Adres": d.adres || "",
+                    "Ürün Adı": d.urunAdi || "",
+                    "Ürün Kodu": d.urunKodu || "",
+                    "Barkod": d.barkod || "",
+                    "Ref No": d.refNo || ""
+                });
+            });
+            
+            if(data.length === 0) { alert("Dışa aktarılacak veri yok."); return; }
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Adresler");
+            XLSX.writeFile(wb, `terminux_${currentDepo}_yedek.xlsx`);
+        };
+
+        window.importExcel = (event) => {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if(!confirm(`${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`)) return;
+                    
+                    document.getElementById('import-file').value = '';
+                    
+                    let count = 0;
+                    for(let row of rows) {
+                        let adres = row["Adres"] || row["adres"] || "";
+                        if(adres) {
+                            await addDoc(collection(db, currentCollection), {
+                                adres: String(adres),
+                                urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
+                                urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
+                                barkod: String(row["Barkod"] || row["barkod"] || ""),
+                                refNo: String(row["Ref No"] || row["refNo"] || "")
+                            });
+                            count++;
+                        }
+                    }
+                    alert(`${count} adet ürün başarıyla yüklendi! Lütfen kotayı aşmamak için sayfanın güncellenmesini bekleyin.`);
+                    switchDepo(currentDepo);
+                } catch(err) {
+                    alert("Excel yükleme hatası: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
         };
 
     </script>
