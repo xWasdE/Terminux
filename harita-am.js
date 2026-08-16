@@ -50,7 +50,4 @@ window.haritaAmeliyathane = `
 <div class="map-desk-am" style="position: absolute; top: -0.2%; left: 86.0%; width: 12.2%; height: 24.5%; transform: rotate(0deg); box-sizing: border-box; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2;">
     <div class="map-desk-title-am" style="font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg);">MASA</div>
 </div>
-
-<div class="map-pathway" style="position: absolute; top: 3.0%; left: 19.2%; width: 29.4%; height: 5.3%; transform: rotate(0deg); box-sizing: border-box; display: none;"></div>
-<div class="map-pathway" style="position: absolute; top: 49.6%; left: 22.4%; width: 49.8%; height: 5.3%; transform: rotate(90deg); box-sizing: border-box; display: none;"></div>
 `;
