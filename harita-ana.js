@@ -56,7 +56,6 @@ window.haritaAnaDepo = `
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
-<div id="door-extra" style="position:absolute; top:25.54%; left:82.67%; width:5.25%; height:7.29%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
 <div style="position:absolute; top:34.13%; left:86.02%; width:0.33%; height:66%; transform:rotate(0deg); box-sizing:border-box; background:#1a1a1a; border:1px solid #111;"></div>
 <div class="map-cabinet" style="position:absolute; top:35.06%; left:76.92%; width:8.83%; height:14.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
@@ -189,7 +188,7 @@ window.haritaAnaDepo = `
 <div style="position:absolute; top:1.38%; left:72.5%; width:3%; height:3.1%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#1a1a1a; border-radius:50%; z-index:5;"></div>
 <div style="position:absolute; top:17.88%; left:65.42%; width:18%; height:0.94%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
 <div style="position:absolute; top:2.12%; left:36.67%; width:0.92%; height:13.41%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
-<div id="main-door" class="map-door-main" style="position:absolute; top:27.11%; left:83.83%; width:4.33%; height:5.33%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
+<div id="main-door" class="map-door-main" style="position:absolute; top:27.11%; left:83.83%; width:4.3%; height:5.3%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
 <div class="map-grey-cabinet" style="position:absolute; top:0%; left:21.17%; width:6.58%; height:3.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
@@ -272,6 +271,8 @@ window.haritaAnaDepo = `
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
+<div style="position:absolute; top:6.96%; left:48.17%; width:16.75%; height:2.37%; transform:rotate(0deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:clamp(8px, 1.5vw, 12px); letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">SORUMLU/MÜDÜR OFİS</div>
+<div style="position:absolute; top:29.48%; left:84.92%; width:15.17%; height:16.44%; transform:rotate(90deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:clamp(8px, 1.5vw, 12px); letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">ANA DEPO DIŞ KORİDOR</div>
 <div class="map-pathway" style="position:absolute; top:27.41%; left:16.33%; width:68.92%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-pathway" style="position:absolute; top:4.74%; left:24%; width:1.25%; height:23.41%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-pathway" style="position:absolute; top:27.56%; left:18.17%; width:1.25%; height:59.85%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
@@ -280,8 +281,6 @@ window.haritaAnaDepo = `
 <div class="map-pathway" style="position:absolute; top:27.11%; left:69.75%; width:1.25%; height:59.85%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-pathway" style="position:absolute; top:12.15%; left:55.33%; width:1.25%; height:17.93%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-pathway" style="position:absolute; top:10.96%; left:45.67%; width:22.25%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
-<div style="position:absolute; top:6.96%; left:48.17%; width:16.75%; height:2.37%; transform:rotate(0deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:16px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">SORUMLU/MÜDÜR OFİS</div>
-<div style="position:absolute; top:29.48%; left:84.92%; width:15.17%; height:16.44%; transform:rotate(90deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:16px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">ANA DEPO DIŞ KORİDOR</div>
 <div class="map-pathway" style="position:absolute; top:27.85%; left:85.25%; width:10%; height:1.63%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-pathway" style="position:absolute; top:1.33%; left:94.08%; width:1.25%; height:72.59%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 `;
