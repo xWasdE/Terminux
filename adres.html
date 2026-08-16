@@ -50,9 +50,9 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; display: flex; justify-content: center; padding-bottom: 10px; flex-shrink: 0; overflow-x: auto; }
+        .map-scroll-container { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: flex-start; padding-bottom: 10px; flex-shrink: 0; overflow-x: auto; }
 
-        .map-wrapper { width: 100%; max-width: 900px; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin: 0 auto; flex-shrink: 0; min-width: 800px; }
+        .map-wrapper { width: 100%; max-width: 850px; min-width: 700px; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin: 0 auto; flex-shrink: 0; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
@@ -69,8 +69,6 @@
             position: relative; 
             border-color: #ffaa00 !important;
         }
-
-        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; }
 
         @keyframes flashRed {
             from { background: rgba(255,0,0,0.6); box-shadow: 0 0 10px red; transform: scale(1); }
@@ -92,7 +90,7 @@
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
-            .map-scroll-container { padding-bottom: 5px; justify-content: flex-start; }
+            .map-scroll-container { padding-bottom: 5px; }
             .legal-footer { font-size: 7px !important; padding: 5px 8px !important; line-height: 1.1 !important; }
         }
     </style>
@@ -303,146 +301,65 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            let startX = doorRect.left + doorRect.width / 2 - mapRect.left;
-            let startY = doorRect.top + doorRect.height / 2 - mapRect.top;
-
-            const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
-            const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
-
-            const cellSize = 10;
-            const gridW = Math.ceil(mapRect.width / cellSize);
-            const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
-
-            const pathways = map.querySelectorAll('.map-pathway, .map-inner-door');
-            
-            if (pathways.length > 0) {
-                pathways.forEach(el => {
-                    const rect = el.getBoundingClientRect();
-                    
-                    let actLeft = rect.left - mapRect.left;
-                    let actTop = rect.top - mapRect.top;
-                    let actRight = rect.right - mapRect.left;
-                    let actBottom = rect.bottom - mapRect.top;
-
-                    const sx = Math.max(0, Math.floor(actLeft / cellSize));
-                    const ex = Math.min(gridW - 1, Math.ceil(actRight / cellSize));
-                    const sy = Math.max(0, Math.floor(actTop / cellSize));
-                    const ey = Math.min(gridH - 1, Math.ceil(actBottom / cellSize));
-
-                    for(let y = sy; y <= ey; y++) {
-                        for(let x = sx; x <= ex; x++) {
-                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                                grid[y][x] = 0; 
-                            }
-                        }
-                    }
-                });
+            let dX, dY;
+            if (isAm) {
+                dX = doorRect.right - mapRect.left + 15;
+                dY = doorRect.top + (doorRect.height / 2) - mapRect.top;
             } else {
-                for(let y = 0; y < gridH; y++) {
-                    for(let x = 0; x < gridW; x++) {
-                        grid[y][x] = 0; 
-                    }
-                }
-                const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
-                obstacles.forEach(el => {
-                    const rect = el.getBoundingClientRect();
-                    const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
-                    const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
-                    const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
-                    const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
-
-                    for(let y = sy; y <= ey; y++) {
-                        for(let x = sx; x <= ex; x++) {
-                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1; 
-                        }
-                    }
-                });
+                dX = doorRect.left - mapRect.left - 15;
+                dY = doorRect.top + (doorRect.height / 2) - mapRect.top;
             }
 
-            const dsx = Math.max(0, Math.floor((doorRect.left - mapRect.left - 20) / cellSize));
-            const dex = Math.min(gridW - 1, Math.ceil((doorRect.right - mapRect.left + 20) / cellSize));
-            const dsy = Math.max(0, Math.floor((doorRect.top - mapRect.top - 20) / cellSize));
-            const dey = Math.min(gridH - 1, Math.ceil((doorRect.bottom - mapRect.top + 20) / cellSize));
-
-            for(let y = dsy; y <= dey; y++) {
-                for(let x = dsx; x <= dex; x++) {
-                    if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 0;
-                }
-            }
-
-            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
-            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
-            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
-            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 20) / cellSize));
-
-            for(let y = tsy; y <= tey; y++) {
-                for(let x = tsx; x <= tex; x++) {
-                    if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 0;
-                }
-            }
-
-            const sNode = {x: Math.floor(startX / cellSize), y: Math.floor(startY / cellSize)};
-            const eNode = {x: Math.floor(endX / cellSize), y: Math.floor(endY / cellSize)};
-            
-            if(sNode.y >= 0 && sNode.y < gridH && sNode.x >= 0 && sNode.x < gridW) grid[sNode.y][sNode.x] = 0;
-            if(eNode.y >= 0 && eNode.y < gridH && eNode.x >= 0 && eNode.x < gridW) grid[eNode.y][eNode.x] = 0;
-
-            const q = [{x: sNode.x, y: sNode.y, pd: -1, cost: 0}];
-            const cameFrom = {};
-            const costSoFar = {};
-            costSoFar[sNode.x + ',' + sNode.y] = 0;
-            let found = false;
-
-            const dirs = [[0,-1], [1,0], [0,1], [-1,0]]; 
-
-            while(q.length > 0) {
-                q.sort((a, b) => a.cost - b.cost);
-                const curr = q.shift();
-
-                if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
-
-                for(let i = 0; i < 4; i++) {
-                    const d = dirs[i];
-                    const nx = curr.x + d[0];
-                    const ny = curr.y + d[1];
-
-                    if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 0) {
-                        let turnPenalty = (curr.pd !== -1 && curr.pd !== i) ? 2 : 0;
-                        let newCost = costSoFar[curr.x + ',' + curr.y] + 1 + turnPenalty;
-                        
-                        const key = nx + ',' + ny;
-                        if (costSoFar[key] === undefined || newCost < costSoFar[key]) {
-                            costSoFar[key] = newCost;
-                            cameFrom[key] = {x: curr.x, y: curr.y};
-                            q.push({x: nx, y: ny, pd: i, cost: newCost});
-                        }
-                    }
-                }
-            }
+            const tX = (targetRect.left + targetRect.width / 2) - mapRect.left;
+            const tY = (targetRect.top + targetRect.height / 2) - mapRect.top;
 
             let pathStr = "";
+            const isMobile = window.innerWidth <= 900;
+            const offset = isMobile ? 8 : 15;
 
-            if (found) {
-                let curr = eNode; 
-                const path = [];
-                while(curr) { 
-                    path.push(curr); 
-                    curr = cameFrom[curr.x + ',' + curr.y]; 
+            if (isAm) {
+                const shelf1 = document.querySelector('.map-shelf-1-am');
+                const shelf2 = document.querySelector('.map-shelf-2-am');
+                const cX = ((shelf1.getBoundingClientRect().right + shelf2.getBoundingClientRect().left) / 2) - mapRect.left;
+
+                if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
+                    const endX = (targetRect.right - mapRect.left) + offset;
+                    pathStr = `M ${dX} ${dY} L ${dX} ${tY} L ${endX} ${tY}`;
+                } else {
+                    const safeY = dY + ((shelf1.getBoundingClientRect().top - mapRect.top) - dY) / 2;
+                    let endX = tX;
+                    if (tX < cX) {
+                        endX = (targetRect.right - mapRect.left) + offset; 
+                    } else {
+                        endX = (targetRect.left - mapRect.left) - offset;
+                    }
+                    pathStr = `M ${dX} ${dY} L ${dX} ${safeY} L ${cX} ${safeY} L ${cX} ${tY} L ${endX} ${tY}`;
                 }
-                path.reverse();
-                
-                let simp = [path[0]];
-                for(let i = 1; i < path.length - 1; i++) {
-                    if ((path[i-1].x === path[i].x && path[i].x === path[i+1].x) || 
-                        (path[i-1].y === path[i].y && path[i].y === path[i+1].y)) continue;
-                    simp.push(path[i]);
-                }
-                simp.push(path[path.length - 1]);
-                
-                pathStr = `M ${startX} ${startY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
             } else {
-                pathStr = `M ${startX} ${startY} L ${startX} ${endY} L ${endX} ${endY}`;
+                const corridorsX = [
+                    0.1817 * mapRect.width,
+                    0.4000 * mapRect.width,
+                    0.6975 * mapRect.width,
+                    0.9408 * mapRect.width
+                ];
+                
+                let bestCx = corridorsX[0];
+                let minDiff = Infinity;
+                for(let cx of corridorsX) {
+                    if (Math.abs(tX - cx) < minDiff) {
+                        minDiff = Math.abs(tX - cx);
+                        bestCx = cx;
+                    }
+                }
+                
+                let endX = tX;
+                if (tX < bestCx) {
+                    endX = (targetRect.right - mapRect.left) + offset; 
+                } else {
+                    endX = (targetRect.left - mapRect.left) - offset;
+                }
+                
+                pathStr = `M ${dX} ${dY} L ${bestCx} ${dY} L ${bestCx} ${tY} L ${endX} ${tY}`;
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
