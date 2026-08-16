@@ -3,137 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Kroki Yönetimi</title>
+    <title>Terminux | Kroki Adres Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="harita-am.js"></script>
+    <script src="harita-ana.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-box { background: #0a0a0a; padding: 40px; border-radius: 12px; border: 1px solid #333; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-
-        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
-        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
+        .header-title { font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
-        .btn-danger-main { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid #ff3333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
-        .btn-danger-main:hover { background: #ff3333; color: #000; }
         
-        main { flex: 1; padding: 40px 50px; overflow-y: auto; background: #000; display: none; }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; }
 
-        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin: 0 auto 30px auto; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; }
-        .depo-btn { padding: 10px 18px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; }
+        
+        .depo-tabs { display: flex; gap: 8px; }
+        .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
-        .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
         
-        .setup-container { max-width: 600px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
-        
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; position: relative; }
-        .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ff00; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
-        .input-group input:focus, .input-group select:focus { border-color: #ffbc00; }
-        
-        .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-primary:hover { opacity: 0.8; }
-        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-scan:hover { border-color: #ffbc00; color: #ffbc00; }
-        
-        .btn-action-sm { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 10px; text-transform: uppercase; }
-        .btn-action-sm:hover { border-color: #ffbc00; color: #ffbc00; }
-        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
-        .btn-danger:hover { background: #ff3333; color: #000; border-color: #ff3333; }
+        .action-group { display: flex; gap: 10px; align-items: center; }
+        .btn-action { background: #ffbc00; color: #000; border: none; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-action:hover { background: #e0a800; }
 
-        .list-container { max-width: 900px; margin: 0 auto; }
+        .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px; }
+        .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 35px; cursor: pointer; }
+        .zoom-val { font-size: 12px; font-weight: bold; font-family: monospace; width: 50px; text-align: center; color: #00ccff; }
+
+        .search-box { display: flex; gap: 5px; }
+        .search-box input { background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; font-family: monospace; font-size: 12px; border-radius: 6px; outline: none; width: 200px; }
+        .search-box input:focus { border-color: #00ccff; }
+        .search-box button { background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+
+        /* KROKİ ALANI */
+        .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: flex-start; justify-content: flex-start; }
+        .map-container { position: relative; transition: width 0.2s, height 0.2s; }
+        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
-        .accordion-item { margin-bottom: 10px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
-        .accordion-header { padding: 15px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; color: #ffbc00; transition: 0.2s; }
-        .accordion-header:hover { background: #1a1a1a; }
-        .accordion-body { display: none; padding: 10px; border-top: 1px solid #222; }
-        .accordion-row { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; }
-        .accordion-row:last-child { border-bottom: none; }
+        .map-wrapper-am { min-width: 950px; }
+        .map-wrapper-ana { min-width: 1200px; }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #00ff00; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; z-index: 99999; display: none; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; }
+        .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
+        .cell-hidden { visibility: hidden; }
+        .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
+        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
-        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
-        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+        /* MODALLAR */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow-y: auto; }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        .modal-title span { color: #ffbc00; font-family: monospace; }
+        .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
+        .btn-close:hover { color: #ff3333; }
+
+        .product-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .product-card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .product-card:hover { border-color: #444; }
+        .pc-info { display: flex; flex-direction: column; gap: 4px; }
+        .pc-name { font-size: 14px; font-weight: bold; color: #fff; }
+        .pc-code { font-size: 11px; color: #aaa; font-family: monospace; }
+        .pc-actions { display: flex; gap: 8px; }
+        .btn-edit { background: #00ccff; color: #000; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-del { background: #ff3333; color: #fff; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 11px; color: #888; font-weight: bold; letter-spacing: 1px; }
+        .form-group input { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .form-group input:focus { border-color: #ffbc00; }
+        
+        .btn-save { background: #00ff00; color: #000; border: none; padding: 15px; font-weight: 900; font-size: 14px; border-radius: 6px; cursor: pointer; letter-spacing: 2px; width: 100%; transition: 0.2s; }
+        .btn-save:hover { opacity: 0.8; }
+
+        .legal-footer { padding: 8px 15px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #1a1a1a; background: #050505; flex-shrink: 0; }
+
+        #password-modal { display: flex; position: fixed; z-index: 50000; top: 0; left: 0; width: 100%; height: 100%; background: #000; align-items: center; justify-content: center; }
+        .pw-box { background: #0a0a0a; border: 1px solid #222; padding: 40px; border-radius: 12px; text-align: center; width: 100%; max-width: 350px; }
+        .pw-box input { width: 100%; background: #000; border: 1px solid #444; color: #ffbc00; padding: 15px; font-size: 24px; border-radius: 6px; text-align: center; margin-bottom: 20px; outline: none; letter-spacing: 8px; font-family: monospace; }
+        .pw-box button { width: 100%; background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 900; cursor: pointer; letter-spacing: 2px; }
 
         @media (max-width: 900px) {
-            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px; }
-            .setup-container { padding: 25px 20px; }
-            .accordion-row { flex-direction: column; text-align: center; gap: 10px; }
+            header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
+            .toolbar { flex-direction: column; padding: 15px; }
+            .search-box { width: 100%; }
+            .search-box input { flex: 1; }
+            .legal-footer { font-size: 7px; padding: 5px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-box">
-            <h2 style="color:#fff; margin-bottom:25px; letter-spacing:1px;">YÖNETİCİ GİRİŞİ</h2>
-            <input type="password" id="admin-pass" placeholder="Parola" style="width:100%; padding:15px; border-radius:6px; border:1px solid #444; background:#000; color:#fff; text-align:center; margin-bottom:20px; outline:none; font-size: 16px;">
-            <button onclick="checkLogin()" class="btn-primary" style="margin-bottom:15px;">GİRİŞ YAP</button>
-            <a href="adres.html" style="color:#888; font-size:12px; text-decoration:none;">Adres Bulucuya Dön</a>
+    <div id="password-modal">
+        <div class="pw-box">
+            <h3 style="margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px;">YÖNETİM ŞİFRESİ</h3>
+            <input type="password" id="admin-pw-input" autocomplete="new-password">
+            <button onclick="submitPassword()">SİSTEME GİRİŞ YAP</button>
         </div>
     </div>
 
     <header>
-        <div class="header-title">TERMINUX <span class="header-subtitle">KROKİ YÖNETİMİ</span></div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
-            <button class="btn-danger-main" onclick="deleteAllAddresses()">TÜMÜNÜ SİL</button>
-            <button class="btn-secondary" style="border-color: #00ff00; color: #00ff00;" onclick="triggerExcel()">EXCEL İÇERİ AKTAR</button>
-            <button class="btn-secondary" onclick="exportExcel()">EXCEL İNDİR</button>
-            <a href="adres.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">ADRES BULUCU</a>
+        <div class="header-title">TERMINUX <span class="header-subtitle">ADRES YÖNETİMİ</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="index.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
+            <a href="adres.html" class="btn-secondary" style="border-color: #ff3333; color: #ff3333;">ADRES BULUCU</a>
         </div>
     </header>
 
-    <main id="main-content">
-        <div id="toast" class="toast">Kayıt Başarılı!</div>
-        <input type="file" id="excel-import" style="display:none;" accept=".xlsx, .xls" onchange="importExcel(event)">
-
+    <div class="toolbar">
         <div class="depo-tabs">
-            <button class="depo-btn active" id="tab-am" onclick="switchAdminDepo('am')">AMELİYATHANE DEPOSU</button>
-            <button class="depo-btn inactive" id="tab-ana" onclick="switchAdminDepo('ana')">ANA DEPO</button>
+            <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE</button>
+            <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
+        </div>
+        
+        <div class="zoom-group">
+            <button class="zoom-btn" onclick="changeZoom(-0.25)">-</button>
+            <div class="zoom-val" id="zoom-val">%100</div>
+            <button class="zoom-btn" onclick="changeZoom(0.25)">+</button>
         </div>
 
-        <div class="setup-container">
-            <div class="setup-title">ADRES TANIMLAMA / DÜZENLEME</div>
-            <form id="mapping-form">
-                <div class="input-group">
-                    <label>ÜRÜN KODU / BARKOD</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="p-code" required autocomplete="off" placeholder="Örn: 61530328" data-barkod="" data-refno="" style="flex:1;">
-                        <button type="button" class="btn-scan" onclick="openScanner()">TARA</button>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>ÜRÜN İSMİ (Otomatik Dolar)</label>
-                    <input type="text" id="p-name" required autocomplete="off" placeholder="Örn: Ağrı Bandı Mavi">
-                </div>
-                <div class="input-group">
-                    <label>RAF ADRESİ (Manuel Yazın)</label>
-                    <input type="text" id="p-address" required autocomplete="off" placeholder="Örn: 01.01.01">
-                </div>
-                <button type="submit" class="btn-primary">SİSTEME KAYDET</button>
-            </form>
+        <div class="search-box">
+            <input type="text" id="manual-search-val" placeholder="Barkod, Kod veya Adres...">
+            <button onclick="manualSearch()">ARA</button>
         </div>
 
-        <div class="list-container" id="mapping-list"></div>
+        <div class="action-group">
+            <button class="btn-action" onclick="openProductModal()">+ SIFIRDAN ÜRÜN EKLE</button>
+        </div>
+    </div>
+
+    <main>
+        <div class="map-outer" id="map-outer">
+            <div class="map-container" id="map-container">
+                <div id="admin-map-area" class="map-wrapper"></div>
+            </div>
+        </div>
     </main>
 
-    <div id="scanner-modal">
-        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
-        <div id="reader"></div>
-        <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    <div class="legal-footer">
+        YASAL BİLGİLENDİRME: Kapalı devre operasyonel test sistemidir. Ticari faaliyet bulunmamaktadır.
+    </div>
+
+    <!-- HÜCRE İÇERİĞİ MODAL -->
+    <div id="cell-modal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">RAF İÇERİĞİ: <span id="cell-modal-title">00.00.00</span></div>
+                <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
+            </div>
+            
+            <div id="cell-loading" style="text-align:center; color:#888; padding: 20px; font-family:monospace; display:none;">Veriler getiriliyor...</div>
+            <div id="cell-empty" style="text-align:center; color:#ff3333; padding: 20px; font-weight:bold; display:none;">Bu adreste kayıtlı ürün bulunamadı.</div>
+            
+            <div class="product-list" id="cell-product-list"></div>
+            
+            <button class="btn-action" style="width:100%; padding:15px; font-size:13px;" onclick="openProductModal(document.getElementById('cell-modal-title').innerText)">BU RAFA YENİ ÜRÜN EKLE</button>
+        </div>
+    </div>
+
+    <!-- ÜRÜN EKLEME / DÜZENLEME MODAL -->
+    <div id="product-modal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title" id="pm-title">YENİ ÜRÜN EKLE</div>
+                <button class="btn-close" onclick="closeModal('product-modal')">×</button>
+            </div>
+            
+            <input type="hidden" id="pm-id">
+            
+            <div class="form-group">
+                <label>ADRES (Zorunlu)</label>
+                <input type="text" id="pm-adres" placeholder="Örn: 05.01.01">
+            </div>
+            <div class="form-group">
+                <label>ÜRÜN ADI</label>
+                <input type="text" id="pm-isim" placeholder="Ürün İsmi">
+            </div>
+            <div class="form-group">
+                <label>ÜRÜN KODU</label>
+                <input type="text" id="pm-kodu" placeholder="Kodu">
+            </div>
+            <div class="form-group">
+                <label>BARKOD</label>
+                <input type="text" id="pm-barkod" placeholder="Barkodu">
+            </div>
+            <div class="form-group">
+                <label>REFERANS NO</label>
+                <input type="text" id="pm-ref" placeholder="Ref No">
+            </div>
+
+            <button class="btn-save" id="btn-save-product" onclick="saveProduct()">KAYDET</button>
+        </div>
+    </div>
+
+    <!-- ARAMA SONUÇLARI MODAL -->
+    <div id="search-modal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">ARAMA SONUÇLARI</div>
+                <button class="btn-close" onclick="closeModal('search-modal')">×</button>
+            </div>
+            <div class="product-list" id="search-results-list"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -147,337 +228,251 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let catalogDb = {};
-        window.mappingData = [];
-        let html5QrCode = null;
-
         let currentDepo = 'am';
         let currentCollection = 'kroki_adresleri';
+        let currentScale = 1.0;
 
-        window.switchAdminDepo = (depo) => {
+        window.submitPassword = () => {
+            const pw = document.getElementById('admin-pw-input').value;
+            if(pw === 'admin') {
+                document.getElementById('password-modal').style.display = 'none';
+                switchDepo('am');
+            } else {
+                alert("Hatalı şifre!");
+                document.getElementById('admin-pw-input').value = '';
+            }
+        };
+
+        document.getElementById('admin-pw-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') submitPassword();
+        });
+
+        window.switchDepo = (depo) => {
             currentDepo = depo;
+            const mapArea = document.getElementById('admin-map-area');
+
             if(depo === 'am') {
                 document.getElementById('tab-am').classList.replace('inactive', 'active');
                 document.getElementById('tab-ana').classList.replace('active', 'inactive');
                 currentCollection = 'kroki_adresleri';
+                mapArea.className = 'map-wrapper map-wrapper-am';
+                mapArea.innerHTML = window.haritaAmeliyathane || "";
             } else {
                 document.getElementById('tab-ana').classList.replace('inactive', 'active');
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
                 currentCollection = 'kroki_adresleri_ana';
+                mapArea.className = 'map-wrapper map-wrapper-ana';
+                mapArea.innerHTML = window.haritaAnaDepo || "";
             }
-            loadMappingData();
+            
+            // Tüm gereksiz SVG veya Pathway kodlarını gizleyelim
+            const svgEl = mapArea.querySelector('svg');
+            if(svgEl) svgEl.style.display = 'none';
+            mapArea.querySelectorAll('.map-pathway').forEach(p => p.style.display = 'none');
+            
+            // Hücrelere tıklama özelliği ekle
+            setTimeout(() => {
+                mapArea.querySelectorAll('.cell').forEach(cell => {
+                    if(cell.classList.contains('cell-hidden')) return;
+                    cell.addEventListener('click', () => {
+                        const addr = cell.id.replace('cell-', '');
+                        openCellModal(addr);
+                    });
+                });
+            }, 100);
+
+            applyZoom();
+        };
+
+        window.changeZoom = (delta) => {
+            currentScale += delta;
+            if(currentScale < 0.25) currentScale = 0.25;
+            if(currentScale > 2.5) currentScale = 2.5;
+            document.getElementById('zoom-val').innerText = '%' + Math.round(currentScale * 100);
+            applyZoom();
+        };
+
+        function applyZoom() {
+            const mapWrapper = document.getElementById('admin-map-area');
+            const mapContainer = document.getElementById('map-container');
+            
+            mapWrapper.style.transform = `scale(${currentScale})`;
+            
+            const baseW = currentDepo === 'am' ? 950 : 1200;
+            const baseH = (baseW * 9) / 16; 
+            
+            mapContainer.style.width = (baseW * currentScale) + 'px';
+            mapContainer.style.height = (baseH * currentScale) + 'px';
         }
 
-        window.checkLogin = () => {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === 'admin') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-            } else {
-                alert('Hatalı parola!');
-            }
+        window.closeModal = (id) => {
+            document.getElementById(id).style.display = 'none';
         };
 
-        document.getElementById('admin-pass').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') checkLogin();
-        });
+        // --- HÜCRE İÇERİĞİ ÇEKME (READ KOTASI DOSTU) ---
+        window.openCellModal = async (adres) => {
+            document.getElementById('cell-modal-title').innerText = adres;
+            document.getElementById('cell-modal').style.display = 'flex';
+            document.getElementById('cell-loading').style.display = 'block';
+            document.getElementById('cell-empty').style.display = 'none';
+            document.getElementById('cell-product-list').innerHTML = '';
 
-        const loadCatalog = async () => {
             try {
-                const cachedData = localStorage.getItem('terminux_catalog_cache');
-                if (cachedData) {
-                    try {
-                        const parsed = JSON.parse(cachedData);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(item => {
-                                const uKodu = String(item.urunKodu || item.docId || "");
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || "") 
-                                };
-                            });
-                            return;
-                        }
-                    } catch(e) { }
-                }
-
-                const [anaSnap, amSnap] = await Promise.all([
-                    getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
-                    getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
-                ]);
+                const q = query(collection(db, currentCollection), where("adres", "==", adres));
+                const querySnapshot = await getDocs(q);
                 
-                const processSnap = (snap) => {
-                    if (!snap || typeof snap.forEach !== 'function') return;
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        const key = String(d.urunKodu || doc.id || "");
-                        if (!catalogDb[key]) {
-                            catalogDb[key] = { 
-                                urunKodu: key, 
-                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
-                                barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "") 
-                            };
-                        }
+                document.getElementById('cell-loading').style.display = 'none';
+                
+                if (querySnapshot.empty) {
+                    document.getElementById('cell-empty').style.display = 'block';
+                } else {
+                    let html = '';
+                    querySnapshot.forEach((docSnap) => {
+                        const d = docSnap.data();
+                        html += `
+                            <div class="product-card" id="card-${docSnap.id}">
+                                <div class="pc-info">
+                                    <div class="pc-name">${d.urunAdi || '-'}</div>
+                                    <div class="pc-code">KOD: ${d.urunKodu || '-'} | BARKOD: ${d.barkod || '-'}</div>
+                                </div>
+                                <div class="pc-actions">
+                                    <button class="btn-edit" onclick="editProduct('${docSnap.id}', '${d.urunAdi?.replace(/'/g, "\\'")}', '${d.urunKodu}', '${d.barkod}', '${d.refNo}', '${d.adres}')">DÜZENLE</button>
+                                    <button class="btn-del" onclick="deleteProduct('${docSnap.id}')">SİL</button>
+                                </div>
+                            </div>
+                        `;
                     });
-                };
-                
-                processSnap(anaSnap); processSnap(amSnap);
-            } catch (err) { }
-        };
-
-        loadCatalog();
-
-        const showToast = (msg = "Kayıt Başarılı!") => {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        };
-
-        const executeCodeMatch = (val) => {
-            const codeInput = document.getElementById('p-code');
-            const nameInput = document.getElementById('p-name');
-            
-            if (!val) {
-                nameInput.value = '';
-                codeInput.dataset.barkod = '';
-                codeInput.dataset.refNo = '';
-                return;
-            }
-
-            let matchedProduct = null;
-            if (catalogDb[val]) {
-                matchedProduct = catalogDb[val];
-            } else {
-                for (const key in catalogDb) {
-                    if (catalogDb[key].barkod.toLowerCase() === val || catalogDb[key].refNo.toLowerCase() === val) {
-                        matchedProduct = catalogDb[key];
-                        break;
-                    }
+                    document.getElementById('cell-product-list').innerHTML = html;
                 }
-            }
-
-            if (matchedProduct) {
-                nameInput.value = matchedProduct.urunAdi;
-                codeInput.dataset.barkod = matchedProduct.barkod || "";
-                codeInput.dataset.refNo = matchedProduct.refNo || "";
-            } else {
-                nameInput.value = '';
-                codeInput.dataset.barkod = '';
-                codeInput.dataset.refNo = '';
+            } catch(e) {
+                alert("Veriler çekilirken hata: " + e.message);
+                document.getElementById('cell-loading').style.display = 'none';
             }
         };
 
-        document.getElementById('p-code').addEventListener('input', (e) => executeCodeMatch(e.target.value.trim().toLowerCase()));
+        // --- YENİ EKLME & DÜZENLEME ---
+        window.openProductModal = (prefillAdres = "") => {
+            document.getElementById('pm-id').value = '';
+            document.getElementById('pm-adres').value = prefillAdres;
+            document.getElementById('pm-isim').value = '';
+            document.getElementById('pm-kodu').value = '';
+            document.getElementById('pm-barkod').value = '';
+            document.getElementById('pm-ref').value = '';
+            
+            document.getElementById('pm-title').innerText = prefillAdres ? "BU RAFA ÜRÜN EKLE" : "SIFIRDAN ÜRÜN EKLE";
+            document.getElementById('btn-save-product').innerText = "KAYDET VE EKLE";
+            document.getElementById('product-modal').style.display = 'flex';
+        };
 
-        document.getElementById('mapping-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const codeEl = document.getElementById('p-code');
-            let code = codeEl.value.trim();
-            const name = document.getElementById('p-name').value.trim();
-            const address = document.getElementById('p-address').value.trim();
-            const barkod = codeEl.dataset.barkod || "";
-            const refNo = codeEl.dataset.refNo || "";
+        window.editProduct = (id, isim, kod, barkod, ref, adres) => {
+            document.getElementById('pm-id').value = id;
+            document.getElementById('pm-adres').value = adres;
+            document.getElementById('pm-isim').value = isim !== 'undefined' ? isim : '';
+            document.getElementById('pm-kodu').value = kod !== 'undefined' ? kod : '';
+            document.getElementById('pm-barkod').value = barkod !== 'undefined' ? barkod : '';
+            document.getElementById('pm-ref').value = ref !== 'undefined' ? ref : '';
+            
+            document.getElementById('pm-title').innerText = "ÜRÜNÜ DÜZENLE";
+            document.getElementById('btn-save-product').innerText = "GÜNCELLE";
+            document.getElementById('product-modal').style.display = 'flex';
+        };
 
-            const safeId = code.replace(/[^a-zA-Z0-9_-]/g, '-');
+        window.saveProduct = async () => {
+            const id = document.getElementById('pm-id').value;
+            const adres = document.getElementById('pm-adres').value.trim();
+            const btn = document.getElementById('btn-save-product');
+            
+            if(!adres) { alert("Lütfen ürünün adresini girin!"); return; }
+
+            btn.innerText = "KAYDEDİLİYOR...";
+            btn.disabled = true;
+
+            const dataObj = {
+                adres: adres,
+                urunAdi: document.getElementById('pm-isim').value.trim(),
+                urunKodu: document.getElementById('pm-kodu').value.trim(),
+                barkod: document.getElementById('pm-barkod').value.trim(),
+                refNo: document.getElementById('pm-ref').value.trim()
+            };
 
             try {
-                await setDoc(doc(db, currentCollection, safeId), {
-                    urunKodu: code,
-                    urunAdi: name,
-                    barkod: barkod,
-                    refNo: refNo,
-                    adres: address,
-                    timestamp: Date.now()
-                }, { merge: true });
-                
-                codeEl.value = '';
-                codeEl.dataset.barkod = '';
-                codeEl.dataset.refNo = '';
-                document.getElementById('p-name').value = '';
-                document.getElementById('p-address').value = '';
-                codeEl.focus();
-                showToast();
-            } catch (error) {
-                alert("Kayıt Hatası: " + error.message);
+                if (id) {
+                    await updateDoc(doc(db, currentCollection, id), dataObj);
+                    alert("Ürün başarıyla güncellendi.");
+                } else {
+                    await addDoc(collection(db, currentCollection), dataObj);
+                    alert("Yeni ürün başarıyla eklendi.");
+                }
+                closeModal('product-modal');
+                // Tıklanılan raf açıksa orayı yenile
+                if(document.getElementById('cell-modal').style.display === 'flex') {
+                    openCellModal(document.getElementById('cell-modal-title').innerText);
+                }
+            } catch(e) {
+                alert("Kaydetme hatası: " + e.message);
             }
-        });
-
-        window.toggleAcc = (id) => {
-            const body = document.getElementById(`acc-${id}`);
-            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+            btn.disabled = false;
         };
 
-        let unsub = null;
-        function loadMappingData() {
-            if(unsub) unsub();
-            unsub = onSnapshot(collection(db, currentCollection), (snapshot) => {
-                const listEl = document.getElementById('mapping-list');
-                window.mappingData = [];
-                snapshot.forEach(doc => window.mappingData.push({ id: doc.id, ...doc.data() }));
-
-                if (window.mappingData.length === 0) {
-                    listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#555; border: 1px solid #1a1a1a; border-radius: 8px;">Kayıtlı haritalandırma bulunamadı.</div>';
-                    return;
+        window.deleteProduct = async (id) => {
+            if(!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
+            try {
+                document.getElementById(`card-${id}`).style.opacity = '0.3';
+                await deleteDoc(doc(db, currentCollection, id));
+                document.getElementById(`card-${id}`).remove();
+                
+                if(document.getElementById('cell-product-list').innerHTML.trim() === '') {
+                    document.getElementById('cell-empty').style.display = 'block';
                 }
+            } catch(e) {
+                alert("Silme hatası: " + e.message);
+            }
+        };
 
-                const grouped = {};
-                window.mappingData.forEach(item => {
-                    if (!grouped[item.adres]) grouped[item.adres] = [];
-                    grouped[item.adres].push(item);
+        window.manualSearch = async () => {
+            const val = document.getElementById('manual-search-val').value.trim().toLowerCase();
+            if(val.length < 2) { alert("En az 2 karakter girin."); return; }
+            
+            document.getElementById('search-results-list').innerHTML = '<div style="color:#aaa; text-align:center;">Aranıyor...</div>';
+            document.getElementById('search-modal').style.display = 'flex';
+
+            try {
+
+                const q = query(collection(db, currentCollection), limit(100));
+                const snapshot = await getDocs(q);
+                
+                let found = [];
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const s = `${d.urunKodu} ${d.urunAdi} ${d.barkod} ${d.refNo} ${d.adres}`.toLowerCase();
+                    if(s.includes(val)) {
+                        found.push({id: docSnap.id, ...d});
+                    }
                 });
 
-                listEl.innerHTML = Object.keys(grouped).sort().map(addr => {
-                    const items = grouped[addr];
-                    let html = `
-                    <div class="accordion-item">
-                        <div class="accordion-header" onclick="toggleAcc('${addr}')">
-                            <span>📍 RAF ADRESİ: ${addr}</span>
-                            <span>${items.length} Ürün ▼</span>
-                        </div>
-                        <div class="accordion-body" id="acc-${addr}">
-                            ${items.map(item => `
-                                <div class="accordion-row">
-                                    <div style="font-size: 12px; color: #888; font-family: monospace; width: 120px; text-align: left;">${item.urunKodu}</div>
-                                    <div style="font-size: 13px; color: #fff; flex: 1; text-align: left;">${item.urunAdi}</div>
-                                    <div style="display: flex; gap: 5px;">
-                                        <button class="btn-action-sm" onclick="editMapping('${item.id}')">DÜZENLE</button>
-                                        <button class="btn-action-sm btn-danger" onclick="deleteMapping('${item.id}')">SİL</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-                    return html;
-                }).join('');
-            });
-        }
-        loadMappingData();
-
-        window.editMapping = (id) => {
-            const item = window.mappingData.find(m => m.id === id);
-            if (item) {
-                const codeEl = document.getElementById('p-code');
-                codeEl.value = item.urunKodu;
-                codeEl.dataset.barkod = item.barkod || "";
-                codeEl.dataset.refNo = item.refNo || "";
-                document.getElementById('p-name').value = item.urunAdi;
-                document.getElementById('p-address').value = item.adres;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        };
-
-        window.deleteMapping = async (id) => {
-            if (confirm("Bu haritalandırmayı silmek istediğinize emin misiniz?")) {
-                try {
-                    await deleteDoc(doc(db, currentCollection, id));
-                } catch(e) {}
-            }
-        };
-
-        window.deleteAllAddresses = () => {
-            if(window.mappingData.length === 0) return alert("Silinecek kayıt bulunamadı.");
-            
-            if(confirm("DİKKAT: Veritabanındaki TÜM kroki adresleri kalıcı olarak silinecektir. Bu işlem geri alınamaz! Devam etmek istiyor musunuz?")) {
-                const pwd = prompt("Güvenlik Onayı: Lütfen yönetici parolasını girin");
-                if (pwd === "admin") {
-                    showToast("Tüm adresler siliniyor, lütfen sayfayı kapatmayın...");
-                    Promise.all(window.mappingData.map(item => deleteDoc(doc(db, currentCollection, item.id))))
-                    .then(() => {
-                        showToast("Veritabanı tamamen temizlendi!");
-                    })
-                    .catch(err => alert("Silme sırasında hata oluştu: " + err));
+                if(found.length === 0) {
+                    document.getElementById('search-results-list').innerHTML = '<div style="color:#ff3333; text-align:center; font-weight:bold;">Sonuç bulunamadı.</div>';
                 } else {
-                    alert("Parola hatalı! İşlem iptal edildi.");
+                    let html = '';
+                    found.forEach(d => {
+                        html += `
+                            <div class="product-card" id="card-${d.id}">
+                                <div class="pc-info">
+                                    <div style="color:#ffbc00; font-size:10px; font-weight:bold;">ADRES: ${d.adres}</div>
+                                    <div class="pc-name">${d.urunAdi || '-'}</div>
+                                    <div class="pc-code">KOD: ${d.urunKodu || '-'}</div>
+                                </div>
+                                <div class="pc-actions">
+                                    <button class="btn-edit" onclick="editProduct('${d.id}', '${d.urunAdi?.replace(/'/g, "\\'")}', '${d.urunKodu}', '${d.barkod}', '${d.refNo}', '${d.adres}')">DÜZENLE</button>
+                                    <button class="btn-del" onclick="deleteProduct('${d.id}')">SİL</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('search-results-list').innerHTML = html;
                 }
-            }
-        };
-
-        window.triggerExcel = () => document.getElementById('excel-import').click();
-        
-        window.importExcel = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                    
-                    let added = 0; let updated = 0; let skipped = 0;
-
-                    for (let r of rows) {
-                        const code = r['Ürün Kodu'] || r['KOD'] || r['urunKodu'];
-                        const name = r['Ürün Adı'] || r['Ürün İsmi'] || r['ÜRÜN ADI'] || r['urunAdi'] || r['İsim'] || r['Isim'];
-                        let addr = r['Adres'] || r['ADRES'] || r['adres'] || r['Stok Adresi'] || r['STOK ADRESİ'];
-                        
-                        if (code && addr) {
-                            const safeCode = String(code).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
-                            
-                            let cleanAddr = String(addr).trim().toUpperCase();
-                            if (cleanAddr.startsWith('BDA')) {
-                                cleanAddr = cleanAddr.substring(3).trim();
-                            }
-
-                            const existing = window.mappingData.find(m => m.id === safeCode);
-                            
-                            if (existing) {
-                                if (existing.adres !== cleanAddr || existing.urunAdi !== String(name).trim()) {
-                                    await setDoc(doc(db, currentCollection, safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() }, {merge: true});
-                                    updated++;
-                                } else {
-                                    skipped++;
-                                }
-                            } else {
-                                await setDoc(doc(db, currentCollection, safeCode), { urunKodu: String(code), urunAdi: String(name || "İsimsiz"), adres: cleanAddr, timestamp: Date.now() });
-                                added++;
-                            }
-                        }
-                    }
-                    showToast(`İşlem Bitti! Eklenen: ${added} | Güncellenen: ${updated} | Atlanan: ${skipped}`);
-                } catch(err) {
-                    alert("Excel okunurken hata oluştu: " + err.message);
-                }
-                e.target.value = '';
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        window.exportExcel = () => {
-            if (window.mappingData.length === 0) return alert("Dışa aktarılacak kayıt yok.");
-            const data = window.mappingData.map(m => ({ "Ürün Kodu": m.urunKodu, "Ürün İsmi": m.urunAdi, "Adres": m.adres }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "ADRESLER");
-            XLSX.writeFile(wb, `Terminux_DepoAdresleri_${currentDepo}.xlsx`);
-        };
-
-        window.openScanner = () => {
-            document.getElementById('scanner-modal').style.display = 'flex';
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    const inputEl = document.getElementById('p-code');
-                    inputEl.value = decodedText;
-                    executeCodeMatch(decodedText.trim().toLowerCase());
-                    closeScanner();
-                },
-                (errorMessage) => {}
-            ).catch((err) => {
-                alert("Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
-                closeScanner();
-            });
-        };
-
-        window.closeScanner = () => {
-            document.getElementById('scanner-modal').style.display = 'none';
-            if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+            } catch (e) {
+                document.getElementById('search-results-list').innerHTML = 'Hata: ' + e.message;
             }
         };
 
