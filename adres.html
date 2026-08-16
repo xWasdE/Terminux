@@ -50,9 +50,9 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; max-width: 1400px; display: flex; justify-content: center; padding-bottom: 10px; flex-shrink: 0; overflow-x: hidden; }
+        .map-scroll-container { width: 100%; display: flex; justify-content: center; padding-bottom: 10px; flex-shrink: 0; overflow-x: auto; }
 
-        .map-wrapper { width: 100%; max-width: 1200px; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; }
+        .map-wrapper { width: 100%; max-width: 900px; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; margin: 0 auto; flex-shrink: 0; min-width: 800px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
@@ -69,6 +69,8 @@
             position: relative; 
             border-color: #ffaa00 !important;
         }
+
+        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; }
 
         @keyframes flashRed {
             from { background: rgba(255,0,0,0.6); box-shadow: 0 0 10px red; transform: scale(1); }
@@ -90,7 +92,7 @@
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
-            .map-scroll-container { padding-bottom: 5px; overflow-x: auto; justify-content: flex-start; }
+            .map-scroll-container { padding-bottom: 5px; justify-content: flex-start; }
             .legal-footer { font-size: 7px !important; padding: 5px 8px !important; line-height: 1.1 !important; }
         }
     </style>
@@ -130,7 +132,7 @@
 
         <div style="position: relative; width: 100%; overflow-x: auto;">
             <div class="map-scroll-container">
-                <div id="map-area" class="map-wrapper" style="min-width: 800px;"></div>
+                <div id="map-area" class="map-wrapper"></div>
             </div>
         </div>
     </main>
@@ -259,6 +261,8 @@
                     osc.frequency.setValueAtTime(300, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     osc.start();
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
                     gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0);
                     osc.stop(ctx.currentTime + 1.0);
                 }
@@ -310,12 +314,11 @@
             const gridH = Math.ceil(mapRect.height / cellSize);
             const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
 
-            const pathways = map.querySelectorAll('.map-pathway');
+            const pathways = map.querySelectorAll('.map-pathway, .map-inner-door');
             
             if (pathways.length > 0) {
                 pathways.forEach(el => {
                     const rect = el.getBoundingClientRect();
-                    const rot = parseInt(el.style.transform.replace(/[^0-9\-]/g, '')) || 0;
                     
                     let actLeft = rect.left - mapRect.left;
                     let actTop = rect.top - mapRect.top;
@@ -357,10 +360,10 @@
                 });
             }
 
-            const dsx = Math.max(0, Math.floor((doorRect.left - mapRect.left - 30) / cellSize));
-            const dex = Math.min(gridW - 1, Math.ceil((doorRect.right - mapRect.left + 30) / cellSize));
-            const dsy = Math.max(0, Math.floor((doorRect.top - mapRect.top - 30) / cellSize));
-            const dey = Math.min(gridH - 1, Math.ceil((doorRect.bottom - mapRect.top + 30) / cellSize));
+            const dsx = Math.max(0, Math.floor((doorRect.left - mapRect.left - 20) / cellSize));
+            const dex = Math.min(gridW - 1, Math.ceil((doorRect.right - mapRect.left + 20) / cellSize));
+            const dsy = Math.max(0, Math.floor((doorRect.top - mapRect.top - 20) / cellSize));
+            const dey = Math.min(gridH - 1, Math.ceil((doorRect.bottom - mapRect.top + 20) / cellSize));
 
             for(let y = dsy; y <= dey; y++) {
                 for(let x = dsx; x <= dex; x++) {
@@ -368,10 +371,10 @@
                 }
             }
 
-            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 50) / cellSize));
-            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 50) / cellSize));
-            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 50) / cellSize));
-            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 50) / cellSize));
+            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
+            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
+            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
+            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 20) / cellSize));
 
             for(let y = tsy; y <= tey; y++) {
                 for(let x = tsx; x <= tex; x++) {
@@ -385,25 +388,34 @@
             if(sNode.y >= 0 && sNode.y < gridH && sNode.x >= 0 && sNode.x < gridW) grid[sNode.y][sNode.x] = 0;
             if(eNode.y >= 0 && eNode.y < gridH && eNode.x >= 0 && eNode.x < gridW) grid[eNode.y][eNode.x] = 0;
 
-            const q = [sNode];
+            const q = [{x: sNode.x, y: sNode.y, pd: -1, cost: 0}];
             const cameFrom = {};
-            const visited = new Set();
-            visited.add(sNode.x + ',' + sNode.y);
+            const costSoFar = {};
+            costSoFar[sNode.x + ',' + sNode.y] = 0;
             let found = false;
 
+            const dirs = [[0,-1], [1,0], [0,1], [-1,0]]; 
+
             while(q.length > 0) {
+                q.sort((a, b) => a.cost - b.cost);
                 const curr = q.shift();
+
                 if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
-                
-                for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
+
+                for(let i = 0; i < 4; i++) {
+                    const d = dirs[i];
                     const nx = curr.x + d[0];
                     const ny = curr.y + d[1];
+
                     if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 0) {
+                        let turnPenalty = (curr.pd !== -1 && curr.pd !== i) ? 2 : 0;
+                        let newCost = costSoFar[curr.x + ',' + curr.y] + 1 + turnPenalty;
+                        
                         const key = nx + ',' + ny;
-                        if (!visited.has(key)) {
-                            visited.add(key);
-                            cameFrom[key] = curr;
-                            q.push({x: nx, y: ny});
+                        if (costSoFar[key] === undefined || newCost < costSoFar[key]) {
+                            costSoFar[key] = newCost;
+                            cameFrom[key] = {x: curr.x, y: curr.y};
+                            q.push({x: nx, y: ny, pd: i, cost: newCost});
                         }
                     }
                 }
@@ -414,7 +426,10 @@
             if (found) {
                 let curr = eNode; 
                 const path = [];
-                while(curr) { path.push(curr); curr = cameFrom[curr.x + ',' + curr.y]; }
+                while(curr) { 
+                    path.push(curr); 
+                    curr = cameFrom[curr.x + ',' + curr.y]; 
+                }
                 path.reverse();
                 
                 let simp = [path[0]];
