@@ -33,16 +33,17 @@
         .btn-excel-out { background: #00ccff; color: #000; }
         .btn-excel-in { background: #00ff00; color: #000; }
 
-        .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px; }
-        .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 35px; cursor: pointer; }
-        .zoom-val { font-size: 12px; font-weight: bold; font-family: monospace; width: 50px; text-align: center; color: #00ccff; }
+        .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px 10px; height: 35px; }
+        .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 25px; cursor: pointer; }
+        .zoom-val { font-size: 14px; font-weight: bold; font-family: monospace; width: 45px; text-align: center; color: #00ccff; background: transparent; border: none; outline: none; -moz-appearance: textfield; }
+        .zoom-val::-webkit-outer-spin-button, .zoom-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
         .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; }
         .map-container { position: relative; transition: width 0.2s, height 0.2s; margin: auto; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
         
-        .map-wrapper-am { min-width: 900px; }
-        .map-wrapper-ana { min-width: 1100px; }
+        .map-wrapper-am { min-width: 1100px; }
+        .map-wrapper-ana { min-width: 1200px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
@@ -71,11 +72,14 @@
 
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-size: 11px; color: #888; font-weight: bold; letter-spacing: 1px; }
-        .form-group input { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; }
-        .form-group input:focus { border-color: #ffbc00; }
+        .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: #ffbc00; }
         
         .btn-save { background: #00ff00; color: #000; border: none; padding: 15px; font-weight: 900; font-size: 14px; border-radius: 6px; cursor: pointer; letter-spacing: 2px; width: 100%; transition: 0.2s; }
         .btn-save:hover { opacity: 0.8; }
+        
+        .btn-cancel { background: #333; color: #fff; border: none; padding: 15px; font-weight: 900; font-size: 14px; border-radius: 6px; cursor: pointer; letter-spacing: 2px; transition: 0.2s; }
+        .btn-cancel:hover { background: #444; }
 
         .legal-footer { padding: 8px 15px; font-size: 10px; color: #666; text-align: center; border-top: 1px solid #1a1a1a; background: #050505; flex-shrink: 0; }
 
@@ -112,13 +116,14 @@
 
     <div class="toolbar">
         <div class="depo-tabs">
-            <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE</button>
+            <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE DEPO</button>
             <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
         </div>
         
         <div class="zoom-group">
             <button class="zoom-btn" onclick="changeZoom(-0.25)">-</button>
-            <div class="zoom-val" id="zoom-val">%100</div>
+            <input type="number" class="zoom-val" id="zoom-val" value="100" min="25" max="250" onchange="setCustomZoom(this.value)">
+            <span style="color:#00ccff; font-weight:bold; margin-right:5px;">%</span>
             <button class="zoom-btn" onclick="changeZoom(0.25)">+</button>
         </div>
 
@@ -139,9 +144,10 @@
     </main>
 
     <div class="legal-footer">
-        YASAL BİLGİLENDİRME: Kapalı devre operasyonel test sistemidir. Ticari faaliyet bulunmamaktadır.
+        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
+    <!-- HÜCRE İÇERİĞİ MODAL -->
     <div id="cell-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -151,25 +157,21 @@
                     <button class="btn-close" onclick="closeModal('cell-modal')">×</button>
                 </div>
             </div>
-            
             <div id="cell-loading" style="text-align:center; color:#888; padding: 20px; font-family:monospace; display:none;">Veriler getiriliyor...</div>
             <div id="cell-empty" style="text-align:center; color:#ff3333; padding: 20px; font-weight:bold; display:none;">Bu adreste kayıtlı ürün bulunamadı.</div>
-            
             <div class="product-list" id="cell-product-list"></div>
-            
             <button class="btn-action" style="width:100%; padding:15px; font-size:13px;" onclick="openProductModal(document.getElementById('cell-modal-title').innerText)">BU RAFA YENİ ÜRÜN EKLE</button>
         </div>
     </div>
 
+    <!-- YENİ ÜRÜN MODAL -->
     <div id="product-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
                 <div class="modal-title" id="pm-title">YENİ ÜRÜN EKLE</div>
                 <button class="btn-close" onclick="closeModal('product-modal')">×</button>
             </div>
-            
             <input type="hidden" id="pm-id">
-            
             <div class="form-group">
                 <label>ADRES (Zorunlu)</label>
                 <input type="text" id="pm-adres" placeholder="Örn: 05.01.01">
@@ -190,8 +192,79 @@
                 <label>REFERANS NO</label>
                 <input type="text" id="pm-ref" placeholder="Ref No">
             </div>
-
             <button class="btn-save" id="btn-save-product" onclick="saveProduct()">KAYDET</button>
+        </div>
+    </div>
+
+    <!-- TOPLU ADRES TANIMLAMA MODAL -->
+    <div id="bulk-modal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">RAF ADRESLENDİRME</div>
+                <button class="btn-close" onclick="closeModal('bulk-modal')">×</button>
+            </div>
+            <p style="color:#aaa; font-size:12px; margin-bottom:15px;">Bu bloğa toplu adres tanımlayabilir veya sadece tıkladığınız hücreye tekil adres verebilirsiniz.</p>
+            <div class="form-group">
+                <label>ADRES ÖN EKİ (Örn: A1- veya 06.01.)</label>
+                <input type="text" id="bm-prefix" placeholder="A1-">
+            </div>
+            <div style="display:flex; gap:15px; margin-bottom:15px;">
+                <div class="form-group" style="flex:1; margin:0;">
+                    <label>BAŞLANGIÇ NO</label>
+                    <input type="number" id="bm-start" value="1">
+                </div>
+                <div class="form-group" style="flex:1; margin:0;">
+                    <label>KAÇ ADET?</label>
+                    <input type="number" id="bm-count" value="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>YAZI YÖNÜ / AÇISI</label>
+                <select id="bm-rot">
+                    <option value="0">Yatay (0°)</option>
+                    <option value="90">Dikey (90°)</option>
+                    <option value="-90">Dikey (-90°)</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-save" style="background:#444; color:#fff;" onclick="saveSingleAddress()">SADECE BİR ADRES EKLE</button>
+                <button class="btn-save" onclick="saveBulkAddress()">TOPLU TANIMLA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADRES DEĞİŞTİRME MODAL -->
+    <div id="edit-addr-modal" class="modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title">ADRESİ DEĞİŞTİR</div>
+                <button class="btn-close" onclick="closeModal('edit-addr-modal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>YENİ ADRESİ GİRİN (Tüm ürünler taşınacak)</label>
+                <input type="text" id="ea-new-addr" placeholder="Örn: B2-05">
+            </div>
+            <button class="btn-save" onclick="executeAddressChange()">DEĞİŞTİR VE TAŞI</button>
+        </div>
+    </div>
+
+    <!-- GENEL ONAY MODAL -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-box" style="max-width: 450px; text-align: center;">
+            <div class="modal-title" id="confirm-msg" style="margin-bottom: 25px; line-height:1.5;">Emin misiniz?</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cancel" style="flex:1;" onclick="closeModal('confirm-modal')">İPTAL</button>
+                <button class="btn-save" style="flex:1; background:#ff3333;" onclick="executeConfirm()">EVET, ONAYLIYORUM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENEL UYARI MODAL -->
+    <div id="custom-alert" class="modal">
+        <div class="modal-box" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 18px; font-weight: 900; color: #ffbc00; margin-bottom: 15px; letter-spacing: 1px;" id="alert-title">UYARI</div>
+            <div id="alert-desc" style="font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px;">-</div>
+            <button onclick="closeModal('custom-alert')" style="background: #fff; color: #000; border: none; padding: 12px 30px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 12px;">ANLADIM</button>
         </div>
     </div>
 
@@ -215,6 +288,27 @@
         let currentCollection = 'kroki_adresleri';
         let currentScale = 1.0;
 
+        let confirmAction = null;
+        window.showConfirm = (msg, action) => {
+            document.getElementById('confirm-msg').innerText = msg;
+            confirmAction = action;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        };
+        window.executeConfirm = () => {
+            if(confirmAction) confirmAction();
+            closeModal('confirm-modal');
+        };
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+
+        window.closeModal = (id) => {
+            document.getElementById(id).style.display = 'none';
+        };
+
         window.submitPassword = () => {
             const pw = document.getElementById('admin-pw-input').value;
             if(pw === 'admin') {
@@ -230,6 +324,9 @@
             if(e.key === 'Enter') submitPassword();
         });
 
+        let currentTargetCell = null;
+        let currentCellsInGrid = [];
+
         window.switchDepo = (depo) => {
             currentDepo = depo;
             const mapArea = document.getElementById('admin-map-area');
@@ -240,7 +337,6 @@
                 currentCollection = 'kroki_adresleri';
                 mapArea.className = 'map-wrapper map-wrapper-am';
                 mapArea.innerHTML = window.haritaAmeliyathane || "";
-                
                 document.getElementById('btn-excel-upload').innerText = 'AMELİYATHANE İÇİN EXCEL YÜKLE';
                 document.getElementById('btn-excel-download').innerText = 'AMELİYATHANE YEDEĞİ İNDİR';
             } else {
@@ -249,7 +345,6 @@
                 currentCollection = 'kroki_adresleri_ana';
                 mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
-                
                 document.getElementById('btn-excel-upload').innerText = 'ANA DEPO İÇİN EXCEL YÜKLE';
                 document.getElementById('btn-excel-download').innerText = 'ANA DEPO YEDEĞİ İNDİR';
             }
@@ -274,45 +369,14 @@
                     newCell.addEventListener('click', () => {
                         let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
                         if(!addr || addr === '' || addr === 'undefined') {
-                            if(confirm("Bu rafa / bloğa toplu adres tanımlamak ister misiniz?\n\nTamam = Toplu Tanımla\nİptal = Sadece bu hücreye tanımla")) {
-                                let parentGrid = newCell.parentElement;
-                                let cellsInGrid = Array.from(parentGrid.querySelectorAll('.cell'));
-                                
-                                let prefix = prompt("Adres Ön Eki (örn: A1- veya 06.01.):");
-                                if(!prefix) return;
-                                let startNum = parseInt(prompt("Başlangıç Numarası (örn: 1):", "1"));
-                                if(isNaN(startNum)) return;
-                                let count = parseInt(prompt(`Kaç adet adres tanımlanacak? (Bu raftaki hücre kapasitesi: ${cellsInGrid.length})`, cellsInGrid.length));
-                                if(isNaN(count)) return;
-                                let rot = prompt("Yazı Yönü Açısı (0, 90, -90 vb.):", "0");
-
-                                for(let i=0; i<count; i++) {
-                                    if(i < cellsInGrid.length) {
-                                        let targetCell = cellsInGrid[i];
-                                        let numStr = (startNum + i).toString().padStart(2, '0');
-                                        let sep = prefix.endsWith('.') || prefix.endsWith('-') ? '' : '.';
-                                        let fullAddr = prefix + sep + numStr;
-
-                                        targetCell.id = 'cell-' + fullAddr;
-                                        targetCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
-                                        targetCell.style.opacity = '1';
-                                        targetCell.classList.remove('cell-hidden');
-                                        
-                                        targetCell.onclick = () => { openCellModal(fullAddr); };
-                                    }
-                                }
-                                alert("Adresler tanımlandı! Değişikliklerin kalıcı olması için kod üret adımını unutmayın (Tasarlayıcıda). NOT: Bu ekran sadece geçici bir görünüm sağlar.");
-                                return;
-                            } else {
-                                addr = prompt("Yeni adres (örn: A1-01):");
-                                if(!addr) return;
-                                newCell.id = 'cell-' + addr;
-                                newCell.innerText = addr;
-                                newCell.style.opacity = '1';
-                                newCell.classList.remove('cell-hidden');
-                            }
+                            currentTargetCell = newCell;
+                            currentCellsInGrid = Array.from(newCell.parentElement.querySelectorAll('.cell'));
+                            document.getElementById('bm-count').value = currentCellsInGrid.length;
+                            document.getElementById('bm-count').max = currentCellsInGrid.length;
+                            document.getElementById('bulk-modal').style.display = 'flex';
+                        } else {
+                            openCellModal(addr);
                         }
-                        openCellModal(addr);
                     });
                 });
             }, 300);
@@ -321,10 +385,17 @@
         };
 
         window.changeZoom = (delta) => {
-            currentScale += delta;
-            if(currentScale < 0.25) currentScale = 0.25;
-            if(currentScale > 2.5) currentScale = 2.5;
-            document.getElementById('zoom-val').innerText = '%' + Math.round(currentScale * 100);
+            let newVal = (currentScale + delta) * 100;
+            setCustomZoom(newVal);
+        };
+
+        window.setCustomZoom = (val) => {
+            let parsed = parseInt(val);
+            if(isNaN(parsed)) parsed = 100;
+            if(parsed < 25) parsed = 25;
+            if(parsed > 250) parsed = 250;
+            currentScale = parsed / 100;
+            document.getElementById('zoom-val').value = parsed;
             applyZoom();
         };
 
@@ -334,15 +405,54 @@
             
             mapWrapper.style.transform = `scale(${currentScale})`;
             
-            const baseW = currentDepo === 'am' ? 950 : 1200;
+            const baseW = currentDepo === 'am' ? 1100 : 1200;
             const baseH = (baseW * 9) / 16; 
             
             mapContainer.style.width = (baseW * currentScale) + 'px';
             mapContainer.style.height = (baseH * currentScale) + 'px';
         }
 
-        window.closeModal = (id) => {
-            document.getElementById(id).style.display = 'none';
+        window.saveSingleAddress = () => {
+            let prefix = document.getElementById('bm-prefix').value.trim();
+            let startNum = document.getElementById('bm-start').value;
+            let numStr = startNum.padStart(2, '0');
+            let sep = prefix.endsWith('.') || prefix.endsWith('-') ? '' : '.';
+            let fullAddr = prefix + (prefix ? sep : '') + numStr;
+            if(prefix === '') fullAddr = startNum; 
+            
+            let rot = document.getElementById('bm-rot').value;
+
+            currentTargetCell.id = 'cell-' + fullAddr;
+            currentTargetCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
+            currentTargetCell.style.opacity = '1';
+            currentTargetCell.classList.remove('cell-hidden');
+            currentTargetCell.onclick = () => { openCellModal(fullAddr); };
+            
+            closeModal('bulk-modal');
+        };
+
+        window.saveBulkAddress = () => {
+            let prefix = document.getElementById('bm-prefix').value.trim();
+            let startNum = parseInt(document.getElementById('bm-start').value) || 1;
+            let count = parseInt(document.getElementById('bm-count').value) || 1;
+            let rot = document.getElementById('bm-rot').value;
+
+            for(let i=0; i<count; i++) {
+                if(i < currentCellsInGrid.length) {
+                    let target = currentCellsInGrid[i];
+                    let numStr = (startNum + i).toString().padStart(2, '0');
+                    let sep = prefix.endsWith('.') || prefix.endsWith('-') ? '' : '.';
+                    let fullAddr = prefix + (prefix ? sep : '') + numStr;
+
+                    target.id = 'cell-' + fullAddr;
+                    target.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${fullAddr}</span>`;
+                    target.style.opacity = '1';
+                    target.classList.remove('cell-hidden');
+                    target.onclick = () => { openCellModal(fullAddr); };
+                }
+            }
+            closeModal('bulk-modal');
+            showCustomAlert("TANIMLAMA BAŞARILI", "Adresler haritada geçici olarak oluşturuldu. Kalıcı olması için 'KROKİ TASARLAYICI'dan kodları dışa aktarmayı unutmayın.");
         };
 
         window.openCellModal = async (adres) => {
@@ -380,7 +490,7 @@
                     document.getElementById('cell-product-list').innerHTML = html;
                 }
             } catch(e) {
-                alert("Veriler çekilirken hata: " + e.message);
+                showCustomAlert("HATA", "Veriler çekilirken hata: " + e.message);
                 document.getElementById('cell-loading').style.display = 'none';
             }
         };
@@ -416,7 +526,7 @@
             const adres = document.getElementById('pm-adres').value.trim();
             const btn = document.getElementById('btn-save-product');
             
-            if(!adres) { alert("Lütfen ürünün adresini girin!"); return; }
+            if(!adres) { showCustomAlert("UYARI", "Lütfen ürünün adresini girin!"); return; }
 
             btn.innerText = "KAYDEDİLİYOR...";
             btn.disabled = true;
@@ -432,68 +542,76 @@
             try {
                 if (id) {
                     await updateDoc(doc(db, currentCollection, id), dataObj);
-                    alert("Ürün başarıyla güncellendi.");
+                    showCustomAlert("BAŞARILI", "Ürün başarıyla güncellendi.");
                 } else {
                     await addDoc(collection(db, currentCollection), dataObj);
-                    alert("Yeni ürün başarıyla eklendi.");
+                    showCustomAlert("BAŞARILI", "Yeni ürün başarıyla eklendi.");
                 }
                 closeModal('product-modal');
                 if(document.getElementById('cell-modal').style.display === 'flex') {
                     openCellModal(document.getElementById('cell-modal-title').innerText);
                 }
             } catch(e) {
-                alert("Kaydetme hatası: " + e.message);
+                showCustomAlert("HATA", "Kaydetme hatası: " + e.message);
             }
             btn.disabled = false;
         };
 
-        window.deleteProduct = async (id) => {
-            if(!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
-            try {
-                document.getElementById(`card-${id}`).style.opacity = '0.3';
-                await deleteDoc(doc(db, currentCollection, id));
-                document.getElementById(`card-${id}`).remove();
-                
-                if(document.getElementById('cell-product-list').innerHTML.trim() === '') {
-                    document.getElementById('cell-empty').style.display = 'block';
+        window.deleteProduct = (id) => {
+            showConfirm("Bu ürünü silmek istediğinize emin misiniz?", async () => {
+                try {
+                    document.getElementById(`card-${id}`).style.opacity = '0.3';
+                    await deleteDoc(doc(db, currentCollection, id));
+                    document.getElementById(`card-${id}`).remove();
+                    
+                    if(document.getElementById('cell-product-list').innerHTML.trim() === '') {
+                        document.getElementById('cell-empty').style.display = 'block';
+                    }
+                } catch(e) {
+                    showCustomAlert("HATA", "Silme hatası: " + e.message);
                 }
-            } catch(e) {
-                alert("Silme hatası: " + e.message);
-            }
+            });
         };
 
-        window.changeCellAddress = async () => {
-            const oldAdres = document.getElementById('cell-modal-title').innerText;
-            const newAdres = prompt(`'${oldAdres}' adresini hangi yeni adres ile değiştirmek istiyorsunuz?\n(İçindeki tüm ürünler de yeni adrese taşınacaktır.)`);
-            if(!newAdres || newAdres.trim() === '' || newAdres === oldAdres) return;
+        let oldAddrToChange = "";
+        window.changeCellAddress = () => {
+            oldAddrToChange = document.getElementById('cell-modal-title').innerText;
+            document.getElementById('ea-new-addr').value = "";
+            document.getElementById('edit-addr-modal').style.display = 'flex';
+        };
+
+        window.executeAddressChange = async () => {
+            const newAdres = document.getElementById('ea-new-addr').value.trim();
+            if(!newAdres || newAdres === oldAddrToChange) return;
             
-            if(!confirm(`Emin misiniz? '${oldAdres}' adresindeki tüm ürünler '${newAdres}' olarak güncellenecek.`)) return;
+            showConfirm(`'${oldAddrToChange}' adresindeki tüm ürünler '${newAdres}' olarak güncellenecek. Onaylıyor musunuz?`, async () => {
+                try {
+                    document.getElementById('cell-loading').style.display = 'block';
+                    document.getElementById('cell-product-list').style.display = 'none';
 
-            try {
-                document.getElementById('cell-loading').style.display = 'block';
-                document.getElementById('cell-product-list').style.display = 'none';
-
-                const q = query(collection(db, currentCollection), where("adres", "==", oldAdres));
-                const snapshot = await getDocs(q);
-                
-                let promises = [];
-                snapshot.forEach(docSnap => {
-                    promises.push(updateDoc(doc(db, currentCollection, docSnap.id), { adres: newAdres }));
-                });
-                
-                await Promise.all(promises);
-                
-                alert("Adres başarıyla güncellendi ve ürünler taşındı!");
-                closeModal('cell-modal');
-                
-                let cell = document.getElementById('cell-' + oldAdres);
-                if(cell) {
-                    cell.id = 'cell-' + newAdres;
-                    cell.innerText = newAdres;
+                    const q = query(collection(db, currentCollection), where("adres", "==", oldAddrToChange));
+                    const snapshot = await getDocs(q);
+                    
+                    let promises = [];
+                    snapshot.forEach(docSnap => {
+                        promises.push(updateDoc(doc(db, currentCollection, docSnap.id), { adres: newAdres }));
+                    });
+                    
+                    await Promise.all(promises);
+                    
+                    showCustomAlert("BAŞARILI", "Adres başarıyla güncellendi ve ürünler taşındı!");
+                    closeModal('cell-modal');
+                    closeModal('edit-addr-modal');
+                    
+                    let cell = document.getElementById('cell-' + oldAddrToChange);
+                    if(cell) {
+                        cell.id = 'cell-' + newAdres;
+                        cell.innerText = newAdres;
+                    }
+                } catch(err) {
+                    showCustomAlert("HATA", "Adres güncelleme hatası: " + err.message);
                 }
-            } catch(err) {
-                alert("Adres güncelleme hatası: " + err.message);
-            }
+            });
         };
 
         window.exportExcel = async () => {
@@ -511,7 +629,7 @@
                 });
             });
             
-            if(data.length === 0) { alert("Dışa aktarılacak veri yok."); return; }
+            if(data.length === 0) { showCustomAlert("UYARI", "Dışa aktarılacak veri yok."); return; }
             
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -530,28 +648,27 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    if(!confirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`)) return;
-                    
-                    document.getElementById('import-file').value = '';
-                    
-                    let count = 0;
-                    for(let row of rows) {
-                        let adres = row["Adres"] || row["adres"] || "";
-                        if(adres) {
-                            await addDoc(collection(db, currentCollection), {
-                                adres: String(adres),
-                                urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
-                                urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
-                                barkod: String(row["Barkod"] || row["barkod"] || ""),
-                                refNo: String(row["Ref No"] || row["refNo"] || "")
-                            });
-                            count++;
+                    showConfirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`, async () => {
+                        document.getElementById('import-file').value = '';
+                        let count = 0;
+                        for(let row of rows) {
+                            let adres = row["Adres"] || row["adres"] || "";
+                            if(adres) {
+                                await addDoc(collection(db, currentCollection), {
+                                    adres: String(adres),
+                                    urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
+                                    urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
+                                    barkod: String(row["Barkod"] || row["barkod"] || ""),
+                                    refNo: String(row["Ref No"] || row["refNo"] || "")
+                                });
+                                count++;
+                            }
                         }
-                    }
-                    alert(`${count} adet ürün başarıyla yüklendi! Lütfen kotayı aşmamak için sayfanın güncellenmesini bekleyin.`);
-                    switchDepo(currentDepo);
+                        showCustomAlert("BAŞARILI", `${count} adet ürün başarıyla yüklendi! Lütfen sayfanın güncellenmesini bekleyin.`);
+                        switchDepo(currentDepo);
+                    });
                 } catch(err) {
-                    alert("Excel yükleme hatası: " + err.message);
+                    showCustomAlert("HATA", "Excel yükleme hatası: " + err.message);
                 }
             };
             reader.readAsArrayBuffer(file);
