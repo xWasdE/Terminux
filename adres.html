@@ -90,7 +90,7 @@
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
-            .map-scroll-container { padding-bottom: 5px; }
+            .map-scroll-container { padding-bottom: 5px; overflow-x: auto; justify-content: flex-start; }
             .legal-footer { font-size: 7px !important; padding: 5px 8px !important; line-height: 1.1 !important; }
         }
     </style>
@@ -128,8 +128,10 @@
             <div id="result-address" class="result-address">-</div>
         </div>
 
-        <div class="map-scroll-container">
-            <div id="map-area" class="map-wrapper"></div>
+        <div style="position: relative; width: 100%; overflow-x: auto;">
+            <div class="map-scroll-container">
+                <div id="map-area" class="map-wrapper" style="min-width: 800px;"></div>
+            </div>
         </div>
     </main>
 
@@ -281,7 +283,6 @@
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
-            const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
             
             let targetIdRaw = targetId.trim();
             if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
