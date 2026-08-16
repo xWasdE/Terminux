@@ -190,14 +190,12 @@
                 document.getElementById('tab-ana').classList.replace('active', 'inactive');
                 currentCollection = 'kroki_adresleri';
                 
-                mapArea.className = 'map-wrapper map-wrapper-am';
                 mapArea.innerHTML = window.haritaAmeliyathane || "";
             } else {
                 document.getElementById('tab-ana').classList.replace('inactive', 'active');
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
                 currentCollection = 'kroki_adresleri_ana';
                 
-                mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
             }
             clearSearch();
@@ -259,6 +257,8 @@
                     osc.frequency.setValueAtTime(300, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     osc.start();
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
                     gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0);
                     osc.stop(ctx.currentTime + 1.0);
                 }
@@ -283,15 +283,14 @@
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
-            const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
             
-            let targetIdRaw = targetId;
-            if (isAm && (targetId === "02.01.06" || targetId === "03.01.06")) {
-                targetIdRaw = targetId.replace('.06', '.05');
+            let targetIdRaw = targetId.trim();
+            if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
+                targetIdRaw = targetIdRaw.replace('.06', '.05');
             }
             
             const targetCell = document.getElementById(`cell-${targetIdRaw}`);
-            const doorId = isAm ? 'door-am' : 'door-ana';
+            const doorId = isAm ? 'door-am' : 'main-door';
             const door = document.getElementById(doorId);
             
             if(!targetCell || !door || !map) return;
@@ -300,78 +299,90 @@
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            let startX, startY;
+            // Kapının başlangıç noktasını belirliyoruz.
+            let startX = doorRect.left + doorRect.width / 2 - mapRect.left;
+            let startY = doorRect.top + doorRect.height / 2 - mapRect.top;
 
-            if (isAm) {
-                startX = doorRect.right - mapRect.left + 15;
-                startY = doorRect.top - mapRect.top + (doorRect.height / 2);
-            } else {
-                if (doorRect.left - mapRect.left > mapRect.width * 0.5) {
-                    startX = doorRect.left - mapRect.left - 15;
-                } else {
-                    startX = doorRect.right - mapRect.left + 15;
-                }
-                startY = doorRect.top - mapRect.top + (doorRect.height / 2);
-            }
+            // Hedef adresin tam orta noktasını belirliyoruz.
+            const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
+            const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
 
             const cellSize = 10;
             const gridW = Math.ceil(mapRect.width / cellSize);
             const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
+            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); // 1: Engel var (Varsayılan olarak her yer kapalı)
 
-            const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
+            // Yalnızca ".map-pathway" (Lazer Güzergahı) div'lerinin içini yürünebilir (0) yapıyoruz.
+            const pathways = map.querySelectorAll('.map-pathway');
             
-            obstacles.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
-                const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
-                const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
-                const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
+            if (pathways.length > 0) {
+                pathways.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
+                    const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
+                    const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
+                    const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
 
-                for(let y = sy; y <= ey; y++) {
-                    for(let x = sx; x <= ex; x++) {
-                        if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                            grid[y][x] = 0; 
+                    for(let y = sy; y <= ey; y++) {
+                        for(let x = sx; x <= ex; x++) {
+                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
+                                grid[y][x] = 0; // 0: Yol açık (Lazer geçebilir)
+                            }
                         }
                     }
+                });
+            } else {
+                // Eğer tasarıma Pathway (Güzergah) eklenmemişse, eski sistem A* mantığı (Her yeri boşalt) çalışsın.
+                for(let y = 0; y < gridH; y++) {
+                    for(let x = 0; x < gridW; x++) {
+                        grid[y][x] = 0; 
+                    }
                 }
-            });
+                const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
+                obstacles.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const sx = Math.max(0, Math.floor((rect.left - mapRect.left) / cellSize));
+                    const ex = Math.min(gridW - 1, Math.ceil((rect.right - mapRect.left) / cellSize));
+                    const sy = Math.max(0, Math.floor((rect.top - mapRect.top) / cellSize));
+                    const ey = Math.min(gridH - 1, Math.ceil((rect.bottom - mapRect.top) / cellSize));
 
-            const carve = (start_x, start_y, dx, dy) => {
-                let x = start_x;
-                let y = start_y;
-                while(x >= 0 && x < gridW && y >= 0 && y < gridH) {
-                    if (grid[y][x] === 1 && (x !== start_x || y !== start_y)) break;
-                    grid[y][x] = 1;
-                    x += dx;
-                    y += dy;
-                }
-            };
-
-            const tX = Math.floor((targetRect.left + targetRect.width / 2 - mapRect.left) / cellSize);
-            const tY = Math.floor((targetRect.top + targetRect.height / 2 - mapRect.top) / cellSize);
-            const sX = Math.floor(startX / cellSize);
-            const sY = Math.floor(startY / cellSize);
-
-            if(tX >= 0 && tX < gridW && tY >= 0 && tY < gridH) {
-                carve(tX, tY, -1, 0); 
-                carve(tX, tY, 1, 0);  
-                carve(tX, tY, 0, -1); 
-                carve(tX, tY, 0, 1);  
+                    for(let y = sy; y <= ey; y++) {
+                        for(let x = sx; x <= ex; x++) {
+                            if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 1; // 1: Engel
+                        }
+                    }
+                });
             }
 
-            if(sX >= 0 && sX < gridW && sY >= 0 && sY < gridH) {
-                carve(sX, sY, -1, 0); 
-                carve(sX, sY, 1, 0);  
-                carve(sX, sY, 0, -1); 
-                carve(sX, sY, 0, 1);  
+            // Kapıdan pathway'e çıkış yapabilmesi için kapının etrafını (Pathway'e ulaşana kadar) açıyoruz.
+            const dsx = Math.max(0, Math.floor((doorRect.left - mapRect.left - 30) / cellSize));
+            const dex = Math.min(gridW - 1, Math.ceil((doorRect.right - mapRect.left + 30) / cellSize));
+            const dsy = Math.max(0, Math.floor((doorRect.top - mapRect.top - 30) / cellSize));
+            const dey = Math.min(gridH - 1, Math.ceil((doorRect.bottom - mapRect.top + 30) / cellSize));
+
+            for(let y = dsy; y <= dey; y++) {
+                for(let x = dsx; x <= dex; x++) {
+                    if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 0;
+                }
             }
 
-            const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
-            const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
+            // Aynı şekilde Pathway'den hedef rafa/kutuya gidebilmesi için hedefin de etrafını açıyoruz.
+            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 50) / cellSize));
+            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 50) / cellSize));
+            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 50) / cellSize));
+            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 50) / cellSize));
 
-            const sNode = {x: sX, y: sY};
-            const eNode = {x: tX, y: tY};
+            for(let y = tsy; y <= tey; y++) {
+                for(let x = tsx; x <= tex; x++) {
+                    if(y >= 0 && y < gridH && x >= 0 && x < gridW) grid[y][x] = 0;
+                }
+            }
+
+            const sNode = {x: Math.floor(startX / cellSize), y: Math.floor(startY / cellSize)};
+            const eNode = {x: Math.floor(endX / cellSize), y: Math.floor(endY / cellSize)};
+            
+            if(sNode.y >= 0 && sNode.y < gridH && sNode.x >= 0 && sNode.x < gridW) grid[sNode.y][sNode.x] = 0;
+            if(eNode.y >= 0 && eNode.y < gridH && eNode.x >= 0 && eNode.x < gridW) grid[eNode.y][eNode.x] = 0;
 
             const q = [sNode];
             const cameFrom = {};
@@ -386,7 +397,7 @@
                 for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
                     const nx = curr.x + d[0];
                     const ny = curr.y + d[1];
-                    if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 1) {
+                    if (nx >= 0 && nx < gridW && ny >= 0 && ny < gridH && grid[ny][nx] === 0) {
                         const key = nx + ',' + ny;
                         if (!visited.has(key)) {
                             visited.add(key);
@@ -398,8 +409,6 @@
             }
 
             let pathStr = "";
-            let finalStartX = startX;
-            let finalStartY = startY;
 
             if (found) {
                 let curr = eNode; 
@@ -415,9 +424,9 @@
                 }
                 simp.push(path[path.length - 1]);
                 
-                pathStr = `M ${finalStartX} ${finalStartY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
+                pathStr = `M ${startX} ${startY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
             } else {
-                pathStr = `M ${finalStartX} ${finalStartY} L ${finalStartX} ${endY} L ${endX} ${endY}`;
+                pathStr = `M ${startX} ${startY} L ${startX} ${endY} L ${endX} ${endY}`;
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
@@ -482,7 +491,8 @@
                     let targetCellId = product.adres.trim();
                     if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
                     
-                    const targetCell = document.getElementById(`cell-${targetCellId}`);
+                    const map = document.getElementById('map-area');
+                    const targetCell = map.querySelector(`[id="cell-${targetCellId}"]`);
                     if (targetCell) {
                         targetCell.classList.add('active');
                         nameEl.innerText = product.urunAdi;
