@@ -86,16 +86,17 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
         .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px; padding-bottom: 80px; }
+            main { padding: 15px; padding-bottom: 120px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
             .map-scroll-container { overflow-x: auto; }
+            .map-wrapper-am { min-width: 900px; }
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -283,25 +284,21 @@
             document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
             bannerEl.style.display = 'none';
             
-            const svgAm = document.getElementById('path-svg-am');
-            const svgAna = document.getElementById('path-svg-ana');
-            if (svgAm) svgAm.innerHTML = '';
-            if (svgAna) svgAna.innerHTML = '';
+            const svgEl = document.querySelector(`#map-area svg`);
+            if (svgEl) svgEl.innerHTML = '';
         };
 
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
-            const mapId = isAm ? 'map-area-am' : 'map-area-ana';
-            const doorId = isAm ? 'door-am' : 'door-ana';
-            const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
+            const map = document.getElementById('map-area');
             
             let targetIdRaw = targetId;
             if (isAm && (targetId === "02.01.06" || targetId === "03.01.06")) {
                 targetIdRaw = targetId.replace('.06', '.05');
             }
             
-            const map = document.getElementById('map-area');
             const targetCell = map.querySelector(`[id="cell-${targetIdRaw}"]`);
+            const doorId = isAm ? 'door-am' : 'door-ana';
             const door = document.getElementById(doorId);
             
             if(!targetCell || !door || !map) return;
@@ -313,11 +310,11 @@
             let startX, startY;
 
             if (isAm) {
-                startX = doorRect.right - mapRect.left + 15;
-                startY = doorRect.top + doorRect.height / 2 - mapRect.top;
+                startX = doorRect.right - mapRect.left + 30;
+                startY = doorRect.top - mapRect.top + (doorRect.height / 2);
             } else {
-                startX = doorRect.left - mapRect.left - 15;
-                startY = doorRect.top + doorRect.height / 2 - mapRect.top;
+                startX = doorRect.left - mapRect.left - 30;
+                startY = doorRect.top - mapRect.top + (doorRect.height / 2);
             }
 
             const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
@@ -346,10 +343,10 @@
                 }
             });
 
-            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
-            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
-            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
-            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 20) / cellSize));
+            const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 50) / cellSize));
+            const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 50) / cellSize));
+            const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 50) / cellSize));
+            const tey = Math.min(gridH - 1, Math.ceil((targetRect.bottom - mapRect.top + 50) / cellSize));
 
             for(let y = tsy; y <= tey; y++) {
                 for(let x = tsx; x <= tex; x++) {
@@ -411,7 +408,7 @@
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
-            const targetSvg = document.getElementById(svgId);
+            const targetSvg = document.querySelector(`#map-area svg`);
             if(targetSvg) {
                 targetSvg.innerHTML = `
                     <defs>
@@ -473,7 +470,8 @@
                     let targetCellId = product.adres;
                     if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
                     
-                    const targetCell = document.querySelector(`#${mapId} [id="cell-${targetCellId}"]`);
+                    const map = document.getElementById('map-area');
+                    const targetCell = map.querySelector(`[id="cell-${targetCellId}"]`);
                     if (targetCell) {
                         targetCell.classList.add('active');
                         nameEl.innerText = product.urunAdi;
