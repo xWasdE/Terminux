@@ -51,7 +51,6 @@
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
         .cell-hidden { visibility: hidden; }
         .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
-        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow-y: auto; }
@@ -148,7 +147,7 @@
     </main>
 
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <!-- HÜCRE İÇERİĞİ MODAL -->
@@ -181,9 +180,7 @@
                 <div class="modal-title" id="pm-title">YENİ ÜRÜN EKLE</div>
                 <button class="btn-close" onclick="closeModal('product-modal')">×</button>
             </div>
-            
             <input type="hidden" id="pm-id">
-            
             <div class="form-group">
                 <label>ADRES (Zorunlu)</label>
                 <input type="text" id="pm-adres" placeholder="Örn: 05.01.01">
@@ -204,20 +201,30 @@
                 <label>REFERANS NO</label>
                 <input type="text" id="pm-ref" placeholder="Ref No">
             </div>
-
             <button class="btn-save" id="btn-save-product" onclick="saveProduct()">KAYDET</button>
         </div>
     </div>
 
-    <!-- TOPLU ADRES TANIMLAMA MODAL -->
+    <!-- TOPLU ADRES TANIMLAMA & IZGARA DÜZENLEME MODAL -->
     <div id="bulk-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
-                <div class="modal-title">RAF ADRESLENDİRME</div>
+                <div class="modal-title">RAF YÖNETİMİ</div>
                 <button class="btn-close" onclick="closeModal('bulk-modal')">×</button>
             </div>
-            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">Bu bloğa toplu adres tanımlayabilir veya sadece tıkladığınız hücreye tekil adres verebilirsiniz.</p>
+            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">Bu rafın kapasitesini (Sütun/Satır) değiştirebilir ve adreslerini tanımlayabilirsiniz.</p>
             
+            <div style="display:flex; gap:15px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <div class="form-group" style="flex:1; margin:0;">
+                    <label>SÜTUN SAYISI (Yatay)</label>
+                    <input type="number" id="bm-grid-cols" value="1" min="1" onchange="updateGridLayout()">
+                </div>
+                <div class="form-group" style="flex:1; margin:0;">
+                    <label>SATIR SAYISI (Dikey)</label>
+                    <input type="number" id="bm-grid-rows" value="1" min="1" onchange="updateGridLayout()">
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>ADRES ÖN EKİ (Örn: A1- veya 06.01.)</label>
                 <input type="text" id="bm-prefix" placeholder="A1-">
@@ -245,7 +252,7 @@
             
             <div style="display:flex; gap:10px; margin-top:10px;">
                 <button class="btn-save" style="background:#444; color:#fff;" onclick="saveSingleAddress()">SADECE TEK ADRES</button>
-                <button class="btn-save" onclick="saveBulkAddress()">TOPLU TANIMLA</button>
+                <button class="btn-save" onclick="saveBulkAddress()">KROKİYE UYGULA</button>
             </div>
         </div>
     </div>
@@ -402,37 +409,80 @@
             mapArea.querySelectorAll('.map-pathway').forEach(p => p.style.display = 'none');
             
             setTimeout(() => {
-                mapArea.querySelectorAll('.cell').forEach(cell => {
-                    if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') {
-                        cell.style.visibility = 'visible';
-                        cell.style.opacity = '0.3';
-                        cell.innerText = '+';
-                        cell.classList.remove('cell-hidden');
-                        cell.id = ''; 
-                    }
-                    cell.style.pointerEvents = 'auto';
-
-                    const newCell = cell.cloneNode(true);
-                    cell.parentNode.replaceChild(newCell, cell);
-                    
-                    newCell.addEventListener('click', () => {
-                        let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
-                        activeVisualCell = newCell;
-
-                        if(!addr || addr === '' || addr === 'undefined' || newCell.innerText === '+') {
-                            currentCellsInGrid = Array.from(newCell.parentElement.querySelectorAll('.cell')).filter(c => !c.id || c.id === '');
-                            document.getElementById('bm-count').value = currentCellsInGrid.length;
-                            document.getElementById('bm-max-cap').innerText = currentCellsInGrid.length;
-                            document.getElementById('bm-count').max = currentCellsInGrid.length;
-                            document.getElementById('bulk-modal').style.display = 'flex';
-                        } else {
-                            openCellModal(addr);
-                        }
-                    });
-                });
+                bindCellEvents(mapArea);
             }, 300);
 
             applyZoom();
+        };
+
+        function bindCellEvents(parentArea) {
+            parentArea.querySelectorAll('.cell').forEach(cell => {
+                if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') {
+                    cell.style.visibility = 'visible';
+                    cell.style.opacity = '0.3';
+                    cell.innerText = '+';
+                    cell.classList.remove('cell-hidden');
+                    cell.id = ''; 
+                }
+                cell.style.pointerEvents = 'auto';
+
+                const newCell = cell.cloneNode(true);
+                cell.parentNode.replaceChild(newCell, cell);
+                
+                newCell.addEventListener('click', () => {
+                    let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
+                    activeVisualCell = newCell;
+
+                    if(!addr || addr === '' || addr === 'undefined' || newCell.innerText === '+') {
+                        currentCellsInGrid = Array.from(newCell.parentElement.querySelectorAll('.cell'));
+                        document.getElementById('bm-count').value = currentCellsInGrid.length;
+                        document.getElementById('bm-max-cap').innerText = currentCellsInGrid.length;
+                        document.getElementById('bm-count').max = currentCellsInGrid.length;
+                        
+                        let matchC = newCell.parentElement.style.gridTemplateColumns.match(/repeat\((\d+)/);
+                        let matchR = newCell.parentElement.style.gridTemplateRows.match(/repeat\((\d+)/);
+                        document.getElementById('bm-grid-cols').value = matchC ? matchC[1] : 1;
+                        document.getElementById('bm-grid-rows').value = matchR ? matchR[1] : 1;
+
+                        document.getElementById('bulk-modal').style.display = 'flex';
+                    } else {
+                        openCellModal(addr);
+                    }
+                });
+            });
+        }
+
+        window.updateGridLayout = () => {
+            if(!activeVisualCell) return;
+            let cols = parseInt(document.getElementById('bm-grid-cols').value) || 1;
+            let rows = parseInt(document.getElementById('bm-grid-rows').value) || 1;
+            let parent = activeVisualCell.parentElement;
+
+            parent.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            parent.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            let baseStyle = activeVisualCell.getAttribute('style') || '';
+            baseStyle = baseStyle.replace(/opacity:\s*[^;]+;/gi, '').replace(/visibility:\s*[^;]+;/gi, '');
+
+            parent.innerHTML = '';
+            let totalCells = cols * rows;
+
+            for(let i=0; i<totalCells; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.style.cssText = baseStyle;
+                cell.style.visibility = 'visible';
+                cell.style.opacity = '0.3';
+                cell.innerText = '+';
+                cell.style.pointerEvents = 'auto';
+                parent.appendChild(cell);
+            }
+            bindCellEvents(parent);
+            activeVisualCell = parent.firstElementChild;
+            currentCellsInGrid = Array.from(parent.querySelectorAll('.cell'));
+            document.getElementById('bm-count').value = currentCellsInGrid.length;
+            document.getElementById('bm-max-cap').innerText = currentCellsInGrid.length;
+            document.getElementById('bm-count').max = currentCellsInGrid.length;
         };
 
         window.changeZoom = (delta) => {
@@ -504,7 +554,7 @@
                 }
             }
             closeModal('bulk-modal');
-            showCustomAlert("TANIMLAMA BAŞARILI", "Adresler haritada oluşturuldu. Kalıcı olması için 'KROKİ KODUNU ÜRET' butonuna tıklayarak kodu .js dosyasına yapıştırın.");
+            showCustomAlert("BAŞARILI", "Adresler haritada oluşturuldu. Kalıcı olması için KROKİ KODUNU ÜRET butonunu kullanın.");
         };
 
         window.editVisualAddress = () => {
