@@ -1,7 +1,7 @@
 window.haritaAmeliyathane = `
 <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
-<div id="door-am" style="position: absolute; top: 0.2%; left: 5.8%; width: 13.4%; height: 10.8%; transform: rotate(0deg); box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: #ffbc00; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 3px dashed #ffbc00; border-bottom: 3px dashed #ffbc00; background: rgba(255,188,0,0.05); z-index: 5;">KAPI <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #ffbc00;">↓</span></div>
+<div id="door-am" style="position: absolute; top: 0.2%; left: 5.8%; width: 13.4%; height: 10.8%; transform: rotate(0deg); box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 5;">KAPI <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa;">↓</span></div>
 
 <div class="map-lens-am" id="lens-am" style="position: absolute; top: 11.4%; left: 0.1%; width: 16.5%; height: 20.6%; transform: rotate(0deg); box-sizing: border-box; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2;">
     <div id="cell-05.01.01" class="cell cell-lens" style="background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:12px; font-weight:bold; border-radius:3px; border: 2px solid #333;">05.01.01</div>
