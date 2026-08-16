@@ -18,7 +18,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 40px 50px 100px 50px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
+        main { flex: 1; padding: 40px 50px 80px 50px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 600px; margin-bottom: 30px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
         .depo-btn { padding: 12px 18px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -54,19 +54,10 @@
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
+        .map-wrapper { width: 100%; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
 
-        .map-wrapper-am { min-width: 950px; }
-        .map-wrapper-ana { min-width: 1200px; }
-
-        /* AMELİYATHANE SABİT CSS (JavaScript'in Bozulmasını Engeller) */
-        .map-door-am { position: absolute; top: 0.2%; left: 2.3%; width: 9.9%; height: 11.9%; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 2; }
-        .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
-        .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 10.7%; height: 19.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
-        .map-shelf-1-am { position: absolute; top: 31.6%; left: 0.1%; width: 44.6%; height: 67.0%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-shelf-2-am { position: absolute; top: 25.9%; left: 54.5%; width: 44.6%; height: 72.8%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-desk-am { position: absolute; top: 0.0%; left: 90.2%; width: 8.9%; height: 25.8%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
-        .map-desk-title-am { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
+        .map-wrapper-am { aspect-ratio: 16/9; min-width: 950px; }
+        .map-wrapper-ana { aspect-ratio: 16/9; min-width: 1200px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
@@ -95,17 +86,16 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
         .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
-            main { padding: 15px; padding-bottom: 120px; }
+            main { padding: 15px; padding-bottom: 80px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 50px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
             .map-scroll-container { overflow-x: auto; }
-            .map-wrapper-am { min-width: 900px; }
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -223,7 +213,7 @@
             if(window.haritaAmeliyathane) {
                 switchDepo('am');
             } else {
-                setTimeout(() => switchDepo('am'), 500); 
+                setTimeout(() => switchDepo('am'), 500);
             }
         });
 
@@ -338,11 +328,7 @@
             const gridH = Math.ceil(mapRect.height / cellSize);
             const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
 
-            const obstacleSelector = isAm 
-                ? 'div[class*="map-shelf"], div[class*="map-desk"], div[class*="map-lens"]'
-                : 'div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]';
-            
-            const obstacles = map.querySelectorAll(obstacleSelector);
+            const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
             
             obstacles.forEach(el => {
                 const rect = el.getBoundingClientRect();
