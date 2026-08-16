@@ -6,69 +6,57 @@
     <title>Terminux | Depo Adres Bulucu</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
-    
-    <!-- DIŞARIDAN HARİTALARIMIZI (HTML KODLARINI) ÇAĞIRIYORUZ -->
     <script src="harita-am.js"></script>
     <script src="harita-ana.js"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
-        .header-title { font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; }
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
+        main { flex: 1; padding: 40px 50px 100px 50px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
 
-        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
-        .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
+        .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 600px; margin-bottom: 30px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
+        .depo-btn { padding: 12px 18px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
         .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
 
-        .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; flex-shrink: 0; }
-        .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
+        .search-container { width: 100%; max-width: 1000px; margin-bottom: 20px; position: relative; flex-shrink: 0; }
+        .search-wrapper { display: flex; gap: 15px; width: 100%; position: relative; }
         .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
-        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 110px 16px 16px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; }
+        .search-input { width: 100%; background: #080808; border: 2px solid #222; color: #00ff00; padding: 20px 110px 20px 25px; font-size: 18px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .search-input:focus { border-color: #ff3333; }
-        .clear-icon { position: absolute; right: 15px; background: #ff3333; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
+        .clear-icon { position: absolute; right: 15px; background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
         
-        .btn-scan { background: #222; border: 2px solid #444; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .btn-scan { background: #111; border: 2px solid #333; color: #fff; padding: 0 30px; font-size: 14px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ff3333; color: #ff3333; }
 
-        .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 10px 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; flex-shrink: 0; }
-        .result-title { font-size: 10px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .result-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-        .result-address { font-size: 24px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
+        .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 15px 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; animation: fadeIn 0.3s ease; flex-shrink: 0; }
+        .result-title { font-size: 11px; color: #aaa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .result-name { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+        .result-address { font-size: 28px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 5px; }
         .dropdown-item { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
         .dropdown-item:hover { background: #111; border-color: #ff3333; border-left: 4px solid #ff3333; }
-        .di-name { color: #fff; font-size: 13px; font-weight: 600; }
-        .di-code { color: #888; font-size: 11px; font-family: monospace; }
+        .di-name { color: #fff; font-size: 14px; font-weight: 600; }
+        .di-code { color: #888; font-size: 12px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; max-width: 1200px; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; flex-shrink: 0; }
+        .map-scroll-container { width: 100%; max-width: 1400px; overflow-x: auto; overflow-y: hidden; padding-bottom: 15px; flex-shrink: 0; }
         .map-scroll-container::-webkit-scrollbar { height: 8px; }
         .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
+        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
 
-        /* AMELİYATHANE MANUEL YERLEŞİM CSS (SABİT) */
         .map-wrapper-am { min-width: 950px; }
-        .map-wrapper-am .map-door-am { position: absolute; top: 0.2%; left: 2.3%; width: 9.9%; height: 11.9%; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 2; }
-        .map-wrapper-am .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
-        .map-wrapper-am .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 10.7%; height: 19.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
-        .map-wrapper-am .map-shelf-1-am { position: absolute; top: 31.6%; left: 0.1%; width: 44.6%; height: 67.0%; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-shelf-2-am { position: absolute; top: 25.9%; left: 54.5%; width: 44.6%; height: 72.8%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
-        .map-wrapper-am .map-desk-am { position: absolute; top: 0.0%; left: 90.2%; width: 8.9%; height: 25.8%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
-        .map-wrapper-am .map-desk-title-am { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
-
         .map-wrapper-ana { min-width: 1200px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
@@ -98,14 +86,14 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
         .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
-            header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
-            main { padding: 15px; }
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px; padding-bottom: 120px; }
             .search-wrapper { flex-direction: column; }
-            .btn-scan { height: 45px; padding: 0; width: 100%; }
+            .btn-scan { height: 50px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
             .map-scroll-container { overflow-x: auto; }
             .map-wrapper-am { min-width: 900px; }
@@ -147,7 +135,6 @@
         </div>
 
         <div class="map-scroll-container">
-            <!-- İKİ HARİTANIN DA GÖMÜLECEĞİ DİNAMİK ALAN -->
             <div id="map-area" class="map-wrapper"></div>
         </div>
     </main>
@@ -200,7 +187,6 @@
         const nameEl = document.getElementById('result-name');
         const addressEl = document.getElementById('result-address');
 
-        // HARİTALARI DEĞİŞTİRME MANTIĞI
         window.switchDepo = (depo) => {
             currentDepo = depo;
             const mapArea = document.getElementById('map-area');
@@ -224,12 +210,11 @@
             loadMappingData();
         }
 
-        // Başlangıçta AM haritasını yükle
         document.addEventListener("DOMContentLoaded", () => {
             if(window.haritaAmeliyathane) {
                 switchDepo('am');
             } else {
-                setTimeout(() => switchDepo('am'), 500); // Scriptlerin yüklenmesini bekle
+                setTimeout(() => switchDepo('am'), 500); 
             }
         });
 
@@ -307,6 +292,7 @@
 
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
+            const mapId = isAm ? 'map-area-am' : 'map-area-ana';
             const doorId = isAm ? 'door-am' : 'door-ana';
             const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
             
@@ -327,13 +313,10 @@
 
             let startX, startY;
 
-            // KAPI ÇIKIŞ YÖNÜ AYARLAMASI (Boşluğa/Koridora doğru adım atması için)
             if (isAm) {
-                // Ameliyathanede kapı solda, sağa (koridora) doğru çıkması lazım.
                 startX = doorRect.right - mapRect.left + 15;
                 startY = doorRect.top + doorRect.height / 2 - mapRect.top;
             } else {
-                // Ana depoda kapı sağda (id="door-ana"), sola (koridora) doğru çıkması lazım.
                 startX = doorRect.left - mapRect.left - 15;
                 startY = doorRect.top + doorRect.height / 2 - mapRect.top;
             }
@@ -341,13 +324,11 @@
             const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
             const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
 
-            // YOL BULMA ALGORİTMASI (A* BFS) - Tamamen dinamik çalışır
             const cellSize = 10;
             const gridW = Math.ceil(mapRect.width / cellSize);
             const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); // 1 = Yürünebilir
+            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); 
 
-            // Haritadaki raf, dolap, lens ve masaları ENGEL (0) olarak işaretle
             const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
             
             obstacles.forEach(el => {
@@ -360,14 +341,12 @@
                 for(let y = sy; y <= ey; y++) {
                     for(let x = sx; x <= ex; x++) {
                         if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                            grid[y][x] = 0; // Engel
+                            grid[y][x] = 0; 
                         }
                     }
                 }
             });
 
-            // Hedefin (Raf hücresinin) etrafını 20px genişleterek yürünebilir yap
-            // Aksi takdirde raf engel sayıldığı için yolun sonu rafa varamaz.
             const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
             const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
             const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
@@ -395,7 +374,6 @@
                 const curr = q.shift();
                 if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
                 
-                // Sağ, Alt, Sol, Üst taraması
                 for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
                     const nx = curr.x + d[0];
                     const ny = curr.y + d[1];
@@ -422,7 +400,6 @@
                 
                 let simp = [path[0]];
                 for(let i = 1; i < path.length - 1; i++) {
-                    // Aynı düzlemdeki ara noktaları sil (Performans ve düz çizgi için)
                     if ((path[i-1].x === path[i].x && path[i].x === path[i+1].x) || 
                         (path[i-1].y === path[i].y && path[i].y === path[i+1].y)) continue;
                     simp.push(path[i]);
@@ -431,19 +408,21 @@
                 
                 pathStr = `M ${finalStartX} ${finalStartY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
             } else {
-                // Eğer yol bulunamazsa, dümdüz L çizimi yap (Fallback)
                 pathStr = `M ${finalStartX} ${finalStartY} L ${finalStartX} ${endY} L ${endX} ${endY}`;
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
-            document.getElementById(svgId).innerHTML = `
-                <defs>
-                    <marker id="arrowhead" markerWidth="${strokeW * 2}" markerHeight="${strokeW * 2}" refX="${strokeW * 2 - 1}" refY="${strokeW}" orient="auto">
-                        <polygon points="0 0, ${strokeW * 2} ${strokeW}, 0 ${strokeW * 2}" fill="#ff0000" />
-                    </marker>
-                </defs>
-                <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" style="animation: dash 0.5s linear infinite reverse;" />
-            `;
+            const targetSvg = document.getElementById(svgId);
+            if(targetSvg) {
+                targetSvg.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="${strokeW * 2}" markerHeight="${strokeW * 2}" refX="${strokeW * 2 - 1}" refY="${strokeW}" orient="auto">
+                            <polygon points="0 0, ${strokeW * 2} ${strokeW}, 0 ${strokeW * 2}" fill="#ff0000" />
+                        </marker>
+                    </defs>
+                    <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="10, 10" marker-end="url(#arrowhead)" style="animation: dash 0.5s linear infinite reverse;" />
+                `;
+            }
         };
 
         const executeSearch = (val) => {
