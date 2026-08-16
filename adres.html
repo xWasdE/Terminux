@@ -35,9 +35,10 @@
         .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; flex-shrink: 0; }
         .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
         .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
-        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 100px 16px 20px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; }
+        
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 90px 16px 16px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         .search-input:focus { border-color: #ff3333; }
-        .clear-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
+        .clear-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
         
         .btn-scan { background: #111; border: 2px solid #333; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
@@ -93,16 +94,17 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 8px 15px; font-size: 10px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
-            main { padding: 15px; padding-bottom: 70px; }
+            main { padding: 15px; padding-bottom: 90px; }
             .toolbar { justify-content: center; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .map-scroll-container { justify-content: flex-start; padding-bottom: 15px; }
-            .legal-footer { font-size: 7px !important; padding: 5px 8px !important; line-height: 1.1 !important; }
+            .legal-footer { font-size: 9px !important; padding: 8px 10px !important; line-height: 1.3 !important; }
             .map-outer-wrapper { justify-content: flex-start; }
         }
     </style>
@@ -158,7 +160,7 @@
     </main>
 
     <div class="legal-footer">
-        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <div id="scanner-modal">
@@ -198,6 +200,7 @@
         let currentDepo = 'am';
         let currentCollection = 'kroki_adresleri';
         let currentScale = 1.0;
+        window.currentActiveAdres = null;
 
         const inputEl = document.getElementById('search-input');
         const clearIcon = document.getElementById('clear-search');
@@ -247,11 +250,15 @@
             
             mapWrapper.style.transform = `scale(${currentScale})`;
             
-            const baseW = currentDepo === 'am' ? 1100 : 1200;
+            const baseW = currentDepo === 'am' ? 1050 : 1200;
             const baseH = (baseW * 9) / 16; 
             
             mapContainer.style.width = (baseW * currentScale) + 'px';
             mapContainer.style.height = (baseH * currentScale) + 'px';
+
+            if(window.currentActiveAdres) {
+                setTimeout(() => window.drawPath(window.currentActiveAdres), 50);
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -329,12 +336,26 @@
             bannerEl.style.display = 'none';
             const svgEl = document.querySelector(`#map-area svg`);
             if (svgEl) svgEl.innerHTML = '';
+            window.currentActiveAdres = null;
+        };
+
+        const getRectCenter = (el, mapRect) => {
+            const rect = el.getBoundingClientRect();
+            return {
+                left: (rect.left - mapRect.left) / currentScale,
+                right: (rect.right - mapRect.left) / currentScale,
+                top: (rect.top - mapRect.top) / currentScale,
+                bottom: (rect.bottom - mapRect.top) / currentScale,
+                cx: ((rect.left + rect.width / 2) - mapRect.left) / currentScale,
+                cy: ((rect.top + rect.height / 2) - mapRect.top) / currentScale,
+            };
         };
 
         // KUSURSUZ L-ŞEKLİNDE LAZER ÇİZİM MANTIĞI
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
+            const mapRect = map.getBoundingClientRect();
             
             let targetIdRaw = targetId.trim();
             if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
@@ -352,67 +373,60 @@
             const dashArr = isMobile ? "8, 8" : "12, 12";
             const offset = isMobile ? 8 : 15;
 
-            const mapRect = map.getBoundingClientRect();
-            const doorRect = door.getBoundingClientRect();
-            const targetRect = targetCell.getBoundingClientRect();
-            const scale = currentScale;
+            const d = getRectCenter(door, mapRect);
+            const t = getRectCenter(targetCell, mapRect);
 
             let pathStr = "";
 
             if (isAm) {
-                let dX = ((doorRect.right) - mapRect.left) / scale; 
-                let dY = ((doorRect.top + doorRect.height / 2) - mapRect.top) / scale;
+                // Kapının sağ kenarından çık (Ameliyathane kapısı solda)
+                let startX = d.right; 
+                let startY = d.cy;
 
-                const tX = ((targetRect.left + targetRect.width / 2) - mapRect.left) / scale;
-                const tY = ((targetRect.top + targetRect.height / 2) - mapRect.top) / scale;
-
-                const shelf1 = document.querySelector('.map-shelf-1-am');
-                const shelf2 = document.querySelector('.map-shelf-2-am');
-                const cX = (((shelf1.getBoundingClientRect().right + shelf2.getBoundingClientRect().left) / 2) - mapRect.left) / scale;
+                const s1 = getRectCenter(document.querySelector('.map-shelf-1-am'), mapRect);
+                const s2 = getRectCenter(document.querySelector('.map-shelf-2-am'), mapRect);
+                const cX = (s1.right + s2.left) / 2;
 
                 if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
-                    const endX = ((targetRect.right - mapRect.left) / scale) + offset;
-                    pathStr = `M ${dX} ${dY} L ${endX} ${dY} L ${endX} ${tY}`;
+                    let endX = t.right + offset;
+                    pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`;
                 } else {
-                    let endX = tX;
-                    if (tX < cX) {
-                        endX = ((targetRect.right - mapRect.left) / scale) + offset; 
-                    } else {
-                        endX = ((targetRect.left - mapRect.left) / scale) - offset;
-                    }
-                    pathStr = `M ${dX} ${dY} L ${cX} ${dY} L ${cX} ${tY} L ${endX} ${tY}`;
+                    let endX = t.cx < cX ? t.right + offset : t.left - offset;
+                    pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
                 }
             } else {
-                let dX = ((doorRect.left) - mapRect.left) / scale; 
-                let dY = ((doorRect.top + doorRect.height / 2) - mapRect.top) / scale;
+                // Kapının sol kenarından çık (Ana depo kapısı sağda)
+                let startX = d.left; 
+                let startY = d.cy;
 
-                const tX = ((targetRect.left + targetRect.width / 2) - mapRect.left) / scale;
-                const tY = ((targetRect.top + targetRect.height / 2) - mapRect.top) / scale;
+                let vCorridors = [];
+                document.querySelectorAll('.map-pathway').forEach(p => {
+                    const pRect = getRectCenter(p, mapRect);
+                    if ((pRect.bottom - pRect.top) > (pRect.right - pRect.left)) { 
+                        vCorridors.push(pRect.cx);
+                    }
+                });
 
-                const corridorsX = [
-                    0.1700 * (mapRect.width / scale), 
-                    0.3800 * (mapRect.width / scale), 
-                    0.6900 * (mapRect.width / scale), 
-                    0.9400 * (mapRect.width / scale)  
-                ];
+                if(vCorridors.length === 0) {
+                    vCorridors = [
+                        0.1817 * (map.offsetWidth),
+                        0.4000 * (map.offsetWidth),
+                        0.6975 * (map.offsetWidth),
+                        0.9408 * (map.offsetWidth)
+                    ];
+                }
                 
-                let bestCx = corridorsX[0];
+                let bestCx = vCorridors[0];
                 let minDiff = Infinity;
-                for(let cx of corridorsX) {
-                    if (Math.abs(tX - cx) < minDiff) {
-                        minDiff = Math.abs(tX - cx);
+                for(let cx of vCorridors) {
+                    if (Math.abs(t.cx - cx) < minDiff) {
+                        minDiff = Math.abs(t.cx - cx);
                         bestCx = cx;
                     }
                 }
                 
-                let endX = tX;
-                if (tX < bestCx) {
-                    endX = ((targetRect.right - mapRect.left) / scale) + offset; 
-                } else {
-                    endX = ((targetRect.left - mapRect.left) / scale) - offset;
-                }
-                
-                pathStr = `M ${dX} ${dY} L ${bestCx} ${dY} L ${bestCx} ${tY} L ${endX} ${tY}`;
+                let endX = t.cx < bestCx ? t.right + offset : t.left - offset;
+                pathStr = `M ${startX} ${startY} L ${bestCx} ${startY} L ${bestCx} ${t.cy} L ${endX} ${t.cy}`;
             }
 
             const targetSvg = map.querySelector(`svg`);
@@ -472,6 +486,7 @@
                 inputEl.value = product.urunAdi;
                 clearIcon.style.display = 'block';
                 if (product.adres) {
+                    window.currentActiveAdres = product.adres;
                     const isAm = currentDepo === 'am';
                     let targetCellId = product.adres.trim();
                     if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
@@ -546,10 +561,8 @@
         };
 
         window.addEventListener('resize', () => {
-            const activeCell = document.querySelector('.cell.active');
-            if (activeCell) {
-                let id = activeCell.id.replace('cell-', '');
-                drawPath(id);
+            if (window.currentActiveAdres) {
+                drawPath(window.currentActiveAdres);
             }
         });
 
