@@ -6,6 +6,11 @@
     <title>Terminux | Depo Adres Bulucu</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <!-- DIŞARIDAN HARİTALARIMIZI (HTML KODLARINI) ÇAĞIRIYORUZ -->
+    <script src="harita-am.js"></script>
+    <script src="harita-ana.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -16,7 +21,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; overflow-y: auto; background: #000; }
+        main { flex: 1; padding: 20px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
         .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -48,9 +53,14 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-container { width: 100%; max-width: 1200px; aspect-ratio: 16 / 9; background-color: #050505; border: 4px solid #1a1a1a; border-radius: 12px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); overflow: hidden; margin: 0 auto; flex-shrink: 0; }
+        .map-scroll-container { width: 100%; max-width: 1200px; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; flex-shrink: 0; }
+        .map-scroll-container::-webkit-scrollbar { height: 8px; }
+        .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
-        .map-wrapper-am { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
+
+        /* AMELİYATHANE MANUEL YERLEŞİM CSS (SABİT) */
+        .map-wrapper-am { min-width: 950px; }
         .map-wrapper-am .map-door-am { position: absolute; top: 0.2%; left: 2.3%; width: 9.9%; height: 11.9%; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 2; }
         .map-wrapper-am .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         .map-wrapper-am .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 10.7%; height: 19.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
@@ -58,6 +68,8 @@
         .map-wrapper-am .map-shelf-2-am { position: absolute; top: 25.9%; left: 54.5%; width: 44.6%; height: 72.8%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background: #1a1a1a; padding: 4px; border: 2px solid #333; border-radius: 4px; z-index: 2; }
         .map-wrapper-am .map-desk-am { position: absolute; top: 0.0%; left: 90.2%; width: 8.9%; height: 25.8%; border: 2px solid #333; background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; border-radius: 8px; text-align: center; z-index: 2; }
         .map-wrapper-am .map-desk-title-am { font-weight: 900; font-size: 14px; margin-bottom: 2px; letter-spacing: 2px; transform: rotate(-90deg); }
+
+        .map-wrapper-ana { min-width: 1200px; }
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: 11px; font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
         .cell-lens { border: 2px solid #333; font-size: 12px; }
@@ -86,16 +98,17 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { background-color: #0a0a0a; color: #555; font-size: 11px; text-align: center; padding: 15px; border-top: 1px solid #1a1a1a; width: 100%; box-sizing: border-box; }
-        .legal-footer b { color: #888; font-weight: bold; }
+        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer b { color: #aaa; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
-            .main-content { padding: 15px; }
+            main { padding: 15px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
-            .map-container { overflow-x: auto; min-width: 900px; }
+            .map-scroll-container { overflow-x: auto; }
+            .map-wrapper-am { min-width: 900px; }
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -110,7 +123,7 @@
         </div>
     </header>
 
-    <div class="main-content">
+    <main id="main-content-scroll">
         <div class="depo-tabs">
             <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE DEPOSU</button>
             <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
@@ -133,272 +146,9 @@
             <div id="result-address" class="result-address">-</div>
         </div>
 
-        <!-- HARİTA KONTEYNERİ -->
-        <div id="map-area" class="map-container">
-            
-            <!-- AMELİYATHANE HARİTASI (MANUEL YERLEŞİM - YENİ SABİT CSS) -->
-            <div class="map-wrapper-am" id="map-area-am" style="display: block;">
-                <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
-
-                <div class="map-door-am" id="door-am">KAPI</div>
-                
-                <div class="map-desk-am">
-                    <div class="map-desk-title-am">MASA</div>
-                </div>
-                
-                <div class="map-lens-am" id="lens-am">
-                    <div id="cell-05.01.01" class="cell cell-lens">05.01.01</div>
-                    <div id="cell-04.01.01" class="cell cell-lens">04.01.01</div>
-                </div>
-
-                <div class="map-shelf-1-am" id="shelf-1-am">
-                    <div id="cell-07.01.05" class="cell">07.01.05</div>
-                    <div id="cell-07.01.04" class="cell">07.01.04</div>
-                    <div id="cell-07.01.03" class="cell">07.01.03</div>
-                    <div id="cell-07.01.02" class="cell">07.01.02</div>
-                    <div id="cell-07.01.01" class="cell">07.01.01</div>
-
-                    <div id="cell-01.01.05" class="cell">01.01.05</div>
-                    <div id="cell-01.01.04" class="cell">01.01.04</div>
-                    <div id="cell-01.01.03" class="cell">01.01.03</div>
-                    <div id="cell-01.01.02" class="cell">01.01.02</div>
-                    <div id="cell-01.01.01" class="cell">01.01.01</div>
-
-                    <div id="cell-01.02.05" class="cell">01.02.05</div>
-                    <div id="cell-01.02.04" class="cell">01.02.04</div>
-                    <div id="cell-01.02.03" class="cell">01.02.03</div>
-                    <div id="cell-01.02.02" class="cell">01.02.02</div>
-                    <div id="cell-01.02.01" class="cell">01.02.01</div>
-                </div>
-
-                <div class="map-shelf-2-am" id="shelf-2-am">
-                    <div id="cell-02.01.01" class="cell">02.01.01</div>
-                    <div id="cell-02.01.02" class="cell">02.01.02</div>
-                    <div id="cell-02.01.03" class="cell">02.01.03</div>
-                    <div id="cell-02.01.04" class="cell">02.01.04</div>
-                    <div id="cell-02.01.05" class="cell">02.01.05</div>
-                    <div id="cell-02.01.06" class="cell">02.01.06</div>
-
-                    <div id="cell-03.01.01" class="cell">03.01.01</div>
-                    <div id="cell-03.01.02" class="cell">03.01.02</div>
-                    <div id="cell-03.01.03" class="cell">03.01.03</div>
-                    <div id="cell-03.01.04" class="cell">03.01.04</div>
-                    <div id="cell-03.01.05" class="cell">03.01.05</div>
-                    <div class="cell cell-hidden"></div>
-
-                    <div id="cell-06.01.01" class="cell">06.01.01</div>
-                    <div id="cell-06.01.02" class="cell">06.01.02</div>
-                    <div id="cell-06.01.03" class="cell">06.01.03</div>
-                    <div id="cell-06.01.04" class="cell">06.01.04</div>
-                    <div class="cell cell-hidden"></div>
-                    <div class="cell cell-hidden"></div>
-                </div>
-            </div>
-
-            <!-- ANA DEPO HARİTASI (TASARLAYICIDAN ÇIKAN YENİ KOD) -->
-            <div id="map-area-ana" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
-                <svg id="path-svg-ana" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
-
-                <div id="door-ana-extra" style="position:absolute; top:42.37%; left:77.5%; width:5.25%; height:7.29%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
-                <div id="door-ana" style="position:absolute; top:33.48%; left:58.33%; width:5.25%; height:7.29%; transform:rotate(0deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
-                <div class="map-grey-cabinet" style="position:absolute; top:78.67%; left:19.67%; width:5.08%; height:8.05%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:86.81%; left:22.58%; width:23%; height:10%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(2, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:70.52%; left:19.58%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:66.67%; left:42.75%; width:17.58%; height:11.41%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div style="position:absolute; top:23.7%; left:82.08%; width:0.33%; height:62.85%; transform:rotate(0deg); box-sizing:border-box; background:#1a1a1a; border:1px solid #111;"></div>
-                <div class="map-grey-cabinet" style="position:absolute; top:24.44%; left:41.25%; width:6.75%; height:3.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:86.81%; left:45.67%; width:23%; height:10%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(2, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:75.41%; left:65.42%; width:11.83%; height:14.6%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div style="position:absolute; top:23.7%; left:19.42%; width:62.83%; height:0.3%; transform:rotate(0deg); box-sizing:border-box; background:#1a1a1a; border:1px solid #111;"></div>
-                <div class="map-cabinet" style="position:absolute; top:35.41%; left:73.5%; width:8.83%; height:14.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:60.3%; left:19.58%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:50.07%; left:19.58%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:39.85%; left:19.58%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:29.63%; left:19.58%; width:13.17%; height:10.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:61.04%; left:65.42%; width:11.83%; height:14.6%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:46.67%; left:65.42%; width:11.83%; height:14.6%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:52.59%; left:42.83%; width:17.67%; height:14.02%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-shelf-1" style="position:absolute; top:38.52%; left:42.83%; width:17.67%; height:14.02%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div style="position:absolute; top:24.44%; left:42.59%; width:39.67%; height:13.92%; transform:rotate(0deg); box-sizing:border-box; border:4px solid #333; background:rgba(255,255,255,0.02); display:flex; align-items:flex-start; justify-content:flex-start; padding:10px; pointer-events:none;">
-                    <div style="color:#555; font-size:14px; font-weight:900; letter-spacing:2px; text-transform:uppercase;"></div>
-                </div>
-                <div style="position:absolute; top:26.52%; left:61.67%; width:8.17%; height:3.26%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
-                <div style="position:absolute; top:25.63%; left:64.5%; width:2.5%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#1a1a1a; border-radius:50%; z-index:5;"></div>
-                <div style="position:absolute; top:33.48%; left:62.83%; width:8.17%; height:3.26%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
-                <div style="position:absolute; top:36.15%; left:65.83%; width:2.5%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#1a1a1a; border-radius:50%; z-index:5;"></div>
-                <div style="position:absolute; top:30.96%; left:60.25%; width:11.25%; height:0.89%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
-                <div style="position:absolute; top:25.63%; left:42.25%; width:0.58%; height:9.48%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
-                <div class="map-grey-cabinet" style="position:absolute; top:23.56%; left:28.17%; width:4.17%; height:2.52%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:23.56%; left:32.5%; width:3.58%; height:2.52%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:23.56%; left:36.42%; width:4.5%; height:2.52%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div style="position:absolute; top:36.44%; left:43.75%; width:5.33%; height:3.41%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
-                <div class="map-cabinet" style="position:absolute; top:43.26%; left:34.25%; width:21.83%; height:4.74%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:33.48%; left:39.75%; width:1.33%; height:4.74%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:24.44%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:30.22%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:35.85%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:48.89%; left:82.5%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:54.52%; left:82.5%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:60.15%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:65.78%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:71.41%; left:82.42%; width:3.33%; height:5.33%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:39.11%; left:65.75%; width:5.33%; height:7.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#001122; padding:4px; border:2px dashed #0055ff; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:24.44%; left:39.92%; width:1.33%; height:15.56%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-                <div class="map-grey-cabinet" style="position:absolute; top:25.04%; left:44.83%; width:8.67%; height:3.11%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-                </div>
-            </div>
+        <div class="map-scroll-container">
+            <!-- İKİ HARİTANIN DA GÖMÜLECEĞİ DİNAMİK ALAN -->
+            <div id="map-area" class="map-wrapper"></div>
         </div>
     </main>
 
@@ -450,24 +200,38 @@
         const nameEl = document.getElementById('result-name');
         const addressEl = document.getElementById('result-address');
 
+        // HARİTALARI DEĞİŞTİRME MANTIĞI
         window.switchDepo = (depo) => {
             currentDepo = depo;
+            const mapArea = document.getElementById('map-area');
+
             if(depo === 'am') {
                 document.getElementById('tab-am').classList.replace('inactive', 'active');
                 document.getElementById('tab-ana').classList.replace('active', 'inactive');
-                document.getElementById('map-area-am').style.display = 'block';
-                document.getElementById('map-area-ana').style.display = 'none';
                 currentCollection = 'kroki_adresleri';
+                
+                mapArea.className = 'map-wrapper map-wrapper-am';
+                mapArea.innerHTML = window.haritaAmeliyathane || "";
             } else {
                 document.getElementById('tab-ana').classList.replace('inactive', 'active');
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
-                document.getElementById('map-area-ana').style.display = 'block';
-                document.getElementById('map-area-am').style.display = 'none';
                 currentCollection = 'kroki_adresleri_ana';
+                
+                mapArea.className = 'map-wrapper map-wrapper-ana';
+                mapArea.innerHTML = window.haritaAnaDepo || "";
             }
             clearSearch();
             loadMappingData();
         }
+
+        // Başlangıçta AM haritasını yükle
+        document.addEventListener("DOMContentLoaded", () => {
+            if(window.haritaAmeliyathane) {
+                switchDepo('am');
+            } else {
+                setTimeout(() => switchDepo('am'), 500); // Scriptlerin yüklenmesini bekle
+            }
+        });
 
         let unsub = null;
         function loadMappingData() {
@@ -488,7 +252,6 @@
                 });
             });
         }
-        loadMappingData();
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -535,14 +298,15 @@
         const clearHighlights = () => {
             document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
             bannerEl.style.display = 'none';
-            document.getElementById('path-svg-am').innerHTML = '';
-            document.getElementById('path-svg-ana').innerHTML = '';
+            
+            const svgAm = document.getElementById('path-svg-am');
+            const svgAna = document.getElementById('path-svg-ana');
+            if (svgAm) svgAm.innerHTML = '';
+            if (svgAna) svgAna.innerHTML = '';
         };
 
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
-            const mapId = isAm ? 'map-area-am' : 'map-area-ana';
-            
             const doorId = isAm ? 'door-am' : 'door-ana';
             const svgId = isAm ? 'path-svg-am' : 'path-svg-ana';
             
@@ -551,40 +315,40 @@
                 targetIdRaw = targetId.replace('.06', '.05');
             }
             
-            const targetCell = document.querySelector(`#${mapId} [id="cell-${targetIdRaw}"]`);
+            const map = document.getElementById('map-area');
+            const targetCell = map.querySelector(`[id="cell-${targetIdRaw}"]`);
             const door = document.getElementById(doorId);
-            const map = document.getElementById(mapId);
-
+            
             if(!targetCell || !door || !map) return;
 
             const mapRect = map.getBoundingClientRect();
             const doorRect = door.getBoundingClientRect();
             const targetRect = targetCell.getBoundingClientRect();
 
-            let startX = doorRect.left + doorRect.width / 2 - mapRect.left;
-            let startY = doorRect.top + doorRect.height / 2 - mapRect.top;
+            let startX, startY;
 
-            if (doorRect.left - mapRect.left > mapRect.width * 0.7) {
-                startX = doorRect.left - mapRect.left - 15;
-            } else if (doorRect.left - mapRect.left < mapRect.width * 0.3) {
+            // KAPI ÇIKIŞ YÖNÜ AYARLAMASI (Boşluğa/Koridora doğru adım atması için)
+            if (isAm) {
+                // Ameliyathanede kapı solda, sağa (koridora) doğru çıkması lazım.
                 startX = doorRect.right - mapRect.left + 15;
+                startY = doorRect.top + doorRect.height / 2 - mapRect.top;
             } else {
+                // Ana depoda kapı sağda (id="door-ana"), sola (koridora) doğru çıkması lazım.
                 startX = doorRect.left - mapRect.left - 15;
+                startY = doorRect.top + doorRect.height / 2 - mapRect.top;
             }
 
             const endX = targetRect.left + targetRect.width / 2 - mapRect.left;
             const endY = targetRect.top + targetRect.height / 2 - mapRect.top;
 
+            // YOL BULMA ALGORİTMASI (A* BFS) - Tamamen dinamik çalışır
             const cellSize = 10;
             const gridW = Math.ceil(mapRect.width / cellSize);
             const gridH = Math.ceil(mapRect.height / cellSize);
-            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1));
+            const grid = Array(gridH).fill(0).map(() => Array(gridW).fill(1)); // 1 = Yürünebilir
 
-            const obstacleSelector = isAm 
-                ? 'div[class*="map-shelf"], div[class*="map-desk"], div[class*="map-lens"]'
-                : 'div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]';
-            
-            const obstacles = map.querySelectorAll(obstacleSelector);
+            // Haritadaki raf, dolap, lens ve masaları ENGEL (0) olarak işaretle
+            const obstacles = map.querySelectorAll('div[class*="map-shelf"], div[class*="map-cabinet"], div[class*="map-grey-cabinet"], div[class*="map-desk"], div[class*="map-lens"]');
             
             obstacles.forEach(el => {
                 const rect = el.getBoundingClientRect();
@@ -596,12 +360,14 @@
                 for(let y = sy; y <= ey; y++) {
                     for(let x = sx; x <= ex; x++) {
                         if(y >= 0 && y < gridH && x >= 0 && x < gridW) {
-                            grid[y][x] = 0;
+                            grid[y][x] = 0; // Engel
                         }
                     }
                 }
             });
 
+            // Hedefin (Raf hücresinin) etrafını 20px genişleterek yürünebilir yap
+            // Aksi takdirde raf engel sayıldığı için yolun sonu rafa varamaz.
             const tsx = Math.max(0, Math.floor((targetRect.left - mapRect.left - 20) / cellSize));
             const tex = Math.min(gridW - 1, Math.ceil((targetRect.right - mapRect.left + 20) / cellSize));
             const tsy = Math.max(0, Math.floor((targetRect.top - mapRect.top - 20) / cellSize));
@@ -629,6 +395,7 @@
                 const curr = q.shift();
                 if (curr.x === eNode.x && curr.y === eNode.y) { found = true; break; }
                 
+                // Sağ, Alt, Sol, Üst taraması
                 for(let d of [[0,1], [1,0], [0,-1], [-1,0]]) {
                     const nx = curr.x + d[0];
                     const ny = curr.y + d[1];
@@ -644,6 +411,8 @@
             }
 
             let pathStr = "";
+            let finalStartX = startX;
+            let finalStartY = startY;
 
             if (found) {
                 let curr = eNode; 
@@ -653,15 +422,17 @@
                 
                 let simp = [path[0]];
                 for(let i = 1; i < path.length - 1; i++) {
+                    // Aynı düzlemdeki ara noktaları sil (Performans ve düz çizgi için)
                     if ((path[i-1].x === path[i].x && path[i].x === path[i+1].x) || 
                         (path[i-1].y === path[i].y && path[i].y === path[i+1].y)) continue;
                     simp.push(path[i]);
                 }
                 simp.push(path[path.length - 1]);
                 
-                pathStr = `M ${startX} ${startY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
+                pathStr = `M ${finalStartX} ${finalStartY} ` + simp.map(p => `L ${p.x * cellSize + 5} ${p.y * cellSize + 5}`).join(' ') + ` L ${endX} ${endY}`;
             } else {
-                pathStr = `M ${startX} ${startY} L ${startX} ${endY} L ${endX} ${endY}`;
+                // Eğer yol bulunamazsa, dümdüz L çizimi yap (Fallback)
+                pathStr = `M ${finalStartX} ${finalStartY} L ${finalStartX} ${endY} L ${endX} ${endY}`;
             }
 
             const strokeW = window.innerWidth <= 900 ? 3 : 4;
