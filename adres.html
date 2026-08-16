@@ -16,7 +16,7 @@
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; padding: 20px; padding-bottom: 90px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
+        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; overflow-y: auto; background: #000; }
 
         .depo-tabs { display: flex; gap: 8px; width: 100%; max-width: 500px; margin-bottom: 15px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; justify-content: center; flex-shrink: 0; }
         .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; flex: 1; }
@@ -48,14 +48,9 @@
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
 
-        .map-scroll-container { width: 100%; max-width: 1200px; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; flex-shrink: 0; }
-        .map-scroll-container::-webkit-scrollbar { height: 8px; }
-        .map-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .map-container { width: 100%; max-width: 1200px; aspect-ratio: 16 / 9; background-color: #050505; border: 4px solid #1a1a1a; border-radius: 12px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); overflow: hidden; margin: 0 auto; flex-shrink: 0; }
 
-        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 4px solid #1a1a1a; border-radius: 12px; margin: 0 auto; overflow: hidden; }
-
-        /* AMELİYATHANE YENİ SABİT CSS YERLEŞİMLERİ */
-        .map-wrapper-am { min-width: 950px; }
+        .map-wrapper-am { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         .map-wrapper-am .map-door-am { position: absolute; top: 0.2%; left: 2.3%; width: 9.9%; height: 11.9%; display: flex; align-items: center; justify-content: center; color: #888; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-right: 2px dashed #666; border-bottom: 2px dashed #666; z-index: 2; }
         .map-wrapper-am .map-door-am::after { content: '↓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #aaa; }
         .map-wrapper-am .map-lens-am { position: absolute; top: 12.3%; left: 0.3%; width: 10.7%; height: 19.4%; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 8px; z-index: 2; }
@@ -91,17 +86,16 @@
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
 
-        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 11px; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
-        .legal-footer b { color: #aaa; font-weight: bold; }
+        .legal-footer { background-color: #0a0a0a; color: #555; font-size: 11px; text-align: center; padding: 15px; border-top: 1px solid #1a1a1a; width: 100%; box-sizing: border-box; }
+        .legal-footer b { color: #888; font-weight: bold; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
-            main { padding: 15px; }
+            .main-content { padding: 15px; }
             .search-wrapper { flex-direction: column; }
             .btn-scan { height: 45px; padding: 0; width: 100%; }
             .clear-icon { right: 10px; }
-            .map-scroll-container { overflow-x: auto; }
-            .map-wrapper-am { min-width: 900px; }
+            .map-container { overflow-x: auto; min-width: 900px; }
             .legal-footer { font-size: 8px !important; padding: 8px 10px !important; line-height: 1.2 !important; display: block !important; }
         }
     </style>
@@ -116,7 +110,7 @@
         </div>
     </header>
 
-    <main id="main-content-scroll">
+    <div class="main-content">
         <div class="depo-tabs">
             <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE DEPOSU</button>
             <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
@@ -139,9 +133,11 @@
             <div id="result-address" class="result-address">-</div>
         </div>
 
-        <div class="map-scroll-container">
+        <!-- HARİTA KONTEYNERİ -->
+        <div id="map-area" class="map-container">
+            
             <!-- AMELİYATHANE HARİTASI (MANUEL YERLEŞİM - YENİ SABİT CSS) -->
-            <div class="map-wrapper map-wrapper-am" id="map-area-am" style="display: block;">
+            <div class="map-wrapper-am" id="map-area-am" style="display: block;">
                 <svg id="path-svg-am" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
                 <div class="map-door-am" id="door-am">KAPI</div>
@@ -200,7 +196,7 @@
             </div>
 
             <!-- ANA DEPO HARİTASI (TASARLAYICIDAN ÇIKAN YENİ KOD) -->
-            <div class="map-wrapper" id="map-area-ana" style="display: none; min-width: 1200px;">
+            <div id="map-area-ana" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
                 <svg id="path-svg-ana" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
                 <div id="door-ana-extra" style="position:absolute; top:42.37%; left:77.5%; width:5.25%; height:7.29%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
