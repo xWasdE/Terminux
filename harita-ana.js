@@ -1,5 +1,5 @@
 window.haritaAnaDepo = `
-<svg id="path-svg-ana" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible; display: none;"></svg>
+<svg id="path-svg-ana" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
 <div class="map-grey-cabinet" style="position:absolute; top:91.55%; left:0.24%; width:7.92%; height:8%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;"><div class="cell" id="cell-09.01.01" style="opacity: 1;"><span style="display:inline-block; transform: rotate(0deg); white-space: nowrap; pointer-events: none;">09.01.01</span></div></div>
 
