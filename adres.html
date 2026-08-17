@@ -333,8 +333,14 @@
         const clearHighlights = () => {
             document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
             bannerEl.style.display = 'none';
-            const svgEl = document.querySelector(`#map-area svg`);
-            if (svgEl) svgEl.innerHTML = '';
+            const mapArea = document.getElementById('map-area');
+            if (mapArea) {
+                const svgEl = mapArea.querySelector(`svg`);
+                if (svgEl) {
+                    svgEl.innerHTML = '';
+                    svgEl.style.display = 'none'; // Çizim bittiğinde SVG'yi gizle
+                }
+            }
             window.currentActiveAdres = null;
         };
 
@@ -350,6 +356,7 @@
             };
         };
 
+        // AKILLI LAZER NAVİGASYONU & ÇOKLU ADRES YÖNETİMİ
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
@@ -360,110 +367,96 @@
                 targetIdRaw = targetIdRaw.replace('.06', '.05');
             }
             
-            const targetCell = document.getElementById(`cell-${targetIdRaw}`);
+            // Aynı ID'ye sahip TÜM hücreleri bul (Çoklu Adresleme Desteği)
+            const targetCells = map.querySelectorAll(`[id="cell-${targetIdRaw}"]`);
             const doorId = isAm ? 'door-am' : 'main-door';
             const door = document.getElementById(doorId);
             
-            if(!targetCell || !door || !map) return;
+            if(targetCells.length === 0 || !door || !map) return;
 
             const isMobile = window.innerWidth <= 900;
             const strokeW = isMobile ? 3 : 4;
             const dashArr = isMobile ? "8, 8" : "12, 12";
 
             const d = getRectCenter(door, mapRect);
-            const t = getRectCenter(targetCell, mapRect);
+            
+            let pathsHtml = ""; // Tüm ok yollarını biriktireceğimiz alan
 
-            let pathStr = "";
+            // Bulunan her bir adres hücresi için ayrı ok çiz
+            targetCells.forEach(targetCell => {
+                const t = getRectCenter(targetCell, mapRect);
+                let pathStr = "";
 
-            if (isAm) {
-                // Kapının sağ kenarından çık (Ameliyathane kapısı solda)
-                let startX = d.right; 
-                let startY = d.cy;
+                if (isAm) {
+                    let startX = d.right; 
+                    let startY = d.cy;
+                    const s1 = getRectCenter(map.querySelector('.map-shelf-1-am'), mapRect);
+                    const s2 = getRectCenter(map.querySelector('.map-shelf-2-am'), mapRect);
+                    const cX = (s1.right + s2.left) / 2;
 
-                const s1 = getRectCenter(document.querySelector('.map-shelf-1-am'), mapRect);
-                const s2 = getRectCenter(document.querySelector('.map-shelf-2-am'), mapRect);
-                const cX = (s1.right + s2.left) / 2;
-
-                if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
-                    let endX = t.right;
-                    pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`;
-                } else {
-                    let endX = t.cx < cX ? t.right : t.left;
-                    pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
-                }
-            } else {
-                // ANA DEPO AKILLI GÜZERGAH (Çizilen Koridorları Takip Eder)
-                let mapW = mapRect.width / currentScale;
-                let mapH = mapRect.height / currentScale;
-
-                // Çizdiğiniz .map-pathway çizgilerinin tam merkez koordinatları
-                let mainHY = 0.2852 * mapH;    // Ana Yatay Koridor (Y ekseni)
-                let bottomHY = 0.8600 * mapH;  // Alt Yatay Koridor (Y ekseni)
-                let leftVX = 0.1879 * mapW;    // Sol Dikey Koridor (X ekseni)
-                let rightVX = 0.6812 * mapW;   // Sağ Dikey Koridor (X ekseni)
-                let farRightVX = 0.9470 * mapW;// En Sağ Dikey Koridor (X ekseni)
-                let officeVX = 0.5595 * mapW;  // Ofis İçi Dikey Geçiş (X ekseni)
-                let officeHY = 0.1207 * mapH;  // Ofis İçi Yatay Geçiş (Y ekseni)
-
-                let startX = d.left; // Sarı kapının solundan çıkış
-                let startY = d.cy;
-                let endY = t.cy;
-                let endX;
-
-                // Lazer çizimi başlıyor
-                pathStr = `M ${startX} ${startY}`;
-
-                // 1. Kapıdan çıkıp sola ilerle ve Ana Yatay Koridora (merkeze) hizalan
-                let doorOutX = startX - (0.02 * mapW);
-                pathStr += ` L ${doorOutX} ${startY} L ${doorOutX} ${mainHY}`;
-
-                // 2. Hedefin Hangi Bölgede Olduğunu Tespit Et
-                let isOffice = t.cy < (0.22 * mapH) && t.cx > (0.30 * mapW) && t.cx < (0.70 * mapW);
-                let isFarRight = t.cx > (0.85 * mapW); // Sağ dış duvar rafları
-                let isBottom = t.cy > (0.75 * mapH); // Alt kısımdaki paletler/raflar
-
-                if (isFarRight) {
-                    // En sağdaki dış koridoru kullanarak duvar dibine git
-                    pathStr += ` L ${farRightVX} ${mainHY} L ${farRightVX} ${endY}`;
-                    endX = t.cx < farRightVX ? t.right : t.left;
-                    if(t.cx > farRightVX) endX = t.cx; // Merkezine gir
-                    pathStr += ` L ${endX} ${endY}`;
-                } 
-                else if (isOffice) {
-                    // Ofis koridorundan geçiş (İç kapıyı hedefler, rafa arkadan girmez)
-                    pathStr += ` L ${officeVX} ${mainHY} L ${officeVX} ${officeHY} L ${t.cx} ${officeHY} L ${t.cx} ${endY}`;
-                } 
-                else {
-                    // Normal raf alanları (Sol veya Sağ dikey ana koridoru kullanacak)
-                    let bestVX = Math.abs(t.cx - leftVX) < Math.abs(t.cx - rightVX) ? leftVX : rightVX;
-                    
-                    // Seçilen güvenli dikey koridora yatayda ilerle
-                    pathStr += ` L ${bestVX} ${mainHY}`;
-
-                    if (isBottom) {
-                        // En alta inmek için dikeyden alt yatay koridora git, oradan hedefe dön (ara rafları ezmez)
-                        pathStr += ` L ${bestVX} ${bottomHY}`;
-                        endX = t.cx < bestVX ? t.right : t.left;
-                        pathStr += ` L ${endX} ${bottomHY} L ${endX} ${endY}`;
+                    if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
+                        let endX = t.right;
+                        pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`;
                     } else {
-                        // Dikey koridordan doğrudan hedefin Y hizasına güvenli iniş
-                        pathStr += ` L ${bestVX} ${endY}`;
-                        endX = t.cx < bestVX ? t.right : t.left;
-                        pathStr += ` L ${endX} ${endY}`;
+                        let endX = t.cx < cX ? t.right : t.left;
+                        pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
+                    }
+                } else {
+                    // ANA DEPO AKILLI GÜZERGAH
+                    let mapW = mapRect.width / currentScale;
+                    let mapH = mapRect.height / currentScale;
+
+                    let Y_MAIN = 0.285 * mapH;
+                    let X_FAR_LEFT = 0.188 * mapW;
+                    let X_RIGHT = 0.681 * mapW;
+                    let X_FAR_RIGHT = 0.947 * mapW;
+                    let X_OFFICE = 0.560 * mapW;
+
+                    let startX = d.left;
+                    let startY = d.cy;
+                    let doorOutX = startX - (0.02 * mapW);
+
+                    // Kapıdan çık ve yatay ana koridora bağlan
+                    pathStr = `M ${startX} ${startY} L ${doorOutX} ${startY} L ${doorOutX} ${Y_MAIN}`;
+
+                    let isOffice = t.cy < Y_MAIN && t.cx > (0.30 * mapW) && t.cx < (0.75 * mapW);
+                    
+                    if (isOffice) {
+                        // Ofis bölgesindeyse iç kapıyı (X_OFFICE) kullanarak gir
+                        pathStr += ` L ${X_OFFICE} ${Y_MAIN} L ${X_OFFICE} ${t.cy}`;
+                        let endX = t.cx < X_OFFICE ? t.right : t.left;
+                        pathStr += ` L ${endX} ${t.cy}`;
+                    } else {
+                        // Dış alanlardaysa hedefe en yakın dikey boş koridoru seç
+                        let v_corridors = [X_FAR_LEFT, X_RIGHT, X_FAR_RIGHT];
+                        let bestVX = v_corridors.reduce((prev, curr) => Math.abs(curr - t.cx) < Math.abs(prev - t.cx) ? curr : prev);
+
+                        // Boş dikey koridordan aşağı/yukarı in
+                        pathStr += ` L ${bestVX} ${Y_MAIN} L ${bestVX} ${t.cy}`;
+                        
+                        // Koridordan rafa güvenli yanaş (raftan içeri ok girmemesi için kenarında durur)
+                        let endX = t.cx < bestVX ? t.right : t.left;
+                        if (t.cx > bestVX && endX < bestVX) endX = t.cx; 
+                        if (t.cx < bestVX && endX > bestVX) endX = t.cx;
+
+                        pathStr += ` L ${endX} ${t.cy}`;
                     }
                 }
-            }
+                
+                // Her hedef için ayrı path HTML kodu oluştur ki oklar her adreste çıksın
+                pathsHtml += `<path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="${dashArr}" marker-end="url(#arrowhead)" class="path-animation" />`;
+            });
 
             const targetSvg = map.querySelector(`svg`);
             if(targetSvg) {
-                targetSvg.style.display = 'block'; // SVG'nin görünürlük kilidini aç!
+                targetSvg.style.display = 'block'; // SVG'yi görünür yap
                 targetSvg.innerHTML = `
                     <defs>
                         <marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto">
                             <polygon points="0 0, ${isMobile ? 6 : 8} ${isMobile ? 3 : 4}, 0 ${isMobile ? 6 : 8}" fill="#ff0000" />
                         </marker>
                     </defs>
-                    <path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="${dashArr}" marker-end="url(#arrowhead)" class="path-animation" />
+                    ${pathsHtml}
                 `;
             }
         };
@@ -518,9 +511,14 @@
                     if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
                     
                     const map = document.getElementById('map-area');
-                    const targetCell = map.querySelector(`[id="cell-${targetCellId}"]`);
-                    if (targetCell) {
-                        targetCell.classList.add('active');
+                    
+                    // querySelectorAll kullanıldı: Aynı adrese sahip tüm hücreleri yakala!
+                    const targetCells = map.querySelectorAll(`[id="cell-${targetCellId}"]`);
+                    
+                    if (targetCells.length > 0) {
+                        // Bulunan tüm hücreleri kırmızı yanıp sönme efektine (active) al
+                        targetCells.forEach(tc => tc.classList.add('active'));
+                        
                         nameEl.innerText = product.urunAdi;
                         addressEl.innerText = product.adres;
                         bannerEl.style.display = 'block';
