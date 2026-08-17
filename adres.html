@@ -392,44 +392,71 @@
                     pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
                 }
             } else {
-                // Kapının sol kenarından çık (Ana depo kapısı sağda)
-                let startX = d.left; 
+                // ANA DEPO AKILLI GÜZERGAH (Çizilen Koridorları Takip Eder)
+                let mapW = mapRect.width / currentScale;
+                let mapH = mapRect.height / currentScale;
+
+                // Çizdiğiniz .map-pathway çizgilerinin tam merkez koordinatları
+                let mainHY = 0.2852 * mapH;    // Ana Yatay Koridor (Y ekseni)
+                let bottomHY = 0.8600 * mapH;  // Alt Yatay Koridor (Y ekseni)
+                let leftVX = 0.1879 * mapW;    // Sol Dikey Koridor (X ekseni)
+                let rightVX = 0.6812 * mapW;   // Sağ Dikey Koridor (X ekseni)
+                let farRightVX = 0.9470 * mapW;// En Sağ Dikey Koridor (X ekseni)
+                let officeVX = 0.5595 * mapW;  // Ofis İçi Dikey Geçiş (X ekseni)
+                let officeHY = 0.1207 * mapH;  // Ofis İçi Yatay Geçiş (Y ekseni)
+
+                let startX = d.left; // Sarı kapının solundan çıkış
                 let startY = d.cy;
+                let endY = t.cy;
+                let endX;
 
-                let vCorridors = [];
-                document.querySelectorAll('.map-pathway').forEach(p => {
-                    let pLeft = parseFloat(p.style.left);
-                    let pWidth = parseFloat(p.style.width);
-                    let pHeight = parseFloat(p.style.height);
-                    if (pHeight > pWidth) { 
-                        vCorridors.push((pLeft + pWidth/2) / 100 * (mapRect.width / currentScale));
-                    }
-                });
+                // Lazer çizimi başlıyor
+                pathStr = `M ${startX} ${startY}`;
 
-                if(vCorridors.length === 0) {
-                    vCorridors = [
-                        0.1817 * (mapRect.width / currentScale),
-                        0.4000 * (mapRect.width / currentScale),
-                        0.6975 * (mapRect.width / currentScale),
-                        0.9408 * (mapRect.width / currentScale)
-                    ];
-                }
-                
-                let bestCx = vCorridors[0];
-                let minDiff = Infinity;
-                for(let cx of vCorridors) {
-                    if (Math.abs(t.cx - cx) < minDiff) {
-                        minDiff = Math.abs(t.cx - cx);
-                        bestCx = cx;
+                // 1. Kapıdan çıkıp sola ilerle ve Ana Yatay Koridora (merkeze) hizalan
+                let doorOutX = startX - (0.02 * mapW);
+                pathStr += ` L ${doorOutX} ${startY} L ${doorOutX} ${mainHY}`;
+
+                // 2. Hedefin Hangi Bölgede Olduğunu Tespit Et
+                let isOffice = t.cy < (0.22 * mapH) && t.cx > (0.30 * mapW) && t.cx < (0.70 * mapW);
+                let isFarRight = t.cx > (0.85 * mapW); // Sağ dış duvar rafları
+                let isBottom = t.cy > (0.75 * mapH); // Alt kısımdaki paletler/raflar
+
+                if (isFarRight) {
+                    // En sağdaki dış koridoru kullanarak duvar dibine git
+                    pathStr += ` L ${farRightVX} ${mainHY} L ${farRightVX} ${endY}`;
+                    endX = t.cx < farRightVX ? t.right : t.left;
+                    if(t.cx > farRightVX) endX = t.cx; // Merkezine gir
+                    pathStr += ` L ${endX} ${endY}`;
+                } 
+                else if (isOffice) {
+                    // Ofis koridorundan geçiş (İç kapıyı hedefler, rafa arkadan girmez)
+                    pathStr += ` L ${officeVX} ${mainHY} L ${officeVX} ${officeHY} L ${t.cx} ${officeHY} L ${t.cx} ${endY}`;
+                } 
+                else {
+                    // Normal raf alanları (Sol veya Sağ dikey ana koridoru kullanacak)
+                    let bestVX = Math.abs(t.cx - leftVX) < Math.abs(t.cx - rightVX) ? leftVX : rightVX;
+                    
+                    // Seçilen güvenli dikey koridora yatayda ilerle
+                    pathStr += ` L ${bestVX} ${mainHY}`;
+
+                    if (isBottom) {
+                        // En alta inmek için dikeyden alt yatay koridora git, oradan hedefe dön (ara rafları ezmez)
+                        pathStr += ` L ${bestVX} ${bottomHY}`;
+                        endX = t.cx < bestVX ? t.right : t.left;
+                        pathStr += ` L ${endX} ${bottomHY} L ${endX} ${endY}`;
+                    } else {
+                        // Dikey koridordan doğrudan hedefin Y hizasına güvenli iniş
+                        pathStr += ` L ${bestVX} ${endY}`;
+                        endX = t.cx < bestVX ? t.right : t.left;
+                        pathStr += ` L ${endX} ${endY}`;
                     }
                 }
-                
-                let endX = t.cx < bestCx ? t.right : t.left;
-                pathStr = `M ${startX} ${startY} L ${bestCx} ${startY} L ${bestCx} ${t.cy} L ${endX} ${t.cy}`;
             }
 
             const targetSvg = map.querySelector(`svg`);
             if(targetSvg) {
+                targetSvg.style.display = 'block'; // SVG'nin görünürlük kilidini aç!
                 targetSvg.innerHTML = `
                     <defs>
                         <marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto">
