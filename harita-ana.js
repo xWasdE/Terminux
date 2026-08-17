@@ -1,7 +1,7 @@
 window.haritaAnaDepo = `
 <svg id="path-svg-ana" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: visible;"></svg>
 
-<div class="map-grey-cabinet" style="position:absolute; top:91.55%; left:0.24%; width:7%; height:8%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
+<div class="map-grey-cabinet" style="position:absolute; top:91.55%; left:0.24%; width:7.92%; height:8%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
 <div class="map-shelf-1" style="position:absolute; top:90.07%; left:18.17%; width:23%; height:10%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(2, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
@@ -152,21 +152,15 @@ window.haritaAnaDepo = `
 <div style="position:absolute; top:1.38%; left:72.5%; width:3%; height:3.1%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#1a1a1a; border-radius:50%; z-index:5;"></div>
 <div style="position:absolute; top:17.88%; left:65.42%; width:18%; height:0.94%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
 <div style="position:absolute; top:2.12%; left:36.67%; width:0.92%; height:13.41%; transform:rotate(0deg); box-sizing:border-box; background:rgba(0,204,255,0.15); border:2px solid #00ccff; box-shadow:inset 0 0 15px rgba(0,204,255,0.4); backdrop-filter:blur(2px);"></div>
-<div id="main-door" class="map-door-main" style="position:absolute; top:27.11%; left:83.83%; width:4.3%; height:5.3%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
-<div class="map-grey-cabinet" style="position:absolute; top:0%; left:21.17%; width:6.58%; height:3.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-</div>
-<div class="map-grey-cabinet" style="position:absolute; top:0%; left:28.17%; width:5.75%; height:3.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-</div>
-<div class="map-grey-cabinet" style="position:absolute; top:0%; left:34.42%; width:2.17%; height:6.71%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
-    <div class="cell cell-hidden" style="visibility:hidden;"></div>
-</div>
-<div class="map-grey-cabinet" style="position:absolute; top:6.81%; left:34.42%; width:2.17%; height:6.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
+<div class="map-inner-door" style="position:absolute; top:15.65%; left:52.17%; width:8%; height:5.41%; transform:rotate(0deg); box-sizing:border-box; border:2px dashed #888; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; font-weight:bold; font-size:10px; z-index:10;">İÇ KAPI</div>
+<div class="map-grey-cabinet" style="position:absolute; top:0.44%; left:29.42%; width:6.67%; height:3.85%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
 <div style="position:absolute; top:18.71%; left:39.25%; width:8.5%; height:4.82%; transform:rotate(0deg); box-sizing:border-box; border:2px solid #444; background:#0a0a0a; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; border-radius:8px; font-weight:900; font-size:12px; letter-spacing:2px; z-index:5;">MASA</div>
-<div class="map-grey-cabinet" style="position:absolute; top:13.53%; left:34.42%; width:2.17%; height:6.59%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
+<div class="map-cabinet" style="position:absolute; top:29.93%; left:58.81%; width:7.2%; height:10.2%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
+    <div class="cell cell-hidden" style="visibility:hidden;"></div>
+</div>
+<div class="map-cabinet" style="position:absolute; top:30.81%; left:23.83%; width:34.3%; height:8%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#001122; padding:4px; border:2px solid #0055ff; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
 <div class="map-grey-cabinet" style="position:absolute; top:0.47%; left:86.42%; width:5.25%; height:7.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
@@ -193,7 +187,7 @@ window.haritaAnaDepo = `
 <div class="map-grey-cabinet" style="position:absolute; top:66.34%; left:86.51%; width:5.25%; height:7.53%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#3d2b1f; padding:4px; border:2px solid #5c4033; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
-<div class="map-grey-cabinet" style="position:absolute; top:12%; left:66%; width:17.5%; height:4.94%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#1a0022; padding:4px; border:2px dashed #aa00ff; border-radius:50%; z-index:5;">
+<div class="map-grey-cabinet" style="position:absolute; top:12%; left:66%; width:17.5%; height:4.9%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:4px; background:#1a0022; padding:4px; border:2px dashed #aa00ff; border-radius:50%; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
 <div class="map-grey-cabinet" style="position:absolute; top:79.53%; left:23.32%; width:12.67%; height:3.06%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(3, 1fr); gap:4px; background:#4a4a4a; padding:4px; border:2px solid #7a7a7a; border-radius:4px; z-index:5;">
@@ -215,8 +209,19 @@ window.haritaAnaDepo = `
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
-<div style="position:absolute; top:6.96%; left:48.17%; width:16.75%; height:2.37%; transform:rotate(0deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:clamp(8px, 1.5vw, 12px); letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">SORUMLU/MÜDÜR OFİS</div>
-<div style="position:absolute; top:29.48%; left:84.92%; width:15.17%; height:16.44%; transform:rotate(90deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:clamp(8px, 1.5vw, 12px); letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">ANA DEPO DIŞ KORİDOR</div>
+<div id="main-door" class="map-door-main" style="position:absolute; top:27.11%; left:83.83%; width:4.33%; height:5.33%; transform:rotate(90deg); box-sizing:border-box; border-right:3px dashed #ffbc00; border-bottom:3px dashed #ffbc00; background:rgba(255,188,0,0.05); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ffbc00; font-weight:900; font-size:14px; letter-spacing:2px; z-index:5;">KAPI <span style="font-size:24px; margin-top:-5px;">↓</span></div>
+<div class="map-pathway" style="position:absolute; top:27.41%; left:16.33%; width:68.92%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:4.74%; left:24%; width:1.25%; height:23.41%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:27.56%; left:18.17%; width:1.25%; height:59.85%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:40%; left:40%; width:20%; height:5%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:84.89%; left:16.25%; width:52.92%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:27.26%; left:67.5%; width:1.25%; height:59.85%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:12.15%; left:55.33%; width:1.25%; height:17.93%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:10.96%; left:45.67%; width:22.25%; height:2.22%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div style="position:absolute; top:6.96%; left:48.17%; width:16.75%; height:2.37%; transform:rotate(0deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:16px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">SORUMLU/MÜDÜR OFİS</div>
+<div style="position:absolute; top:29.48%; left:84.92%; width:15.17%; height:16.44%; transform:rotate(90deg); box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:16px; letter-spacing:2px; text-transform:uppercase; white-space:nowrap; pointer-events:none; z-index:5;">ANA DEPO DIŞ KORİDOR</div>
+<div class="map-pathway" style="position:absolute; top:27.85%; left:85.25%; width:10%; height:1.63%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
+<div class="map-pathway" style="position:absolute; top:1.33%; left:94.08%; width:1.25%; height:72.59%; transform:rotate(0deg); box-sizing:border-box; display:none;"></div>
 <div class="map-shelf-1" style="position:absolute; top:74.97%; left:71.25%; width:14.8%; height:12.4%; transform:rotate(0deg); box-sizing:border-box; display:grid; grid-template-columns:repeat(1, 1fr); grid-template-rows:repeat(1, 1fr); gap:2px; background:#1a1a1a; padding:4px; border:2px solid #333; border-radius:4px; z-index:5;">
     <div class="cell cell-hidden" style="visibility:hidden;"></div>
 </div>
