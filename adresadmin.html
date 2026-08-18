@@ -49,7 +49,7 @@
 
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
-        .cell-hidden { visibility: hidden; pointer-events: none; }
+        .cell-hidden { visibility: hidden; }
         .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
         .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
@@ -223,7 +223,7 @@
             </div>
             <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">
                 Tıkladığınız bloğun (raf, dolap vb.) satır/sütun kapasitesini dilediğiniz gibi ayarlayın. 
-                Numaraları otomatik doldurabilir ve kutucukları farenizle sürükleyerek yerlerini değiştirebilirsiniz.
+                Numaraları otomatik doldurabilir ve kutucukları farenizle sürükleyerek yerlerini (örn: 01 en altta olacak şekilde) değiştirebilirsiniz.
             </p>
             
             <div style="display:flex; gap:15px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #222;">
@@ -351,6 +351,7 @@
             if(e.key === 'Enter') submitPassword();
         });
 
+        // MİNİ DÜZENLEYİCİ DEĞİŞKENLERİ
         let activeBlockParent = null; 
         let draggedGridCell = null;
 
@@ -432,6 +433,7 @@
             let existingData = [];
             let cellElements = Array.from(parent.querySelectorAll('.cell'));
             
+            // Eğer blokta daha önce tanımlanmış açı varsa yakalayalım
             let foundRot = 0;
             
             cellElements.forEach(c => {
@@ -557,9 +559,10 @@
 
             bindCellEvents(activeBlockParent);
             closeModal('block-editor-modal');
-            showCustomAlert("BAŞARILI", "Raf yapısı ve adresleri krokide güncellendi. Kalıcı olması için KROKİYİ KAYDET (İNDİR) butonuna tıklayın ve dosyayı sunucuya atın.");
+            showCustomAlert("BAŞARILI", "Raf yapısı ve adresleri krokide güncellendi. Kalıcı olması için KROKİ KODUNU ÜRET (İNDİR) butonuna tıklayın ve dosyayı kaydedin.");
         };
 
+        // Mini Grid Drag & Drop
         function handleDragStart(e) {
             draggedGridCell = this;
             e.dataTransfer.effectAllowed = 'move';
@@ -691,8 +694,13 @@
                         for(let row of rows) {
                             let adres = row["Adres"] || row["adres"] || "";
                             if(adres) {
+                                adres = String(adres).trim();
+                                // BDM filtrelemesi eklendi
+                                if (adres.toUpperCase().startsWith("BDM")) {
+                                    adres = adres.substring(3); 
+                                }
                                 await addDoc(collection(db, currentCollection), {
-                                    adres: String(adres),
+                                    adres: adres,
                                     urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
                                     urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
                                     barkod: String(row["Barkod"] || row["barkod"] || ""),
