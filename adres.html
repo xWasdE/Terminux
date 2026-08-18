@@ -363,6 +363,12 @@
             const mapRect = map.getBoundingClientRect();
             
             let targetIdRaw = targetId.trim();
+            
+            // LAZER OK ÇİZİMİ İÇİN BDM TEMİZLİĞİ (BU SAYEDE HEDEFİ BULABİLECEK)
+            if (targetIdRaw.toUpperCase().startsWith("BDM")) {
+                targetIdRaw = targetIdRaw.substring(3);
+            }
+
             if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
                 targetIdRaw = targetIdRaw.replace('.06', '.05');
             }
@@ -509,7 +515,13 @@
                     const isAm = currentDepo === 'am';
                     let targetCellId = product.adres.trim();
                     
-                    // Haritada hücreyi bulabilmesi için baştaki BDM'yi görmezden gel
+                    // GÖRSEL (KIRMIZI KUTU) İÇİN BDM TEMİZLİĞİ
+                    let displayAdres = targetCellId;
+                    if (displayAdres.toUpperCase().startsWith("BDM")) {
+                        displayAdres = displayAdres.substring(3);
+                    }
+                    
+                    // HARİTADA HÜCREYİ BULABİLMESİ İÇİN BDM TEMİZLİĞİ
                     if (targetCellId.toUpperCase().startsWith("BDM")) {
                         targetCellId = targetCellId.substring(3);
                     }
@@ -526,11 +538,11 @@
                         targetCells.forEach(tc => tc.classList.add('active'));
                         
                         nameEl.innerText = product.urunAdi;
-                        addressEl.innerText = product.adres;
+                        addressEl.innerText = displayAdres; // BDM BURADAN UÇTU!
                         bannerEl.style.display = 'block';
                         
                         setTimeout(() => { 
-                            drawPath(product.adres); 
+                            drawPath(targetCellId); // BDM'siz adresi yola gönder
                             document.getElementById('main-content-scroll').scrollTo({
                                 top: document.getElementById('main-content-scroll').scrollHeight,
                                 behavior: 'smooth'
@@ -540,7 +552,7 @@
                         window.playBeep('success');
                     } else {
                         window.playBeep('error');
-                        showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${product.adres}) krokide mevcut değil.`);
+                        showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${displayAdres}) krokide mevcut değil.`);
                     }
                 } else {
                     window.playBeep('error');
