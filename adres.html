@@ -338,7 +338,7 @@
                 const svgEl = mapArea.querySelector(`svg`);
                 if (svgEl) {
                     svgEl.innerHTML = '';
-                    svgEl.style.display = 'none'; // Çizim bittiğinde SVG'yi gizle
+                    svgEl.style.display = 'none';
                 }
             }
             window.currentActiveAdres = null;
@@ -508,6 +508,12 @@
                     window.currentActiveAdres = product.adres;
                     const isAm = currentDepo === 'am';
                     let targetCellId = product.adres.trim();
+                    
+                    // Haritada hücreyi bulabilmesi için baştaki BDM'yi görmezden gel
+                    if (targetCellId.toUpperCase().startsWith("BDM")) {
+                        targetCellId = targetCellId.substring(3);
+                    }
+                    
                     if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
                     
                     const map = document.getElementById('map-area');
