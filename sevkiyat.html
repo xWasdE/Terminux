@@ -112,7 +112,8 @@
         .status-over { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.08) 0%, transparent 100%); }
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
-        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; display: flex; align-items: center; flex-wrap: wrap; gap: 5px;}
+        .bmc-badge { background: #ff3333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
         
         .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
@@ -219,8 +220,12 @@
                     </select>
                 </div>
                 <div class="input-group" style="margin-top: 10px;">
-                    <label>SEVKİYAT EXCEL DOSYASI (Ürün Kodu, Ürün İsmi, Miktar)</label>
+                    <label>ANA SEVKİYAT EXCEL DOSYASI</label>
                     <input type="file" id="setup-file" accept=".xlsx, .xls">
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>BMC LİSTESİ (İsteğe Bağlı - Excel)</label>
+                    <input type="file" id="setup-bmc" accept=".xlsx, .xls">
                 </div>
                 <button class="btn-primary" style="margin-top: 10px;" onclick="createShipment()">LİSTEYİ YÜKLE VE BAŞLAT</button>
             </div>
@@ -278,7 +283,7 @@
     <div id="custom-alert" class="custom-modal">
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
-            <div class="modal-desc" id="alert-desc">-</div>
+            <div class="modal-desc" id="alert-desc" style="font-size: 16px; font-weight: bold; color: #fff;">-</div>
             <div class="modal-actions" style="flex-direction:row;">
                 <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
             </div>
@@ -342,6 +347,7 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
+        let autoConfirmTimers = {};
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -485,15 +491,6 @@
                     return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
                 }
             }
-            for (let k of rowKeys) {
-                const normK = normalizeStr(k);
-                if (keys.some(searchKey => {
-                    const normSearch = normalizeStr(searchKey);
-                    return normSearch.length > 2 && normK.includes(normSearch);
-                })) {
-                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
-                }
-            }
             return "";
         };
 
@@ -502,87 +499,114 @@
             return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
         };
 
-        window.createShipment = () => {
+        window.createShipment = async () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
             const fileInput = document.getElementById('setup-file');
+            const bmcInput = document.getElementById('setup-bmc');
             
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat için bir isim belirleyin.");
-            if (!fileInput.files[0]) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat listesini içeren Excel dosyasını seçin.");
+            if (!fileInput.files[0]) return showCustomAlert("EKSİK BİLGİ", "Lütfen ana sevkiyat listesini içeren Excel dosyasını seçin.");
             
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-                    
-                    const now = new Date();
-                    const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
-                    const newId = 'SVK-' + Date.now();
-                    const shipmentItems = {};
+            const readExcel = (file) => {
+                return new Promise((resolve, reject) => {
+                    if(!file) return resolve([]);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        resolve(XLSX.utils.sheet_to_json(firstSheet, { defval: "" }));
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            };
 
-                    let addedCount = 0;
-                    rows.forEach(r => {
-                        const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
-                        const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
-                        let rawName = getCol(r, ["ürünismi", "ürünadı", "urunadi", "isim", "açıklama", "malzemeadı", "malzeme", "tanım", "adı", "adi"]);
+            try {
+                const mainRows = await readExcel(fileInput.files[0]);
+                const bmcRows = await readExcel(bmcInput.files[0]);
+
+                let bmcMap = {};
+                bmcRows.forEach(r => {
+                    const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                    const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                    if (rawCode) {
+                        let searchCode = trToLower(String(rawCode).trim());
+                        let finalCode = String(rawCode).trim();
+                        for (const key in catalogDb) {
+                            if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
+                                finalCode = key; break;
+                            }
+                        }
+                        bmcMap[finalCode] = rawQty !== "" ? (parseInt(rawQty) || 1) : 1;
+                    }
+                });
+
+                const now = new Date();
+                const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
+                const newId = 'SVK-' + Date.now();
+                const shipmentItems = {};
+
+                let addedCount = 0;
+                mainRows.forEach(r => {
+                    const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                    const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                    let rawName = getCol(r, ["ürünismi", "ürünadı", "urunadi", "isim", "açıklama", "malzemeadı", "malzeme", "tanım", "adı", "adi"]);
+                    
+                    if(rawCode) {
+                        let excelCode = String(rawCode).trim();
+                        let expectedQty = rawQty !== "" ? (parseInt(rawQty) || 0) : 1;
+                        let excelName = rawName ? String(rawName).trim() : "İsimsiz Excel Ürünü";
                         
-                        if(rawCode) {
-                            let excelCode = String(rawCode).trim();
-                            let expectedQty = rawQty !== "" ? (parseInt(rawQty) || 0) : 1;
-                            let excelName = rawName ? String(rawName).trim() : "İsimsiz Excel Ürünü";
-                            
-                            let finalCode = excelCode;
-                            let finalName = excelName;
-                            
-                            const searchCode = trToLower(excelCode);
-                            
-                            if (catalogDb[excelCode]) {
-                                finalName = catalogDb[excelCode].urunAdi;
-                            } else {
-                                for (const key in catalogDb) {
-                                    if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
-                                        finalCode = key;
-                                        finalName = catalogDb[key].urunAdi;
-                                        break;
-                                    }
+                        let finalCode = excelCode;
+                        let finalName = excelName;
+                        const searchCode = trToLower(excelCode);
+                        
+                        if (catalogDb[excelCode]) {
+                            finalName = catalogDb[excelCode].urunAdi;
+                        } else {
+                            for (const key in catalogDb) {
+                                if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
+                                    finalCode = key;
+                                    finalName = catalogDb[key].urunAdi;
+                                    break;
                                 }
                             }
-
-                            if (shipmentItems[finalCode]) {
-                                shipmentItems[finalCode].expectedQty += expectedQty;
-                            } else {
-                                shipmentItems[finalCode] = { 
-                                    code: finalCode, 
-                                    name: finalName, 
-                                    expectedQty: expectedQty, 
-                                    receivedQty: 0, 
-                                    labelQty: 0,
-                                    confirmed: false
-                                };
-                            }
-                            addedCount++;
                         }
-                    });
 
-                    if (addedCount === 0) {
-                        return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen Excel dosyasında ürün kodu bulunamadı. Lütfen sütun isimlerini kontrol edin.");
+                        if (shipmentItems[finalCode]) {
+                            shipmentItems[finalCode].expectedQty += expectedQty;
+                        } else {
+                            shipmentItems[finalCode] = { 
+                                code: finalCode, 
+                                name: finalName, 
+                                expectedQty: expectedQty, 
+                                receivedQty: 0, 
+                                labelQty: 0,
+                                confirmed: false,
+                                bmcAlertShown: false
+                            };
+                        }
+                        addedCount++;
                     }
+                });
 
-                    const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems };
-                    await saveShipmentToDb(newShipment);
-                    
-                    document.getElementById('setup-name').value = '';
-                    fileInput.value = '';
-                    resumeShipment(newId);
-
-                } catch(err) {
-                    showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
+                if (addedCount === 0) {
+                    return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen ana Excel dosyasında ürün kodu bulunamadı. Sütun isimlerini kontrol edin.");
                 }
-            };
-            reader.readAsArrayBuffer(fileInput.files[0]);
+
+                const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems, bmc: bmcMap };
+                await saveShipmentToDb(newShipment);
+                
+                document.getElementById('setup-name').value = '';
+                fileInput.value = '';
+                if(bmcInput) bmcInput.value = '';
+                resumeShipment(newId);
+
+            } catch(err) {
+                showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
+            }
         };
 
         window.deleteShipment = (id) => {
@@ -664,13 +688,12 @@
             document.getElementById('scan-qty').focus();
         };
 
-        document.addEventListener('click', (e) => {
-            const scanCode = document.getElementById('scan-code');
-            const dropdown = document.getElementById('scan-dropdown');
-            if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = 'none';
+        const triggerBmcAlert = (code, shipment) => {
+            if (shipment.bmc && shipment.bmc[code] && !shipment.items[code].bmcAlertShown) {
+                shipment.items[code].bmcAlertShown = true; // Sadece bir kere uyarsın
+                showCustomAlert("BMC AYIRMA BİLGİSİ", `Bu üründen BMC için ayrılması gereken miktar:\n\n${shipment.bmc[code]} ADET`);
             }
-        });
+        };
 
         window.processScan = async () => {
             const inputEl = document.getElementById('scan-code');
@@ -717,13 +740,20 @@
                     expectedQty: 0,
                     receivedQty: addQty,
                     labelQty: 0,
-                    confirmed: false
+                    confirmed: false,
+                    bmcAlertShown: false
                 };
             } else {
                 shipment.items[finalKey].receivedQty += addQty;
-                shipment.items[finalKey].confirmed = false;
+                // Eğer girilen miktar bekleneni karşıladıysa otomatik onayla
+                if (shipment.items[finalKey].receivedQty >= shipment.items[finalKey].expectedQty) {
+                    shipment.items[finalKey].confirmed = true;
+                } else {
+                    shipment.items[finalKey].confirmed = false;
+                }
             }
             
+            triggerBmcAlert(finalKey, shipment);
             await saveShipmentToDb(shipment);
             
             inputEl.value = '';
@@ -746,25 +776,56 @@
             }
         });
 
+        // REQ 2: Liste içi Enter tuşu desteği
+        window.handleInlineKey = (e, code) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.confirmItem(code);
+            }
+        };
+
+        // REQ 4 & 3: Canlı Fark Güncelleme ve Otomatik Onay
+        window.updateLiveDiff = (code, val) => {
+            const el = document.getElementById(`rec-${code}`);
+            const expected = parseInt(el.getAttribute('data-expected')) || 0;
+            let parsedVal = parseInt(val) || 0;
+            const diffEl = document.getElementById(`diff-${code}`);
+            
+            if(diffEl) {
+                let diff = parsedVal - expected;
+                diffEl.innerText = diff > 0 ? `+${diff}` : diff;
+                diffEl.className = `item-diff ${diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero')}`;
+            }
+
+            clearTimeout(autoConfirmTimers[code]);
+            // Eğer girilen değer bekleneni tam karşılıyorsa (kısmi değilse), 400ms sonra otomatik onayla.
+            if (parsedVal > 0 && parsedVal === expected) {
+                autoConfirmTimers[code] = setTimeout(() => {
+                    window.confirmItem(code, parsedVal);
+                }, 400); 
+            }
+        };
+
+        // REQ 1 & 5: Gelişmiş Sıralama Mantığı
         const getSortedItems = (items) => {
-            const getSortScore = (item) => {
-                if (item.confirmed) {
-                    if (item.receivedQty === item.expectedQty) return 3;
-                    return 1;
-                }
+            const getScore = (item) => {
+                // Öncelik 1: Düzenleniyor veya eksik girilmiş (Kırmızı/Kısmi). En üste sabitlenir.
+                const isPartial = item.receivedQty > 0 && item.receivedQty < item.expectedQty;
+                if (isPartial || (!item.confirmed && item.receivedQty > 0)) return 1; 
+                
+                // Öncelik 2: Hiç dokunulmamış, bekleyen ürünler
+                if (item.receivedQty === 0) return 2;
+                
+                // Öncelik 3: Teslimatı tamamlanmış veya fazla gelmiş ürünler (Yeşil/Sarı). En alta iner.
+                if (item.receivedQty >= item.expectedQty) return 3;
+                
                 return 2;
             };
             
             return [...items].sort((a, b) => {
-                const scoreA = getSortScore(a);
-                const scoreB = getSortScore(b);
+                const scoreA = getScore(a);
+                const scoreB = getScore(b);
                 if (scoreA !== scoreB) return scoreA - scoreB;
-                
-                if (scoreA === 1) {
-                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
-                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
-                    if (diffA !== diffB) return diffB - diffA; 
-                }
                 
                 return a.code.localeCompare(b.code);
             });
@@ -783,9 +844,11 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                if (item.confirmed) {
+                // Eğer kısmi teslimat (eksik) ise, onaylanmış olsa bile kırmızı kalmasını sağla
+                if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
+                    statusClass = 'status-missing'; valClass = 'val-missing';
+                } else if (item.confirmed) {
                     if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
-                    else if (item.receivedQty < item.expectedQty) { statusClass = 'status-missing'; valClass = 'val-missing'; }
                     else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
                 }
 
@@ -793,7 +856,11 @@
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff;
                 
-                if (!item.confirmed) diffClass = 'diff-zero';
+                if (!item.confirmed && item.receivedQty === 0) diffClass = 'diff-zero';
+
+                // REQ 6: BMC İşareti
+                const isBmc = shipment.bmc && shipment.bmc[item.code];
+                const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span>` : '';
 
                 let dynamicCols = '';
                 if (!item.confirmed) {
@@ -804,11 +871,11 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
-                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
@@ -820,7 +887,7 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div>
-                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
                         </div>
                         <div class="item-action">
@@ -832,23 +899,32 @@
                 return `
                     <div class="list-item ${statusClass}">
                         <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
-                        <div class="item-name">${item.name}</div>
+                        <div class="item-name">${item.name} ${bmcBadge}</div>
                         ${dynamicCols}
                     </div>
                 `;
             }).join('');
         };
 
-        window.confirmItem = async (code) => {
+        window.confirmItem = async (code, overrideVal = null) => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
 
-            const rVal = parseInt(document.getElementById(`rec-${code}`).value) || 0;
-            const lVal = parseInt(document.getElementById(`lbl-${code}`).value) || 0;
+            let rVal = overrideVal;
+            if (rVal === null) {
+                const recEl = document.getElementById(`rec-${code}`);
+                rVal = recEl ? parseInt(recEl.value) : (shipment.items[code].receivedQty || 0);
+            }
+            
+            const lblEl = document.getElementById(`lbl-${code}`);
+            const lVal = lblEl ? parseInt(lblEl.value) : (shipment.items[code].labelQty || 0);
+            
             if(shipment.items[code]) {
-                shipment.items[code].receivedQty = rVal;
-                shipment.items[code].labelQty = lVal;
+                shipment.items[code].receivedQty = rVal || 0;
+                shipment.items[code].labelQty = lVal || 0;
                 shipment.items[code].confirmed = true;
+                
+                triggerBmcAlert(code, shipment);
                 await saveShipmentToDb(shipment);
             }
         };
@@ -910,10 +986,12 @@
                 doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
             }
 
-            const unconfirmed = items.filter(i => !i.confirmed);
+            const unconfirmed = items.filter(i => !i.confirmed && i.receivedQty === 0);
+            const partial = items.filter(i => i.receivedQty > 0 && i.receivedQty < i.expectedQty);
             let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
-            if (unconfirmed.length > 0) {
-                msg = `DİKKAT: Onaylanmamış ${unconfirmed.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
+            
+            if (unconfirmed.length > 0 || partial.length > 0) {
+                msg = `DİKKAT: Hiç girilmemiş ${unconfirmed.length} ve eksik girilmiş ${partial.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
             }
 
             showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
