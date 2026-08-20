@@ -815,25 +815,39 @@
 
         const getSortedItems = (items) => {
             const getScore = (item) => {
-                // Öncelik 0: Sabitlenmiş ürün arama kutusundan çağırıldıysa en üste yapışır.
+                // Öncelik 0: Sabitlenmiş ürün
                 if (item.code === window.pinnedItemCode) return 0;
 
-                // Öncelik 1: Eksik/0 girilmiş VEYA Fazla girilmiş ürünler. En üste sabitlenir.
-                const isMismatch = (item.receivedQty !== item.expectedQty) && (item.confirmed || item.receivedQty > 0);
-                if (isMismatch || (!item.confirmed && item.receivedQty > 0)) return 1; 
-                
-                // Öncelik 2: Hiç dokunulmamış, bekleyen ürünler
-                if (item.receivedQty === 0 && !item.confirmed) return 2;
-                
-                // Öncelik 3: Sadece tam (eşleşen) teslimatı yapılmış ürünler (Yeşil). En alta iner.
-                return 3;
+                // Öncelik 1: Eksik (Kırmızı)
+                const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+                if (isMissing) return 1;
+
+                // Öncelik 2: Fazla (Sarı)
+                const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+                if (isOver) return 2;
+
+                // Öncelik 3: Hiç dokunulmamış
+                if (item.receivedQty === 0 && !item.confirmed) return 3;
+
+                // Öncelik 4: Tam eşleşen (Yeşil)
+                return 4;
             };
             
             return [...items].sort((a, b) => {
                 const scoreA = getScore(a);
                 const scoreB = getScore(b);
+                
+                // Gruplar arası sıralama (Pin -> Eksik -> Fazla -> Bekleyen -> Tam)
                 if (scoreA !== scoreB) return scoreA - scoreB;
                 
+                // Eğer ikisi de Eksik (1) veya ikisi de Fazla (2) grubundaysa, "büyük farktan küçüğe" sırala
+                if (scoreA === 1 || scoreA === 2) {
+                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
+                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
+                    if (diffA !== diffB) return diffB - diffA;
+                }
+                
+                // Aksi halde alfabetik
                 return a.code.localeCompare(b.code);
             });
         };
