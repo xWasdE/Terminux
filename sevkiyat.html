@@ -106,6 +106,7 @@
         .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
         
+        .status-pinned { border-left-color: #00ccff; background: linear-gradient(90deg, rgba(0,204,255,0.08) 0%, transparent 100%); }
         .status-pending { border-left-color: #444; }
         .status-missing { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); }
         .status-complete { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); }
@@ -348,6 +349,9 @@
         let html5QrCode = null;
         let searchTimeout = null;
         let autoConfirmTimers = {};
+        
+        // REQ: Arama yapıldığında ürünün en üste gelmesi için Global Sabitleyici
+        window.pinnedItemCode = null;
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -619,6 +623,7 @@
 
         window.resumeShipment = (id) => {
             currentShipmentId = id;
+            window.pinnedItemCode = null; // Listeyi açarken sıfırla
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('active-screen').style.display = 'block';
             
@@ -636,6 +641,7 @@
             document.getElementById('home-screen').style.display = 'block';
             document.getElementById('active-screen').style.display = 'none';
             currentShipmentId = null;
+            window.pinnedItemCode = null;
             renderHomeList();
         };
 
@@ -686,11 +692,15 @@
             document.getElementById('scan-code').value = code;
             document.getElementById('scan-dropdown').style.display = 'none';
             document.getElementById('scan-qty').focus();
+            
+            // REQ: Seçilen ürünü en üste sabitle ve listeyi hemen yenile
+            window.pinnedItemCode = code; 
+            renderShipmentList();
         };
 
         const triggerBmcAlert = (code, shipment) => {
             if (shipment.bmc && shipment.bmc[code] && !shipment.items[code].bmcAlertShown) {
-                shipment.items[code].bmcAlertShown = true; // Sadece bir kere uyarsın
+                shipment.items[code].bmcAlertShown = true; 
                 showCustomAlert("BMC AYIRMA BİLGİSİ", `Bu üründen BMC için ayrılması gereken miktar:\n\n${shipment.bmc[code]} ADET`);
             }
         };
@@ -740,18 +750,15 @@
                     expectedQty: 0,
                     receivedQty: addQty,
                     labelQty: 0,
-                    confirmed: false,
+                    confirmed: true, // Herhangi bir miktar işlemi onayla
                     bmcAlertShown: false
                 };
             } else {
                 shipment.items[finalKey].receivedQty += addQty;
-                // Eğer girilen miktar bekleneni karşıladıysa otomatik onayla
-                if (shipment.items[finalKey].receivedQty >= shipment.items[finalKey].expectedQty) {
-                    shipment.items[finalKey].confirmed = true;
-                } else {
-                    shipment.items[finalKey].confirmed = false;
-                }
+                shipment.items[finalKey].confirmed = true; // Herhangi bir miktar işlemi onayla
             }
+            
+            if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; // İşlem bitince pini kaldır
             
             triggerBmcAlert(finalKey, shipment);
             await saveShipmentToDb(shipment);
@@ -776,7 +783,6 @@
             }
         });
 
-        // REQ 2: Liste içi Enter tuşu desteği
         window.handleInlineKey = (e, code) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -784,7 +790,7 @@
             }
         };
 
-        // REQ 4 & 3: Canlı Fark Güncelleme ve Otomatik Onay
+        // REQ: Gecici hafıza ve Otomatik Onay
         window.updateLiveDiff = (code, val) => {
             const el = document.getElementById(`rec-${code}`);
             const expected = parseInt(el.getAttribute('data-expected')) || 0;
@@ -797,29 +803,35 @@
                 diffEl.className = `item-diff ${diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero')}`;
             }
 
+            // REQ: Veriyi geçici olarak kaydet, sayfa yenilense bile silinmesin
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(shipment && shipment.items[code]) {
+                shipment.items[code].receivedQty = parsedVal;
+            }
+
+            // Miktar girildiğinde otomatik onay için sayaç başlat (Yazma bitince devreye girer)
             clearTimeout(autoConfirmTimers[code]);
-            // Eğer girilen değer bekleneni tam karşılıyorsa (kısmi değilse), 400ms sonra otomatik onayla.
-            if (parsedVal > 0 && parsedVal === expected) {
+            if (parsedVal > 0) {
                 autoConfirmTimers[code] = setTimeout(() => {
-                    window.confirmItem(code, parsedVal);
-                }, 400); 
+                    window.confirmItem(code);
+                }, 1500); // 1.5 saniye boş bırakırsan otomatik onaylar
             }
         };
 
-        // REQ 1 & 5: Gelişmiş Sıralama Mantığı
         const getSortedItems = (items) => {
             const getScore = (item) => {
-                // Öncelik 1: Düzenleniyor veya eksik girilmiş (Kırmızı/Kısmi). En üste sabitlenir.
+                // Öncelik 0: Sabitlenmiş ürün arama kutusundan çağırıldıysa en üste yapışır.
+                if (item.code === window.pinnedItemCode) return 0;
+
+                // Öncelik 1: Eksik girilmiş (Kırmızı/Kısmi). En üste sabitlenir.
                 const isPartial = item.receivedQty > 0 && item.receivedQty < item.expectedQty;
                 if (isPartial || (!item.confirmed && item.receivedQty > 0)) return 1; 
                 
                 // Öncelik 2: Hiç dokunulmamış, bekleyen ürünler
-                if (item.receivedQty === 0) return 2;
+                if (item.receivedQty === 0 && !item.confirmed) return 2;
                 
                 // Öncelik 3: Teslimatı tamamlanmış veya fazla gelmiş ürünler (Yeşil/Sarı). En alta iner.
-                if (item.receivedQty >= item.expectedQty) return 3;
-                
-                return 2;
+                return 3;
             };
             
             return [...items].sort((a, b) => {
@@ -844,10 +856,16 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                // Eğer kısmi teslimat (eksik) ise, onaylanmış olsa bile kırmızı kalmasını sağla
-                if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
+                // Sabitlenmiş ise özel bir stil
+                if (item.code === window.pinnedItemCode) {
+                    statusClass = 'status-pinned';
+                }
+                // Eksik kısmi teslimat (kırmızı)
+                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
-                } else if (item.confirmed) {
+                } 
+                // Tamamlanmış (yeşil veya sarı)
+                else if (item.confirmed) {
                     if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
                     else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
                 }
@@ -858,7 +876,6 @@
                 
                 if (!item.confirmed && item.receivedQty === 0) diffClass = 'diff-zero';
 
-                // REQ 6: BMC İşareti
                 const isBmc = shipment.bmc && shipment.bmc[item.code];
                 const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span>` : '';
 
@@ -871,15 +888,15 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                             <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
-                            <button class="btn-check" onclick="confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
+                            <button class="btn-check" onclick="window.confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
                         </div>
                     `;
                 } else {
@@ -898,15 +915,26 @@
 
                 return `
                     <div class="list-item ${statusClass}">
-                        <div class="item-code" style="color: ${statusClass === 'status-pending' ? '#888' : '#fff'};">${item.code}</div>
+                        <div class="item-code" style="color: ${statusClass === 'status-pending' || statusClass === 'status-pinned' ? '#888' : '#fff'};">${item.code}</div>
                         <div class="item-name">${item.name} ${bmcBadge}</div>
                         ${dynamicCols}
                     </div>
                 `;
             }).join('');
+            
+            // Eğer pinli ürün varsa view'ı oraya kaydır (opsiyonel rahatlık)
+            if (window.pinnedItemCode) {
+                setTimeout(() => {
+                    const activeScreen = document.getElementById('active-screen');
+                    activeScreen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
         };
 
         window.confirmItem = async (code, overrideVal = null) => {
+            // Güvenlik: Timer varsa temizle
+            clearTimeout(autoConfirmTimers[code]);
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
 
@@ -924,6 +952,8 @@
                 shipment.items[code].labelQty = lVal || 0;
                 shipment.items[code].confirmed = true;
                 
+                if (window.pinnedItemCode === code) window.pinnedItemCode = null; // İşlem bitince pini kaldır
+
                 triggerBmcAlert(code, shipment);
                 await saveShipmentToDb(shipment);
             }
