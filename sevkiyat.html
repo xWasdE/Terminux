@@ -806,7 +806,7 @@
             }
 
             clearTimeout(autoConfirmTimers[code]);
-            if (parsedVal > 0) {
+            if (val !== "") {
                 autoConfirmTimers[code] = setTimeout(() => {
                     window.confirmItem(code);
                 }, 1500); 
@@ -818,8 +818,8 @@
                 // Öncelik 0: Sabitlenmiş ürün arama kutusundan çağırıldıysa en üste yapışır.
                 if (item.code === window.pinnedItemCode) return 0;
 
-                // Öncelik 1: Eksik (Kırmızı) VEYA Fazla (Sarı) girilmiş ürünler. En üste sabitlenir.
-                const isMismatch = item.receivedQty > 0 && item.receivedQty !== item.expectedQty;
+                // Öncelik 1: Eksik/0 girilmiş VEYA Fazla girilmiş ürünler. En üste sabitlenir.
+                const isMismatch = (item.receivedQty !== item.expectedQty) && (item.confirmed || item.receivedQty > 0);
                 if (isMismatch || (!item.confirmed && item.receivedQty > 0)) return 1; 
                 
                 // Öncelik 2: Hiç dokunulmamış, bekleyen ürünler
@@ -855,17 +855,17 @@
                 if (item.code === window.pinnedItemCode) {
                     statusClass = 'status-pinned';
                 }
-                // Eksik kısmi teslimat (kırmızı)
-                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
+                // Eksik / 0 girilmiş (kırmızı)
+                else if (item.confirmed && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 } 
                 // Fazla teslimat (sarı/over)
-                else if (item.receivedQty > item.expectedQty) {
+                else if (item.confirmed && item.receivedQty > item.expectedQty) {
                     statusClass = 'status-over'; valClass = 'val-over';
                 }
                 // Tamamlanmış - Eşleşen (yeşil)
-                else if (item.confirmed) {
-                    if (item.receivedQty === item.expectedQty) { statusClass = 'status-complete'; valClass = 'val-complete'; }
+                else if (item.confirmed && item.receivedQty === item.expectedQty) {
+                    statusClass = 'status-complete'; valClass = 'val-complete';
                 }
 
                 let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
@@ -944,8 +944,8 @@
             const lVal = lblEl ? parseInt(lblEl.value) : (shipment.items[code].labelQty || 0);
             
             if(shipment.items[code]) {
-                shipment.items[code].receivedQty = rVal || 0;
-                shipment.items[code].labelQty = lVal || 0;
+                shipment.items[code].receivedQty = isNaN(rVal) ? 0 : rVal;
+                shipment.items[code].labelQty = isNaN(lVal) ? 0 : lVal;
                 shipment.items[code].confirmed = true;
                 
                 if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
@@ -1013,11 +1013,11 @@
             }
 
             const unconfirmed = items.filter(i => !i.confirmed && i.receivedQty === 0);
-            const partial = items.filter(i => i.receivedQty > 0 && i.receivedQty < i.expectedQty);
+            const partial = items.filter(i => i.confirmed && i.receivedQty < i.expectedQty);
             let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
             
             if (unconfirmed.length > 0 || partial.length > 0) {
-                msg = `DİKKAT: Hiç girilmemiş ${unconfirmed.length} ve eksik girilmiş ${partial.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
+                msg = `DİKKAT: Hiç girilmemiş ${unconfirmed.length} ve eksik/0 girilmiş ${partial.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?`;
             }
 
             showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
