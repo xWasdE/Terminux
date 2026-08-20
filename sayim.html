@@ -136,6 +136,13 @@
 
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
+        .autocomplete-results { display:none; position:absolute; top:100%; left:0; width:100%; background:#111; border:1px solid #333; z-index:100; max-height:250px; overflow-y:auto; border-radius:6px; margin-top:5px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .autocomplete-item { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; transition: 0.2s; text-align: left; }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background: #222; }
+        .autocomplete-name { font-weight: bold; color: #fff; font-size: 13px; margin-bottom: 5px; }
+        .autocomplete-detail { font-size: 11px; color: #00ff00; font-family: monospace; }
+
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
@@ -227,8 +234,9 @@
             <div class="scan-area">
                 <div class="input-group scan-input" style="margin:0;">
                     <label>Ürün Kodu, Barkod veya Ref No</label>
-                    <div class="scan-wrapper">
-                        <input type="text" id="scan-code" placeholder="Kodu okutun veya yazın..." autocomplete="off">
+                    <div class="scan-wrapper" style="position: relative;">
+                        <input type="text" id="scan-code" placeholder="Kod, Ref No veya İsim yazın..." autocomplete="off">
+                        <div id="autocomplete-results" class="autocomplete-results"></div>
                         <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
                     </div>
                 </div>
@@ -327,6 +335,14 @@
         let html5QrCode = null;
         let confirmActionCallback = null;
         let editItemKey = null;
+
+        window.cleanBarcode = (code) => {
+            if(!code) return '';
+            let cleaned = code.toString().trim();
+            cleaned = cleaned.replace(/^\][a-zA-Z0-9]{2}/, '');
+            cleaned = cleaned.replace(/^JD/i, '');
+            return cleaned.trim();
+        };
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -518,7 +534,7 @@
             const codeInput = document.getElementById('scan-code');
             const qtyInput = document.getElementById('scan-qty');
             
-            let searchCode = codeInput.value.trim();
+            let searchCode = window.cleanBarcode(codeInput.value);
             let qty = parseInt(qtyInput.value) || 1;
 
             if (!searchCode) return;
@@ -560,6 +576,55 @@
 
             await saveSessionToDb(session);
         };
+
+        document.getElementById('scan-code').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            const resultsContainer = document.getElementById('autocomplete-results');
+            
+            if (val.length < 2) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            let matches = [];
+            for (const key in catalogDb) {
+                const item = catalogDb[key];
+                if (
+                    item.urunAdi.toLowerCase().includes(val) || 
+                    (item.refNo && item.refNo.toLowerCase().includes(val)) ||
+                    item.urunKodu.toLowerCase().includes(val) ||
+                    (item.barkod && item.barkod.toLowerCase().includes(val))
+                ) {
+                    matches.push(item);
+                    if(matches.length >= 5) break; 
+                }
+            }
+
+            if (matches.length > 0) {
+                resultsContainer.innerHTML = matches.map(m => `
+                    <div class="autocomplete-item" onclick="selectAutocomplete('${m.urunKodu}')">
+                        <div class="autocomplete-name">${m.urunAdi}</div>
+                        <div class="autocomplete-detail">KOD: ${m.urunKodu} | REF: ${m.refNo || '-'}</div>
+                    </div>
+                `).join('');
+                resultsContainer.style.display = 'block';
+            } else {
+                resultsContainer.style.display = 'none';
+            }
+        });
+
+        window.selectAutocomplete = (kod) => {
+            document.getElementById('scan-code').value = kod;
+            document.getElementById('autocomplete-results').style.display = 'none';
+            document.getElementById('scan-qty').focus(); 
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.scan-wrapper')) {
+                const resultsContainer = document.getElementById('autocomplete-results');
+                if(resultsContainer) resultsContainer.style.display = 'none';
+            }
+        });
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => { 
             if (e.key === 'Enter') {
@@ -799,7 +864,7 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    document.getElementById('scan-code').value = decodedText;
+                    document.getElementById('scan-code').value = window.cleanBarcode(decodedText);
                     closeScanner();
                     document.getElementById('scan-qty').focus();
                 },
