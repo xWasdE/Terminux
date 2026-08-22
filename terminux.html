@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Admin Panel</title>
+    <title>Terminux | Super Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="harita-am.js"></script>
@@ -15,15 +15,18 @@
         .sidebar { width: 280px; background: #050505; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
         .sidebar-header { padding: 30px 20px; border-bottom: 1px solid #1a1a1a; text-align: center; }
         .sidebar-title { font-weight: 900; font-size: 24px; color: #fff; letter-spacing: -1px; }
-        .sidebar-subtitle { font-weight: 800; font-size: 11px; color: #ffbc00; letter-spacing: 2px; margin-top: 5px; }
+        .sidebar-subtitle { font-weight: 800; font-size: 11px; color: #00ccff; letter-spacing: 2px; margin-top: 5px; }
         .menu { flex: 1; padding: 20px 0; overflow-y: auto; }
         .menu-item { padding: 15px 20px; color: #888; font-size: 13px; font-weight: 800; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
         .menu-item:hover { background: #0a0a0a; color: #fff; }
         .menu-item.active { background: #111; color: #00ccff; border-left-color: #00ccff; }
+        
         .user-info { padding: 20px; border-top: 1px solid #1a1a1a; background: #080808; display: flex; flex-direction: column; gap: 10px; }
-        .user-name { font-size: 12px; font-weight: bold; color: #00ff00; word-break: break-all; }
-        .btn-logout { background: #111; border: 1px solid #333; color: #ff3333; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; }
+        .user-name { font-size: 12px; font-weight: bold; color: #00ff00; word-break: break-all; text-align: center; margin-bottom: 5px; }
+        .btn-logout { background: #111; border: 1px solid #333; color: #ff3333; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
         .btn-logout:hover { background: #ff3333; color: #000; }
+        .btn-home { background: #00ccff; border: none; color: #000; padding: 10px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-align: center; text-decoration: none; text-transform: uppercase; }
+        .btn-home:hover { opacity: 0.8; }
 
         .main-content { flex: 1; background: #000; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         .topbar { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; background: #020202; display: flex; justify-content: space-between; align-items: center; }
@@ -37,7 +40,7 @@
         .card-header { font-size: 14px; font-weight: 800; color: #ffbc00; margin-bottom: 20px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; text-transform: uppercase; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; }
+        .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
         .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-family: monospace; font-size: 14px; transition: 0.2s; }
         .form-group input:focus, .form-group select:focus { border-color: #00ccff; }
         .btn-primary { background: #00ccff; color: #000; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; }
@@ -54,7 +57,8 @@
         .badge.admin { background: rgba(0,204,255,0.1); color: #00ccff; border: 1px solid #00ccff; }
         .badge.user { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
         .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
-        .btn-sm { padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; }
+        .btn-sm { padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; text-transform: uppercase; }
+        .btn-sm:hover { opacity: 0.8; }
         
         .depo-tabs { display: flex; gap: 8px; margin-bottom:15px; }
         .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
@@ -69,8 +73,9 @@
         .cell:hover { background: #ffbc00; color: #000; }
         .cell-hidden { visibility: hidden; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 400px; text-align: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; }
+        .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; }
 
         #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00ccff; font-weight:bold; font-size:18px; letter-spacing:2px; }
     </style>
@@ -85,14 +90,15 @@
             <div class="sidebar-subtitle">SUPER ADMIN PANEL</div>
         </div>
         <div class="menu">
-            <div class="menu-item active" onclick="switchSection('sec-users', 'KULLANICI YÖNETİMİ', this)"><span>KULLANICI YÖNETİMİ</span><span>👤</span></div>
-            <div class="menu-item" onclick="switchSection('sec-address', 'KROKİ & ADRES YÖNETİMİ', this)"><span>ADRES YÖNETİMİ</span><span>🗺️</span></div>
-            <div class="menu-item" onclick="switchSection('sec-stock', 'STOK & EXCEL İŞLEMLERİ', this)"><span>STOK / EXCEL YÜKLE</span><span>📦</span></div>
-            <div class="menu-item" onclick="switchSection('sec-lens', 'LENS YÜKLEME MERKEZİ', this)"><span>LENS YÖNETİMİ</span><span>👁️</span></div>
-            <div class="menu-item" onclick="switchSection('sec-settings', 'SİSTEM AYARLARI', this)"><span>SİSTEM AYARLARI</span><span>⚙️</span></div>
+            <div class="menu-item active" onclick="switchSection('sec-users', 'KULLANICI YÖNETİMİ', this)"><span>KULLANICI YÖNETİMİ</span></div>
+            <div class="menu-item" onclick="switchSection('sec-address', 'KROKİ & ADRES YÖNETİMİ', this)"><span>ADRES YÖNETİMİ</span></div>
+            <div class="menu-item" onclick="switchSection('sec-stock', 'STOK & EXCEL İŞLEMLERİ', this)"><span>STOK / EXCEL YÜKLE</span></div>
+            <div class="menu-item" onclick="switchSection('sec-lens', 'LENS YÜKLEME MERKEZİ', this)"><span>LENS YÖNETİMİ</span></div>
+            <div class="menu-item" onclick="switchSection('sec-settings', 'SİSTEM AYARLARI', this)"><span>SİSTEM AYARLARI</span></div>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="index.html" class="btn-home">ANA SAYFAYA DÖN</a>
             <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
         </div>
     </div>
@@ -107,7 +113,7 @@
                     <div class="card-header">YENİ KULLANICI OLUŞTUR</div>
                     <div class="form-grid">
                         <div class="form-group"><label>KULLANICI ADI (Kısa ad yazılabilir)</label><input type="text" id="u-name" placeholder="Örn: murat"></div>
-                        <div class="form-group"><label>ŞİFRE (En az 6 hane)</label><input type="password" id="u-pass" placeholder="******"></div>
+                        <div class="form-group"><label>ŞİFRE (Google kuralı: En az 6 hane)</label><input type="password" id="u-pass" placeholder="******"></div>
                         <div class="form-group"><label>ROLÜ</label><select id="u-role"><option value="user">Standart Personel</option><option value="admin">Sistem Yöneticisi</option></select></div>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
@@ -126,6 +132,7 @@
 
                 <div class="card">
                     <div class="card-header">SİSTEMDEKİ KULLANICILAR</div>
+                    <p style="font-size:11px; color:#888; margin-bottom:15px;">NOT: Personelin şifresini değiştirmek veya kalıcı olarak sistemden kaldırmak istiyorsanız bu işlemleri Firebase Console üzerinden yapmalısınız.</p>
                     <table class="user-list">
                         <thead><tr><th>KULLANICI BİLGİSİ</th><th>ROL</th><th>YETKİLER</th><th>DURUM</th><th style="text-align: right;">İŞLEMLER</th></tr></thead>
                         <tbody id="user-table-body"></tbody>
@@ -184,15 +191,6 @@
             </div>
 
             <div id="sec-settings" class="section">
-                <div class="card">
-                    <div class="card-header">KENDİ ŞİFRENİ DEĞİŞTİR</div>
-                    <div class="form-group" style="margin-bottom:15px;">
-                        <label>YENİ ŞİFRENİZ (En az 6 hane)</label>
-                        <input type="password" id="my-new-pass" placeholder="******">
-                    </div>
-                    <button class="btn-primary" id="btn-change-my-pass">ŞİFREMİ GÜNCELLE</button>
-                </div>
-
                 <div class="card" style="border-color: #ff3333;">
                     <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
@@ -204,8 +202,33 @@
         </div>
     </div>
 
-    <div id="custom-alert" class="modal">
+    <!-- YETKİ DÜZENLEME MODAL -->
+    <div id="edit-user-modal" class="modal">
         <div class="modal-box">
+            <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
+            <p id="edit-user-email" style="color:#888; font-size:13px; margin-bottom:20px; font-family:monospace;"></p>
+            <input type="hidden" id="edit-uid">
+            
+            <div class="form-group" style="text-align:left; margin-bottom:25px;">
+                <div class="modules-grid">
+                    <label class="module-check"><input type="checkbox" id="edit-sayim"> Sayım Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-etiket"> Etiket Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-sevkiyat"> Sevkiyat Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-lens"> Lens Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-adres"> Adres Bulucu</label>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" style="background:#222; color:#fff;" onclick="document.getElementById('edit-user-modal').style.display='none'">İPTAL</button>
+                <button class="btn-primary" onclick="saveUserEdit()">YETKİLERİ GÜNCELLE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UYARI MODAL -->
+    <div id="custom-alert" class="modal">
+        <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
             <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
             <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
@@ -214,7 +237,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -257,7 +280,7 @@
 
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
                     document.getElementById('global-loader').style.display = 'none';
-                    document.getElementById('display-user').innerText = `Giriş Yapan: ${user.email}`;
+                    document.getElementById('display-user').innerText = `${user.email}`;
                     loadUsers();
                     window.switchAdresDepo('am');
                 } else {
@@ -274,26 +297,12 @@
             await signOut(auth);
         });
 
-        document.getElementById('btn-change-my-pass').addEventListener('click', async () => {
-            const newPass = document.getElementById('my-new-pass').value;
-            if(newPass.length < 6) return window.showAlert("HATA", "Şifre en az 6 haneli olmalıdır.");
-            try {
-                const user = auth.currentUser;
-                await updatePassword(user, newPass);
-                window.showAlert("BAŞARILI", "Şifreniz başarıyla güncellendi.");
-                document.getElementById('my-new-pass').value = '';
-            } catch(e) {
-                window.showAlert("HATA", "Şifre değiştirilemedi. Güvenlik gereği çıkış yapıp tekrar giriş yaptıktan sonra deneyin.");
-            }
-        });
-
         document.getElementById('btn-create-user').addEventListener('click', async () => {
             let uname = document.getElementById('u-name').value.trim();
             const pass = document.getElementById('u-pass').value;
             const role = document.getElementById('u-role').value;
             
             if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
-            
             if(!uname.includes('@')) uname += "@terminux.com.tr";
             
             const mods = {
@@ -306,6 +315,7 @@
 
             const logEl = document.getElementById('user-log');
             logEl.innerText = "Kullanıcı oluşturuluyor...";
+            logEl.style.color = '#ffbc00';
 
             try {
                 const userCredential = await createUserWithEmailAndPassword(secondaryAuth, uname, pass);
@@ -320,6 +330,7 @@
                 });
                 
                 await signOut(secondaryAuth);
+                logEl.style.color = '#00ff00';
                 logEl.innerText = "Kullanıcı başarıyla eklendi!";
                 document.getElementById('u-name').value = '';
                 document.getElementById('u-pass').value = '';
@@ -346,17 +357,21 @@
                         if(d.modules.adres) modsArr.push('Adres');
                     }
                     const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
+                    const s = d.status === 'active' ? 'BANLA (PASİF)' : 'BAN KALDIR';
+                    const sColor = d.status === 'active' ? '#ff3333' : '#00ff00';
+                    const sBg = d.status === 'active' ? '#330000' : '#003300';
+                    const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
 
                     html += `
                         <tr>
                             <td><strong style="color:#fff;">${d.email}</strong><br><span style="font-size:10px; color:#555;">ID: ${docSnap.id}</span></td>
                             <td>${badgeRole}</td>
-                            <td style="font-size:11px;">${d.role==='admin' ? 'Tüm Sistem' : modStr}</td>
+                            <td style="font-size:11px; color:#aaa;">${d.role==='admin' ? 'Tüm Sistem' : modStr}</td>
                             <td><strong>${statusText}</strong></td>
                             <td style="text-align: right;">
                                 <div class="action-btns">
-                                    <button class="btn-sm btn-edit" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${d.status === 'active' ? 'BANLA (PASİF)' : 'BAN KALDIR'}</button>
-                                    <button class="btn-sm" style="background:#ff3333; color:#fff; border:none;" onclick="window.deleteUserDB('${docSnap.id}')">DB'DEN SİL</button>
+                                    <button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${sMod}')">YETKİLERİ DÜZENLE</button>
+                                    <button class="btn-sm" style="background:${sBg}; color:${sColor};" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button>
                                 </div>
                             </td>
                         </tr>
@@ -366,14 +381,38 @@
             });
         }
 
+        window.openEdit = (uid, email, modStr) => {
+            document.getElementById('edit-uid').value = uid;
+            document.getElementById('edit-user-email').innerText = email;
+            const mods = JSON.parse(decodeURIComponent(modStr));
+            
+            document.getElementById('edit-sayim').checked = mods.sayim || false;
+            document.getElementById('edit-etiket').checked = mods.etiket || false;
+            document.getElementById('edit-sevkiyat').checked = mods.sevkiyat || false;
+            document.getElementById('edit-lens').checked = mods.lens || false;
+            document.getElementById('edit-adres').checked = mods.adres || false;
+            
+            document.getElementById('edit-user-modal').style.display = 'flex';
+        };
+
+        window.saveUserEdit = async () => {
+            const uid = document.getElementById('edit-uid').value;
+            const mods = {
+                sayim: document.getElementById('edit-sayim').checked,
+                etiket: document.getElementById('edit-etiket').checked,
+                sevkiyat: document.getElementById('edit-sevkiyat').checked,
+                lens: document.getElementById('edit-lens').checked,
+                adres: document.getElementById('edit-adres').checked
+            };
+            
+            await updateDoc(doc(db, "users", uid), { modules: mods });
+            document.getElementById('edit-user-modal').style.display = 'none';
+            window.showAlert("BAŞARILI", "Personel yetkileri güncellendi.");
+        };
+
         window.toggleBan = async (uid, currentStatus) => {
             const newStatus = currentStatus === 'active' ? 'banned' : 'active';
             await updateDoc(doc(db, "users", uid), { status: newStatus });
-        };
-        window.deleteUserDB = async (uid) => {
-            if(confirm("Kullanıcı veritabanından kalıcı olarak silinecek. Onaylıyor musunuz? (Sadece Firestore kaydı silinir, Auth temizliği için Firebase Console gereklidir)")) {
-                await deleteDoc(doc(db, "users", uid));
-            }
         };
 
         let currentAdresDepo = 'am';
@@ -391,52 +430,6 @@
                 mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
             }
-        };
-        
-        document.getElementById('import-adres').addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const workbook = XLSX.read(e.target.result, {type: 'array'});
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                const colName = currentAdresDepo === 'am' ? 'kroki_adresleri' : 'kroki_adresleri_ana';
-                
-                if(confirm(`${rows.length} adres eklenecek. Onaylıyor musunuz?`)) {
-                    let count = 0;
-                    for(let r of rows) {
-                        let adr = r["Adres"] || r["adres"] || "";
-                        if(adr) {
-                            if (adr.toUpperCase().startsWith("BDM")) adr = adr.substring(3);
-                            await setDoc(doc(collection(db, colName)), {
-                                adres: adr.trim(),
-                                urunAdi: String(r["Ürün Adı"]||r["urunAdi"]||""),
-                                urunKodu: String(r["Ürün Kodu"]||r["urunKodu"]||""),
-                                barkod: String(r["Barkod"]||""),
-                                refNo: String(r["Ref No"]||"")
-                            });
-                            count++;
-                        }
-                    }
-                    window.showAlert("BAŞARILI", `${count} adres eklendi.`);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        window.exportMapCode = () => {
-            const clone = document.getElementById('admin-map-area').cloneNode(true);
-            let html = clone.innerHTML.replace(/ active"/g, '"');
-            let jsVar = currentAdresDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo';
-            let filename = currentAdresDepo === 'am' ? 'harita-am.js' : 'harita-ana.js';
-            let finalOutput = `window.${jsVar} = \`\n${html}\n\`;`;
-            
-            const blob = new Blob([finalOutput], { type: 'text/javascript' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = filename;
-            a.click();
-            window.showAlert("İNDİRİLDİ", "Yeni harita kodu JS olarak indirildi.");
         };
 
         const sysLog = (elId, msg) => {
@@ -466,42 +459,26 @@
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 let count = 0;
-                
                 for(let r of rows) {
                     const id = getColVal(r, ["ürün kodu", "urun kodu", "kod"]);
                     if(!id) continue;
-                    
                     let data = { urunKodu: id };
                     if(isLens) {
                         data.urunAdi = getColVal(r, ["ürün ismi", "ürün adı", "urun adi"]);
                         data.lensNo = getColVal(r, ["lens no", "lens numarası", "numara", "no"]);
                         data.miktar = parseInt(getColVal(r, ["stok miktar", "stok", "miktar", "adet"])) || 0;
                         data.marka = collectionName.includes("alcon") ? "ALCON" : "TECNIS";
-                        
-                        let extractedRef = "";
-                        if (data.urunAdi.includes(",")) {
-                            const parts = data.urunAdi.split(",");
-                            extractedRef = parts[parts.length - 1].trim();
-                        }
-                        if (extractedRef) {
-                            data.refNo = extractedRef;
-                        }
                     } else {
                         data.urunAdi = getColVal(r, ["ürün adı", "urun adi", "malzeme adı"]);
                         data.miktar = parseInt(getColVal(r, ["miktar", "stok"])) || 0;
-                        let refStr = getColVal(r, ["ref no", "ref", "katalog no", "katalog"]);
-                        if(!refStr || refStr==="-" || refStr.toLowerCase()==="yok") refStr = "BULUNAMADI";
-                        data.refNo = refStr;
+                        data.refNo = getColVal(r, ["ref no", "ref", "katalog no", "katalog"]) || "BULUNAMADI";
                         data.barkod = getColVal(r, ["barkod", "barcode"]);
-                        data.surecTipi = getColVal(r, ["süreç tipi", "surec tipi"]);
-                        data.miatTarihi = getColVal(r, ["miat tarihi", "miat"]);
-                        data.minAlert = parseInt(getColVal(r, ["min(kritik)", "min (kritik)", "min"])) || 0;
-                        data.max = parseInt(getColVal(r, ["max", "maks"])) || 0;
                     }
                     await setDoc(doc(db, collectionName, id), data, { merge: true });
                     count++;
                 }
                 sysLog(isLens ? 'lens-log' : 'stock-log', `Yükleme Bitti. (${count} Kayıt)`);
+                document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
         }
@@ -509,45 +486,24 @@
         async function processExtraDataExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog('stock-log', "Lütfen Güncelleme Excel dosyası seçin.");
-
             const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
             const reader = new FileReader();
-
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                sysLog('stock-log', `(${depoType} GÜNCELLEME) ${rows.length} satır analiz ediliyor...`);
-
                 let updateCount = 0;
-                
                 for (let r of rows) {
                     const id = getColVal(r, ["ürün kodu", "urun kodu", "kod"]);
                     if(!id) continue;
-
                     let extraData = {};
-                    
-                    if (hasCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
-                        extraData.altGrup = getColVal(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
-                    }
-                    if (hasCol(r, ["stok adresi", "adres"])) {
-                        extraData.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
-                    }
-                    if (hasCol(r, ["dummy", "dummy durumu"])) {
-                        let rawDummy = getColVal(r, ["dummy", "dummy durumu"]).toUpperCase();
-                        extraData.dummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
-                    }
-                    if (hasCol(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"])) {
-                        let rawReuse = getColVal(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"]).toUpperCase();
-                        extraData.reuse = (rawReuse === "REUSE") ? "REUSE" : "REUSE DEĞİL";
-                    }
-
+                    if (hasCol(r, ["alt grup adı"])) extraData.altGrup = getColVal(r, ["alt grup adı"]);
+                    if (hasCol(r, ["stok adresi", "adres"])) extraData.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
                     if (Object.keys(extraData).length > 0) {
                         await setDoc(doc(db, collectionName, id), extraData, { merge: true });
                         updateCount++;
                     }
                 }
-                
-                sysLog('stock-log', `✅ (${depoType}) GÜNCELLEME BİTTİ! Güncellenen: ${updateCount}`);
+                sysLog('stock-log', `GÜNCELLEME BİTTİ! (${updateCount} Kayıt)`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -557,7 +513,6 @@
         document.getElementById('btn-am').addEventListener('click', () => processMainExcel('f-am', 'ameliyathane', false));
         document.getElementById('btn-ana-ext').addEventListener('click', () => processExtraDataExcel('f-ana-ext', 'ANA'));
         document.getElementById('btn-am-ext').addEventListener('click', () => processExtraDataExcel('f-am-ext', 'AMELİYATHANE'));
-
         document.getElementById('btn-alcon').addEventListener('click', () => processMainExcel('f-alcon', 'lens_alcon', true));
         document.getElementById('btn-tecnis').addEventListener('click', () => processMainExcel('f-tecnis', 'lens_tecnis', true));
 
@@ -566,10 +521,8 @@
             btn.innerText = "SİNYAL GÖNDERİLİYOR...";
             try {
                 await setDoc(doc(db, "system", "version"), { lastUpdate: Date.now() });
-                document.getElementById('sync-log').innerText = "✅ SİNYAL BAŞARIYLA GÖNDERİLDİ! Tüm terminaller (telefon/tabletler) anında yeni verileri çekecektir.";
-            } catch(e) {
-                document.getElementById('sync-log').innerText = "HATA: " + e.message;
-            }
+                document.getElementById('sync-log').innerText = "✅ SİSTEM GÜNCELLENDİ!";
+            } catch(e) {}
             btn.innerText = "SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET";
         });
 
