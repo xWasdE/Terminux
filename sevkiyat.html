@@ -348,9 +348,17 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
-        let autoConfirmTimers = {};
+       let autoConfirmTimers = {};
         
         window.pinnedItemCode = null;
+
+        window.cleanBarcode = (code) => {
+            if(!code) return '';
+            let cleaned = code.toString().trim();
+            cleaned = cleaned.replace(/^\][a-zA-Z0-9]{2}/, '');
+            cleaned = cleaned.replace(/^JD/i, '');
+            return cleaned.trim();
+        };
 
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
@@ -645,6 +653,8 @@
         };
 
         document.getElementById('scan-code').addEventListener('input', (e) => {
+            e.target.value = window.cleanBarcode(e.target.value);
+            
             const val = trToLower(e.target.value.trim());
             const dropdown = document.getElementById('scan-dropdown');
             clearTimeout(searchTimeout);
@@ -707,7 +717,7 @@
             const inputEl = document.getElementById('scan-code');
             const qtyInput = document.getElementById('scan-qty');
             
-            const searchCode = inputEl.value.trim();
+            const searchCode = window.cleanBarcode(inputEl.value);
             const addQty = parseInt(qtyInput.value) || 1;
             
             if(!searchCode) return;
@@ -1070,7 +1080,7 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    document.getElementById('scan-code').value = decodedText;
+                    document.getElementById('scan-code').value = window.cleanBarcode(decodedText);
                     closeScanner();
                     document.getElementById('scan-qty').focus();
                 },
