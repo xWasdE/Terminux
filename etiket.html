@@ -226,10 +226,15 @@
         const scanInput = document.getElementById('scan-code');
         const qtyInput = document.getElementById('scan-qty');
 
+        scanInput.addEventListener('input', (e) => {
+            e.target.value = window.cleanBarcode(e.target.value);
+        });
+
         window.showCustomAlert = (title, desc) => {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-desc').innerText = desc;
             document.getElementById('custom-alert').style.display = 'flex';
+        };
         };
         window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
 
@@ -330,7 +335,7 @@
 
         window.processScan = () => {
             try {
-                const searchCode = scanInput.value.trim();
+                const searchCode = window.cleanBarcode(scanInput.value);
                 const addQty = parseInt(qtyInput.value) || 1;
                 
                 if(!searchCode) return;
@@ -471,7 +476,7 @@
             
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    scanInput.value = decodedText;
+                    scanInput.value = window.cleanBarcode(decodedText);
                     closeScanner();
                     qtyInput.focus();
                 },
