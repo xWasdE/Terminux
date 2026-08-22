@@ -1019,3 +1019,13 @@ function renderCard(data) {
         }
     }, 150);
 }
+
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'scan-code' || e.target.id === 'main-search') {
+        let val = e.target.value;
+        let cleaned = val.replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '').trim();
+        if (val !== cleaned) {
+            e.target.value = cleaned;
+        }
+    }
+});
