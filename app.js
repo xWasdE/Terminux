@@ -1021,9 +1021,9 @@ function renderCard(data) {
 }
 
 document.addEventListener('input', (e) => {
-    if (e.target.id === 'scan-code' || e.target.id === 'main-search') {
+    if (e.target.id === 'scan-code' || e.target.id === 'main-search' || e.target.id === 'search-input') {
         let val = e.target.value;
-        let cleaned = val.replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '').trim();
+        let cleaned = val.replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '').trimStart();
         if (val !== cleaned) {
             e.target.value = cleaned;
         }
