@@ -198,10 +198,10 @@
 
         window.cleanBarcode = (code) => {
             if(!code) return '';
-            let cleaned = code.toString().trim();
+            let cleaned = code.toString();
             cleaned = cleaned.replace(/^\][a-zA-Z0-9]{2}/, '');
             cleaned = cleaned.replace(/^JD/i, '');
-            return cleaned.trim();
+            return cleaned.trimStart();
         };
 
         let currentDepo = 'am';
