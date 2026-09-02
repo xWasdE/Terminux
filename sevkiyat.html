@@ -48,7 +48,7 @@
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         
-        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; scroll-behavior: smooth; }
         
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
@@ -156,6 +156,9 @@
 
         .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; border-top: 1px solid #1a1a1a; line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
 
+        .btn-scroll-top { display: none; position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 25px; background: #00ccff; color: #000; border: none; font-size: 24px; font-weight: 900; cursor: pointer; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.3s; }
+        .btn-scroll-top:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,204,255,0.4); }
+
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px; display: block; }
@@ -196,6 +199,7 @@
             .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; max-width: 100%; }
             .legal-footer { font-size: 8px; padding: 10px 15px; display: block; }
+            .btn-scroll-top { bottom: 20px; right: 20px; width: 45px; height: 45px; font-size: 20px; }
         }
     </style>
 </head>
@@ -284,6 +288,8 @@
         </div>
     </main>
 
+    <button id="scroll-to-top" class="btn-scroll-top" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆</button>
+
     <div id="custom-alert" class="custom-modal">
         <div class="modal-box">
             <div class="modal-title" id="alert-title">UYARI</div>
@@ -355,6 +361,15 @@
         
         window.pinnedItemCode = null;
 
+        document.getElementById('main-content').addEventListener('scroll', function() {
+            const btn = document.getElementById('scroll-to-top');
+            if (this.scrollTop > 300) {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        });
+
         window.cleanBarcode = (code) => {
             if(!code) return '';
             let cleaned = code.toString();
@@ -391,9 +406,24 @@
         document.addEventListener('click', (e) => {
             const scanCode = document.getElementById('scan-code');
             const dropdown = document.getElementById('scan-dropdown');
+            const scanArea = document.querySelector('.scan-area');
             
             if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
+            }
+
+            if (window.pinnedItemCode && currentShipmentId) {
+                const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
+                const rowEl = document.getElementById(`item-row-${safeId}`);
+                
+                if (rowEl && !rowEl.contains(e.target) && (!scanArea || !scanArea.contains(e.target))) {
+                    const editBtn = e.target.closest('.btn-edit');
+                    if (!editBtn) {
+                        const code = window.pinnedItemCode;
+                        window.pinnedItemCode = null;
+                        window.confirmItem(code);
+                    }
+                }
             }
         });
 
@@ -419,17 +449,20 @@
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
+                        const checkDummy = d.dummy === true || d.isDummy === true || String(d.urunAdi || '').toUpperCase().includes('DUMMY');
+                        
                         if (!catalogDb[key]) {
                             catalogDb[key] = { 
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "")
+                                refNo: String(d.refNo || ""),
+                                isDummy: checkDummy
                             };
+                        } else {
+                            catalogDb[key].isDummy = catalogDb[key].isDummy || checkDummy;
                         }
                         catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
-                        const checkDummy = String(d.urunAdi || '').toUpperCase().includes('DUMMY') || d.dummy === true || d.isDummy === true;
-                        catalogDb[key].isDummy = checkDummy;
                     });
                 };
                 
@@ -453,29 +486,6 @@
             try {
                 await setDoc(doc(db, "sevkiyat_sessions", shipment.id), shipment);
             } catch(e) {}
-        };
-
-        window.lockExistingEdits = async (excludeCode = null) => {
-            const shipment = allShipments.find(s => s.id === currentShipmentId);
-            if(!shipment) return;
-            let changed = false;
-            
-            Object.values(shipment.items).forEach(item => {
-                if (!item.confirmed && item.code !== excludeCode) {
-                    item.confirmed = true;
-                    item.confirmTime = Date.now();
-                    changed = true;
-                }
-            });
-            
-            if (window.pinnedItemCode && window.pinnedItemCode !== excludeCode) {
-                window.pinnedItemCode = null;
-                changed = true;
-            }
-            
-            if (changed) {
-                await saveShipmentToDb(shipment);
-            }
         };
 
         const renderHomeList = () => {
@@ -734,8 +744,12 @@
             document.getElementById('scan-dropdown').style.display = 'none';
             document.getElementById('scan-qty').focus();
             
-            await window.lockExistingEdits(code);
             window.pinnedItemCode = code; 
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if (shipment && shipment.items[code]) {
+                shipment.items[code].confirmed = false;
+                await saveShipmentToDb(shipment);
+            }
             renderShipmentList();
         };
 
@@ -782,8 +796,6 @@
                 window.playBeep('success');
             }
 
-            await window.lockExistingEdits(finalKey);
-
             if(!shipment.items) shipment.items = {};
 
             if (!shipment.items[finalKey]) {
@@ -803,6 +815,8 @@
                 shipment.items[finalKey].confirmed = true;
                 shipment.items[finalKey].confirmTime = Date.now();
             }
+            
+            if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; 
             
             await saveShipmentToDb(shipment);
             
@@ -829,7 +843,7 @@
         window.handleInlineKey = (e, code) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                window.confirmItem(code, true);
+                window.confirmItem(code);
             }
         };
 
@@ -852,9 +866,15 @@
 
             clearTimeout(autoConfirmTimers[code]);
             if (val !== "") {
-                autoConfirmTimers[code] = setTimeout(() => {
-                    window.confirmItem(code, false);
-                }, 1500); 
+                if (parsedVal === expected && expected > 0) {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 0);
+                } else {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 1500); 
+                }
             }
         };
 
@@ -862,14 +882,18 @@
             const getScore = (item) => {
                 if (item.code === window.pinnedItemCode) return 0;
                 
-                if (item.receivedQty === item.expectedQty && item.receivedQty > 0) return 4;
+                if (item.receivedQty === item.expectedQty && item.expectedQty > 0) return 4;
                 
-                if (item.receivedQty < item.expectedQty && item.receivedQty > 0) return 1;
-                
-                if (item.receivedQty > item.expectedQty) return 2;
-                
-                if (item.receivedQty === 0) return 3;
-                
+                if (!item.confirmed && item.receivedQty > 0) return 1;
+
+                const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+                if (isMissing) return 1;
+
+                const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+                if (isOver) return 2;
+
+                if (item.receivedQty === 0 && !item.confirmed) return 3;
+
                 return 4;
             };
             
@@ -909,21 +933,21 @@
                 if (item.code === window.pinnedItemCode) {
                     statusClass = 'status-pinned';
                 }
+                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
+                    statusClass = 'status-complete'; valClass = 'val-complete';
+                }
                 else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 } 
                 else if (item.receivedQty > item.expectedQty) {
                     statusClass = 'status-over'; valClass = 'val-over';
                 }
-                else if (item.receivedQty === item.expectedQty && item.receivedQty > 0) {
-                    statusClass = 'status-complete'; valClass = 'val-complete';
-                }
 
                 let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff;
                 
-                if (item.receivedQty === 0) diffClass = 'diff-zero';
+                if (!item.confirmed && item.receivedQty === 0 && item.code !== window.pinnedItemCode) diffClass = 'diff-zero';
 
                 let itemAddress = item.address;
                 if (!itemAddress || itemAddress === "-") {
@@ -943,7 +967,7 @@
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
 
                 let dynamicCols = '';
-                if (!item.confirmed) {
+                if (!item.confirmed && item.code === window.pinnedItemCode) {
                     const defaultRec = item.receivedQty || 0;
                     const defaultLbl = item.labelQty || 0;
                     
@@ -951,15 +975,34 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onchange="window.confirmItem('${item.code}', false)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                             <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onchange="window.confirmItem('${item.code}', false)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
-                            <button class="btn-check" onclick="window.confirmItem('${item.code}', true)">KONTROLÜ BİTİR</button>
+                            <button class="btn-check" onclick="window.confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
+                        </div>
+                    `;
+                } else if (!item.confirmed && item.receivedQty === 0) {
+                    const defaultRec = item.receivedQty || 0;
+                    const defaultLbl = item.labelQty || 0;
+                    
+                    dynamicCols = `
+                        <div class="qty-grid">
+                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
+                            <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                            </div>
+                            <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
+                            <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                            </div>
+                        </div>
+                        <div class="item-action">
+                            <button class="btn-check" onclick="window.confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
                         </div>
                     `;
                 } else {
@@ -971,7 +1014,7 @@
                             <div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div>
                         </div>
                         <div class="item-action">
-                            <button class="btn-edit" data-code="${item.code}" onclick="editItem('${item.code}')">DÜZENLE</button>
+                            <button class="btn-edit" data-code="${item.code}" onclick="window.editItem('${item.code}')">DÜZENLE</button>
                         </div>
                     `;
                 }
@@ -984,19 +1027,9 @@
                     </div>
                 `;
             }).join('');
-            
-            if (window.pinnedItemCode) {
-                setTimeout(() => {
-                    const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
-                    const targetEl = document.getElementById(`item-row-${safeId}`);
-                    if (targetEl) {
-                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-            }
         };
 
-        window.confirmItem = async (code, manual = false, overrideVal = null) => {
+        window.confirmItem = async (code, overrideVal = null) => {
             clearTimeout(autoConfirmTimers[code]);
             
             const shipment = allShipments.find(s => s.id === currentShipmentId);
@@ -1017,19 +1050,17 @@
                 shipment.items[code].confirmed = true;
                 shipment.items[code].confirmTime = Date.now();
                 
-                if (manual && window.pinnedItemCode === code) {
-                    window.pinnedItemCode = null; 
-                }
+                if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
 
                 await saveShipmentToDb(shipment);
             }
         };
 
         window.editItem = async (code) => {
-            await window.lockExistingEdits(code);
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
+                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
             }
         };
@@ -1052,13 +1083,14 @@
             const bmcItems = [];
             if (hasBmc) {
                 Object.keys(shipment.bmc).forEach(code => {
-                    const itemInfo = items.find(i => i.code === code) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0 };
-                    let ayrilan = itemInfo.confirmed ? Math.min(itemInfo.receivedQty, shipment.bmc[code]) : 0;
+                    const itemInfo = items.find(i => String(i.code) === String(code)) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0, expectedQty: 0 };
+                    let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0;
+                    let ayrilan = (itemInfo.confirmed || isComplete) ? Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.bmc[code]) || 0) : 0;
                     
                     bmcItems.push({
                         "Ürün Kodu": code,
                         "ÜRÜN İSMİ": itemInfo.name,
-                        "BMC İÇİN AYRILACAK": shipment.bmc[code],
+                        "BMC İÇİN AYRILACAK": Number(shipment.bmc[code]) || 0,
                         "AYRILAN MİKTAR": ayrilan
                     });
                 });
