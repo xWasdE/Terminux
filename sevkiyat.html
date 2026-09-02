@@ -741,14 +741,15 @@
             document.getElementById('scan-code').value = '';
             document.getElementById('scan-dropdown').style.display = 'none';
             
-            if (window.pinnedItemCode && window.pinnedItemCode !== code) window.confirmItem(window.pinnedItemCode);
-            if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) await window.confirmItem(window.editingItemCode);
 
             window.pinnedItemCode = code; 
             window.editingItemCode = code;
             
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
+                shipment.items[code].confirmed = false;
                 await saveShipmentToDb(shipment);
                 
                 setTimeout(() => {
@@ -814,8 +815,8 @@
                 window.playBeep('success');
             }
 
-            if (window.pinnedItemCode && window.pinnedItemCode !== finalKey) window.confirmItem(window.pinnedItemCode);
-            if (window.editingItemCode && window.editingItemCode !== finalKey) window.confirmItem(window.editingItemCode);
+            if (window.pinnedItemCode && window.pinnedItemCode !== finalKey) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== finalKey) await window.confirmItem(window.editingItemCode);
 
             if(!shipment.items) shipment.items = {};
 
@@ -833,8 +834,12 @@
                 };
             } else {
                 shipment.items[finalKey].receivedQty += addQty;
-                shipment.items[finalKey].confirmed = true;
-                shipment.items[finalKey].confirmTime = Date.now();
+                if (shipment.items[finalKey].receivedQty === 0) {
+                    shipment.items[finalKey].confirmed = false;
+                } else {
+                    shipment.items[finalKey].confirmed = true;
+                    shipment.items[finalKey].confirmTime = Date.now();
+                }
             }
             
             if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; 
@@ -900,41 +905,18 @@
             }
         };
 
-        const getSortedItems = (items) => {
-            const getScore = (item) => {
-                if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) return 0;
-                
-                if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) return 4;
-                
-                if (!item.confirmed && item.receivedQty === 0) return 3;
-
-                const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
-                if (isMissing) return 1;
-
-                const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
-                if (isOver) return 2;
-
-                return 4;
-            };
+        const getScore = (item) => {
+            if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) return 0;
             
-            return [...items].sort((a, b) => {
-                const scoreA = getScore(a);
-                const scoreB = getScore(b);
-                
-                if (scoreA !== scoreB) return scoreA - scoreB;
-                
-                if (scoreA === 1 || scoreA === 2) {
-                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
-                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
-                    if (diffA !== diffB) return diffB - diffA;
-                }
-                
-                if (scoreA === 4) {
-                    return (a.confirmTime || 0) - (b.confirmTime || 0);
-                }
-                
-                return a.code.localeCompare(b.code);
-            });
+            if (item.receivedQty === item.expectedQty && item.expectedQty > 0) return 4;
+            
+            if (item.receivedQty === 0) return 3;
+
+            if (item.receivedQty < item.expectedQty) return 1;
+
+            if (item.receivedQty > item.expectedQty) return 2;
+
+            return 4;
         };
 
         const renderShipmentList = () => {
@@ -950,13 +932,18 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) {
+                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
+
+                if (isEditingMode) {
                     statusClass = 'status-pinned';
                 }
-                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) {
+                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
                     statusClass = 'status-complete'; valClass = 'val-complete';
                 }
-                else if ((item.receivedQty > 0 && item.receivedQty < item.expectedQty) || (item.receivedQty === 0 && item.confirmed)) {
+                else if (item.receivedQty === 0) {
+                    statusClass = 'status-pending'; valClass = 'val-expected';
+                }
+                else if (item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 }
                 else if (item.receivedQty > item.expectedQty) {
@@ -967,7 +954,7 @@
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff;
                 
-                if (!item.confirmed && item.receivedQty === 0 && item.code !== window.pinnedItemCode && item.code !== window.editingItemCode) diffClass = 'diff-zero';
+                if (item.receivedQty === 0 && !isEditingMode) diffClass = 'diff-zero';
 
                 let itemAddress = item.address;
                 if (!itemAddress || itemAddress === "-") {
@@ -991,7 +978,6 @@
                 const dummyBadge = checkDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
 
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
-                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
 
                 let dynamicCols = '';
                 if (isEditingMode) {
@@ -1068,7 +1054,7 @@
                 shipment.items[code].receivedQty = rVal;
                 shipment.items[code].labelQty = lVal;
                 
-                if (rVal === 0 && !shipment.items[code].confirmTime) {
+                if (rVal === 0) {
                     shipment.items[code].confirmed = false;
                 } else {
                     shipment.items[code].confirmed = true;
@@ -1085,13 +1071,14 @@
         };
 
         window.editItem = async (code) => {
-            if (window.pinnedItemCode && window.pinnedItemCode !== code) window.confirmItem(window.pinnedItemCode);
-            if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) await window.confirmItem(window.editingItemCode);
             
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 window.editingItemCode = code;
                 window.pinnedItemCode = code;
+                shipment.items[code].confirmed = false;
                 await saveShipmentToDb(shipment);
                 
                 setTimeout(() => {
@@ -1192,8 +1179,8 @@
                 doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
             }
 
-            const unconfirmed = items.filter(i => !i.confirmed && i.receivedQty === 0);
-            const partial = items.filter(i => i.confirmed && i.receivedQty < i.expectedQty);
+            const unconfirmed = items.filter(i => i.receivedQty === 0);
+            const partial = items.filter(i => i.receivedQty > 0 && i.receivedQty < i.expectedQty);
             let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
             
             if (unconfirmed.length > 0 || partial.length > 0) {
