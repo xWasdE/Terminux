@@ -364,7 +364,6 @@
             };
         };
 
-        // AKILLI LAZER NAVİGASYONU & ÇOKLU ADRES YÖNETİMİ
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
@@ -372,7 +371,6 @@
             
             let targetIdRaw = targetId.trim();
             
-            // LAZER OK ÇİZİMİ İÇİN BDM TEMİZLİĞİ (BU SAYEDE HEDEFİ BULABİLECEK)
             if (targetIdRaw.toUpperCase().startsWith("BDM")) {
                 targetIdRaw = targetIdRaw.substring(3);
             }
@@ -381,7 +379,6 @@
                 targetIdRaw = targetIdRaw.replace('.06', '.05');
             }
             
-            // Aynı ID'ye sahip TÜM hücreleri bul (Çoklu Adresleme Desteği)
             const targetCells = map.querySelectorAll(`[id="cell-${targetIdRaw}"]`);
             const doorId = isAm ? 'door-am' : 'main-door';
             const door = document.getElementById(doorId);
@@ -394,9 +391,8 @@
 
             const d = getRectCenter(door, mapRect);
             
-            let pathsHtml = ""; // Tüm ok yollarını biriktireceğimiz alan
+            let pathsHtml = ""; 
 
-            // Bulunan her bir adres hücresi için ayrı ok çiz
             targetCells.forEach(targetCell => {
                 const t = getRectCenter(targetCell, mapRect);
                 let pathStr = "";
@@ -416,7 +412,6 @@
                         pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
                     }
                 } else {
-                    // ANA DEPO AKILLI GÜZERGAH
                     let mapW = mapRect.width / currentScale;
                     let mapH = mapRect.height / currentScale;
 
@@ -430,25 +425,20 @@
                     let startY = d.cy;
                     let doorOutX = startX - (0.02 * mapW);
 
-                    // Kapıdan çık ve yatay ana koridora bağlan
                     pathStr = `M ${startX} ${startY} L ${doorOutX} ${startY} L ${doorOutX} ${Y_MAIN}`;
 
                     let isOffice = t.cy < Y_MAIN && t.cx > (0.30 * mapW) && t.cx < (0.75 * mapW);
                     
                     if (isOffice) {
-                        // Ofis bölgesindeyse iç kapıyı (X_OFFICE) kullanarak gir
                         pathStr += ` L ${X_OFFICE} ${Y_MAIN} L ${X_OFFICE} ${t.cy}`;
                         let endX = t.cx < X_OFFICE ? t.right : t.left;
                         pathStr += ` L ${endX} ${t.cy}`;
                     } else {
-                        // Dış alanlardaysa hedefe en yakın dikey boş koridoru seç
                         let v_corridors = [X_FAR_LEFT, X_RIGHT, X_FAR_RIGHT];
                         let bestVX = v_corridors.reduce((prev, curr) => Math.abs(curr - t.cx) < Math.abs(prev - t.cx) ? curr : prev);
 
-                        // Boş dikey koridordan aşağı/yukarı in
                         pathStr += ` L ${bestVX} ${Y_MAIN} L ${bestVX} ${t.cy}`;
                         
-                        // Koridordan rafa güvenli yanaş (raftan içeri ok girmemesi için kenarında durur)
                         let endX = t.cx < bestVX ? t.right : t.left;
                         if (t.cx > bestVX && endX < bestVX) endX = t.cx; 
                         if (t.cx < bestVX && endX > bestVX) endX = t.cx;
@@ -457,13 +447,12 @@
                     }
                 }
                 
-                // Her hedef için ayrı path HTML kodu oluştur ki oklar her adreste çıksın
                 pathsHtml += `<path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="${dashArr}" marker-end="url(#arrowhead)" class="path-animation" />`;
             });
 
             const targetSvg = map.querySelector(`svg`);
             if(targetSvg) {
-                targetSvg.style.display = 'block'; // SVG'yi görünür yap
+                targetSvg.style.display = 'block';
                 targetSvg.innerHTML = `
                     <defs>
                         <marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto">
@@ -526,13 +515,11 @@
                     const isAm = currentDepo === 'am';
                     let targetCellId = product.adres.trim();
                     
-                    // GÖRSEL (KIRMIZI KUTU) İÇİN BDM TEMİZLİĞİ
                     let displayAdres = targetCellId;
                     if (displayAdres.toUpperCase().startsWith("BDM")) {
                         displayAdres = displayAdres.substring(3);
                     }
                     
-                    // HARİTADA HÜCREYİ BULABİLMESİ İÇİN BDM TEMİZLİĞİ
                     if (targetCellId.toUpperCase().startsWith("BDM")) {
                         targetCellId = targetCellId.substring(3);
                     }
@@ -541,19 +528,17 @@
                     
                     const map = document.getElementById('map-area');
                     
-                    // querySelectorAll kullanıldı: Aynı adrese sahip tüm hücreleri yakala!
                     const targetCells = map.querySelectorAll(`[id="cell-${targetCellId}"]`);
                     
                     if (targetCells.length > 0) {
-                        // Bulunan tüm hücreleri kırmızı yanıp sönme efektine (active) al
                         targetCells.forEach(tc => tc.classList.add('active'));
                         
                         nameEl.innerText = product.urunAdi;
-                        addressEl.innerText = displayAdres; // BDM BURADAN UÇTU!
+                        addressEl.innerText = displayAdres;
                         bannerEl.style.display = 'block';
                         
                         setTimeout(() => { 
-                            drawPath(targetCellId); // BDM'siz adresi yola gönder
+                            drawPath(targetCellId);
                             document.getElementById('main-content-scroll').scrollTo({
                                 top: document.getElementById('main-content-scroll').scrollHeight,
                                 behavior: 'smooth'
