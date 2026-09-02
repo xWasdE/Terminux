@@ -738,20 +738,26 @@
 
         window.selectFromDropdown = async (e, code) => {
             if (e) e.stopPropagation();
-            document.getElementById('scan-code').value = code;
+            document.getElementById('scan-code').value = '';
             document.getElementById('scan-dropdown').style.display = 'none';
-            document.getElementById('scan-qty').focus();
             
             if (window.pinnedItemCode && window.pinnedItemCode !== code) window.confirmItem(window.pinnedItemCode);
             if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
 
             window.pinnedItemCode = code; 
-            window.editingItemCode = null;
+            window.editingItemCode = code;
             
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
-                shipment.items[code].confirmed = false;
                 await saveShipmentToDb(shipment);
+                
+                setTimeout(() => {
+                    const recInput = document.getElementById(`rec-${code}`);
+                    if (recInput) {
+                        recInput.focus();
+                        recInput.select();
+                    }
+                }, 150);
             }
         };
 
@@ -889,26 +895,24 @@
                 } else {
                     autoConfirmTimers[code] = setTimeout(() => {
                         window.confirmItem(code);
-                    }, 1500); 
+                    }, 2000); 
                 }
             }
         };
 
         const getSortedItems = (items) => {
             const getScore = (item) => {
-                if (item.code === window.pinnedItemCode) return 0;
+                if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) return 0;
                 
                 if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) return 4;
                 
-                if (!item.confirmed && item.receivedQty > 0 && item.code !== window.editingItemCode) return 1;
+                if (!item.confirmed && item.receivedQty === 0) return 3;
 
                 const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
                 if (isMissing) return 1;
 
                 const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
                 if (isOver) return 2;
-
-                if (item.receivedQty === 0 && !item.confirmed) return 3;
 
                 return 4;
             };
@@ -946,16 +950,13 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                if (item.code === window.pinnedItemCode) {
+                if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) {
                     statusClass = 'status-pinned';
                 }
                 else if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) {
                     statusClass = 'status-complete'; valClass = 'val-complete';
                 }
-                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
-                    statusClass = 'status-missing'; valClass = 'val-missing';
-                } 
-                else if (item.receivedQty === 0 && item.confirmed) {
+                else if ((item.receivedQty > 0 && item.receivedQty < item.expectedQty) || (item.receivedQty === 0 && item.confirmed)) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 }
                 else if (item.receivedQty > item.expectedQty) {
@@ -990,7 +991,7 @@
                 const dummyBadge = checkDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
 
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
-                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode) || !item.confirmed;
+                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
 
                 let dynamicCols = '';
                 if (isEditingMode) {
@@ -1071,7 +1072,9 @@
                     shipment.items[code].confirmed = false;
                 } else {
                     shipment.items[code].confirmed = true;
-                    if (!shipment.items[code].confirmTime) shipment.items[code].confirmTime = Date.now();
+                    if (!shipment.items[code].confirmTime) {
+                        shipment.items[code].confirmTime = Date.now();
+                    }
                 }
                 
                 if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
@@ -1082,15 +1085,22 @@
         };
 
         window.editItem = async (code) => {
-            if (window.pinnedItemCode) window.confirmItem(window.pinnedItemCode);
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) window.confirmItem(window.pinnedItemCode);
             if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
             
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
-                shipment.items[code].confirmed = false;
                 window.editingItemCode = code;
-                window.pinnedItemCode = null;
+                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
+                
+                setTimeout(() => {
+                    const recInput = document.getElementById(`rec-${code}`);
+                    if (recInput) {
+                        recInput.focus();
+                        recInput.select();
+                    }
+                }, 150);
             }
         };
 
