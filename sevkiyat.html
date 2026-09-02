@@ -403,35 +403,40 @@
             closeCustomConfirm();
         });
 
+        window.lockAllUnconfirmed = async (excludeCode = null) => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if (!shipment) return false;
+            
+            let changed = false;
+            Object.values(shipment.items).forEach(item => {
+                if (!item.confirmed && item.code !== excludeCode && item.code !== window.pinnedItemCode) {
+                    item.confirmed = true;
+                    item.confirmTime = Date.now();
+                    changed = true;
+                }
+            });
+            
+            if (window.pinnedItemCode && window.pinnedItemCode !== excludeCode) {
+                const pinnedItem = shipment.items[window.pinnedItemCode];
+                if (pinnedItem) {
+                    pinnedItem.confirmed = true;
+                    pinnedItem.confirmTime = Date.now();
+                    changed = true;
+                }
+                window.pinnedItemCode = null;
+            }
+
+            if (changed) {
+                await saveShipmentToDb(shipment);
+            }
+        };
+
         document.addEventListener('click', (e) => {
             const scanCode = document.getElementById('scan-code');
             const dropdown = document.getElementById('scan-dropdown');
-            const scanArea = document.querySelector('.scan-area');
             
             if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
-            }
-
-            if (window.pinnedItemCode && currentShipmentId) {
-                const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
-                const rowEl = document.getElementById(`item-row-${safeId}`);
-                
-                if (rowEl && !rowEl.contains(e.target) && (!scanArea || !scanArea.contains(e.target))) {
-                    const editBtn = e.target.closest('.btn-edit');
-                    if (!editBtn) {
-                        const code = window.pinnedItemCode;
-                        window.pinnedItemCode = null;
-                        const shipment = allShipments.find(s => s.id === currentShipmentId);
-                        if (shipment && shipment.items[code]) {
-                            const item = shipment.items[code];
-                            if (item.receivedQty > 0 || item.confirmTime > 0) {
-                                window.confirmItem(code);
-                            } else {
-                                renderShipmentList();
-                            }
-                        }
-                    }
-                }
             }
         });
 
@@ -454,13 +459,11 @@
                         if (Array.isArray(parsed)) {
                             parsed.forEach(item => {
                                 const uKodu = String(item.urunKodu || item.docId || "");
-                                const checkDummy = item.dummy === true || item.isDummy === true || String(item.urunAdi || '').toUpperCase().includes('DUMMY');
                                 catalogDb[uKodu] = { 
                                     urunKodu: uKodu, 
                                     urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
                                     barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || ""),
-                                    isDummy: checkDummy
+                                    refNo: String(item.refNo || "")
                                 };
                             });
                         }
@@ -484,12 +487,10 @@
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || ""),
-                                isDummy: checkDummy
+                                refNo: String(d.refNo || "")
                             };
-                        } else {
-                            catalogDb[key].isDummy = catalogDb[key].isDummy || checkDummy;
                         }
+                        catalogDb[key]['isDummy_' + locKey] = checkDummy;
                         catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
                     });
                 };
@@ -645,8 +646,13 @@
                         let finalAddress = "-";
                         let isDummy = false;
                         if (catalogDb[finalCode]) {
-                            finalAddress = type === 'ANA DEPO' ? (catalogDb[finalCode].ana_adres || "-") : (catalogDb[finalCode].am_adres || "-");
-                            isDummy = catalogDb[finalCode].isDummy || false;
+                            if (type === 'ANA DEPO') {
+                                finalAddress = catalogDb[finalCode].ana_adres || "-";
+                                isDummy = catalogDb[finalCode].isDummy_ana || false;
+                            } else {
+                                finalAddress = catalogDb[finalCode].am_adres || "-";
+                                isDummy = catalogDb[finalCode].isDummy_am || false;
+                            }
                         } else {
                             isDummy = String(finalName).toUpperCase().includes('DUMMY');
                         }
@@ -772,18 +778,15 @@
             document.getElementById('scan-dropdown').style.display = 'none';
             document.getElementById('scan-qty').focus();
             
+            await window.lockAllUnconfirmed(code);
+            window.pinnedItemCode = code; 
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
-                if (window.pinnedItemCode && window.pinnedItemCode !== code) {
-                    const oldPinnedCode = window.pinnedItemCode;
-                    if (shipment.items[oldPinnedCode].receivedQty > 0 || shipment.items[oldPinnedCode].confirmTime > 0) {
-                        shipment.items[oldPinnedCode].confirmed = true;
-                    }
-                }
-                
                 shipment.items[code].confirmed = false;
-                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
+            } else {
+                renderShipmentList();
             }
         };
 
@@ -807,16 +810,26 @@
             if (catalogDb[searchCode]) {
                 matchedKey = searchCode;
                 matchedName = catalogDb[searchCode].urunAdi;
-                finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[searchCode].ana_adres || "-") : (catalogDb[searchCode].am_adres || "-");
-                isDummy = catalogDb[searchCode].isDummy || false;
+                if (shipment.type === 'ANA DEPO') {
+                    finalAddress = catalogDb[searchCode].ana_adres || "-";
+                    isDummy = catalogDb[searchCode].isDummy_ana || false;
+                } else {
+                    finalAddress = catalogDb[searchCode].am_adres || "-";
+                    isDummy = catalogDb[searchCode].isDummy_am || false;
+                }
             } else {
                 const searchCodeLower = trToLower(searchCode);
                 for (const key in catalogDb) {
                     if (trToLower(key) === searchCodeLower || trToLower(catalogDb[key].barkod) === searchCodeLower || trToLower(catalogDb[key].refNo) === searchCodeLower) {
                         matchedKey = key;
                         matchedName = catalogDb[key].urunAdi;
-                        finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[key].ana_adres || "-") : (catalogDb[key].am_adres || "-");
-                        isDummy = catalogDb[key].isDummy || false;
+                        if (shipment.type === 'ANA DEPO') {
+                            finalAddress = catalogDb[key].ana_adres || "-";
+                            isDummy = catalogDb[key].isDummy_ana || false;
+                        } else {
+                            finalAddress = catalogDb[key].am_adres || "-";
+                            isDummy = catalogDb[key].isDummy_am || false;
+                        }
                         break;
                     }
                 }
@@ -829,6 +842,8 @@
             } else {
                 window.playBeep('success');
             }
+
+            await window.lockAllUnconfirmed(finalKey);
 
             if(!shipment.items) shipment.items = {};
 
@@ -903,11 +918,7 @@
                 if (parsedVal === expected && expected > 0) {
                     autoConfirmTimers[code] = setTimeout(() => {
                         window.confirmItem(code);
-                    }, 0);
-                } else {
-                    autoConfirmTimers[code] = setTimeout(() => {
-                        window.confirmItem(code);
-                    }, 1500); 
+                    }, 400);
                 }
             }
         };
@@ -916,18 +927,13 @@
             const getScore = (item) => {
                 if (item.code === window.pinnedItemCode) return 0;
                 
-                if (item.receivedQty === item.expectedQty && item.expectedQty > 0) return 4;
+                if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) return 1;
+                if (item.receivedQty === 0 && item.confirmed) return 1;
                 
-                if (!item.confirmed && item.receivedQty > 0) return 1;
-
-                const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
-                if (isMissing) return 1;
-
-                const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
-                if (isOver) return 2;
-
+                if (item.receivedQty > item.expectedQty) return 2;
+                
                 if (item.receivedQty === 0 && !item.confirmed) return 3;
-
+                
                 return 4;
             };
             
@@ -973,6 +979,9 @@
                 else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 } 
+                else if (item.receivedQty === 0 && item.confirmed) {
+                    statusClass = 'status-missing'; valClass = 'val-missing';
+                }
                 else if (item.receivedQty > item.expectedQty) {
                     statusClass = 'status-over'; valClass = 'val-over';
                 }
@@ -995,7 +1004,7 @@
                 const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span><span class="bmc-badge bmc-qty">${shipment.bmc[item.code]} ADET</span>` : '';
                 const addressBadge = itemAddress && itemAddress !== "-" && itemAddress !== "" ? `<span class="address-badge">📍 ${itemAddress}</span>` : '';
                 
-                const showDummy = item.isDummy === true || (catalogDb[item.code] && catalogDb[item.code].isDummy === true) || String(item.name || '').toUpperCase().includes('DUMMY');
+                const showDummy = item.isDummy === true || (catalogDb[item.code] && (shipment.type === 'ANA DEPO' ? catalogDb[item.code].isDummy_ana : catalogDb[item.code].isDummy_am) === true) || String(item.name || '').toUpperCase().includes('DUMMY');
                 const dummyBadge = showDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
 
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1091,6 +1100,7 @@
         };
 
         window.editItem = async (code) => {
+            await window.lockAllUnconfirmed(code);
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
@@ -1118,7 +1128,7 @@
                 Object.keys(shipment.bmc).forEach(code => {
                     const itemInfo = items.find(i => String(i.code) === String(code)) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0, expectedQty: 0 };
                     let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0;
-                    let ayrilan = (itemInfo.confirmed || isComplete) ? Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.bmc[code]) || 0) : 0;
+                    let ayrilan = Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.bmc[code]) || 0);
                     
                     bmcItems.push({
                         "Ürün Kodu": code,
