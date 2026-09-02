@@ -421,7 +421,15 @@
                     if (!editBtn) {
                         const code = window.pinnedItemCode;
                         window.pinnedItemCode = null;
-                        window.confirmItem(code);
+                        const shipment = allShipments.find(s => s.id === currentShipmentId);
+                        if (shipment && shipment.items[code]) {
+                            const item = shipment.items[code];
+                            if (item.receivedQty > 0 || item.confirmTime > 0) {
+                                window.confirmItem(code);
+                            } else {
+                                renderShipmentList();
+                            }
+                        }
                     }
                 }
             }
@@ -439,6 +447,26 @@
 
         const loadCatalog = async () => {
             try {
+                const cachedData = localStorage.getItem('terminux_catalog_cache');
+                if (cachedData) {
+                    try {
+                        const parsed = JSON.parse(cachedData);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const uKodu = String(item.urunKodu || item.docId || "");
+                                const checkDummy = item.dummy === true || item.isDummy === true || String(item.urunAdi || '').toUpperCase().includes('DUMMY');
+                                catalogDb[uKodu] = { 
+                                    urunKodu: uKodu, 
+                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
+                                    barkod: String(item.barkod || ""), 
+                                    refNo: String(item.refNo || ""),
+                                    isDummy: checkDummy
+                                };
+                            });
+                        }
+                    } catch(e) { }
+                }
+
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
@@ -744,13 +772,19 @@
             document.getElementById('scan-dropdown').style.display = 'none';
             document.getElementById('scan-qty').focus();
             
-            window.pinnedItemCode = code; 
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
+                if (window.pinnedItemCode && window.pinnedItemCode !== code) {
+                    const oldPinnedCode = window.pinnedItemCode;
+                    if (shipment.items[oldPinnedCode].receivedQty > 0 || shipment.items[oldPinnedCode].confirmTime > 0) {
+                        shipment.items[oldPinnedCode].confirmed = true;
+                    }
+                }
+                
                 shipment.items[code].confirmed = false;
+                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
             }
-            renderShipmentList();
         };
 
         window.processScan = async () => {
@@ -961,7 +995,7 @@
                 const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span><span class="bmc-badge bmc-qty">${shipment.bmc[item.code]} ADET</span>` : '';
                 const addressBadge = itemAddress && itemAddress !== "-" && itemAddress !== "" ? `<span class="address-badge">📍 ${itemAddress}</span>` : '';
                 
-                const showDummy = item.isDummy || (catalogDb[item.code] && catalogDb[item.code].isDummy);
+                const showDummy = item.isDummy === true || (catalogDb[item.code] && catalogDb[item.code].isDummy === true) || String(item.name || '').toUpperCase().includes('DUMMY');
                 const dummyBadge = showDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
 
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1060,7 +1094,6 @@
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
-                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
             }
         };
