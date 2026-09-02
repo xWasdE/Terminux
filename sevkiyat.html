@@ -468,7 +468,7 @@
                 allShipments = [];
                 snapshot.forEach(doc => allShipments.push(doc.data()));
                 renderHomeList();
-                if (currentShipmentId) renderShipmentList();
+                if (currentShipmentId) window.renderShipmentList();
             });
         };
 
@@ -675,7 +675,7 @@
                 document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
                 document.getElementById('scan-code').value = '';
                 document.getElementById('scan-code').focus();
-                renderShipmentList();
+                window.renderShipmentList();
             }
         };
 
@@ -750,6 +750,7 @@
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
+                window.renderShipmentList();
                 await saveShipmentToDb(shipment);
                 
                 setTimeout(() => {
@@ -836,6 +837,7 @@
                 shipment.items[finalKey].receivedQty += addQty;
                 if (shipment.items[finalKey].receivedQty === 0) {
                     shipment.items[finalKey].confirmed = false;
+                    shipment.items[finalKey].confirmTime = 0;
                 } else {
                     shipment.items[finalKey].confirmed = true;
                     shipment.items[finalKey].confirmTime = Date.now();
@@ -845,6 +847,7 @@
             if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; 
             if (window.editingItemCode === finalKey) window.editingItemCode = null;
             
+            window.renderShipmentList();
             await saveShipmentToDb(shipment);
             
             inputEl.value = '';
@@ -919,7 +922,28 @@
             return 4;
         };
 
-        const renderShipmentList = () => {
+        const getSortedItems = (items) => {
+            return [...items].sort((a, b) => {
+                const scoreA = getScore(a);
+                const scoreB = getScore(b);
+                
+                if (scoreA !== scoreB) return scoreA - scoreB;
+                
+                if (scoreA === 1 || scoreA === 2) {
+                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
+                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
+                    if (diffA !== diffB) return diffB - diffA;
+                }
+                
+                if (scoreA === 4) {
+                    return (a.confirmTime || 0) - (b.confirmTime || 0);
+                }
+                
+                return a.code.localeCompare(b.code);
+            });
+        };
+
+        window.renderShipmentList = () => {
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
 
@@ -1056,6 +1080,7 @@
                 
                 if (rVal === 0) {
                     shipment.items[code].confirmed = false;
+                    shipment.items[code].confirmTime = 0;
                 } else {
                     shipment.items[code].confirmed = true;
                     if (!shipment.items[code].confirmTime) {
@@ -1066,6 +1091,7 @@
                 if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
                 if (window.editingItemCode === code) window.editingItemCode = null; 
 
+                window.renderShipmentList();
                 await saveShipmentToDb(shipment);
             }
         };
@@ -1079,6 +1105,8 @@
                 window.editingItemCode = code;
                 window.pinnedItemCode = code;
                 shipment.items[code].confirmed = false;
+                
+                window.renderShipmentList();
                 await saveShipmentToDb(shipment);
                 
                 setTimeout(() => {
