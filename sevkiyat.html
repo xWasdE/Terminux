@@ -350,6 +350,7 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
+        let autoConfirmTimers = {};
         
         window.pinnedItemCode = null;
 
@@ -389,7 +390,6 @@
         document.addEventListener('click', (e) => {
             const scanCode = document.getElementById('scan-code');
             const dropdown = document.getElementById('scan-dropdown');
-            const scanArea = document.querySelector('.scan-area');
             
             if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
@@ -398,31 +398,15 @@
             if (window.pinnedItemCode && currentShipmentId) {
                 const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
                 const rowEl = document.getElementById(`item-row-${safeId}`);
+                const scanArea = document.querySelector('.scan-area');
                 
-                if ((!rowEl || !rowEl.contains(e.target)) && (!scanArea || !scanArea.contains(e.target))) {
-                    window.pinnedItemCode = null;
-                    renderShipmentList();
-                }
-            }
-
-            if (currentShipmentId) {
-                const shipment = allShipments.find(s => s.id === currentShipmentId);
-                if(shipment && shipment.items) {
-                    const unconfirmedCodes = Object.keys(shipment.items).filter(k => !shipment.items[k].confirmed);
-                    
-                    unconfirmedCodes.forEach(code => {
-                        const safeId = code.replace(/[^a-zA-Z0-9]/g, '_');
-                        const rowEl = document.getElementById(`item-row-${safeId}`);
-                        
-                        if (rowEl && !rowEl.contains(e.target)) {
-                            const editBtn = e.target.closest('.btn-edit');
-                            if (editBtn && editBtn.getAttribute('data-code') === code) return;
-                            
-                            if (scanArea && scanArea.contains(e.target)) return;
-
-                            window.confirmItem(code);
-                        }
-                    });
+                if (rowEl && !rowEl.contains(e.target) && (!scanArea || !scanArea.contains(e.target))) {
+                    const editBtn = e.target.closest('.btn-edit');
+                    if (!editBtn) {
+                        const code = window.pinnedItemCode;
+                        window.pinnedItemCode = null;
+                        window.confirmItem(code);
+                    }
                 }
             }
         });
@@ -832,6 +816,21 @@
             }
         };
 
+        window.handleBlur = (e, code) => {
+            setTimeout(() => {
+                const recEl = document.getElementById(`rec-${code}`);
+                const lblEl = document.getElementById(`lbl-${code}`);
+                if (document.activeElement !== recEl && document.activeElement !== lblEl) {
+                    const shipment = allShipments.find(s => s.id === currentShipmentId);
+                    if (shipment && shipment.items[code]) {
+                        if (shipment.items[code].receivedQty > 0 || shipment.items[code].confirmTime > 0) {
+                            window.confirmItem(code);
+                        }
+                    }
+                }
+            }, 150);
+        };
+
         window.updateLiveDiff = (code, val) => {
             const el = document.getElementById(`rec-${code}`);
             const expected = parseInt(el.getAttribute('data-expected')) || 0;
@@ -847,6 +846,15 @@
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].receivedQty = parsedVal;
+            }
+
+            clearTimeout(autoConfirmTimers[code]);
+            if (val !== "") {
+                if (parsedVal === expected && expected > 0) {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 500);
+                }
             }
         };
 
@@ -942,11 +950,11 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')" onblur="window.handleBlur(event, '${item.code}')">
                             </div>
                             <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')" onblur="window.handleBlur(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
@@ -985,6 +993,8 @@
         };
 
         window.confirmItem = async (code, overrideVal = null) => {
+            clearTimeout(autoConfirmTimers[code]);
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
 
