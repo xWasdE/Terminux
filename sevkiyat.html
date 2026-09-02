@@ -677,10 +677,6 @@
             
             if (val.length === 0) {
                 dropdown.style.display = 'none';
-                if (window.pinnedItemCode) {
-                    window.pinnedItemCode = null;
-                    renderShipmentList();
-                }
                 return;
             }
             if (val.length < 2) {
@@ -820,6 +816,16 @@
             }
         };
 
+        window.handleBlur = (e, code) => {
+            setTimeout(() => {
+                const recEl = document.getElementById(`rec-${code}`);
+                const lblEl = document.getElementById(`lbl-${code}`);
+                if (document.activeElement !== recEl && document.activeElement !== lblEl) {
+                    window.confirmItem(code);
+                }
+            }, 150);
+        };
+
         window.updateLiveDiff = (code, val) => {
             const el = document.getElementById(`rec-${code}`);
             const expected = parseInt(el.getAttribute('data-expected')) || 0;
@@ -839,9 +845,15 @@
 
             clearTimeout(autoConfirmTimers[code]);
             if (val !== "") {
-                autoConfirmTimers[code] = setTimeout(() => {
-                    window.confirmItem(code);
-                }, 1500); 
+                if (parsedVal === expected && expected > 0) {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 300);
+                } else {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 1500); 
+                }
             }
         };
 
@@ -937,11 +949,11 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')" onblur="window.handleBlur(event, '${item.code}')">
                             </div>
                             <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onchange="window.confirmItem('${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')" onblur="window.handleBlur(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
