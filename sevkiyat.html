@@ -390,27 +390,31 @@
         document.addEventListener('click', (e) => {
             const scanCode = document.getElementById('scan-code');
             const dropdown = document.getElementById('scan-dropdown');
+            const scanArea = document.querySelector('.scan-area');
+            
             if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
                 dropdown.style.display = 'none';
             }
 
-            if (currentShipmentId) {
-                const shipment = allShipments.find(s => s.id === currentShipmentId);
-                if(shipment && shipment.items) {
-                    const unconfirmedCodes = Object.keys(shipment.items).filter(k => !shipment.items[k].confirmed);
-                    
-                    unconfirmedCodes.forEach(code => {
-                        const safeId = code.replace(/[^a-zA-Z0-9]/g, '_');
-                        const rowEl = document.getElementById(`item-row-${safeId}`);
-                        
-                        if (rowEl && !rowEl.contains(e.target)) {
-                            const editBtn = e.target.closest('.btn-edit');
-                            if (editBtn && editBtn.getAttribute('data-code') === code) {
-                                return;
+            if (window.pinnedItemCode && currentShipmentId) {
+                const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
+                const rowEl = document.getElementById(`item-row-${safeId}`);
+                
+                if (rowEl && !rowEl.contains(e.target) && (!scanArea || !scanArea.contains(e.target))) {
+                    const editBtn = e.target.closest('.btn-edit');
+                    if (!editBtn) {
+                        const code = window.pinnedItemCode;
+                        window.pinnedItemCode = null;
+                        const shipment = allShipments.find(s => s.id === currentShipmentId);
+                        if (shipment && shipment.items[code]) {
+                            const item = shipment.items[code];
+                            if (item.receivedQty > 0 || item.confirmTime > 0) {
+                                window.confirmItem(code);
+                            } else {
+                                renderShipmentList();
                             }
-                            window.confirmItem(code);
                         }
-                    });
+                    }
                 }
             }
         });
@@ -677,6 +681,10 @@
             
             if (val.length === 0) {
                 dropdown.style.display = 'none';
+                if (window.pinnedItemCode) {
+                    window.pinnedItemCode = null;
+                    renderShipmentList();
+                }
                 return;
             }
             if (val.length < 2) {
@@ -821,7 +829,12 @@
                 const recEl = document.getElementById(`rec-${code}`);
                 const lblEl = document.getElementById(`lbl-${code}`);
                 if (document.activeElement !== recEl && document.activeElement !== lblEl) {
-                    window.confirmItem(code);
+                    const shipment = allShipments.find(s => s.id === currentShipmentId);
+                    if (shipment && shipment.items[code]) {
+                        if (shipment.items[code].receivedQty > 0 || shipment.items[code].confirmTime > 0) {
+                            window.confirmItem(code);
+                        }
+                    }
                 }
             }, 150);
         };
@@ -849,7 +862,7 @@
                     autoConfirmTimers[code] = setTimeout(() => {
                         window.confirmItem(code);
                     }, 300);
-                } else {
+                } else if (parsedVal > 0) {
                     autoConfirmTimers[code] = setTimeout(() => {
                         window.confirmItem(code);
                     }, 1500); 
