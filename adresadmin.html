@@ -84,7 +84,6 @@
         .btn-cancel { background: #333; color: #fff; border: none; padding: 15px; font-weight: 900; font-size: 14px; border-radius: 6px; cursor: pointer; letter-spacing: 2px; transition: 0.2s; }
         .btn-cancel:hover { background: #444; }
 
-        /* MİNİ RAF DÜZENLEYİCİ İÇİN CSS */
         #be-grid { display: grid; gap: 5px; overflow: auto; padding: 15px; background: #050505; border: 1px solid #222; border-radius: 8px; margin-top: 15px; max-height: 400px; }
         .edit-cell-wrap { position: relative; background: #111; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column; transition: 0.2s; }
         .edit-cell-wrap.over { border-color: #00ff00; background: #0a0a0a; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
@@ -160,7 +159,6 @@
         YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
-    <!-- HÜCRE İÇERİĞİ MODAL -->
     <div id="cell-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header" style="margin-bottom: 10px;">
@@ -180,7 +178,6 @@
         </div>
     </div>
 
-    <!-- YENİ ÜRÜN MODAL -->
     <div id="product-modal" class="modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -214,7 +211,6 @@
         </div>
     </div>
 
-    <!-- MİNİ RAF KROKİSİ DÜZENLEYİCİ -->
     <div id="block-editor-modal" class="modal">
         <div class="modal-box" style="max-width: 800px;">
             <div class="modal-header">
@@ -275,7 +271,6 @@
         </div>
     </div>
 
-    <!-- GENEL ONAY MODAL -->
     <div id="confirm-modal" class="modal">
         <div class="modal-box" style="max-width: 450px; text-align: center;">
             <div class="modal-title" id="confirm-msg" style="margin-bottom: 25px; line-height:1.5;">Emin misiniz?</div>
@@ -286,7 +281,6 @@
         </div>
     </div>
 
-    <!-- GENEL UYARI MODAL -->
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="max-width: 400px; text-align: center;">
             <div style="font-size: 18px; font-weight: 900; color: #ffbc00; margin-bottom: 15px; letter-spacing: 1px;" id="alert-title">UYARI</div>
@@ -351,7 +345,6 @@
             if(e.key === 'Enter') submitPassword();
         });
 
-        // MİNİ DÜZENLEYİCİ DEĞİŞKENLERİ
         let activeBlockParent = null; 
         let draggedGridCell = null;
 
@@ -433,7 +426,6 @@
             let existingData = [];
             let cellElements = Array.from(parent.querySelectorAll('.cell'));
             
-            // Eğer blokta daha önce tanımlanmış açı varsa yakalayalım
             let foundRot = 0;
             
             cellElements.forEach(c => {
@@ -562,7 +554,6 @@
             showCustomAlert("BAŞARILI", "Raf yapısı ve adresleri krokide güncellendi. Kalıcı olması için KROKİ KODUNU ÜRET (İNDİR) butonuna tıklayın ve dosyayı kaydedin.");
         };
 
-        // Mini Grid Drag & Drop
         function handleDragStart(e) {
             draggedGridCell = this;
             e.dataTransfer.effectAllowed = 'move';
@@ -688,32 +679,82 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    showConfirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet ürün sisteme eklenecek. Onaylıyor musunuz?`, async () => {
+                    showConfirm(`${currentDepo === 'am' ? 'AMELİYATHANE' : 'ANA DEPO'} için ${rows.length} adet satır işlenecek. Onaylıyor musunuz?`, async () => {
                         document.getElementById('import-file').value = '';
-                        let count = 0;
+                        
+                        const btnUpload = document.getElementById('btn-excel-upload');
+                        const originalBtnText = btnUpload.innerText;
+                        btnUpload.innerText = 'İŞLENİYOR...';
+                        btnUpload.disabled = true;
+
+                        const q = query(collection(db, currentCollection));
+                        const snapshot = await getDocs(q);
+                        
+                        const mevcutUrunler = new Map();
+                        snapshot.forEach(docSnap => {
+                            const d = docSnap.data();
+                            const key = d.urunKodu || d.barkod;
+                            if (key) {
+                                mevcutUrunler.set(String(key).trim(), { id: docSnap.id, adres: d.adres });
+                            }
+                        });
+
+                        let eklendi = 0;
+                        let guncellendi = 0;
+                        let atlandi = 0;
+
                         for(let row of rows) {
                             let adres = row["Adres"] || row["adres"] || "";
+                            let rowUrunKodu = String(row["Ürün Kodu"] || row["urunKodu"] || "").trim();
+                            let rowBarkod = String(row["Barkod"] || row["barkod"] || "").trim();
+                            let rowUrunAdi = String(row["Ürün Adı"] || row["urunAdi"] || "").trim();
+                            let rowRefNo = String(row["Ref No"] || row["refNo"] || "").trim();
+                            
+                            let uniqueKey = rowUrunKodu || rowBarkod;
+
                             if(adres) {
                                 adres = String(adres).trim();
-                                // BDM filtrelemesi eklendi
                                 if (adres.toUpperCase().startsWith("BDM")) {
                                     adres = adres.substring(3); 
                                 }
-                                await addDoc(collection(db, currentCollection), {
+                                
+                                const dataObj = {
                                     adres: adres,
-                                    urunAdi: String(row["Ürün Adı"] || row["urunAdi"] || ""),
-                                    urunKodu: String(row["Ürün Kodu"] || row["urunKodu"] || ""),
-                                    barkod: String(row["Barkod"] || row["barkod"] || ""),
-                                    refNo: String(row["Ref No"] || row["refNo"] || "")
-                                });
-                                count++;
+                                    urunAdi: rowUrunAdi,
+                                    urunKodu: rowUrunKodu,
+                                    barkod: rowBarkod,
+                                    refNo: rowRefNo
+                                };
+
+                                if (uniqueKey && mevcutUrunler.has(uniqueKey)) {
+                                    const kayitliUrun = mevcutUrunler.get(uniqueKey);
+                                    
+                                    if (kayitliUrun.adres !== adres) {
+                                        await updateDoc(doc(db, currentCollection, kayitliUrun.id), dataObj);
+                                        guncellendi++;
+                                    } else {
+                                        atlandi++;
+                                    }
+                                } else {
+                                    await addDoc(collection(db, currentCollection), dataObj);
+                                    eklendi++;
+                                }
                             }
                         }
-                        showCustomAlert("BAŞARILI", `${count} adet ürün başarıyla yüklendi! Lütfen sayfanın güncellenmesini bekleyin.`);
+                        
+                        btnUpload.innerText = originalBtnText;
+                        btnUpload.disabled = false;
+                        
+                        showCustomAlert(
+                            "İŞLEM TAMAMLANDI", 
+                            `Eklenen: ${eklendi}\nGüncellenen: ${guncellendi}\nAtlanan: ${atlandi}`
+                        );
                         switchDepo(currentDepo);
                     });
                 } catch(err) {
                     showCustomAlert("HATA", "Excel yükleme hatası: " + err.message);
+                    document.getElementById('btn-excel-upload').disabled = false;
+                    switchDepo(currentDepo);
                 }
             };
             reader.readAsArrayBuffer(file);
