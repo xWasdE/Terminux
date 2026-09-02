@@ -360,6 +360,7 @@
         let autoConfirmTimers = {};
         
         window.pinnedItemCode = null;
+        window.editingItemCode = null;
 
         document.getElementById('main-content').addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-to-top');
@@ -403,26 +404,18 @@
             closeCustomConfirm();
         });
 
-        window.autoCloseItem = async (code) => {
-            if (!code || !currentShipmentId) return;
-            const shipment = allShipments.find(s => s.id === currentShipmentId);
-            if (shipment && shipment.items[code]) {
-                const item = shipment.items[code];
-                if (item.receivedQty > 0 || item.confirmTime > 0) {
-                    item.confirmed = true;
-                } else {
-                    item.confirmed = false;
-                }
-                await saveShipmentToDb(shipment);
-            }
-        };
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.scan-area') || e.target.closest('.scan-dropdown')) return;
 
-        document.addEventListener('click', (e) => {
-            const scanCode = document.getElementById('scan-code');
-            const dropdown = document.getElementById('scan-dropdown');
-            
-            if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = 'none';
+            const activeCode = window.pinnedItemCode || window.editingItemCode;
+            if (activeCode && currentShipmentId) {
+                const safeId = activeCode.replace(/[^a-zA-Z0-9]/g, '_');
+                const rowEl = document.getElementById(`item-row-${safeId}`);
+                
+                if (rowEl && !rowEl.contains(e.target)) {
+                    if (e.target.closest('.btn-edit')) return;
+                    window.confirmItem(activeCode);
+                }
             }
         });
 
@@ -438,26 +431,6 @@
 
         const loadCatalog = async () => {
             try {
-                const cachedData = localStorage.getItem('terminux_catalog_cache');
-                if (cachedData) {
-                    try {
-                        const parsed = JSON.parse(cachedData);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(item => {
-                                const uKodu = String(item.urunKodu || item.docId || "");
-                                const checkDummy = item.dummy === true || item.isDummy === true || item.DUMMY === true || String(item.urunAdi || '').toUpperCase().includes('DUMMY');
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || ""),
-                                    isDummy: checkDummy
-                                };
-                            });
-                        }
-                    } catch(e) { }
-                }
-
                 const [anaSnap, amSnap] = await Promise.all([
                     getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
@@ -475,12 +448,10 @@
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || ""),
-                                isDummy: checkDummy
+                                refNo: String(d.refNo || "")
                             };
-                        } else {
-                            catalogDb[key].isDummy = catalogDb[key].isDummy || checkDummy;
                         }
+                        catalogDb[key]['isDummy_' + locKey] = checkDummy;
                         catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
                     });
                 };
@@ -636,11 +607,15 @@
                         let finalAddress = "-";
                         let isDummy = false;
                         if (catalogDb[finalCode]) {
-                            finalAddress = type === 'ANA DEPO' ? (catalogDb[finalCode].ana_adres || "-") : (catalogDb[finalCode].am_adres || "-");
-                            isDummy = catalogDb[finalCode].isDummy || false;
-                        }
-                        if (!isDummy && String(finalName).toUpperCase().includes('DUMMY')) {
-                            isDummy = true;
+                            if (type === 'ANA DEPO') {
+                                finalAddress = catalogDb[finalCode].ana_adres || "-";
+                                isDummy = catalogDb[finalCode].isDummy_ana || false;
+                            } else {
+                                finalAddress = catalogDb[finalCode].am_adres || "-";
+                                isDummy = catalogDb[finalCode].isDummy_am || false;
+                            }
+                        } else {
+                            isDummy = String(finalName).toUpperCase().includes('DUMMY');
                         }
 
                         if (shipmentItems[finalCode]) {
@@ -689,7 +664,8 @@
 
         window.resumeShipment = (id) => {
             currentShipmentId = id;
-            window.pinnedItemCode = null; 
+            window.pinnedItemCode = null;
+            window.editingItemCode = null;
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('active-screen').style.display = 'block';
             
@@ -708,6 +684,7 @@
             document.getElementById('active-screen').style.display = 'none';
             currentShipmentId = null;
             window.pinnedItemCode = null;
+            window.editingItemCode = null;
             renderHomeList();
         };
 
@@ -745,7 +722,7 @@
                         const catItem = catalogDb[m.code] || Object.values(catalogDb).find(c => c.urunKodu === m.code || c.barkod === m.code);
                         const refNo = catItem ? catItem.refNo : "-";
                         return `
-                            <div class="scan-dropdown-item" onclick="selectFromDropdown('${m.code}')">
+                            <div class="scan-dropdown-item" onclick="selectFromDropdown(event, '${m.code}')">
                                 <div class="scan-dropdown-item-title">${m.name}</div>
                                 <div class="scan-dropdown-item-sub">KOD: <span style="color:#00ff00;">${m.code}</span> | REF: ${refNo}</div>
                             </div>
@@ -759,23 +736,22 @@
             }, 150);
         });
 
-        window.selectFromDropdown = async (code) => {
+        window.selectFromDropdown = async (e, code) => {
+            if (e) e.stopPropagation();
             document.getElementById('scan-code').value = code;
             document.getElementById('scan-dropdown').style.display = 'none';
             document.getElementById('scan-qty').focus();
             
-            if (window.pinnedItemCode && window.pinnedItemCode !== code) {
-                await window.autoCloseItem(window.pinnedItemCode);
-            }
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
 
+            window.pinnedItemCode = code; 
+            window.editingItemCode = null;
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if (shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
-                window.pinnedItemCode = code;
                 await saveShipmentToDb(shipment);
-            } else {
-                window.pinnedItemCode = code;
-                renderShipmentList();
             }
         };
 
@@ -799,16 +775,26 @@
             if (catalogDb[searchCode]) {
                 matchedKey = searchCode;
                 matchedName = catalogDb[searchCode].urunAdi;
-                finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[searchCode].ana_adres || "-") : (catalogDb[searchCode].am_adres || "-");
-                isDummy = catalogDb[searchCode].isDummy || false;
+                if (shipment.type === 'ANA DEPO') {
+                    finalAddress = catalogDb[searchCode].ana_adres || "-";
+                    isDummy = catalogDb[searchCode].isDummy_ana || false;
+                } else {
+                    finalAddress = catalogDb[searchCode].am_adres || "-";
+                    isDummy = catalogDb[searchCode].isDummy_am || false;
+                }
             } else {
                 const searchCodeLower = trToLower(searchCode);
                 for (const key in catalogDb) {
                     if (trToLower(key) === searchCodeLower || trToLower(catalogDb[key].barkod) === searchCodeLower || trToLower(catalogDb[key].refNo) === searchCodeLower) {
                         matchedKey = key;
                         matchedName = catalogDb[key].urunAdi;
-                        finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[key].ana_adres || "-") : (catalogDb[key].am_adres || "-");
-                        isDummy = catalogDb[key].isDummy || false;
+                        if (shipment.type === 'ANA DEPO') {
+                            finalAddress = catalogDb[key].ana_adres || "-";
+                            isDummy = catalogDb[key].isDummy_ana || false;
+                        } else {
+                            finalAddress = catalogDb[key].am_adres || "-";
+                            isDummy = catalogDb[key].isDummy_am || false;
+                        }
                         break;
                     }
                 }
@@ -822,9 +808,8 @@
                 window.playBeep('success');
             }
 
-            if (window.pinnedItemCode && window.pinnedItemCode !== finalKey) {
-                await window.autoCloseItem(window.pinnedItemCode);
-            }
+            if (window.pinnedItemCode && window.pinnedItemCode !== finalKey) window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== finalKey) window.confirmItem(window.editingItemCode);
 
             if(!shipment.items) shipment.items = {};
 
@@ -847,6 +832,7 @@
             }
             
             if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; 
+            if (window.editingItemCode === finalKey) window.editingItemCode = null;
             
             await saveShipmentToDb(shipment);
             
@@ -899,7 +885,11 @@
                 if (parsedVal === expected && expected > 0) {
                     autoConfirmTimers[code] = setTimeout(() => {
                         window.confirmItem(code);
-                    }, 400);
+                    }, 100);
+                } else {
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 1500); 
                 }
             }
         };
@@ -910,7 +900,7 @@
                 
                 if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) return 4;
                 
-                if (!item.confirmed && item.receivedQty > 0) return 1;
+                if (!item.confirmed && item.receivedQty > 0 && item.code !== window.editingItemCode) return 1;
 
                 const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
                 if (isMissing) return 1;
@@ -965,18 +955,18 @@
                 else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 } 
-                else if (item.receivedQty > item.expectedQty) {
-                    statusClass = 'status-over'; valClass = 'val-over';
-                }
                 else if (item.receivedQty === 0 && item.confirmed) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
+                }
+                else if (item.receivedQty > item.expectedQty) {
+                    statusClass = 'status-over'; valClass = 'val-over';
                 }
 
                 let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff;
                 
-                if (!item.confirmed && item.receivedQty === 0 && item.code !== window.pinnedItemCode) diffClass = 'diff-zero';
+                if (!item.confirmed && item.receivedQty === 0 && item.code !== window.pinnedItemCode && item.code !== window.editingItemCode) diffClass = 'diff-zero';
 
                 let itemAddress = item.address;
                 if (!itemAddress || itemAddress === "-") {
@@ -990,32 +980,20 @@
                 const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span><span class="bmc-badge bmc-qty">${shipment.bmc[item.code]} ADET</span>` : '';
                 const addressBadge = itemAddress && itemAddress !== "-" && itemAddress !== "" ? `<span class="address-badge">📍 ${itemAddress}</span>` : '';
                 
-                const showDummy = item.isDummy === true || (catalogDb[item.code] && catalogDb[item.code].isDummy === true) || String(item.name || '').toUpperCase().includes('DUMMY');
-                const dummyBadge = showDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
+                let checkDummy = item.isDummy === true;
+                if (!checkDummy && catalogDb[item.code]) {
+                    checkDummy = (shipment.type === 'ANA DEPO' ? catalogDb[item.code].isDummy_ana : catalogDb[item.code].isDummy_am) === true;
+                }
+                if (!checkDummy) {
+                    checkDummy = String(item.name || '').toUpperCase().includes('DUMMY');
+                }
+                const dummyBadge = checkDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
 
                 const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
+                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode) || !item.confirmed;
 
                 let dynamicCols = '';
-                if (!item.confirmed && item.code === window.pinnedItemCode) {
-                    const defaultRec = item.receivedQty || 0;
-                    const defaultLbl = item.labelQty || 0;
-                    
-                    dynamicCols = `
-                        <div class="qty-grid">
-                            <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
-                            <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
-                            </div>
-                            <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
-                            <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
-                            </div>
-                        </div>
-                        <div class="item-action">
-                            <button class="btn-check" onclick="window.confirmItem('${item.code}')">KONTROLÜ BİTİR</button>
-                        </div>
-                    `;
-                } else if (!item.confirmed && item.receivedQty === 0) {
+                if (isEditingMode) {
                     const defaultRec = item.receivedQty || 0;
                     const defaultLbl = item.labelQty || 0;
                     
@@ -1056,6 +1034,16 @@
                     </div>
                 `;
             }).join('');
+            
+            if (window.pinnedItemCode) {
+                setTimeout(() => {
+                    const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
+                    const targetEl = document.getElementById(`item-row-${safeId}`);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
         };
 
         window.confirmItem = async (code, overrideVal = null) => {
@@ -1069,30 +1057,39 @@
                 const recEl = document.getElementById(`rec-${code}`);
                 rVal = recEl ? parseInt(recEl.value) : (shipment.items[code].receivedQty || 0);
             }
+            if (isNaN(rVal)) rVal = 0;
             
             const lblEl = document.getElementById(`lbl-${code}`);
-            const lVal = lblEl ? parseInt(lblEl.value) : (shipment.items[code].labelQty || 0);
+            let lVal = lblEl ? parseInt(lblEl.value) : (shipment.items[code].labelQty || 0);
+            if (isNaN(lVal)) lVal = 0;
             
             if(shipment.items[code]) {
-                shipment.items[code].receivedQty = isNaN(rVal) ? 0 : rVal;
-                shipment.items[code].labelQty = isNaN(lVal) ? 0 : lVal;
-                shipment.items[code].confirmed = true;
-                shipment.items[code].confirmTime = Date.now();
+                shipment.items[code].receivedQty = rVal;
+                shipment.items[code].labelQty = lVal;
+                
+                if (rVal === 0 && !shipment.items[code].confirmTime) {
+                    shipment.items[code].confirmed = false;
+                } else {
+                    shipment.items[code].confirmed = true;
+                    if (!shipment.items[code].confirmTime) shipment.items[code].confirmTime = Date.now();
+                }
                 
                 if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
+                if (window.editingItemCode === code) window.editingItemCode = null; 
 
                 await saveShipmentToDb(shipment);
             }
         };
 
         window.editItem = async (code) => {
-            if (window.pinnedItemCode && window.pinnedItemCode !== code) {
-                await window.autoCloseItem(window.pinnedItemCode);
-            }
+            if (window.pinnedItemCode) window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) window.confirmItem(window.editingItemCode);
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(shipment && shipment.items[code]) {
                 shipment.items[code].confirmed = false;
-                window.pinnedItemCode = code;
+                window.editingItemCode = code;
+                window.pinnedItemCode = null;
                 await saveShipmentToDb(shipment);
             }
         };
