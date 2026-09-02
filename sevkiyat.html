@@ -738,7 +738,7 @@
 
         window.selectFromDropdown = async (e, code) => {
             if (e) e.stopPropagation();
-            document.getElementById('scan-code').value = '';
+            document.getElementById('scan-code').value = code;
             document.getElementById('scan-dropdown').style.display = 'none';
             
             if (window.pinnedItemCode && window.pinnedItemCode !== code) await window.confirmItem(window.pinnedItemCode);
