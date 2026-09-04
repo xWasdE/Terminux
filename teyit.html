@@ -340,6 +340,7 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
+        
         let selectedVerifyCode = null;
 
         document.getElementById('main-content').addEventListener('scroll', function() {
@@ -523,18 +524,32 @@
 
         window.exportDatabaseByAddress = () => {
             const depo = document.getElementById('export-depo').value;
-            const prefix = document.getElementById('export-address').value.trim().toUpperCase();
+            const rawPrefix = document.getElementById('export-address').value.trim().toUpperCase();
             const locKey = depo === 'ANA DEPO' ? 'ana' : 'am';
             
+            let p1 = rawPrefix;
+            let p2 = rawPrefix;
+            
+            if (rawPrefix !== "") {
+                if (!rawPrefix.startsWith("BDA")) {
+                    p1 = "BDA" + rawPrefix;
+                    p2 = rawPrefix;
+                } else {
+                    p1 = rawPrefix;
+                    p2 = rawPrefix.substring(3);
+                }
+            }
+
             const results = [];
             Object.values(catalogDb).forEach(item => {
-                const addr = String(item[`${locKey}_adres`] || "");
-                if (addr.toUpperCase().startsWith(prefix)) {
+                const addr = String(item[`${locKey}_adres`] || "").toUpperCase();
+                
+                if (rawPrefix === "" || addr.startsWith(p1) || addr.startsWith(p2)) {
                     results.push({
                         "ÜRÜN KODU": item.urunKodu,
                         "ÜRÜN İSMİ": item.urunAdi,
                         "BARKOD": item.barkod,
-                        "ADRES": addr,
+                        "ADRES": item[`${locKey}_adres`] || "-",
                         "MİAT": item[`${locKey}_miat`] || "-"
                     });
                 }
@@ -547,7 +562,7 @@
             const ws = XLSX.utils.json_to_sheet(results);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "STOK_ADRES_LISTESI");
-            XLSX.writeFile(wb, `Terminux_${depo}_${prefix || 'TUM'}.xlsx`);
+            XLSX.writeFile(wb, `Terminux_${depo}_${rawPrefix || 'TUM'}.xlsx`);
         };
 
         window.deleteSession = (id) => {
@@ -811,13 +826,11 @@
                 let addr = i.newAddress || "";
                 let parts = addr.split('.');
                 let blok = "-", kat = "-", bolme = "-";
-                if(parts.length >= 3) {
-                    blok = "BDA" + parts[0];
-                    kat = parts[1];
-                    bolme = parts[2];
-                } else if (parts.length > 0 && parts[0].trim() !== "") {
-                    blok = "BDA" + parts[0];
-                    if(parts.length > 1) kat = parts[1];
+                if (parts.length > 0 && parts[0].trim() !== "") {
+                    let p0 = parts[0].trim().toUpperCase();
+                    blok = p0.startsWith("BDA") ? p0 : "BDA" + p0;
+                    if (parts.length > 1) kat = parts[1].trim();
+                    if (parts.length > 2) bolme = parts[2].trim();
                 }
                 return {
                     "Ürün Kodu": i.code,
