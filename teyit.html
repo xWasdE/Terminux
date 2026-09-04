@@ -102,6 +102,7 @@
         .vp-header { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .vp-name { font-size: 20px; font-weight: 800; color: #00ccff; }
         .vp-code { font-size: 13px; color: #888; font-family: monospace; }
+        .vp-miat { font-size: 12px; font-weight: bold; color: #ffbc00; margin-top: 5px; }
         .vp-actions { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
 
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
@@ -113,7 +114,7 @@
         .status-changed { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.05) 0%, transparent 100%); }
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
-        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; }
         .item-addr { font-family: monospace; font-size: 15px; font-weight: bold; color: #888; }
         .item-addr-new { font-family: monospace; font-size: 15px; font-weight: bold; color: #ffbc00; }
         .item-addr-correct { font-family: monospace; font-size: 15px; font-weight: bold; color: #00ff00; }
@@ -121,6 +122,7 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: inline-block; text-align: center; }
         .badge-correct { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid rgba(0,255,0,0.3); }
         .badge-changed { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
+        .badge-miat { background: #222; color: #00ccff; border: 1px solid #333; width: fit-content; }
 
         .item-action { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-edit { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
@@ -202,6 +204,22 @@
                 <button class="btn-primary" style="margin-top: 20px; background: #9c27b0; color:#fff;" onclick="createTeyitSession()">TEYİT OTURUMUNU BAŞLAT</button>
             </div>
 
+            <div class="setup-container" style="margin-top: 30px;">
+                <div class="setup-title">LOKASYON BAZLI STOK İNDİR</div>
+                <div class="input-group">
+                    <label>İNDİRİLECEK DEPO</label>
+                    <select id="export-depo">
+                        <option value="ANA DEPO">ANA DEPO</option>
+                        <option value="AMELİYATHANE">AMELİYATHANE</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>ADRES BAŞLANGICI (Örn: 06 veya 06.01)</label>
+                    <input type="text" id="export-address" placeholder="Tüm ürünleri indirmek için boş bırakın..." autocomplete="off">
+                </div>
+                <button class="btn-success" style="margin-top: 10px;" onclick="exportDatabaseByAddress()">LİSTEYİ İNDİR</button>
+            </div>
+
             <div class="history-container" id="history-container" style="display:none;">
                 <div class="history-title">MEVCUT VE GEÇMİŞ TEYİT OTURUMLARI</div>
                 <div class="history-list" id="history-list"></div>
@@ -235,6 +253,7 @@
                 <div class="vp-header">
                     <div class="vp-name" id="vp-name">-</div>
                     <div class="vp-code" id="vp-code">-</div>
+                    <div class="vp-miat" id="vp-miat">-</div>
                 </div>
                 <div class="vp-actions">
                     <div class="input-group" style="flex:1; margin:0;">
@@ -321,7 +340,6 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
-        
         let selectedVerifyCode = null;
 
         document.getElementById('main-content').addEventListener('scroll', function() {
@@ -425,6 +443,8 @@
                             };
                         }
                         catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
+                        const miat = d.miat || d.miatTarihi || d.skt || d.sonKullanma || d.sonKullanmaTarihi || "-";
+                        catalogDb[key][locKey + '_miat'] = String(miat);
                     });
                 };
                 
@@ -501,6 +521,35 @@
             resumeSession(newId);
         };
 
+        window.exportDatabaseByAddress = () => {
+            const depo = document.getElementById('export-depo').value;
+            const prefix = document.getElementById('export-address').value.trim().toUpperCase();
+            const locKey = depo === 'ANA DEPO' ? 'ana' : 'am';
+            
+            const results = [];
+            Object.values(catalogDb).forEach(item => {
+                const addr = String(item[`${locKey}_adres`] || "");
+                if (addr.toUpperCase().startsWith(prefix)) {
+                    results.push({
+                        "ÜRÜN KODU": item.urunKodu,
+                        "ÜRÜN İSMİ": item.urunAdi,
+                        "BARKOD": item.barkod,
+                        "ADRES": addr,
+                        "MİAT": item[`${locKey}_miat`] || "-"
+                    });
+                }
+            });
+            
+            if(results.length === 0) {
+                return showCustomAlert("SONUÇ YOK", "Bu aramaya veya adrese ait ürün bulunamadı.");
+            }
+            
+            const ws = XLSX.utils.json_to_sheet(results);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "STOK_ADRES_LISTESI");
+            XLSX.writeFile(wb, `Terminux_${depo}_${prefix || 'TUM'}.xlsx`);
+        };
+
         window.deleteSession = (id) => {
             showCustomConfirm("OTURUMU SİL", "Bu teyit listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", async () => {
                 try {
@@ -564,7 +613,7 @@
                     dropdown.innerHTML = matches.map(m => {
                         const refNo = m.refNo || "-";
                         return `
-                            <div class="scan-dropdown-item" onclick="selectFromDropdown(event, '${m.urunKodu}')">
+                            <div class="scan-dropdown-item" onclick="window.selectFromDropdown(event, '${m.urunKodu}')">
                                 <div class="scan-dropdown-item-title">${m.urunAdi}</div>
                                 <div class="scan-dropdown-item-sub">KOD: <span style="color:#00ccff;">${m.urunKodu}</span> | REF: ${refNo}</div>
                             </div>
@@ -581,7 +630,7 @@
         window.selectFromDropdown = (e, code) => {
             if (e) e.stopPropagation();
             document.getElementById('scan-dropdown').style.display = 'none';
-            openVerifyPanel(code);
+            window.openVerifyPanel(code);
         };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => {
@@ -590,12 +639,12 @@
                 const code = document.getElementById('scan-code').value.trim();
                 document.getElementById('scan-dropdown').style.display = 'none';
                 if(code) {
-                    openVerifyPanel(window.cleanBarcode(code));
+                    window.openVerifyPanel(window.cleanBarcode(code));
                 }
             }
         });
 
-        const openVerifyPanel = (code) => {
+        window.openVerifyPanel = (code) => {
             if(!code || !currentSessionId) return;
             const sessionData = allSessions.find(s => s.id === currentSessionId);
             if(!sessionData) return;
@@ -616,16 +665,25 @@
             selectedVerifyCode = itemData.urunKodu;
             
             let currentAddress = "-";
+            let miat = "-";
             if (sessionData.type === 'ANA DEPO') {
                 currentAddress = itemData.ana_adres || "-";
+                miat = itemData.ana_miat || "-";
             } else {
                 currentAddress = itemData.am_adres || "-";
+                miat = itemData.am_miat || "-";
+            }
+
+            let existingNewAddr = '';
+            if (sessionData.items && sessionData.items[itemData.urunKodu] && sessionData.items[itemData.urunKodu].status === 'DEĞİŞTİ') {
+                existingNewAddr = sessionData.items[itemData.urunKodu].newAddress;
             }
 
             document.getElementById('vp-name').innerText = itemData.urunAdi;
             document.getElementById('vp-code').innerText = `KOD: ${itemData.urunKodu}`;
+            document.getElementById('vp-miat').innerText = `MİAT: ${miat}`;
             document.getElementById('vp-old-address').value = currentAddress;
-            document.getElementById('vp-new-address').value = '';
+            document.getElementById('vp-new-address').value = existingNewAddr;
             
             document.getElementById('verify-panel').style.display = 'block';
             document.getElementById('scan-code').value = '';
@@ -641,6 +699,7 @@
             const name = document.getElementById('vp-name').innerText;
             const oldAddr = document.getElementById('vp-old-address').value;
             let newAddr = document.getElementById('vp-new-address').value.trim();
+            let miatText = document.getElementById('vp-miat').innerText.replace('MİAT: ', '') || "-";
 
             let status = 'DOĞRU';
             let finalAddr = oldAddr;
@@ -663,7 +722,8 @@
                 name: name,
                 oldAddress: oldAddr,
                 newAddress: finalAddr,
-                status: status
+                status: status,
+                miat: miatText
             };
 
             await saveSessionToDb(sessionData);
@@ -704,14 +764,17 @@
                 return `
                     <div class="list-item ${statusClass}">
                         <div class="item-code">${item.code}</div>
-                        <div class="item-name">${item.name}</div>
+                        <div class="item-name">
+                            ${item.name}
+                            <span class="badge badge-miat" style="margin-top: 4px;">MİAT: ${item.miat || '-'}</span>
+                        </div>
                         <div class="item-addr">${item.oldAddress}</div>
                         <div class="${addrClass}">${item.newAddress}</div>
                         <div style="text-align:center;">
                             <span class="badge ${badgeClass}">${item.status}</span>
                         </div>
                         <div class="item-action">
-                            <button class="btn-edit" onclick="openVerifyPanel('${item.code}')">DÜZENLE</button>
+                            <button class="btn-edit" onclick="window.openVerifyPanel('${item.code}')">DÜZENLE</button>
                             <button class="btn-del" onclick="removeItem('${item.code}')">SİL</button>
                         </div>
                     </div>
@@ -740,13 +803,42 @@
                 "Ürün Kodu": i.code, 
                 "ÜRÜN İSMİ": i.name, 
                 "ESKİ ADRES": i.oldAddress, 
-                "DURUM": i.status
+                "DURUM": i.status,
+                "MİAT": i.miat || "-"
             }));
 
+            const splitData = items.map(i => {
+                let addr = i.newAddress || "";
+                let parts = addr.split('.');
+                let blok = "-", kat = "-", bolme = "-";
+                if(parts.length >= 3) {
+                    blok = "BDA" + parts[0];
+                    kat = parts[1];
+                    bolme = parts[2];
+                } else if (parts.length > 0 && parts[0].trim() !== "") {
+                    blok = "BDA" + parts[0];
+                    if(parts.length > 1) kat = parts[1];
+                }
+                return {
+                    "Ürün Kodu": i.code,
+                    "ÜRÜN İSMİ": i.name,
+                    "TAM ADRES": addr,
+                    "BLOK": blok,
+                    "KAT": kat,
+                    "BÖLME": bolme,
+                    "DURUM": i.status,
+                    "MİAT": i.miat || "-"
+                };
+            });
+
             const safeName = sessionData.name.replace(/[^a-z0-9]/gi, '_');
-            const ws = XLSX.utils.json_to_sheet(exportData);
+            const ws1 = XLSX.utils.json_to_sheet(exportData);
+            const ws2 = XLSX.utils.json_to_sheet(splitData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "ADRES TEYITLERI");
+            
+            XLSX.utils.book_append_sheet(wb, ws1, "ADRES TEYITLERI");
+            XLSX.utils.book_append_sheet(wb, ws2, "AYRISTIRILMIS ADRESLER");
+            
             XLSX.writeFile(wb, `Terminux_Adres_Teyit_${safeName}.xlsx`);
 
             showCustomConfirm("OTURUMU KAPAT", "Excel dosyası indirildi. Oturumu tamamlandı olarak işaretlemek ister misiniz?", "KAPAT", "btn-success", async () => {
@@ -764,7 +856,7 @@
                 (decodedText) => {
                     document.getElementById('scan-code').value = window.cleanBarcode(decodedText);
                     closeScanner();
-                    openVerifyPanel(window.cleanBarcode(decodedText));
+                    window.openVerifyPanel(window.cleanBarcode(decodedText));
                 },
                 (errorMessage) => {}
             ).catch((err) => {
