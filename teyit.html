@@ -340,7 +340,6 @@
         let confirmActionCallback = null;
         let html5QrCode = null;
         let searchTimeout = null;
-        
         let selectedVerifyCode = null;
 
         document.getElementById('main-content').addEventListener('scroll', function() {
@@ -443,7 +442,9 @@
                                 refNo: String(d.refNo || "")
                             };
                         }
-                        catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
+                        const addrFields = d.stokAdresi || d.StokAdresi || d.adres || d.Adres || d.lokasyon || d.Lokasyon || d.raf || d.Raf || "-";
+                        catalogDb[key][locKey + '_adres'] = String(addrFields);
+                        
                         const miat = d.miat || d.miatTarihi || d.skt || d.sonKullanma || d.sonKullanmaTarihi || "-";
                         catalogDb[key][locKey + '_miat'] = String(miat);
                     });
@@ -531,25 +532,35 @@
             let p2 = rawPrefix;
             
             if (rawPrefix !== "") {
-                if (!rawPrefix.startsWith("BDA")) {
-                    p1 = "BDA" + rawPrefix;
-                    p2 = rawPrefix;
-                } else {
+                if (rawPrefix.startsWith("BDA")) {
                     p1 = rawPrefix;
                     p2 = rawPrefix.substring(3);
+                } else {
+                    p1 = "BDA" + rawPrefix;
+                    p2 = rawPrefix;
                 }
             }
 
             const results = [];
             Object.values(catalogDb).forEach(item => {
-                const addr = String(item[`${locKey}_adres`] || "").toUpperCase();
+                const addr = String(item[`${locKey}_adres`] || "").trim().toUpperCase();
                 
-                if (rawPrefix === "" || addr.startsWith(p1) || addr.startsWith(p2)) {
+                if (rawPrefix === "") {
+                    if (addr !== "-") {
+                        results.push({
+                            "ÜRÜN KODU": item.urunKodu,
+                            "ÜRÜN İSMİ": item.urunAdi,
+                            "BARKOD": item.barkod,
+                            "ADRES": addr,
+                            "MİAT": item[`${locKey}_miat`] || "-"
+                        });
+                    }
+                } else if (addr !== "-" && (addr.startsWith(p1) || addr.startsWith(p2))) {
                     results.push({
                         "ÜRÜN KODU": item.urunKodu,
                         "ÜRÜN İSMİ": item.urunAdi,
                         "BARKOD": item.barkod,
-                        "ADRES": item[`${locKey}_adres`] || "-",
+                        "ADRES": addr,
                         "MİAT": item[`${locKey}_miat`] || "-"
                     });
                 }
@@ -725,7 +736,11 @@
                     return;
                 }
                 status = 'DEĞİŞTİ';
-                finalAddr = newAddr.toUpperCase();
+                let formattedAddr = newAddr.toUpperCase().trim();
+                if (!formattedAddr.startsWith("BDA")) {
+                    formattedAddr = "BDA" + formattedAddr;
+                }
+                finalAddr = formattedAddr;
             } else {
                 finalAddr = oldAddr;
             }
@@ -826,12 +841,14 @@
                 let addr = i.newAddress || "";
                 let parts = addr.split('.');
                 let blok = "-", kat = "-", bolme = "-";
+                
                 if (parts.length > 0 && parts[0].trim() !== "") {
                     let p0 = parts[0].trim().toUpperCase();
                     blok = p0.startsWith("BDA") ? p0 : "BDA" + p0;
                     if (parts.length > 1) kat = parts[1].trim();
                     if (parts.length > 2) bolme = parts[2].trim();
                 }
+
                 return {
                     "Ürün Kodu": i.code,
                     "ÜRÜN İSMİ": i.name,
