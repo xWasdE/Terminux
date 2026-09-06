@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Bakımda</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Inter', sans-serif; }
+        
+        .glass-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        .crack { position: absolute; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); transform-origin: center; animation: crackReveal 0.1s forwards; opacity: 0; }
+        .crack-1 { width: 2px; height: 120%; top: -10%; left: 45%; transform: rotate(15deg); animation-delay: 0.5s; }
+        .crack-2 { width: 100%; height: 2px; top: 40%; left: -10%; transform: rotate(-25deg); animation-delay: 0.6s; }
+        .crack-3 { width: 2px; height: 80%; top: 30%; left: 60%; transform: rotate(-45deg); animation-delay: 0.7s; }
+        .crack-4 { width: 60%; height: 2px; top: 70%; left: 20%; transform: rotate(10deg); animation-delay: 0.8s; }
+
+        @keyframes crackReveal { to { opacity: 1; } }
+
+        .content { position: relative; z-index: 5; text-align: center; color: #fff; }
+        .glitch-text { font-size: 6vw; position: relative; display: inline-block; letter-spacing: -2px; animation: textGlitch 3s infinite; }
+        .glitch-text::before, .glitch-text::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; }
+        .glitch-text::before { left: 2px; text-shadow: -2px 0 #ff0000; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch-text::after { left: -2px; text-shadow: -2px 0 #00ffff; animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        
+        .sub-text { margin-top: 20px; font-size: 1.5vw; color: #888; letter-spacing: 5px; text-transform: uppercase; animation: fadePulse 4s infinite; }
+
+        @keyframes textGlitch { 0%, 100% { transform: skewX(0deg); } 5% { transform: skewX(2deg); opacity: 0.8; } 10% { transform: skewX(-2deg); opacity: 1; } }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); } 40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(70% 0 10% 0); } 60% { clip-path: inset(20% 0 50% 0); } 80% { clip-path: inset(50% 0 30% 0); } 100% { clip-path: inset(5% 0 80% 0); } }
+        @keyframes fadePulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        .hidden-trigger { position: absolute; bottom: 20px; right: 20px; width: 50px; height: 50px; z-index: 20; cursor: pointer; }
+        #bypass-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 30; align-items: center; justify-content: center; }
+        .bypass-box { background: #111; border: 1px solid #333; padding: 30px; text-align: center; border-radius: 8px; }
+        .bypass-box input { width: 100%; padding: 15px; background: #000; border: 1px solid #444; color: #fff; font-size: 20px; text-align: center; font-family: monospace; letter-spacing: 5px; outline: none; margin-bottom: 15px; }
+        .bypass-box button { width: 100%; padding: 15px; background: #fff; color: #000; font-weight: 900; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <div class="crack crack-1"></div>
+        <div class="crack crack-2"></div>
+        <div class="crack crack-3"></div>
+        <div class="crack crack-4"></div>
+    </div>
+    
+    <div class="content">
+        <div class="glitch-text" data-text="SYSTEM OFFLINE">SYSTEM OFFLINE</div>
+        <div class="sub-text">BAKIM ÇALIŞMASI DEVAM EDİYOR</div>
+    </div>
+
+    <div class="hidden-trigger" onclick="document.getElementById('bypass-modal').style.display='flex'"></div>
+
+    <div id="bypass-modal">
+        <div class="bypass-box">
+            <input type="password" id="bypass-pw" autocomplete="off">
+            <button onclick="checkBypass()">SİSTEMİ AÇ</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
+            authDomain: "terminux-wms.firebaseapp.com",
+            projectId: "terminux-wms",
+            storageBucket: "terminux-wms.firebasestorage.app",
+            messagingSenderId: "427323493367",
+            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+            if(docSnap.exists() && docSnap.data().maintenanceMode !== true) {
+                window.location.href = "index.html";
+            }
+        });
+
+        window.checkBypass = async () => {
+            const pw = document.getElementById('bypass-pw').value;
+            const docSnap = await getDoc(doc(db, "system", "settings"));
+            if (docSnap.exists() && docSnap.data().maintenancePassword === pw) {
+                sessionStorage.setItem('bypass_maintenance', 'true');
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('bypass-pw').value = '';
+                document.getElementById('bypass-modal').style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
