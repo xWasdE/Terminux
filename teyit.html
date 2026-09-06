@@ -199,14 +199,16 @@
                 </div>
                 <div class="input-group">
                     <label>KONTROL EDİLECEK DEPO</label>
-                    <select id="setup-type">
+                    <select id="setup-type" onchange="updateAddressDropdowns()">
                         <option value="ANA DEPO">ANA DEPO</option>
                         <option value="AMELİYATHANE">AMELİYATHANE</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>KONTROL EDİLECEK ADRES (Opsiyonel - Otomatik Listeler)</label>
-                    <input type="text" id="setup-address" placeholder="Örn: 06 veya 06.01" autocomplete="off">
+                    <label>KONTROL EDİLECEK ADRES</label>
+                    <select id="setup-address">
+                        <option value="">-- YÜKLENİYOR --</option>
+                    </select>
                 </div>
                 <button class="btn-primary" style="margin-top: 20px; background: #9c27b0; color:#fff;" onclick="createTeyitSession()">TEYİT OTURUMUNU BAŞLAT</button>
             </div>
@@ -215,14 +217,16 @@
                 <div class="setup-title">LOKASYON BAZLI STOK İNDİR</div>
                 <div class="input-group">
                     <label>İNDİRİLECEK DEPO</label>
-                    <select id="export-depo">
+                    <select id="export-depo" onchange="updateAddressDropdowns()">
                         <option value="ANA DEPO">ANA DEPO</option>
                         <option value="AMELİYATHANE">AMELİYATHANE</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>ADRES BAŞLANGICI (Örn: 06 veya 06.01)</label>
-                    <input type="text" id="export-address" placeholder="Tüm ürünleri indirmek için boş bırakın..." autocomplete="off">
+                    <label>ADRES BAŞLANGICI</label>
+                    <select id="export-address">
+                        <option value="">-- YÜKLENİYOR --</option>
+                    </select>
                 </div>
                 <button class="btn-success" style="margin-top: 10px;" onclick="exportDatabaseByAddress()">LİSTEYİ İNDİR</button>
             </div>
@@ -348,6 +352,9 @@
         let html5QrCode = null;
         let searchTimeout = null;
         let selectedVerifyCode = null;
+        
+        let anaAddresses = new Set();
+        let amAddresses = new Set();
 
         document.getElementById('main-content').addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-to-top');
@@ -410,6 +417,31 @@
             }
         });
 
+        window.updateAddressDropdowns = () => {
+            const setupType = document.getElementById('setup-type').value;
+            const exportType = document.getElementById('export-depo').value;
+            
+            const populate = (selectId, type, addEmptyOption = false) => {
+                const sel = document.getElementById(selectId);
+                sel.innerHTML = '';
+                if (addEmptyOption) {
+                    sel.innerHTML += '<option value="">-- TÜM ÜRÜNLER --</option>';
+                } else {
+                    sel.innerHTML += '<option value="">-- LÜTFEN ADRES SEÇİNİZ --</option>';
+                }
+                
+                let sourceSet = type === 'ANA DEPO' ? anaAddresses : amAddresses;
+                let sorted = Array.from(sourceSet).sort();
+                
+                sorted.forEach(addr => {
+                    sel.innerHTML += `<option value="${addr}">${addr}</option>`;
+                });
+            };
+            
+            populate('setup-address', setupType, false);
+            populate('export-address', exportType, true);
+        };
+
         const loadCatalog = async () => {
             try {
                 const cachedData = localStorage.getItem('terminux_catalog_cache');
@@ -435,7 +467,7 @@
                     getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
                 ]);
                 
-                const processSnap = (snap, locKey) => {
+                const processSnap = (snap, locKey, addressSet) => {
                     if (!snap || typeof snap.forEach !== 'function') return;
                     snap.forEach(doc => {
                         const d = doc.data();
@@ -449,15 +481,36 @@
                                 refNo: String(d.refNo || "")
                             };
                         }
-                        const addrFields = d.stokAdresi || d.StokAdresi || d.adres || d.Adres || d.lokasyon || d.Lokasyon || d.raf || d.Raf || "-";
-                        catalogDb[key][locKey + '_adres'] = String(addrFields);
+                        
+                        const addrRaw = String(d.stokAdresi || d.StokAdresi || d.adres || d.Adres || d.lokasyon || d.Lokasyon || d.raf || d.Raf || "-").trim();
+                        catalogDb[key][locKey + '_adres'] = addrRaw;
                         
                         const miat = d.miat || d.miatTarihi || d.skt || d.sonKullanma || d.sonKullanmaTarihi || "-";
                         catalogDb[key][locKey + '_miat'] = String(miat);
+
+                        if (addrRaw !== "-" && addrRaw !== "") {
+                            let cleanAddr = addrRaw.toUpperCase();
+                            if (cleanAddr.startsWith("BDA")) cleanAddr = cleanAddr.substring(3);
+                            
+                            addressSet.add(cleanAddr);
+                            
+                            if (cleanAddr.includes(".")) {
+                                let parts = cleanAddr.split(".");
+                                let cumulative = parts[0];
+                                addressSet.add(cumulative);
+                                for(let i=1; i<parts.length-1; i++) {
+                                    cumulative += "." + parts[i];
+                                    addressSet.add(cumulative);
+                                }
+                            }
+                        }
                     });
                 };
                 
-                processSnap(anaSnap, 'ana'); processSnap(amSnap, 'am');
+                processSnap(anaSnap, 'ana', anaAddresses); 
+                processSnap(amSnap, 'am', amAddresses);
+                
+                window.updateAddressDropdowns();
             } catch (err) {
             } finally {
                 setupRealtimeSessions();
@@ -516,9 +569,10 @@
         window.createTeyitSession = async () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
-            const targetAddress = document.getElementById('setup-address').value.trim().toUpperCase();
+            const targetAddress = document.getElementById('setup-address').value;
             
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen teyit oturumu için bir isim belirleyin.");
+            if (!targetAddress) return showCustomAlert("EKSİK BİLGİ", "Lütfen kontrol edilecek adresi listeden seçin.");
 
             const now = new Date();
             const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
@@ -565,7 +619,7 @@
 
         window.exportDatabaseByAddress = () => {
             const depo = document.getElementById('export-depo').value;
-            const rawPrefix = document.getElementById('export-address').value.trim().toUpperCase();
+            const rawPrefix = document.getElementById('export-address').value;
             const locKey = depo === 'ANA DEPO' ? 'ana' : 'am';
             
             let p1 = rawPrefix;
