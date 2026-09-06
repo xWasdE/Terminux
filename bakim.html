@@ -3,58 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Bakımda</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <title>Terminux | Offline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --glitch-1: #ff003c;
+            --glitch-2: #00e6e6;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; font-family: 'Inter', sans-serif; }
         
-        .glass-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        .crack { position: absolute; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); transform-origin: center; animation: crackReveal 0.1s forwards; opacity: 0; }
-        .crack-1 { width: 2px; height: 120%; top: -10%; left: 45%; transform: rotate(15deg); animation-delay: 0.5s; }
-        .crack-2 { width: 100%; height: 2px; top: 40%; left: -10%; transform: rotate(-25deg); animation-delay: 0.6s; }
-        .crack-3 { width: 2px; height: 80%; top: 30%; left: 60%; transform: rotate(-45deg); animation-delay: 0.7s; }
-        .crack-4 { width: 60%; height: 2px; top: 70%; left: 20%; transform: rotate(10deg); animation-delay: 0.8s; }
-
-        @keyframes crackReveal { to { opacity: 1; } }
-
-        .content { position: relative; z-index: 5; text-align: center; color: #fff; }
-        .glitch-text { font-size: 6vw; position: relative; display: inline-block; letter-spacing: -2px; animation: textGlitch 3s infinite; }
-        .glitch-text::before, .glitch-text::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; }
-        .glitch-text::before { left: 2px; text-shadow: -2px 0 #ff0000; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
-        .glitch-text::after { left: -2px; text-shadow: -2px 0 #00ffff; animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        body { 
+            background: #000; 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            font-family: 'Inter', sans-serif;
+            perspective: 1000px;
+        }
         
-        .sub-text { margin-top: 20px; font-size: 1.5vw; color: #888; letter-spacing: 5px; text-transform: uppercase; animation: fadePulse 4s infinite; }
+        .bg-grid { 
+            position: absolute; 
+            top: -50%; left: -50%; 
+            width: 200%; height: 200%; 
+            background: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); 
+            background-size: 50px 50px; 
+            z-index: 1; 
+            transform: translateZ(-500px); 
+        }
 
-        @keyframes textGlitch { 0%, 100% { transform: skewX(0deg); } 5% { transform: skewX(2deg); opacity: 0.8; } 10% { transform: skewX(-2deg); opacity: 1; } }
-        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); } 40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); } }
-        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(70% 0 10% 0); } 60% { clip-path: inset(20% 0 50% 0); } 80% { clip-path: inset(50% 0 30% 0); } 100% { clip-path: inset(5% 0 80% 0); } }
-        @keyframes fadePulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .flicker { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.02); 
+            z-index: 25; 
+            pointer-events: none; 
+            animation: screenFlicker 0.1s infinite; 
+        }
 
-        .hidden-trigger { position: absolute; bottom: 20px; right: 20px; width: 50px; height: 50px; z-index: 20; cursor: pointer; }
-        #bypass-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 30; align-items: center; justify-content: center; }
-        .bypass-box { background: #111; border: 1px solid #333; padding: 30px; text-align: center; border-radius: 8px; }
-        .bypass-box input { width: 100%; padding: 15px; background: #000; border: 1px solid #444; color: #fff; font-size: 20px; text-align: center; font-family: monospace; letter-spacing: 5px; outline: none; margin-bottom: 15px; }
-        .bypass-box button { width: 100%; padding: 15px; background: #fff; color: #000; font-weight: 900; border: none; cursor: pointer; }
+        @keyframes screenFlicker { 
+            0%, 100% { opacity: 0.1; } 
+            50% { opacity: 0.4; } 
+        }
+
+        .shatter-overlay { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            z-index: 20; 
+            pointer-events: none; 
+        }
+
+        .crack-line { 
+            stroke: #fff; 
+            stroke-width: 0.15; 
+            fill: none; 
+            opacity: 0; 
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)) drop-shadow(0 0 5px rgba(0,255,255,0.5)); 
+            animation: crackFlash 5s infinite; 
+        }
+
+        .crack-line:nth-child(even) { 
+            stroke-width: 0.3; 
+            animation-delay: 0.2s; 
+            filter: drop-shadow(0 0 5px rgba(255,255,255,1)); 
+        }
+
+        .crack-line:nth-child(3n) { 
+            stroke: #ccffff; 
+            animation-delay: 0.4s; 
+        }
+
+        @keyframes crackFlash {
+            0%, 100% { opacity: 0.3; }
+            1%, 3% { opacity: 1; }
+            2%, 4% { opacity: 0.1; }
+            5% { opacity: 0.8; }
+            10% { opacity: 0.2; }
+        }
+
+        .shard { 
+            position: absolute; 
+            background: rgba(255,255,255,0.01); 
+            backdrop-filter: blur(8px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.02), 0 0 10px rgba(0,255,255,0.05); 
+            z-index: 15; 
+            opacity: 0; 
+            animation: shardFloat 8s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        .shard-1 { top: 15%; left: 25%; width: 25vw; height: 35vh; clip-path: polygon(0 0, 100% 15%, 85% 100%, 10% 85%); animation-delay: 0.1s; }
+        .shard-2 { top: 45%; left: 55%; width: 35vw; height: 45vh; clip-path: polygon(25% 0, 100% 10%, 65% 100%, 0 85%); animation-delay: 0.3s; }
+        .shard-3 { top: 5%; left: 65%; width: 20vw; height: 30vh; clip-path: polygon(45% 0, 100% 75%, 0 100%); animation-delay: 0.6s; }
+        .shard-4 { top: 55%; left: 5%; width: 30vw; height: 40vh; clip-path: polygon(0 25%, 85% 0, 100% 85%, 15% 100%); animation-delay: 0.2s; }
+
+        @keyframes shardFloat {
+            0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(1); }
+            5% { opacity: 1; transform: translate(3px, -3px) rotate(1deg) scale(1.01); }
+            100% { opacity: 0.9; transform: translate(15px, -20px) rotate(4deg) scale(1.04); }
+        }
+
+        .glitch-wrapper { 
+            position: relative; 
+            z-index: 10; 
+            text-align: center; 
+        }
+
+        .glitch-text { 
+            font-size: 8vw; 
+            font-weight: 900; 
+            color: #fff; 
+            letter-spacing: 6px; 
+            position: relative; 
+            display: inline-block; 
+            text-shadow: 0 0 15px rgba(255,255,255,0.4); 
+            margin-bottom: 10px;
+        }
+
+        .glitch-text::before, .glitch-text::after { 
+            content: attr(data-text); 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: transparent; 
+            pointer-events: none; 
+        }
+
+        .glitch-text::before { 
+            left: 5px; 
+            text-shadow: -3px 0 var(--glitch-1); 
+            animation: glitch-anim 2.5s infinite linear alternate-reverse; 
+        }
+
+        .glitch-text::after { 
+            left: -5px; 
+            text-shadow: -3px 0 var(--glitch-2); 
+            animation: glitch-anim2 3s infinite linear alternate-reverse; 
+        }
+
+        @keyframes glitch-anim {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 2px); }
+            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+            80% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 2px); }
+            100% { clip-path: inset(30% 0 20% 0); transform: translate(2px, -2px); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+            20% { clip-path: inset(30% 0 20% 0); transform: translate(-2px, 2px); }
+            40% { clip-path: inset(70% 0 10% 0); transform: translate(2px, -2px); }
+            60% { clip-path: inset(20% 0 50% 0); transform: translate(-2px, 2px); }
+            80% { clip-path: inset(50% 0 30% 0); transform: translate(2px, -2px); }
+            100% { clip-path: inset(5% 0 80% 0); transform: translate(-2px, 2px); }
+        }
+
+        .sub-text { 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: #888; 
+            letter-spacing: 12px; 
+            text-transform: uppercase; 
+            animation: fadePulse 2s infinite; 
+        }
+
+        @keyframes fadePulse { 
+            0%, 100% { opacity: 0.3; } 
+            50% { opacity: 1; text-shadow: 0 0 10px rgba(255,255,255,0.5); } 
+        }
+
+        .hidden-trigger { 
+            position: absolute; 
+            bottom: 0; right: 0; 
+            width: 80px; height: 80px; 
+            z-index: 100; 
+            cursor: pointer; 
+        }
+
+        #bypass-modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); 
+            z-index: 200; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(10px); 
+        }
+
+        .bypass-box { 
+            background: #0c0c0c; 
+            border: 1px solid #333; 
+            padding: 40px; 
+            text-align: center; 
+            border-radius: 12px; 
+            width: 100%; max-width: 400px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9); 
+        }
+
+        .bypass-box h3 { 
+            color: #ff3333; 
+            font-size: 12px; 
+            letter-spacing: 4px; 
+            margin-bottom: 25px; 
+        }
+
+        .bypass-box input { 
+            width: 100%; 
+            padding: 20px; 
+            background: #000; 
+            border: 1px solid #444; 
+            color: #00ff00; 
+            font-size: 24px; 
+            text-align: center; 
+            font-family: monospace; 
+            letter-spacing: 8px; 
+            outline: none; 
+            margin-bottom: 20px; 
+            border-radius: 6px; 
+            transition: 0.2s; 
+        }
+
+        .bypass-box input:focus { 
+            border-color: #00ff00; 
+            box-shadow: 0 0 15px rgba(0,255,0,0.2); 
+        }
+
+        .bypass-box button { 
+            width: 100%; 
+            padding: 18px; 
+            background: #fff; 
+            color: #000; 
+            font-weight: 900; 
+            font-size: 14px; 
+            letter-spacing: 2px; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: 0.2s; 
+        }
+
+        .bypass-box button:hover { 
+            background: #00ff00; 
+        }
     </style>
 </head>
 <body>
-    <div class="glass-container">
-        <div class="crack crack-1"></div>
-        <div class="crack crack-2"></div>
-        <div class="crack crack-3"></div>
-        <div class="crack crack-4"></div>
-    </div>
-    
-    <div class="content">
-        <div class="glitch-text" data-text="SYSTEM OFFLINE">SYSTEM OFFLINE</div>
-        <div class="sub-text">BAKIM ÇALIŞMASI DEVAM EDİYOR</div>
+
+    <div class="bg-grid"></div>
+    <div class="flicker"></div>
+
+    <svg class="shatter-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <g stroke-linecap="round" stroke-linejoin="round">
+            <path d="M45 50 L10 5 M45 50 L85 0 M45 50 L100 45 M45 50 L80 100 M45 50 L20 100 M45 50 L0 60" class="crack-line" />
+            <path d="M55 45 L30 0 M55 45 L100 25 M55 45 L65 100 M55 45 L0 75" class="crack-line" />
+            <path d="M48 52 L25 25 M48 52 L75 10 M48 52 L90 80 M48 52 L15 90 M48 52 L0 40 M48 52 L100 65" class="crack-line" />
+            <path d="M25 25 L0 20 M25 25 L40 0 M85 0 L100 10 M80 100 L100 85 M20 100 L0 85" class="crack-line" />
+        </g>
+    </svg>
+
+    <div class="shard shard-1"></div>
+    <div class="shard shard-2"></div>
+    <div class="shard shard-3"></div>
+    <div class="shard shard-4"></div>
+
+    <div class="glitch-wrapper">
+        <div class="glitch-text" data-text="TERMINUX OFFLINE">TERMINUX OFFLINE</div>
+        <div class="sub-text">Sistem Bakım Modunda</div>
     </div>
 
-    <div class="hidden-trigger" onclick="document.getElementById('bypass-modal').style.display='flex'"></div>
+    <div class="hidden-trigger" onclick="document.getElementById('bypass-modal').style.display='flex'; document.getElementById('bypass-pw').focus();"></div>
 
     <div id="bypass-modal">
         <div class="bypass-box">
+            <h3>YÖNETİCİ ERİŞİMİ</h3>
             <input type="password" id="bypass-pw" autocomplete="off">
             <button onclick="checkBypass()">SİSTEMİ AÇ</button>
         </div>
@@ -72,6 +300,7 @@
             messagingSenderId: "427323493367",
             appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
         };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -82,16 +311,38 @@
         });
 
         window.checkBypass = async () => {
-            const pw = document.getElementById('bypass-pw').value;
+            const pwInput = document.getElementById('bypass-pw');
+            const btn = document.querySelector('.bypass-box button');
+            const pw = pwInput.value;
+            
+            btn.innerText = "KONTROL EDİLİYOR...";
+            
             const docSnap = await getDoc(doc(db, "system", "settings"));
             if (docSnap.exists() && docSnap.data().maintenancePassword === pw) {
                 sessionStorage.setItem('bypass_maintenance', 'true');
                 window.location.href = "index.html";
             } else {
-                document.getElementById('bypass-pw').value = '';
-                document.getElementById('bypass-modal').style.display = 'none';
+                pwInput.value = '';
+                pwInput.style.borderColor = '#ff3333';
+                pwInput.style.color = '#ff3333';
+                btn.innerText = "HATALI ŞİFRE";
+                btn.style.background = '#ff3333';
+                btn.style.color = '#fff';
+                
+                setTimeout(() => {
+                    pwInput.style.borderColor = '#444';
+                    pwInput.style.color = '#00ff00';
+                    btn.innerText = "SİSTEMİ AÇ";
+                    btn.style.background = '#fff';
+                    btn.style.color = '#000';
+                    document.getElementById('bypass-modal').style.display = 'none';
+                }, 1500);
             }
         };
+
+        document.getElementById('bypass-pw').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') checkBypass();
+        });
     </script>
 </body>
 </html>
