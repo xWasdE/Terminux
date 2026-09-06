@@ -399,10 +399,13 @@
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
                 let userDoc = await getDoc(userDocRef);
+                
                 if (!userDoc.exists()) {
-                    await setDoc(userDocRef, { email: user.email, role: 'admin', status: 'active', modules: { sayim: true, etiket: true, sevkiyat: true, lens: true, adres: true }, createdAt: Date.now() });
-                    userDoc = await getDoc(userDocRef);
+                    document.getElementById('global-loader').innerHTML = '<span style="color:#ff3333; text-align:center;">HATA<br><span style="font-size:12px; color:#aaa; margin-top:10px; display:block;">Kullanıcı kaydınız bulunamadı.</span></span>';
+                    setTimeout(() => window.location.href = "index.html", 2000);
+                    return;
                 }
+                
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
                     document.getElementById('global-loader').style.display = 'none';
                     document.getElementById('display-user').innerText = `${user.email}`;
@@ -410,8 +413,7 @@
                     loadMaintenanceSettings();
                     window.switchAdresDepo('am');
                 } else {
-                    document.getElementById('global-loader').style.display = 'none';
-                    window.showAlert("YETKİSİZ ERİŞİM", "Bu panele sadece yöneticiler erişebilir.");
+                    document.getElementById('global-loader').innerHTML = '<span style="color:#ff3333; text-align:center;">YETKİSİZ ERİŞİM<br><span style="font-size:12px; color:#aaa; margin-top:10px; display:block;">Bu panele sadece yöneticiler erişebilir. Yönlendiriliyorsunuz...</span></span>';
                     setTimeout(() => window.location.href = "index.html", 2000);
                 }
             } else {
