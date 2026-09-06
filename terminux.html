@@ -387,6 +387,14 @@
             document.getElementById('confirm-modal').style.display = 'none';
         };
 
+        onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
+                if (sessionStorage.getItem('bypass_maintenance') !== 'true') {
+                    window.location.href = "bakim.html";
+                }
+            }
+        });
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
@@ -496,6 +504,7 @@
         window.saveMaintenance = async () => {
             const pw = document.getElementById('set-maintenance-pw').value;
             const status = document.getElementById('set-maintenance-status').value === 'true';
+            if(status) sessionStorage.setItem('bypass_maintenance', 'true');
             await setDoc(doc(db, "system", "settings"), { maintenancePassword: pw, maintenanceMode: status }, { merge: true });
             window.showAlert("BAŞARILI", "Bakım modu ayarları kaydedildi.");
         };
