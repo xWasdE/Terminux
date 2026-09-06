@@ -67,6 +67,9 @@
         .btn-success { background: #00ff00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-success:hover { opacity: 0.8; }
 
+        .filter-select { background: #111; border: 1px solid #333; color: #00ccff; padding: 12px 20px; font-size: 12px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; outline: none; letter-spacing: 1px; text-transform: uppercase; }
+        .filter-select:focus { border-color: #00ccff; }
+
         .history-container { max-width: 1000px; margin: 0 auto; }
         .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
         .history-list { display: flex; flex-direction: column; gap: 10px; }
@@ -81,7 +84,7 @@
         .session-info { display: flex; flex-direction: column; gap: 5px; }
         .session-name { font-size: 20px; font-weight: 800; color: #00ccff; }
         .session-details { font-size: 12px; color: #888; font-family: monospace; }
-        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; margin: 0; position: relative; }
@@ -166,7 +169,7 @@
             .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
             .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
             .header-actions { flex-direction: column; }
-            .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
+            .header-actions button, .header-actions a, .header-actions select { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
             
             #active-screen { display: block; }
@@ -251,8 +254,13 @@
                     <div class="session-details" id="ui-session-details">-</div>
                 </div>
                 <div class="header-actions">
+                    <select id="filter-bmc" class="filter-select" onchange="window.renderShipmentList()">
+                        <option value="ALL">TÜM ÜRÜNLER</option>
+                        <option value="MAIN">SADECE ANA MALZEMELER</option>
+                        <option value="BMC">SADECE BMC MALZEMELERİ</option>
+                    </select>
                     <button class="btn-secondary" onclick="closeActiveScreen()">ANA EKRANA DÖN</button>
-                    <button class="btn-primary" style="background:#ffbc00; color:#000;" onclick="exportLabels()">ETİKET LİSTESİ (EXCEL)</button>
+                    <button class="btn-primary" style="background:#ffbc00; color:#000;" onclick="exportLabels()">ETİKET LİSTESİ</button>
                     <button class="btn-success" onclick="promptFinishShipment()">SEVKİYATI KAPAT</button>
                 </div>
             </div>
@@ -361,7 +369,7 @@
         
         window.pinnedItemCode = null;
         window.editingItemCode = null;
-        window.touchedInputs = new Set(); 
+        window.touchedInputs = new Set();
 
         document.getElementById('main-content').addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-to-top');
@@ -449,7 +457,7 @@
                                 urunKodu: key, 
                                 urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "")
+                                refNo: String(d.refNo || "") 
                             };
                         }
                         catalogDb[key]['isDummy_' + locKey] = checkDummy;
@@ -670,6 +678,10 @@
             document.getElementById('home-screen').style.display = 'none';
             document.getElementById('active-screen').style.display = 'block';
             
+            if (document.getElementById('filter-bmc')) {
+                document.getElementById('filter-bmc').value = "ALL";
+            }
+
             const shipment = allShipments.find(s => s.id === id);
             if(shipment) {
                 document.getElementById('ui-session-name').innerText = shipment.name;
@@ -882,8 +894,11 @@
             setTimeout(() => {
                 const recEl = document.getElementById(`rec-${code}`);
                 const lblEl = document.getElementById(`lbl-${code}`);
-                
-                if (document.activeElement !== recEl && document.activeElement !== lblEl) {
+                const activeEl = document.activeElement;
+
+                const isScanArea = activeEl && activeEl.closest('.scan-area');
+
+                if (activeEl !== recEl && activeEl !== lblEl && !isScanArea) {
                     if (window.touchedInputs && window.touchedInputs.has(code)) {
                         window.confirmItem(code);
                     } else if (code === window.pinnedItemCode || code === window.editingItemCode) {
@@ -916,9 +931,7 @@
             clearTimeout(autoConfirmTimers[code]);
             if (val !== "") {
                 if (parsedVal === expected && expected > 0) {
-                    autoConfirmTimers[code] = setTimeout(() => {
-                        window.confirmItem(code);
-                    }, 400);
+                    window.confirmItem(code);
                 }
             }
         };
@@ -969,33 +982,35 @@
             const container = document.getElementById('shipment-list');
             let items = Object.values(shipment.items || {});
             
+            const filterType = document.getElementById('filter-bmc') ? document.getElementById('filter-bmc').value : 'ALL';
+            if (filterType === 'MAIN') {
+                items = items.filter(item => !(shipment.bmc && shipment.bmc[item.code]));
+            } else if (filterType === 'BMC') {
+                items = items.filter(item => shipment.bmc && shipment.bmc[item.code]);
+            }
+            
             const sortedItems = getSortedItems(items);
             
             container.innerHTML = sortedItems.map(item => {
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                const isPinned = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
-                const isEditingMode = isPinned || !item.confirmed; 
+                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode || !item.confirmed);
 
-                if (isPinned) {
+                if (isEditingMode) {
                     statusClass = 'status-pinned';
                 }
-                else if (item.confirmed) {
-                    if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
-                        statusClass = 'status-complete'; valClass = 'val-complete';
-                    }
-                    else if (item.receivedQty === 0) {
-                        statusClass = 'status-missing'; valClass = 'val-missing';
-                    }
-                    else if (item.receivedQty < item.expectedQty) {
-                        statusClass = 'status-missing'; valClass = 'val-missing';
-                    }
-                    else if (item.receivedQty > item.expectedQty) {
-                        statusClass = 'status-over'; valClass = 'val-over';
-                    }
-                } else {
-                    statusClass = 'status-pending';
+                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) {
+                    statusClass = 'status-complete'; valClass = 'val-complete';
+                }
+                else if (item.receivedQty === 0 && item.confirmed) {
+                    statusClass = 'status-missing'; valClass = 'val-missing';
+                }
+                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
+                    statusClass = 'status-missing'; valClass = 'val-missing';
+                }
+                else if (item.receivedQty > item.expectedQty) {
+                    statusClass = 'status-over'; valClass = 'val-over';
                 }
 
                 let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
@@ -1069,16 +1084,6 @@
                     </div>
                 `;
             }).join('');
-            
-            if (window.pinnedItemCode) {
-                setTimeout(() => {
-                    const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
-                    const targetEl = document.getElementById(`item-row-${safeId}`);
-                    if (targetEl) {
-                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
-            }
         };
 
         window.confirmItem = async (code, overrideVal = null) => {
