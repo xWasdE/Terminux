@@ -100,12 +100,30 @@
         .modal-box.wide { max-width: 800px; }
         .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; border-bottom:1px solid #222; padding-bottom:15px; display:flex; justify-content:space-between; align-items:center; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
+        
         #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00ccff; font-weight:bold; font-size:18px; letter-spacing:2px; }
+
+        #admin-login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 50000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .admin-login-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.9); }
+        .admin-login-box h2 { color: #00ccff; margin-bottom: 25px; letter-spacing: 2px; font-size: 18px; }
+        .admin-login-box input { width: 100%; padding: 15px; background: #000; border: 1px solid #444; color: #fff; font-size: 16px; margin-bottom: 15px; border-radius: 6px; outline: none; transition: 0.2s; text-align: center; }
+        .admin-login-box input:focus { border-color: #00ccff; }
+        .admin-login-box button { width: 100%; padding: 15px; background: #00ccff; color: #000; font-weight: 900; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 14px; letter-spacing: 1px; }
+        .admin-login-box button:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
 
     <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+
+    <div id="admin-login-screen" style="display:none;">
+        <div class="admin-login-box">
+            <h2>SUPER ADMIN GİRİŞİ</h2>
+            <input type="text" id="admin-email" placeholder="Kullanıcı Adı" autocomplete="off">
+            <input type="password" id="admin-password" placeholder="Şifre">
+            <button onclick="adminLogin()">SİSTEME GİRİŞ YAP</button>
+        </div>
+    </div>
 
     <div class="sidebar">
         <div class="sidebar-header">
@@ -230,6 +248,7 @@
             <div id="sec-settings" class="section">
                 <div class="card" style="border-color: #ff3333;">
                     <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
+                    <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
                     <button class="btn-primary" style="background: #ff3333; color: #fff; width:100%; padding:20px; font-size:16px;" id="btn-sync-global">SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET</button>
                     <div id="sync-log" style="color:#00ff00; font-size:12px; margin-top:15px; font-weight:bold;"></div>
                 </div>
@@ -352,7 +371,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -387,22 +406,32 @@
             document.getElementById('confirm-modal').style.display = 'none';
         };
 
-        onSnapshot(doc(db, "system", "settings"), (docSnap) => {
-            if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
-                if (sessionStorage.getItem('bypass_maintenance') !== 'true') {
-                    window.location.href = "bakim.html";
-                }
+        window.adminLogin = async () => {
+            let email = document.getElementById('admin-email').value.trim();
+            const pass = document.getElementById('admin-password').value;
+            if(!email || !pass) return window.showAlert("HATA", "Bilgileri eksiksiz girin.");
+            if(!email.includes('@')) email += "@terminux.com.tr";
+            
+            const btn = document.querySelector('.admin-login-box button');
+            btn.innerText = "GİRİŞ YAPILIYOR...";
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch(e) {
+                window.showAlert("HATA", "Giriş başarısız. Bilgileri kontrol edin.");
+                btn.innerText = "SİSTEME GİRİŞ YAP";
             }
-        });
+        };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                document.getElementById('admin-login-screen').style.display = 'none';
+                
                 const userDocRef = doc(db, "users", user.uid);
                 let userDoc = await getDoc(userDocRef);
                 
                 if (!userDoc.exists()) {
                     document.getElementById('global-loader').innerHTML = '<span style="color:#ff3333; text-align:center;">HATA<br><span style="font-size:12px; color:#aaa; margin-top:10px; display:block;">Kullanıcı kaydınız bulunamadı.</span></span>';
-                    setTimeout(() => window.location.href = "index.html", 2000);
+                    setTimeout(async () => { await signOut(auth); window.location.href = "index.html"; }, 2000);
                     return;
                 }
                 
@@ -414,10 +443,11 @@
                     window.switchAdresDepo('am');
                 } else {
                     document.getElementById('global-loader').innerHTML = '<span style="color:#ff3333; text-align:center;">YETKİSİZ ERİŞİM<br><span style="font-size:12px; color:#aaa; margin-top:10px; display:block;">Bu panele sadece yöneticiler erişebilir. Yönlendiriliyorsunuz...</span></span>';
-                    setTimeout(() => window.location.href = "index.html", 2000);
+                    setTimeout(async () => { await signOut(auth); window.location.href = "index.html"; }, 2000);
                 }
             } else {
-                window.location.href = "index.html";
+                document.getElementById('global-loader').style.display = 'none';
+                document.getElementById('admin-login-screen').style.display = 'flex';
             }
         });
 
