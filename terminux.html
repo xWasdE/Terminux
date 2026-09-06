@@ -202,7 +202,6 @@
         </div>
     </div>
 
-    <!-- YETKİ DÜZENLEME MODAL -->
     <div id="edit-user-modal" class="modal">
         <div class="modal-box">
             <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
@@ -226,7 +225,6 @@
         </div>
     </div>
 
-    <!-- UYARI MODAL -->
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
@@ -441,43 +439,125 @@
         const getColVal = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
-                if (keys.includes(k.trim().toLowerCase())) return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                const normK = k.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                for(let searchKey of keys) {
+                    const normS = searchKey.replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                    if (normK.includes(normS)) {
+                        return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+                    }
+                }
             }
             return "";
         };
 
         const hasCol = (row, keys) => {
             const rowKeys = Object.keys(row);
-            return rowKeys.some(k => keys.includes(k.trim().toLowerCase()));
+            for (let k of rowKeys) {
+                const normK = k.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                for(let searchKey of keys) {
+                    const normS = searchKey.replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+                    if (normK.includes(normS)) return true;
+                }
+            }
+            return false;
         };
 
         async function processMainExcel(inputId, collectionName, isLens) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog(isLens ? 'lens-log' : 'stock-log', "Dosya seçilmedi.");
             const reader = new FileReader();
+            
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 let count = 0;
+                let skipCount = 0;
+                
+                const dbCache = {};
+                try {
+                    const snapshot = await getDocs(collection(db, collectionName));
+                    snapshot.forEach(docSnap => {
+                        dbCache[docSnap.id] = docSnap.data();
+                    });
+                } catch(err) {
+                    return sysLog(isLens ? 'lens-log' : 'stock-log', "Veritabanı okunurken hata: " + err.message);
+                }
+
                 for(let r of rows) {
                     const id = getColVal(r, ["ürün kodu", "urun kodu", "kod"]);
                     if(!id) continue;
                     let data = { urunKodu: id };
+
                     if(isLens) {
-                        data.urunAdi = getColVal(r, ["ürün ismi", "ürün adı", "urun adi"]);
+                        data.urunAdi = getColVal(r, ["ürün ismi", "ürün adı", "urun adi", "isim"]);
                         data.lensNo = getColVal(r, ["lens no", "lens numarası", "numara", "no"]);
                         data.miktar = parseInt(getColVal(r, ["stok miktar", "stok", "miktar", "adet"])) || 0;
                         data.marka = collectionName.includes("alcon") ? "ALCON" : "TECNIS";
+                        
+                        let extractedRef = "";
+                        if (data.urunAdi.includes(",")) {
+                            const parts = data.urunAdi.split(",");
+                            extractedRef = parts[parts.length - 1].trim();
+                        }
+                        if (extractedRef) data.refNo = extractedRef;
+
                     } else {
                         data.urunAdi = getColVal(r, ["ürün adı", "urun adi", "malzeme adı"]);
                         data.miktar = parseInt(getColVal(r, ["miktar", "stok"])) || 0;
-                        data.refNo = getColVal(r, ["ref no", "ref", "katalog no", "katalog"]) || "BULUNAMADI";
-                        data.barkod = getColVal(r, ["barkod", "barcode"]);
+                        
+                        let refNoStr = getColVal(r, ["ref no", "ref", "katalog no", "katalog", "katalog numarası", "referans"]);
+                        if(refNoStr === "-" || refNoStr.toLowerCase() === "yok" || refNoStr.toLowerCase() === "bulunamadı" || refNoStr === "0") {
+                            refNoStr = "";
+                        }
+                        if (!refNoStr && data.urunAdi.includes(",")) {
+                            const parts = data.urunAdi.split(",");
+                            refNoStr = parts[parts.length - 1].trim(); 
+                        }
+                        if(!refNoStr) refNoStr = "BULUNAMADI";
+                        data.refNo = refNoStr;
+                        
+                        const excelBarkod = getColVal(r, ["barkod", "barcode"]);
+                        if (excelBarkod) data.barkod = excelBarkod;
+
+                        data.surecTipi = getColVal(r, ["süreç tipi", "surec tipi"]);
+                        data.miatTarihi = getColVal(r, ["miat tarihi", "miat"]);
+                        data.minAlert = parseInt(getColVal(r, ["min(kritik)", "min (kritik)", "min"])) || 0;
+                        data.max = parseInt(getColVal(r, ["max", "maks"])) || 0;
+
+                        if (hasCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
+                            data.altGrup = getColVal(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
+                        }
+                        if (hasCol(r, ["stok adresi", "adres"])) {
+                            data.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
+                        }
+                        if (hasCol(r, ["dummy", "dummy durumu"])) {
+                            let rawDummy = getColVal(r, ["dummy", "dummy durumu"]).toUpperCase();
+                            data.dummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
+                        }
+                        if (hasCol(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"])) {
+                            let rawReuse = getColVal(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"]).toUpperCase();
+                            data.reuse = (rawReuse === "REUSE") ? "REUSE" : "REUSE DEĞİL";
+                        }
                     }
+
+                    const oldData = dbCache[id] || {};
+                    let isDifferent = false;
+                    for (let key in data) {
+                        if (oldData[key] != data[key]) {
+                            isDifferent = true;
+                            break;
+                        }
+                    }
+
+                    if (!isDifferent && Object.keys(oldData).length > 0) {
+                        skipCount++;
+                        continue;
+                    }
+
                     await setDoc(doc(db, collectionName, id), data, { merge: true });
                     count++;
                 }
-                sysLog(isLens ? 'lens-log' : 'stock-log', `Yükleme Bitti. (${count} Kayıt)`);
+                sysLog(isLens ? 'lens-log' : 'stock-log', `Yükleme Bitti. Güncellenen: ${count} | Atlanan: ${skipCount}`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -488,22 +568,62 @@
             if(!file) return sysLog('stock-log', "Lütfen Güncelleme Excel dosyası seçin.");
             const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
             const reader = new FileReader();
+            
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 let updateCount = 0;
+                let skipCount = 0;
+
+                const dbCache = {};
+                try {
+                    const snapshot = await getDocs(collection(db, collectionName));
+                    snapshot.forEach(docSnap => {
+                        dbCache[docSnap.id] = docSnap.data();
+                    });
+                } catch(err) {
+                    return sysLog('stock-log', "Veritabanı okunurken hata: " + err.message);
+                }
+
                 for (let r of rows) {
                     const id = getColVal(r, ["ürün kodu", "urun kodu", "kod"]);
                     if(!id) continue;
+                    
                     let extraData = {};
-                    if (hasCol(r, ["alt grup adı"])) extraData.altGrup = getColVal(r, ["alt grup adı"]);
-                    if (hasCol(r, ["stok adresi", "adres"])) extraData.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
+                    if (hasCol(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"])) {
+                        extraData.altGrup = getColVal(r, ["alt grup adı", "alt grup adi", "alt grup", "altgrup", "grup", "ürün grubu", "urun grubu"]);
+                    }
+                    if (hasCol(r, ["stok adresi", "adres"])) {
+                        extraData.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
+                    }
+                    if (hasCol(r, ["dummy", "dummy durumu"])) {
+                        let rawDummy = getColVal(r, ["dummy", "dummy durumu"]).toUpperCase();
+                        extraData.dummy = (rawDummy === "EVET" || rawDummy === "DUMMY") ? "DUMMY" : "DUMMY DEĞİL";
+                    }
+                    if (hasCol(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"])) {
+                        let rawReuse = getColVal(r, ["reuse", "reuse/sıfır", "reuse/sifir", "cihaz tipi"]).toUpperCase();
+                        extraData.reuse = (rawReuse === "REUSE") ? "REUSE" : "REUSE DEĞİL";
+                    }
+
                     if (Object.keys(extraData).length > 0) {
+                        const oldData = dbCache[id] || {};
+                        let isDifferent = false;
+                        for (let key in extraData) {
+                            if (oldData[key] != extraData[key]) {
+                                isDifferent = true;
+                                break;
+                            }
+                        }
+                        if (!isDifferent && Object.keys(oldData).length > 0) {
+                            skipCount++;
+                            continue;
+                        }
+
                         await setDoc(doc(db, collectionName, id), extraData, { merge: true });
                         updateCount++;
                     }
                 }
-                sysLog('stock-log', `GÜNCELLEME BİTTİ! (${updateCount} Kayıt)`);
+                sysLog('stock-log', `GÜNCELLEME BİTTİ! Güncellenen: ${updateCount} | Atlanan: ${skipCount}`);
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
