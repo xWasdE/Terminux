@@ -117,7 +117,7 @@
         .bmc-badge { background: #ff3333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
         .bmc-qty { background: #ffbc00; color: #000; margin-left: 2px; }
         .address-badge { background: #222; color: #00ccff; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #333; margin-left: 5px; white-space: nowrap; }
-        .dummy-badge { background: #9c27b0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-left: 5px; white-space: nowrap; }
+        .dummy-badge { background: #9c27b0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-left: 5px; }
         
         .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
@@ -446,9 +446,9 @@
                         if (!catalogDb[key]) {
                             catalogDb[key] = { 
                                 urunKodu: key, 
-                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
+                                urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "") 
+                                refNo: String(d.refNo || "")
                             };
                         }
                         catalogDb[key]['isDummy_' + locKey] = checkDummy;
@@ -877,6 +877,24 @@
             }
         };
 
+        window.handleBlur = async (e, code) => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment || !shipment.items[code]) return;
+
+            const recEl = document.getElementById(`rec-${code}`);
+            const lblEl = document.getElementById(`lbl-${code}`);
+            
+            let rVal = recEl ? parseInt(recEl.value) : shipment.items[code].receivedQty;
+            let lVal = lblEl ? parseInt(lblEl.value) : shipment.items[code].labelQty;
+            if (isNaN(rVal)) rVal = 0;
+            if (isNaN(lVal)) lVal = 0;
+
+            shipment.items[code].receivedQty = rVal;
+            shipment.items[code].labelQty = lVal;
+
+            await saveShipmentToDb(shipment);
+        };
+
         window.updateLiveDiff = (code, val) => {
             const el = document.getElementById(`rec-${code}`);
             const expected = parseInt(el.getAttribute('data-expected')) || 0;
@@ -893,18 +911,29 @@
             if(shipment && shipment.items[code]) {
                 shipment.items[code].receivedQty = parsedVal;
             }
+
+            clearTimeout(autoConfirmTimers[code]);
+            if (val !== "") {
+                if (parsedVal === expected && expected > 0) {
+                    window.confirmItem(code);
+                }
+            }
         };
 
         const getScore = (item) => {
             if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) return 0;
             
-            if (item.receivedQty === item.expectedQty && item.expectedQty > 0) return 4;
+            if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) return 4;
             
-            if (item.receivedQty === 0) return 3;
+            if (!item.confirmed && item.receivedQty > 0) return 1;
 
-            if (item.receivedQty < item.expectedQty) return 1;
+            const isMissing = (item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+            if (isMissing) return 1;
 
-            if (item.receivedQty > item.expectedQty) return 2;
+            const isOver = (item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0);
+            if (isOver) return 2;
+
+            if (item.receivedQty === 0 && !item.confirmed) return 3;
 
             return 4;
         };
@@ -943,18 +972,18 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
+                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode || !item.confirmed);
 
                 if (isEditingMode) {
                     statusClass = 'status-pinned';
                 }
-                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
+                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) {
                     statusClass = 'status-complete'; valClass = 'val-complete';
                 }
-                else if (item.receivedQty === 0) {
-                    statusClass = 'status-pending'; valClass = 'val-expected';
+                else if (item.receivedQty === 0 && item.confirmed) {
+                    statusClass = 'status-missing'; valClass = 'val-missing';
                 }
-                else if (item.receivedQty < item.expectedQty) {
+                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
                     statusClass = 'status-missing'; valClass = 'val-missing';
                 }
                 else if (item.receivedQty > item.expectedQty) {
@@ -999,11 +1028,11 @@
                         <div class="qty-grid">
                             <div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div>
                             <div class="inline-input-wrapper" data-label="TESLİM ALINAN">
-                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="rec-${item.code}" class="inline-input" value="${defaultRec}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onblur="window.handleBlur(event, '${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                             <div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div>
                             <div class="inline-input-wrapper" data-label="ETİKET ADETİ">
-                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onkeypress="window.handleInlineKey(event, '${item.code}')">
+                                <input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${defaultLbl}" min="0" onblur="window.handleBlur(event, '${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')">
                             </div>
                         </div>
                         <div class="item-action">
