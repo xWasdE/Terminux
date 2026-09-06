@@ -205,30 +205,12 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>KONTROL EDİLECEK ADRES</label>
+                    <label>KONTROL EDİLECEK ADRES (OPSİYONEL)</label>
                     <select id="setup-address">
                         <option value="">-- YÜKLENİYOR --</option>
                     </select>
                 </div>
                 <button class="btn-primary" style="margin-top: 20px; background: #9c27b0; color:#fff;" onclick="createTeyitSession()">TEYİT OTURUMUNU BAŞLAT</button>
-            </div>
-
-            <div class="setup-container" style="margin-top: 30px;">
-                <div class="setup-title">LOKASYON BAZLI STOK İNDİR</div>
-                <div class="input-group">
-                    <label>İNDİRİLECEK DEPO</label>
-                    <select id="export-depo" onchange="updateAddressDropdowns()">
-                        <option value="ANA DEPO">ANA DEPO</option>
-                        <option value="AMELİYATHANE">AMELİYATHANE</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>ADRES BAŞLANGICI</label>
-                    <select id="export-address">
-                        <option value="">-- YÜKLENİYOR --</option>
-                    </select>
-                </div>
-                <button class="btn-success" style="margin-top: 10px;" onclick="exportDatabaseByAddress()">LİSTEYİ İNDİR</button>
             </div>
 
             <div class="history-container" id="history-container" style="display:none;">
@@ -419,27 +401,27 @@
 
         window.updateAddressDropdowns = () => {
             const setupType = document.getElementById('setup-type').value;
-            const exportType = document.getElementById('export-depo').value;
+            const sel = document.getElementById('setup-address');
             
-            const populate = (selectId, type, addEmptyOption = false) => {
-                const sel = document.getElementById(selectId);
-                sel.innerHTML = '';
-                if (addEmptyOption) {
-                    sel.innerHTML += '<option value="">-- TÜM ÜRÜNLER --</option>';
+            sel.innerHTML = '<option value="">-- BOŞ LİSTE İLE BAŞLA --</option>';
+            
+            let sourceSet = setupType === 'ANA DEPO' ? anaAddresses : amAddresses;
+            let sorted = Array.from(sourceSet).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+            
+            sorted.forEach(addr => {
+                let depth = (addr.match(/\./g) || []).length;
+                let prefix = "";
+                
+                if (depth === 0) {
+                    prefix = "■ ";
+                } else if (depth === 1) {
+                    prefix = "\u00A0\u00A0\u00A0├─ ";
                 } else {
-                    sel.innerHTML += '<option value="">-- LÜTFEN ADRES SEÇİNİZ --</option>';
+                    prefix = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0└─ ";
                 }
                 
-                let sourceSet = type === 'ANA DEPO' ? anaAddresses : amAddresses;
-                let sorted = Array.from(sourceSet).sort();
-                
-                sorted.forEach(addr => {
-                    sel.innerHTML += `<option value="${addr}">${addr}</option>`;
-                });
-            };
-            
-            populate('setup-address', setupType, false);
-            populate('export-address', exportType, true);
+                sel.innerHTML += `<option value="${addr}">${prefix}${addr}</option>`;
+            });
         };
 
         const loadCatalog = async () => {
@@ -483,15 +465,14 @@
                         }
                         
                         const addrRaw = String(d.stokAdresi || d.StokAdresi || d.adres || d.Adres || d.lokasyon || d.Lokasyon || d.raf || d.Raf || "-").trim();
-                        catalogDb[key][locKey + '_adres'] = addrRaw;
+                        let cleanAddr = addrRaw.toUpperCase().replace(/^(BDA|BDM)/, '');
+                        
+                        catalogDb[key][locKey + '_adres'] = cleanAddr || "-";
                         
                         const miat = d.miat || d.miatTarihi || d.skt || d.sonKullanma || d.sonKullanmaTarihi || "-";
                         catalogDb[key][locKey + '_miat'] = String(miat);
 
-                        if (addrRaw !== "-" && addrRaw !== "") {
-                            let cleanAddr = addrRaw.toUpperCase();
-                            if (cleanAddr.startsWith("BDA")) cleanAddr = cleanAddr.substring(3);
-                            
+                        if (cleanAddr !== "-" && cleanAddr !== "") {
                             addressSet.add(cleanAddr);
                             
                             if (cleanAddr.includes(".")) {
@@ -572,7 +553,6 @@
             const targetAddress = document.getElementById('setup-address').value;
             
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen teyit oturumu için bir isim belirleyin.");
-            if (!targetAddress) return showCustomAlert("EKSİK BİLGİ", "Lütfen kontrol edilecek adresi listeden seçin.");
 
             const now = new Date();
             const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
@@ -581,22 +561,12 @@
 
             if (targetAddress !== "") {
                 const locKey = type === 'ANA DEPO' ? 'ana' : 'am';
-                let p1 = targetAddress;
-                let p2 = targetAddress;
                 
-                if (targetAddress.startsWith("BDA")) {
-                    p1 = targetAddress;
-                    p2 = targetAddress.substring(3);
-                } else {
-                    p1 = "BDA" + targetAddress;
-                    p2 = targetAddress;
-                }
-
                 Object.values(catalogDb).forEach(item => {
-                    const addr = String(item[`${locKey}_adres`] || "").trim().toUpperCase();
+                    const addr = String(item[`${locKey}_adres`] || "").toUpperCase();
                     const itemMiat = item[`${locKey}_miat`] || "-";
                     
-                    if (addr !== "-" && (addr.startsWith(p1) || addr.startsWith(p2))) {
+                    if (addr !== "-" && addr.startsWith(targetAddress)) {
                         initialItems[item.urunKodu] = {
                             code: item.urunKodu,
                             name: item.urunAdi,
@@ -615,59 +585,6 @@
             document.getElementById('setup-name').value = '';
             document.getElementById('setup-address').value = '';
             resumeSession(newId);
-        };
-
-        window.exportDatabaseByAddress = () => {
-            const depo = document.getElementById('export-depo').value;
-            const rawPrefix = document.getElementById('export-address').value;
-            const locKey = depo === 'ANA DEPO' ? 'ana' : 'am';
-            
-            let p1 = rawPrefix;
-            let p2 = rawPrefix;
-            
-            if (rawPrefix !== "") {
-                if (rawPrefix.startsWith("BDA")) {
-                    p1 = rawPrefix;
-                    p2 = rawPrefix.substring(3);
-                } else {
-                    p1 = "BDA" + rawPrefix;
-                    p2 = rawPrefix;
-                }
-            }
-
-            const results = [];
-            Object.values(catalogDb).forEach(item => {
-                const addr = String(item[`${locKey}_adres`] || "").trim().toUpperCase();
-                
-                if (rawPrefix === "") {
-                    if (addr !== "-") {
-                        results.push({
-                            "ÜRÜN KODU": item.urunKodu,
-                            "ÜRÜN İSMİ": item.urunAdi,
-                            "BARKOD": item.barkod,
-                            "ADRES": addr,
-                            "MİAT": item[`${locKey}_miat`] || "-"
-                        });
-                    }
-                } else if (addr !== "-" && (addr.startsWith(p1) || addr.startsWith(p2))) {
-                    results.push({
-                        "ÜRÜN KODU": item.urunKodu,
-                        "ÜRÜN İSMİ": item.urunAdi,
-                        "BARKOD": item.barkod,
-                        "ADRES": addr,
-                        "MİAT": item[`${locKey}_miat`] || "-"
-                    });
-                }
-            });
-            
-            if(results.length === 0) {
-                return showCustomAlert("SONUÇ YOK", "Bu aramaya veya adrese ait ürün bulunamadı.");
-            }
-            
-            const ws = XLSX.utils.json_to_sheet(results);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "STOK_ADRES_LISTESI");
-            XLSX.writeFile(wb, `Terminux_${depo}_${rawPrefix || 'TUM'}.xlsx`);
         };
 
         window.deleteSession = (id) => {
@@ -835,9 +752,7 @@
                     return;
                 }
                 status = 'DEĞİŞTİ';
-                let formattedAddr = newAddr.toUpperCase().trim();
-                if (!formattedAddr.startsWith("BDA")) formattedAddr = "BDA" + formattedAddr;
-                finalAddr = formattedAddr;
+                finalAddr = newAddr.toUpperCase().trim();
             } else {
                 finalAddr = oldAddr;
             }
@@ -952,8 +867,7 @@
                 let blok = "-", kat = "-", bolme = "-";
                 
                 if (parts.length > 0 && parts[0].trim() !== "") {
-                    let p0 = parts[0].trim().toUpperCase();
-                    blok = p0.startsWith("BDA") ? p0 : "BDA" + p0;
+                    blok = parts[0].trim().toUpperCase();
                     if (parts.length > 1) kat = parts[1].trim();
                     if (parts.length > 2) bolme = parts[2].trim();
                 }
