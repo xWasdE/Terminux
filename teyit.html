@@ -112,16 +112,19 @@
         
         .status-correct { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.05) 0%, transparent 100%); }
         .status-changed { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.05) 0%, transparent 100%); }
+        .status-pending { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.05) 0%, transparent 100%); }
 
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; }
         .item-addr { font-family: monospace; font-size: 15px; font-weight: bold; color: #888; }
         .item-addr-new { font-family: monospace; font-size: 15px; font-weight: bold; color: #ffbc00; }
         .item-addr-correct { font-family: monospace; font-size: 15px; font-weight: bold; color: #00ff00; }
+        .item-addr-pending { font-family: monospace; font-size: 15px; font-weight: bold; color: #ff3333; }
         
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: inline-block; text-align: center; }
         .badge-correct { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid rgba(0,255,0,0.3); }
         .badge-changed { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
+        .badge-pending { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         .badge-miat { background: #222; color: #00ccff; border: 1px solid #333; width: fit-content; }
 
         .item-action { display: flex; gap: 5px; justify-content: flex-end; }
@@ -167,7 +170,7 @@
             .item-code { font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
             .item-name { margin-bottom: 5px; color: #ccc; }
             .item-addr::before { content: "ESKİ: "; font-size:10px; color:#666; }
-            .item-addr-new::before, .item-addr-correct::before { content: "YENİ: "; font-size:10px; color:#666; }
+            .item-addr-new::before, .item-addr-correct::before, .item-addr-pending::before { content: "YENİ: "; font-size:10px; color:#666; }
             .item-action { margin-top: 10px; display: flex; justify-content: space-between; gap: 10px; width: 100%; border-top: 1px solid #1a1a1a; padding-top: 15px; }
             .item-action button { flex: 1; padding: 12px; font-size: 12px; }
             .modal-actions { flex-direction: column; }
@@ -200,6 +203,10 @@
                         <option value="ANA DEPO">ANA DEPO</option>
                         <option value="AMELİYATHANE">AMELİYATHANE</option>
                     </select>
+                </div>
+                <div class="input-group">
+                    <label>KONTROL EDİLECEK ADRES (Opsiyonel - Otomatik Listeler)</label>
+                    <input type="text" id="setup-address" placeholder="Örn: 06 veya 06.01" autocomplete="off">
                 </div>
                 <button class="btn-primary" style="margin-top: 20px; background: #9c27b0; color:#fff;" onclick="createTeyitSession()">TEYİT OTURUMUNU BAŞLAT</button>
             </div>
@@ -509,17 +516,50 @@
         window.createTeyitSession = async () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
+            const targetAddress = document.getElementById('setup-address').value.trim().toUpperCase();
             
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen teyit oturumu için bir isim belirleyin.");
 
             const now = new Date();
             const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
             const newId = 'TYT-' + Date.now();
+            let initialItems = {};
 
-            const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: {} };
+            if (targetAddress !== "") {
+                const locKey = type === 'ANA DEPO' ? 'ana' : 'am';
+                let p1 = targetAddress;
+                let p2 = targetAddress;
+                
+                if (targetAddress.startsWith("BDA")) {
+                    p1 = targetAddress;
+                    p2 = targetAddress.substring(3);
+                } else {
+                    p1 = "BDA" + targetAddress;
+                    p2 = targetAddress;
+                }
+
+                Object.values(catalogDb).forEach(item => {
+                    const addr = String(item[`${locKey}_adres`] || "").trim().toUpperCase();
+                    const itemMiat = item[`${locKey}_miat`] || "-";
+                    
+                    if (addr !== "-" && (addr.startsWith(p1) || addr.startsWith(p2))) {
+                        initialItems[item.urunKodu] = {
+                            code: item.urunKodu,
+                            name: item.urunAdi,
+                            oldAddress: addr,
+                            newAddress: addr,
+                            status: 'KONTROL BEKLİYOR',
+                            miat: itemMiat
+                        };
+                    }
+                });
+            }
+
+            const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: initialItems };
             await saveSessionToDb(newSession);
             
             document.getElementById('setup-name').value = '';
+            document.getElementById('setup-address').value = '';
             resumeSession(newId);
         };
 
@@ -725,7 +765,12 @@
             const name = document.getElementById('vp-name').innerText;
             const oldAddr = document.getElementById('vp-old-address').value;
             let newAddr = document.getElementById('vp-new-address').value.trim();
-            let miatText = document.getElementById('vp-miat').innerText.replace('MİAT: ', '') || "-";
+            
+            const itemData = catalogDb[selectedVerifyCode];
+            let exactMiat = "-";
+            if (itemData) {
+                exactMiat = sessionData.type === 'ANA DEPO' ? (itemData.ana_miat || "-") : (itemData.am_miat || "-");
+            }
 
             let status = 'DOĞRU';
             let finalAddr = oldAddr;
@@ -737,9 +782,7 @@
                 }
                 status = 'DEĞİŞTİ';
                 let formattedAddr = newAddr.toUpperCase().trim();
-                if (!formattedAddr.startsWith("BDA")) {
-                    formattedAddr = "BDA" + formattedAddr;
-                }
+                if (!formattedAddr.startsWith("BDA")) formattedAddr = "BDA" + formattedAddr;
                 finalAddr = formattedAddr;
             } else {
                 finalAddr = oldAddr;
@@ -753,7 +796,7 @@
                 oldAddress: oldAddr,
                 newAddress: finalAddr,
                 status: status,
-                miat: miatText
+                miat: exactMiat
             };
 
             await saveSessionToDb(sessionData);
@@ -787,9 +830,21 @@
             
             container.innerHTML = items.map(item => {
                 const isCorrect = item.status === 'DOĞRU';
-                const statusClass = isCorrect ? 'status-correct' : 'status-changed';
-                const badgeClass = isCorrect ? 'badge-correct' : 'badge-changed';
-                const addrClass = isCorrect ? 'item-addr-correct' : 'item-addr-new';
+                const isPending = item.status === 'KONTROL BEKLİYOR';
+                
+                let statusClass = 'status-changed';
+                let badgeClass = 'badge-changed';
+                let addrClass = 'item-addr-new';
+
+                if (isCorrect) {
+                    statusClass = 'status-correct';
+                    badgeClass = 'badge-correct';
+                    addrClass = 'item-addr-correct';
+                } else if (isPending) {
+                    statusClass = 'status-pending';
+                    badgeClass = 'badge-pending';
+                    addrClass = 'item-addr-pending';
+                }
 
                 return `
                     <div class="list-item ${statusClass}">
@@ -799,12 +854,12 @@
                             <span class="badge badge-miat" style="margin-top: 4px;">MİAT: ${item.miat || '-'}</span>
                         </div>
                         <div class="item-addr">${item.oldAddress}</div>
-                        <div class="${addrClass}">${item.newAddress}</div>
+                        <div class="${addrClass}">${isPending ? 'ONAY BEKLİYOR' : item.newAddress}</div>
                         <div style="text-align:center;">
                             <span class="badge ${badgeClass}">${item.status}</span>
                         </div>
                         <div class="item-action">
-                            <button class="btn-edit" onclick="window.openVerifyPanel('${item.code}')">DÜZENLE</button>
+                            <button class="btn-edit" onclick="window.openVerifyPanel('${item.code}')">${isPending ? 'TARA' : 'DÜZENLE'}</button>
                             <button class="btn-del" onclick="removeItem('${item.code}')">SİL</button>
                         </div>
                     </div>
