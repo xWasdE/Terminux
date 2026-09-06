@@ -451,8 +451,8 @@ if(loginForm) {
         }
 
         if (!usernameInput || !passwordInput) return;
-        const finalEmail = usernameInput.value.trim().toLowerCase() === 'test' ? 'test@terminux.com.tr' : (usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`);
-        const finalPass = (usernameInput.value.trim().toLowerCase() === 'test' && passwordInput.value === 'test') ? 'testtest' : passwordInput.value;
+        const finalEmail = usernameInput.value.indexOf('@') !== -1 ? usernameInput.value.trim() : `${usernameInput.value.trim()}@terminux.com.tr`;
+        const finalPass = passwordInput.value;
 
         if (loginBtn) {
             loginBtn.textContent = "GİRİŞ YAPILIYOR...";
