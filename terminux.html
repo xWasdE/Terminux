@@ -26,7 +26,6 @@
         .btn-logout { background: #111; border: 1px solid #333; color: #ff3333; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
         .btn-logout:hover { background: #ff3333; color: #000; }
         .btn-home { background: #00ccff; border: none; color: #000; padding: 10px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-align: center; text-decoration: none; text-transform: uppercase; }
-        .btn-home:hover { opacity: 0.8; }
 
         .main-content { flex: 1; background: #000; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         .topbar { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; background: #020202; display: flex; justify-content: space-between; align-items: center; }
@@ -44,9 +43,7 @@
         .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-family: monospace; font-size: 14px; transition: 0.2s; width: 100%; }
         .form-group input:focus, .form-group select:focus { border-color: #00ccff; }
         .btn-primary { background: #00ccff; color: #000; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; }
-        .btn-primary:hover { opacity: 0.8; }
         .btn-cancel { background: #333; color: #fff; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; }
-        .btn-cancel:hover { background: #444; }
         
         .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #000; padding: 15px; border: 1px solid #222; border-radius: 6px; }
         .module-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #aaa; cursor: pointer; }
@@ -61,11 +58,10 @@
         .badge.user { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
         .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-sm { padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; text-transform: uppercase; }
-        .btn-sm:hover { opacity: 0.8; }
-        
+
         .toolbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #1a1a1a; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .depo-tabs { display: flex; gap: 8px; }
-        .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
+        .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; border: none; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
         
@@ -83,34 +79,27 @@
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
         .cell-hidden { visibility: hidden; }
-        .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
         .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
 
         #be-grid { display: grid; gap: 5px; overflow: auto; padding: 15px; background: #050505; border: 1px solid #222; border-radius: 8px; margin-top: 15px; max-height: 400px; }
         .edit-cell-wrap { position: relative; background: #111; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column; transition: 0.2s; }
-        .edit-cell-wrap.over { border-color: #00ff00; background: #0a0a0a; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
         .edit-cell-drag { background: #222; color: #888; font-size: 10px; text-align: center; cursor: grab; padding: 4px 0; border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; }
-        .edit-cell-drag:active { cursor: grabbing; background: #333; }
         .edit-cell { background: transparent; border: none; color: #fff; padding: 10px; text-align: center; font-family: monospace; font-size: 12px; outline: none; width: 100%; }
-        .edit-cell:focus { color: #ffbc00; }
 
         .product-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .product-card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .product-card:hover { border-color: #444; }
+        .product-card { background: #111; border: 1px solid #222; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
         .pc-info { display: flex; flex-direction: column; gap: 4px; }
         .pc-name { font-size: 14px; font-weight: bold; color: #fff; }
         .pc-code { font-size: 11px; color: #aaa; font-family: monospace; }
         .pc-actions { display: flex; gap: 8px; }
-        .btn-edit-sm { background: #00ccff; color: #000; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .btn-del-sm { background: #ff3333; color: #fff; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-edit-sm { background: #00ccff; color: #000; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-del-sm { background: #ff3333; color: #fff; border: none; padding: 6px 12px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.9); }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
         .modal-box.wide { max-width: 800px; }
         .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; border-bottom:1px solid #222; padding-bottom:15px; display:flex; justify-content:space-between; align-items:center; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
-        .btn-close:hover { color: #ff3333; }
-
         #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00ccff; font-weight:bold; font-size:18px; letter-spacing:2px; }
     </style>
 </head>
@@ -146,8 +135,8 @@
                 <div class="card">
                     <div class="card-header">YENİ KULLANICI OLUŞTUR</div>
                     <div class="form-grid">
-                        <div class="form-group"><label>KULLANICI ADI (Kısa ad yazılabilir)</label><input type="text" id="u-name" placeholder="Örn: murat"></div>
-                        <div class="form-group"><label>ŞİFRE (Google kuralı: En az 6 hane)</label><input type="password" id="u-pass" placeholder="******"></div>
+                        <div class="form-group"><label>KULLANICI ADI</label><input type="text" id="u-name" placeholder="Örn: murat"></div>
+                        <div class="form-group"><label>ŞİFRE (Min. 6 Karakter)</label><input type="password" id="u-pass" placeholder="******"></div>
                         <div class="form-group"><label>ROLÜ</label><select id="u-role"><option value="user">Standart Personel</option><option value="admin">Sistem Yöneticisi</option></select></div>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
@@ -166,7 +155,6 @@
 
                 <div class="card">
                     <div class="card-header">SİSTEMDEKİ KULLANICILAR</div>
-                    <p style="font-size:11px; color:#888; margin-bottom:15px;">NOT: Personelin şifresini değiştirmek veya kalıcı olarak sistemden kaldırmak istiyorsanız bu işlemleri Firebase Console üzerinden yapmalısınız.</p>
                     <table class="user-list">
                         <thead><tr><th>KULLANICI BİLGİSİ</th><th>ROL</th><th>YETKİLER</th><th>DURUM</th><th style="text-align: right;">İŞLEMLER</th></tr></thead>
                         <tbody id="user-table-body"></tbody>
@@ -242,9 +230,16 @@
             <div id="sec-settings" class="section">
                 <div class="card" style="border-color: #ff3333;">
                     <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
-                    <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
                     <button class="btn-primary" style="background: #ff3333; color: #fff; width:100%; padding:20px; font-size:16px;" id="btn-sync-global">SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET</button>
                     <div id="sync-log" style="color:#00ff00; font-size:12px; margin-top:15px; font-weight:bold;"></div>
+                </div>
+                <div class="card" style="border-color: #ffbc00;">
+                    <div class="card-header" style="color: #ffbc00;">SİSTEM BAKIM MODU (Offline)</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>BAKIMI GEÇİŞ ŞİFRESİ</label><input type="text" id="set-maintenance-pw" placeholder="Örn: 1234"></div>
+                        <div class="form-group"><label>DURUM</label><select id="set-maintenance-status"><option value="false">KAPALI</option><option value="true">AÇIK (BAKIMDA)</option></select></div>
+                    </div>
+                    <button class="btn-primary" style="background: #ffbc00; color: #000; width:100%;" onclick="saveMaintenance()">BAKIM AYARLARINI KAYDET</button>
                 </div>
             </div>
 
@@ -253,12 +248,21 @@
 
     <div id="edit-user-modal" class="modal">
         <div class="modal-box">
-            <h3 style="color:#00ccff;"><span>PERSONEL YETKİLERİ</span><button class="btn-close" onclick="document.getElementById('edit-user-modal').style.display='none'">×</button></h3>
+            <h3 style="color:#00ccff;"><span>KULLANICI DÜZENLE</span><button class="btn-close" onclick="document.getElementById('edit-user-modal').style.display='none'">×</button></h3>
             <p id="edit-user-email" style="color:#888; font-size:13px; margin-bottom:20px; font-family:monospace;"></p>
             <input type="hidden" id="edit-uid">
             
+            <div class="form-group" style="margin-bottom:15px;">
+                <label>KULLANICI ROLÜ</label>
+                <select id="edit-role">
+                    <option value="user">Standart Personel</option>
+                    <option value="admin">Sistem Yöneticisi</option>
+                </select>
+            </div>
+            
             <div class="form-group" style="text-align:left; margin-bottom:25px;">
-                <div class="modules-grid">
+                <label>MODÜL YETKİLERİ</label>
+                <div class="modules-grid" style="margin-top: 5px;">
                     <label class="module-check"><input type="checkbox" id="edit-sayim"> Sayım Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-etiket"> Etiket Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-sevkiyat"> Sevkiyat Terminali</label>
@@ -297,26 +301,11 @@
             <h3><span id="pm-title">YENİ ÜRÜN EKLE</span><button class="btn-close" onclick="document.getElementById('product-modal').style.display='none'">×</button></h3>
             <input type="hidden" id="pm-id">
             
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>ADRES (Zorunlu)</label>
-                <input type="text" id="pm-adres" placeholder="Örn: 05.01.01">
-            </div>
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>ÜRÜN ADI</label>
-                <input type="text" id="pm-isim" placeholder="Ürün İsmi">
-            </div>
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>ÜRÜN KODU</label>
-                <input type="text" id="pm-kodu" placeholder="Kodu">
-            </div>
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>BARKOD</label>
-                <input type="text" id="pm-barkod" placeholder="Barkodu">
-            </div>
-            <div class="form-group" style="margin-bottom:20px;">
-                <label>REFERANS NO</label>
-                <input type="text" id="pm-ref" placeholder="Ref No">
-            </div>
+            <div class="form-group" style="margin-bottom:15px;"><label>ADRES (Zorunlu)</label><input type="text" id="pm-adres" placeholder="Örn: 05.01.01"></div>
+            <div class="form-group" style="margin-bottom:15px;"><label>ÜRÜN ADI</label><input type="text" id="pm-isim" placeholder="Ürün İsmi"></div>
+            <div class="form-group" style="margin-bottom:15px;"><label>ÜRÜN KODU</label><input type="text" id="pm-kodu" placeholder="Kodu"></div>
+            <div class="form-group" style="margin-bottom:15px;"><label>BARKOD</label><input type="text" id="pm-barkod" placeholder="Barkodu"></div>
+            <div class="form-group" style="margin-bottom:20px;"><label>REFERANS NO</label><input type="text" id="pm-ref" placeholder="Ref No"></div>
             <button class="btn-primary" style="width:100%; background:#00ff00; color:#000; padding:15px;" id="btn-save-product" onclick="saveProduct()">KAYDET</button>
         </div>
     </div>
@@ -324,31 +313,18 @@
     <div id="block-editor-modal" class="modal">
         <div class="modal-box wide">
             <h3><span>RAF KROKİSİ DÜZENLEYİCİ</span><button class="btn-close" onclick="document.getElementById('block-editor-modal').style.display='none'">×</button></h3>
-            <p style="color:#aaa; font-size:12px; margin-bottom:15px; margin-top:-10px;">Tıkladığınız bloğun (raf, dolap vb.) kapasitesini ayarlayın. Numaraları otomatik doldurabilir ve kutucukları farenizle sürükleyerek yerlerini değiştirebilirsiniz.</p>
-            
             <div style="display:flex; gap:15px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #222;">
                 <div class="form-group" style="flex:1;"><label>SÜTUN SAYISI</label><input type="number" id="be-cols" value="1" min="1" onchange="generateGridInputs()"></div>
                 <div class="form-group" style="flex:1;"><label>SATIR SAYISI</label><input type="number" id="be-rows" value="1" min="1" onchange="generateGridInputs()"></div>
             </div>
-
             <div style="display:flex; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:8px; align-items:flex-end;">
                 <div class="form-group" style="flex:1;"><label>ÖN EK</label><input type="text" id="be-prefix" placeholder="A1-"></div>
                 <div class="form-group" style="flex:1;"><label>BAŞLANGIÇ</label><input type="number" id="be-start" value="1"></div>
-                <div class="form-group" style="flex:1;">
-                    <label>YÖN</label>
-                    <select id="be-fill-dir"><option value="normal">Normal</option><option value="reverse">Ters (Aşağıdan Yukarı)</option></select>
-                </div>
+                <div class="form-group" style="flex:1;"><label>YÖN</label><select id="be-fill-dir"><option value="normal">Normal</option><option value="reverse">Ters</option></select></div>
                 <button class="btn-primary" style="padding:13px 20px; background:#ffbc00; color:#000;" onclick="autoFillGrid()">OTOMATİK DOLDUR</button>
             </div>
-
-            <div class="form-group" style="margin-top:15px;">
-                <label>İÇ YAZI AÇISI</label>
-                <select id="be-text-rot"><option value="0">Yatay (0°)</option><option value="90">Dikey (90°)</option><option value="-90">Dikey Ters (-90°)</option></select>
-            </div>
-
-            <label style="font-size: 11px; color: #ffbc00; font-weight: bold; margin-top: 15px; display:block;">GÖRSEL RAF DİZİLİMİ (Sürükle-Bırak)</label>
+            <div class="form-group" style="margin-top:15px;"><label>İÇ YAZI AÇISI</label><select id="be-text-rot"><option value="0">Yatay (0°)</option><option value="90">Dikey (90°)</option><option value="-90">Dikey Ters (-90°)</option></select></div>
             <div id="be-grid"></div>
-            
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="btn-cancel" style="flex:1;" onclick="clearGridVisuals()">KUTULARI TEMİZLE</button>
                 <button class="btn-primary" style="flex:2; background:#00ff00; color:#000;" onclick="applyBlockToMap()">KROKİYE UYGULA</button>
@@ -423,6 +399,7 @@
                     document.getElementById('global-loader').style.display = 'none';
                     document.getElementById('display-user').innerText = `${user.email}`;
                     loadUsers();
+                    loadMaintenanceSettings();
                     window.switchAdresDepo('am');
                 } else {
                     document.getElementById('global-loader').style.display = 'none';
@@ -440,17 +417,10 @@
             let uname = document.getElementById('u-name').value.trim();
             const pass = document.getElementById('u-pass').value;
             const role = document.getElementById('u-role').value;
-            if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli kullanıcı adı ve şifre girin.");
+            if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli kullanıcı adı ve en az 6 haneli şifre girin.");
             if(!uname.includes('@')) uname += "@terminux.com.tr";
             
-            const mods = {
-                sayim: document.getElementById('mod-sayim').checked,
-                etiket: document.getElementById('mod-etiket').checked,
-                sevkiyat: document.getElementById('mod-sevkiyat').checked,
-                lens: document.getElementById('mod-lens').checked,
-                adres: document.getElementById('mod-adres').checked
-            };
-
+            const mods = { sayim: document.getElementById('mod-sayim').checked, etiket: document.getElementById('mod-etiket').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
             const logEl = document.getElementById('user-log');
             logEl.innerText = "İşleniyor...";
             try {
@@ -467,9 +437,10 @@
                 snap.forEach(docSnap => {
                     const d = docSnap.data();
                     const badgeRole = d.role === 'admin' ? '<span class="badge admin">YÖNETİCİ</span>' : '<span class="badge user">PERSONEL</span>';
-                    const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif</span>';
+                    const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Silinmiş / Pasif</span>';
                     const modStr = Object.keys(d.modules||{}).filter(k=>d.modules[k]).join(', ') || 'Yetki Yok';
                     const s = d.status === 'active' ? 'BANLA' : 'BAN KALDIR';
+                    
                     html += `<tr>
                         <td><strong style="color:#fff;">${d.email}</strong></td>
                         <td>${badgeRole}</td>
@@ -477,8 +448,9 @@
                         <td><strong>${statusText}</strong></td>
                         <td style="text-align: right;">
                             <div class="action-btns">
-                                <button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${encodeURIComponent(JSON.stringify(d.modules||{}))}')">DÜZENLE</button>
+                                <button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${d.role}', '${encodeURIComponent(JSON.stringify(d.modules||{}))}')">DÜZENLE</button>
                                 <button class="btn-sm" style="background:#330000; color:#ff3333;" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button>
+                                <button class="btn-sm" style="background:transparent; color:#ff3333; border: 1px solid #ff3333;" onclick="window.deleteUserRecord('${docSnap.id}')">SİL</button>
                             </div>
                         </td>
                     </tr>`;
@@ -487,28 +459,53 @@
             });
         }
 
-        window.openEdit = (uid, email, modStr) => {
+        window.openEdit = (uid, email, role, modStr) => {
             document.getElementById('edit-uid').value = uid;
             document.getElementById('edit-user-email').innerText = email;
+            document.getElementById('edit-role').value = role;
             const mods = JSON.parse(decodeURIComponent(modStr));
             ['sayim','etiket','sevkiyat','lens','adres'].forEach(k => document.getElementById(`edit-${k}`).checked = mods[k] || false);
             document.getElementById('edit-user-modal').style.display = 'flex';
         };
 
         window.saveUserEdit = async () => {
+            const uid = document.getElementById('edit-uid').value;
+            const role = document.getElementById('edit-role').value;
             const mods = {};
             ['sayim','etiket','sevkiyat','lens','adres'].forEach(k => mods[k] = document.getElementById(`edit-${k}`).checked);
-            await updateDoc(doc(db, "users", document.getElementById('edit-uid').value), { modules: mods });
+            await updateDoc(doc(db, "users", uid), { role: role, modules: mods });
             document.getElementById('edit-user-modal').style.display = 'none';
         };
 
         window.toggleBan = async (uid, cur) => await updateDoc(doc(db, "users", uid), { status: cur === 'active' ? 'banned' : 'active' });
+
+        window.deleteUserRecord = (uid) => {
+            window.showConfirm("Kullanıcı kaydını silmek istediğinize emin misiniz?", async () => {
+                await deleteDoc(doc(db, "users", uid));
+            });
+        };
+
+        async function loadMaintenanceSettings() {
+            const docSnap = await getDoc(doc(db, "system", "settings"));
+            if (docSnap.exists()) {
+                document.getElementById('set-maintenance-pw').value = docSnap.data().maintenancePassword || '';
+                document.getElementById('set-maintenance-status').value = docSnap.data().maintenanceMode === true ? 'true' : 'false';
+            }
+        }
+
+        window.saveMaintenance = async () => {
+            const pw = document.getElementById('set-maintenance-pw').value;
+            const status = document.getElementById('set-maintenance-status').value === 'true';
+            await setDoc(doc(db, "system", "settings"), { maintenancePassword: pw, maintenanceMode: status }, { merge: true });
+            window.showAlert("BAŞARILI", "Bakım modu ayarları kaydedildi.");
+        };
 
         const sysLog = (elId, msg) => {
             const div = document.getElementById(elId);
             div.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
             div.scrollTop = div.scrollHeight;
         };
+
         const getColVal = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
@@ -586,9 +583,7 @@
             document.getElementById('topbar-title').innerText = title;
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-            if (sectionId === 'sec-address') {
-                setTimeout(() => applyZoom(), 100);
-            }
+            if (sectionId === 'sec-address') setTimeout(() => applyZoom(), 100);
         };
 
         let currentAdresDepo = 'am';
@@ -620,51 +615,27 @@
         };
 
         window.changeZoom = (delta) => { setCustomZoom((currentScale + delta) * 100); };
-        window.setCustomZoom = (val) => {
-            let p = parseInt(val); if(isNaN(p)) p = 100; if(p < 25) p = 25; if(p > 250) p = 250;
-            currentScale = p / 100; document.getElementById('zoom-val').value = p; applyZoom();
-        };
-
-        function applyZoom() {
-            const mapWrapper = document.getElementById('admin-map-area');
-            const mapContainer = document.getElementById('admin-map-container');
-            mapWrapper.style.transform = `scale(${currentScale})`;
-            const baseW = currentAdresDepo === 'am' ? 1050 : 1200;
-            mapContainer.style.width = (baseW * currentScale) + 'px';
-            mapContainer.style.height = ((baseW * 9) / 16 * currentScale) + 'px';
-        }
+        window.setCustomZoom = (val) => { let p = parseInt(val); if(isNaN(p)) p = 100; if(p < 25) p = 25; if(p > 250) p = 250; currentScale = p / 100; document.getElementById('zoom-val').value = p; applyZoom(); };
+        function applyZoom() { document.getElementById('admin-map-area').style.transform = `scale(${currentScale})`; document.getElementById('admin-map-container').style.width = ((currentAdresDepo === 'am' ? 1050 : 1200) * currentScale) + 'px'; }
 
         function bindCellEvents(parentArea) {
             parentArea.querySelectorAll('.cell').forEach(cell => {
-                if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') {
-                    cell.style.visibility = 'visible'; cell.style.opacity = '0.3'; cell.innerText = '+'; cell.classList.remove('cell-hidden'); cell.id = ''; 
-                }
+                if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') { cell.style.visibility = 'visible'; cell.style.opacity = '0.3'; cell.innerText = '+'; cell.classList.remove('cell-hidden'); cell.id = ''; }
                 cell.style.pointerEvents = 'auto';
-                const newCell = cell.cloneNode(true);
-                cell.parentNode.replaceChild(newCell, cell);
-                newCell.addEventListener('click', () => {
-                    let addr = newCell.id ? newCell.id.replace('cell-', '') : '';
-                    activeBlockParent = newCell.parentElement;
-                    if(!addr || newCell.innerText === '+') openBlockEditorFromParent(activeBlockParent);
-                    else openCellModal(addr);
-                });
+                const newCell = cell.cloneNode(true); cell.parentNode.replaceChild(newCell, cell);
+                newCell.addEventListener('click', () => { let addr = newCell.id ? newCell.id.replace('cell-', '') : ''; activeBlockParent = newCell.parentElement; if(!addr || newCell.innerText === '+') openBlockEditorFromParent(activeBlockParent); else openCellModal(addr); });
             });
         }
 
         window.openBlockEditor = () => { document.getElementById('cell-modal').style.display='none'; openBlockEditorFromParent(activeBlockParent); };
 
         function openBlockEditorFromParent(parent) {
-            let cols = parseInt((parent.style.gridTemplateColumns.match(/repeat\((\d+)/)||[])[1]) || 1;
-            let rows = parseInt((parent.style.gridTemplateRows.match(/repeat\((\d+)/)||[])[1]) || 1;
+            let cols = parseInt((parent.style.gridTemplateColumns.match(/repeat\((\d+)/)||[])[1]) || 1, rows = parseInt((parent.style.gridTemplateRows.match(/repeat\((\d+)/)||[])[1]) || 1;
             document.getElementById('be-cols').value = cols; document.getElementById('be-rows').value = rows;
             let existingData = [], foundRot = 0;
             Array.from(parent.querySelectorAll('.cell')).forEach(c => {
                 if(c.classList.contains('cell-hidden') || c.innerText === '+') existingData.push('');
-                else {
-                    existingData.push(c.innerText.trim());
-                    let rm = (c.querySelector('span')?.style.transform.match(/rotate\(([\d\-]+)deg\)/));
-                    if(rm) foundRot = parseInt(rm[1]);
-                }
+                else { existingData.push(c.innerText.trim()); let rm = (c.querySelector('span')?.style.transform.match(/rotate\(([\d\-]+)deg\)/)); if(rm) foundRot = parseInt(rm[1]); }
             });
             document.getElementById('be-text-rot').value = foundRot;
             window.generateGridInputs(cols, rows, existingData);
@@ -672,11 +643,8 @@
         }
 
         window.generateGridInputs = (cO, rO, ex = []) => {
-            let cols = cO !== undefined ? cO : parseInt(document.getElementById('be-cols').value) || 1;
-            let rows = rO !== undefined ? rO : parseInt(document.getElementById('be-rows').value) || 1;
-            const container = document.getElementById('be-grid');
-            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            container.innerHTML = '';
+            let cols = cO !== undefined ? cO : parseInt(document.getElementById('be-cols').value) || 1, rows = rO !== undefined ? rO : parseInt(document.getElementById('be-rows').value) || 1;
+            const container = document.getElementById('be-grid'); container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; container.innerHTML = '';
             for(let i=0; i<cols*rows; i++) {
                 const wrap = document.createElement('div'); wrap.className = 'edit-cell-wrap'; wrap.draggable = true;
                 const handle = document.createElement('div'); handle.className = 'edit-cell-drag'; handle.innerHTML = '&#9776; KAYDIR';
@@ -693,8 +661,7 @@
         };
 
         window.autoFillGrid = () => {
-            const prefix = document.getElementById('be-prefix').value.trim();
-            let start = parseInt(document.getElementById('be-start').value) || 1;
+            const prefix = document.getElementById('be-prefix').value.trim(); let start = parseInt(document.getElementById('be-start').value) || 1;
             const inputs = Array.from(document.querySelectorAll('#be-grid .edit-cell'));
             if(document.getElementById('be-fill-dir').value === 'reverse') inputs.reverse();
             inputs.forEach(inp => { let s = (prefix===''||prefix.endsWith('.')||prefix.endsWith('-'))?'':'.'; inp.value = prefix===''?start:prefix+s+start.toString().padStart(2,'0'); start++; });
@@ -714,27 +681,19 @@
                 nc.style.pointerEvents = 'auto'; activeBlockParent.appendChild(nc);
             });
             bindCellEvents(activeBlockParent); document.getElementById('block-editor-modal').style.display='none';
-            window.showAlert("BAŞARILI", "Raf güncellendi. Kalıcı olması için KROKİYİ İNDİR butonunu kullanın.");
         };
 
         window.exportMapCode = () => {
             const clone = document.getElementById('admin-map-area').cloneNode(true);
-            clone.querySelectorAll('.cell').forEach(cell => {
-                cell.style.pointerEvents = ''; 
-                if(!cell.id || cell.innerText.trim() === '+') { cell.id=''; cell.innerHTML=''; cell.className='cell cell-hidden'; cell.style.visibility='hidden'; cell.style.opacity=''; }
-            });
-            let html = clone.innerHTML.replace(/ active"/g, '"');
-            let jsVar = currentAdresDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo';
-            let filename = currentAdresDepo === 'am' ? 'harita-am.js' : 'harita-ana.js';
-            const blob = new Blob([`window.${jsVar} = \`\n${html}\n\`;`], { type: 'text/javascript' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+            clone.querySelectorAll('.cell').forEach(cell => { cell.style.pointerEvents = ''; if(!cell.id || cell.innerText.trim() === '+') { cell.id=''; cell.innerHTML=''; cell.className='cell cell-hidden'; cell.style.visibility='hidden'; cell.style.opacity=''; } });
+            const blob = new Blob([`window.${currentAdresDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo'} = \`\n${clone.innerHTML.replace(/ active"/g, '"')}\n\`;`], { type: 'text/javascript' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = currentAdresDepo === 'am' ? 'harita-am.js' : 'harita-ana.js'; a.click();
         };
 
         window.exportAdresExcel = async () => {
-            const q = query(collection(db, currentAdresCollection));
-            const snapshot = await getDocs(q); let data = [];
+            const snapshot = await getDocs(query(collection(db, currentAdresCollection))); let data = [];
             snapshot.forEach(doc => { let d = doc.data(); data.push({"Adres":d.adres||"","Ürün Adı":d.urunAdi||"","Ürün Kodu":d.urunKodu||"","Barkod":d.barkod||"","Ref No":d.refNo||""}); });
-            if(data.length === 0) return window.showAlert("UYARI", "Veri yok.");
+            if(data.length === 0) return;
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Adresler");
             XLSX.writeFile(wb, `terminux_${currentAdresDepo}_adresler.xlsx`);
         };
@@ -747,26 +706,21 @@
                 window.showConfirm(`${rows.length} adres işlenecek. Onaylıyor musunuz?`, async () => {
                     const snap = await getDocs(query(collection(db, currentAdresCollection)));
                     const map = new Map(); snap.forEach(d => { let obj=d.data(); if(obj.urunKodu||obj.barkod) map.set(String(obj.urunKodu||obj.barkod), {id:d.id, adres:obj.adres}); });
-                    let ek=0, gn=0;
                     for(let r of rows) {
-                        let adr = String(r["Adres"]||r["adres"]||"").trim().replace(/^BDM/i,'');
-                        let kod = String(r["Ürün Kodu"]||r["urunKodu"]||"").trim();
-                        let brk = String(r["Barkod"]||r["barkod"]||"").trim();
+                        let adr = String(r["Adres"]||r["adres"]||"").trim().replace(/^BDM/i,''), kod = String(r["Ürün Kodu"]||r["urunKodu"]||"").trim(), brk = String(r["Barkod"]||r["barkod"]||"").trim();
                         if(adr && (kod||brk)) {
-                            let data = {adres:adr, urunAdi:String(r["Ürün Adı"]||r["urunAdi"]||"").trim(), urunKodu:kod, barkod:brk, refNo:String(r["Ref No"]||r["refNo"]||"").trim()};
-                            let key = kod||brk;
-                            if(map.has(key)) { if(map.get(key).adres !== adr) { await updateDoc(doc(db, currentAdresCollection, map.get(key).id), data); gn++; } }
-                            else { await addDoc(collection(db, currentAdresCollection), data); ek++; }
+                            let data = {adres:adr, urunAdi:String(r["Ürün Adı"]||r["urunAdi"]||"").trim(), urunKodu:kod, barkod:brk, refNo:String(r["Ref No"]||r["refNo"]||"").trim()}, key = kod||brk;
+                            if(map.has(key)) { if(map.get(key).adres !== adr) await updateDoc(doc(db, currentAdresCollection, map.get(key).id), data); }
+                            else await addDoc(collection(db, currentAdresCollection), data);
                         }
                     }
-                    window.showAlert("TAMAMLANDI", `Eklenen: ${ek}, Güncellenen: ${gn}`); event.target.value=''; switchAdresDepo(currentAdresDepo);
+                    event.target.value=''; switchAdresDepo(currentAdresDepo);
                 });
             }; reader.readAsArrayBuffer(file);
         };
 
         window.openCellModal = async (adres) => {
-            document.getElementById('cell-modal-title').innerText = adres; document.getElementById('cell-modal').style.display='flex';
-            document.getElementById('cell-loading').style.display='block'; document.getElementById('cell-empty').style.display='none'; document.getElementById('cell-product-list').innerHTML='';
+            document.getElementById('cell-modal-title').innerText = adres; document.getElementById('cell-modal').style.display='flex'; document.getElementById('cell-loading').style.display='block'; document.getElementById('cell-empty').style.display='none'; document.getElementById('cell-product-list').innerHTML='';
             const snap = await getDocs(query(collection(db, currentAdresCollection), where("adres", "==", adres)));
             document.getElementById('cell-loading').style.display='none';
             if(snap.empty) document.getElementById('cell-empty').style.display='block';
@@ -777,15 +731,15 @@
         };
 
         window.openProductModal = (adr="") => { document.getElementById('pm-id').value=''; document.getElementById('pm-adres').value=adr; ['pm-isim','pm-kodu','pm-barkod','pm-ref'].forEach(id=>document.getElementById(id).value=''); document.getElementById('pm-title').innerText = adr?"RAFA ÜRÜN EKLE":"YENİ ÜRÜN EKLE"; document.getElementById('product-modal').style.display='flex'; };
-        window.editProduct = (id,isim,kod,barkod,ref,adres) => { document.getElementById('pm-id').value=id; document.getElementById('pm-adres').value=adres; document.getElementById('pm-isim').value=isim; document.getElementById('pm-kodu').value=kod; document.getElementById('pm-barkod').value=barkod; document.getElementById('pm-ref').value=ref; document.getElementById('pm-title').innerText="ÜRÜNÜ DÜZENLE"; document.getElementById('product-modal').style.display='flex'; };
+        window.editProduct = (id,isim,kod,barkod,ref,adres) => { document.getElementById('pm-id').value=id; document.getElementById('pm-adres').value=adres; document.getElementById('pm-isim').value=isim; document.getElementById('pm-kodu').value=kod; document.getElementById('pm-barkod').value=barkod; document.getElementById('pm-ref').value=ref; document.getElementById('product-modal').style.display='flex'; };
         window.saveProduct = async () => {
             const id = document.getElementById('pm-id').value, adr = document.getElementById('pm-adres').value.trim();
-            if(!adr) return window.showAlert("UYARI", "Adres zorunludur.");
+            if(!adr) return;
             const data = {adres:adr, urunAdi:document.getElementById('pm-isim').value.trim(), urunKodu:document.getElementById('pm-kodu').value.trim(), barkod:document.getElementById('pm-barkod').value.trim(), refNo:document.getElementById('pm-ref').value.trim()};
             if(id) await updateDoc(doc(db, currentAdresCollection, id), data); else await addDoc(collection(db, currentAdresCollection), data);
             document.getElementById('product-modal').style.display='none'; if(document.getElementById('cell-modal').style.display==='flex') openCellModal(document.getElementById('cell-modal-title').innerText);
         };
-        window.deleteProduct = (id) => { window.showConfirm("Ürünü silmek istiyor musunuz?", async () => { await deleteDoc(doc(db, currentAdresCollection, id)); document.getElementById(`card-${id}`).remove(); if(document.getElementById('cell-product-list').innerHTML.trim()==='') document.getElementById('cell-empty').style.display='block'; }); };
+        window.deleteProduct = (id) => { window.showConfirm("SİL?", async () => { await deleteDoc(doc(db, currentAdresCollection, id)); document.getElementById(`card-${id}`).remove(); if(document.getElementById('cell-product-list').innerHTML.trim()==='') document.getElementById('cell-empty').style.display='block'; }); };
 
     </script>
 </body>
