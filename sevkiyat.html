@@ -279,6 +279,7 @@
                 <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
                 <select id="filter-bmc" class="filter-select" onchange="window.renderShipmentList()" style="display:none;">
                     <option value="ALL">TÜMÜ</option>
+                    <option value="MAIN">ANA MALZEME</option>
                     <option value="BMC">BMC</option>
                 </select>
             </div>
@@ -933,6 +934,13 @@
             if(shipment && shipment.items[code]) {
                 shipment.items[code].receivedQty = parsedVal;
             }
+
+            clearTimeout(autoConfirmTimers[code]);
+            if (val !== "") {
+                if (parsedVal === expected && expected > 0) {
+                    window.confirmItem(code);
+                }
+            }
         };
 
         const getScore = (item) => {
@@ -982,8 +990,12 @@
             let items = Object.values(shipment.items || {});
             
             const filterType = document.getElementById('filter-bmc') ? document.getElementById('filter-bmc').value : 'ALL';
-            if (shipment.type === 'ANA DEPO' && filterType === 'BMC') {
-                items = items.filter(item => shipment.bmc && shipment.bmc[item.code]);
+            if (shipment.type === 'ANA DEPO') {
+                if (filterType === 'MAIN') {
+                    items = items.filter(item => !(shipment.bmc && shipment.bmc[item.code]));
+                } else if (filterType === 'BMC') {
+                    items = items.filter(item => shipment.bmc && shipment.bmc[item.code]);
+                }
             }
             
             const sortedItems = getSortedItems(items);
@@ -993,12 +1005,14 @@
                 let valClass = 'val-expected';
                 
                 const isPinned = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
-                const showInputs = isPinned || !item.confirmed;
+                const showInputs = isPinned || (!item.confirmed && item.receivedQty > 0);
 
                 if (isPinned) {
                     statusClass = 'status-pinned';
-                } else if (!item.confirmed) {
+                } else if (!item.confirmed && item.receivedQty === 0) {
                     statusClass = 'status-pending'; 
+                } else if (!item.confirmed && item.receivedQty > 0) {
+                    statusClass = 'status-pinned'; 
                 } else {
                     if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
                         statusClass = 'status-complete'; valClass = 'val-complete';
@@ -1018,7 +1032,7 @@
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
                 let diffText = diff > 0 ? `+${diff}` : diff.toString();
                 
-                if (item.receivedQty === 0 && !item.confirmed) diffClass = 'diff-zero';
+                if (item.receivedQty === 0 && !showInputs) diffClass = 'diff-zero';
 
                 let itemAddress = item.address;
                 if (!itemAddress || itemAddress === "-") {
