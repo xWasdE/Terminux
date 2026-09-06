@@ -117,7 +117,7 @@
         .bmc-badge { background: #ff3333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
         .bmc-qty { background: #ffbc00; color: #000; margin-left: 2px; }
         .address-badge { background: #222; color: #00ccff; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #333; margin-left: 5px; white-space: nowrap; }
-        .dummy-badge { background: #9c27b0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-left: 5px; }
+        .dummy-badge { background: #9c27b0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-left: 5px; white-space: nowrap; }
         
         .qty-grid { display: contents; }
         .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
@@ -441,14 +441,14 @@
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        const checkDummy = d.dummy === true || d.isDummy === true || d.DUMMY === true || String(d.urunAdi || d.isim || '').toUpperCase().includes('DUMMY');
+                        const checkDummy = String(d.dummy || "").trim().toUpperCase() === "DUMMY" || d.isDummy === true || d.DUMMY === true || String(d.urunAdi || d.isim || '').toUpperCase().includes('DUMMY');
                         
                         if (!catalogDb[key]) {
                             catalogDb[key] = { 
                                 urunKodu: key, 
-                                urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), 
+                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "")
+                                refNo: String(d.refNo || "") 
                             };
                         }
                         catalogDb[key]['isDummy_' + locKey] = checkDummy;
@@ -893,19 +893,6 @@
             if(shipment && shipment.items[code]) {
                 shipment.items[code].receivedQty = parsedVal;
             }
-
-            clearTimeout(autoConfirmTimers[code]);
-            if (val !== "") {
-                if (parsedVal === expected && expected > 0) {
-                    autoConfirmTimers[code] = setTimeout(() => {
-                        window.confirmItem(code);
-                    }, 100);
-                } else {
-                    autoConfirmTimers[code] = setTimeout(() => {
-                        window.confirmItem(code);
-                    }, 2000); 
-                }
-            }
         };
 
         const getScore = (item) => {
@@ -1207,8 +1194,8 @@
                 doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
             }
 
-            const unconfirmed = items.filter(i => i.receivedQty === 0);
-            const partial = items.filter(i => i.receivedQty > 0 && i.receivedQty < i.expectedQty);
+            const unconfirmed = items.filter(i => !i.confirmed && i.receivedQty === 0);
+            const partial = items.filter(i => i.confirmed && i.receivedQty < i.expectedQty);
             let msg = "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
             
             if (unconfirmed.length > 0 || partial.length > 0) {
