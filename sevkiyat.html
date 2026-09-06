@@ -361,6 +361,7 @@
         
         window.pinnedItemCode = null;
         window.editingItemCode = null;
+        window.touchedInputs = new Set(); 
 
         document.getElementById('main-content').addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-to-top');
@@ -442,11 +443,11 @@
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
                         const checkDummy = String(d.dummy || "").trim().toUpperCase() === "DUMMY" || d.isDummy === true || d.DUMMY === true || String(d.urunAdi || d.isim || '').toUpperCase().includes('DUMMY');
-                        
+
                         if (!catalogDb[key]) {
                             catalogDb[key] = { 
                                 urunKodu: key, 
-                                urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), 
+                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
                                 barkod: String(d.barkod || ""), 
                                 refNo: String(d.refNo || "")
                             };
@@ -878,24 +879,24 @@
         };
 
         window.handleBlur = async (e, code) => {
-            const shipment = allShipments.find(s => s.id === currentShipmentId);
-            if(!shipment || !shipment.items[code]) return;
-
-            const recEl = document.getElementById(`rec-${code}`);
-            const lblEl = document.getElementById(`lbl-${code}`);
-            
-            let rVal = recEl ? parseInt(recEl.value) : shipment.items[code].receivedQty;
-            let lVal = lblEl ? parseInt(lblEl.value) : shipment.items[code].labelQty;
-            if (isNaN(rVal)) rVal = 0;
-            if (isNaN(lVal)) lVal = 0;
-
-            shipment.items[code].receivedQty = rVal;
-            shipment.items[code].labelQty = lVal;
-
-            await saveShipmentToDb(shipment);
+            setTimeout(() => {
+                const recEl = document.getElementById(`rec-${code}`);
+                const lblEl = document.getElementById(`lbl-${code}`);
+                
+                if (document.activeElement !== recEl && document.activeElement !== lblEl) {
+                    if (window.touchedInputs && window.touchedInputs.has(code)) {
+                        window.confirmItem(code);
+                    } else if (code === window.pinnedItemCode || code === window.editingItemCode) {
+                        window.confirmItem(code);
+                    }
+                }
+            }, 150);
         };
 
         window.updateLiveDiff = (code, val) => {
+            if (!window.touchedInputs) window.touchedInputs = new Set();
+            window.touchedInputs.add(code);
+            
             const el = document.getElementById(`rec-${code}`);
             const expected = parseInt(el.getAttribute('data-expected')) || 0;
             let parsedVal = parseInt(val) || 0;
@@ -915,7 +916,9 @@
             clearTimeout(autoConfirmTimers[code]);
             if (val !== "") {
                 if (parsedVal === expected && expected > 0) {
-                    window.confirmItem(code);
+                    autoConfirmTimers[code] = setTimeout(() => {
+                        window.confirmItem(code);
+                    }, 400);
                 }
             }
         };
@@ -972,27 +975,32 @@
                 let statusClass = 'status-pending';
                 let valClass = 'val-expected';
                 
-                const isEditingMode = (item.code === window.pinnedItemCode || item.code === window.editingItemCode || !item.confirmed);
+                const isPinned = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
+                const isEditingMode = isPinned || !item.confirmed; 
 
-                if (isEditingMode) {
+                if (isPinned) {
                     statusClass = 'status-pinned';
                 }
-                else if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) {
-                    statusClass = 'status-complete'; valClass = 'val-complete';
-                }
-                else if (item.receivedQty === 0 && item.confirmed) {
-                    statusClass = 'status-missing'; valClass = 'val-missing';
-                }
-                else if (item.receivedQty > 0 && item.receivedQty < item.expectedQty) {
-                    statusClass = 'status-missing'; valClass = 'val-missing';
-                }
-                else if (item.receivedQty > item.expectedQty) {
-                    statusClass = 'status-over'; valClass = 'val-over';
+                else if (item.confirmed) {
+                    if (item.receivedQty === item.expectedQty && item.expectedQty > 0) {
+                        statusClass = 'status-complete'; valClass = 'val-complete';
+                    }
+                    else if (item.receivedQty === 0) {
+                        statusClass = 'status-missing'; valClass = 'val-missing';
+                    }
+                    else if (item.receivedQty < item.expectedQty) {
+                        statusClass = 'status-missing'; valClass = 'val-missing';
+                    }
+                    else if (item.receivedQty > item.expectedQty) {
+                        statusClass = 'status-over'; valClass = 'val-over';
+                    }
+                } else {
+                    statusClass = 'status-pending';
                 }
 
                 let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
                 let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
-                let diffText = diff > 0 ? `+${diff}` : diff;
+                let diffText = diff > 0 ? `+${diff}` : diff.toString();
                 
                 if (item.receivedQty === 0 && !isEditingMode) diffClass = 'diff-zero';
 
@@ -1076,6 +1084,10 @@
         window.confirmItem = async (code, overrideVal = null) => {
             clearTimeout(autoConfirmTimers[code]);
             
+            if (window.touchedInputs && window.touchedInputs.has(code)) {
+                window.touchedInputs.delete(code);
+            }
+            
             const shipment = allShipments.find(s => s.id === currentShipmentId);
             if(!shipment) return;
 
@@ -1154,7 +1166,7 @@
             if (hasBmc) {
                 Object.keys(shipment.bmc).forEach(code => {
                     const itemInfo = items.find(i => String(i.code) === String(code)) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0, expectedQty: 0 };
-                    let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0 && itemInfo.confirmed;
+                    let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0;
                     let ayrilan = (itemInfo.confirmed || isComplete) ? Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.bmc[code]) || 0) : 0;
                     
                     bmcItems.push({
