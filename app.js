@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
@@ -100,6 +100,16 @@ document.body.insertAdjacentHTML('beforeend', `
         <span class="lightbox-prev" onclick="changeLightbox(-1)">&#10094;</span>
         <img id="lightbox-img" src="">
         <span class="lightbox-next" onclick="changeLightbox(1)">&#10095;</span>
+    </div>
+    <div id="pw-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:25000; justify-content:center; align-items:center;">
+        <div style="background:#0c0c0c; border:1px solid #333; border-radius:12px; padding:30px; width:100%; max-width:350px; text-align:center;">
+            <h3 style="color:#00ff00; margin-bottom:20px;">ŞİFRE DEĞİŞTİR</h3>
+            <input type="password" id="new-pw-input" placeholder="Yeni Şifre (En az 6 hane)" style="width:100%; padding:15px; background:#000; border:1px solid #444; color:#fff; font-size:16px; text-align:center; border-radius:8px; margin-bottom:20px; outline:none;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="document.getElementById('pw-modal').style.display='none'" style="flex:1; padding:12px; background:#222; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">İPTAL</button>
+                <button onclick="executePwChange()" style="flex:1; padding:12px; background:#00ff00; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">GÜNCELLE</button>
+            </div>
+        </div>
     </div>
     <div id="print-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
         <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; text-align:center; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
@@ -306,13 +316,14 @@ const initFallback = setTimeout(() => {
 
 onSnapshot(doc(db, "system", "settings"), (docSnap) => {
     if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
-        if (!window.location.pathname.toLowerCase().includes('bakim.html')) {
-            window.location.href = "bakim.html";
+        const path = window.location.pathname.toLowerCase();
+        if (!path.includes('bakim.html') && !path.includes('terminux.html')) {
+            if (sessionStorage.getItem('bypass_maintenance') !== 'true') {
+                window.location.href = "bakim.html";
+            }
         }
     }
 });
-
-setPersistence(auth, browserLocalPersistence);
 
 onAuthStateChanged(auth, (user) => {
     clearTimeout(initFallback);
@@ -344,6 +355,10 @@ onAuthStateChanged(auth, (user) => {
 
             if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
             
+            if(document.querySelector('header > div:nth-child(2)') && !document.getElementById('btn-change-pw') && !path.includes('terminux')) {
+                document.querySelector('header > div:nth-child(2)').insertAdjacentHTML('beforeend', `<button id="btn-change-pw" onclick="document.getElementById('pw-modal').style.display='flex'" style="background: #222; color: #fff; border: 1px solid #444; padding: 10px 25px; cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.2s; margin-right:10px;">ŞİFRE DEĞİŞTİR</button>`);
+            }
+            
             if(loadingScreen) loadingScreen.classList.add('hidden');
             if(loginScreen) loginScreen.classList.add('hidden');
             if(appScreen) appScreen.classList.remove('hidden');
@@ -368,6 +383,21 @@ onAuthStateChanged(auth, (user) => {
         if(loginScreen) loginScreen.classList.remove('hidden');
     }
 });
+
+window.executePwChange = async () => {
+    const pw = document.getElementById('new-pw-input').value;
+    if(pw.length < 6) return alert("Şifre en az 6 karakter olmalıdır.");
+    try {
+        await updatePassword(auth.currentUser, pw);
+        alert("Şifreniz başarıyla güncellendi.");
+        document.getElementById('pw-modal').style.display='none';
+        document.getElementById('new-pw-input').value = '';
+    } catch(e) {
+        alert("Güvenlik nedeniyle şifre değiştirmeden önce tekrar giriş yapmanız gerekmektedir.");
+        await signOut(auth);
+        window.location.reload();
+    }
+};
 
 if(loginForm) {
     loginForm.addEventListener('submit', async (e) => {
