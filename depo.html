@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux Ortak Depo</title>
+    <!-- Tailwind CSS (Görsellik için) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Kod Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Başlık ve Gizli Admin Butonu -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Terminux Ortak Depo Yönetimi</h1>
+            <button id="adminToggleBtn" class="w-8 h-8 rounded-full bg-gray-200 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span class="text-xs text-gray-400">#</span>
+            </button>
+        </div>
+
+        <!-- Admin Giriş Paneli (Gizli) -->
+        <div id="adminLoginPanel" class="hidden mb-6 p-4 bg-white rounded shadow flex gap-4">
+            <input type="password" id="adminPassword" placeholder="Admin Şifresi" class="border p-2 rounded w-64 outline-none focus:border-red-500">
+            <button id="adminLoginBtn" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700">Giriş Yap</button>
+        </div>
+
+        <!-- Admin Log Paneli (Şifre doğruysa açılır) -->
+        <div id="adminLogsPanel" class="hidden mb-6 p-4 bg-white rounded shadow">
+            <h2 class="text-xl font-bold mb-4 text-red-600">Gizli İşlem Kayıtları</h2>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="w-full text-left border-collapse" id="logsTable">
+                    <thead>
+                        <tr class="border-b bg-gray-100">
+                            <th class="p-2">Tarih</th>
+                            <th class="p-2">Kullanıcı</th>
+                            <th class="p-2">İşlem</th>
+                            <th class="p-2">Raf</th>
+                            <th class="p-2">Ürün (ASG)</th>
+                            <th class="p-2">Miat</th>
+                            <th class="p-2">Miktar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <!-- Loglar buraya JavaScript ile yüklenecek -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Manuel Stok İşlemi -->
+            <div class="bg-white p-6 rounded shadow border-t-4 border-blue-600">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">Manuel Stok İşlemi</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1 text-gray-600">Raf Adresi</label>
+                    <select id="rackSelect" class="w-full border p-2 rounded outline-none focus:border-blue-500">
+                        <option value="">Raf Seçiniz</option>
+                        <option value="RAF-A1">RAF-A1</option>
+                        <option value="RAF-A2">RAF-A2</option>
+                        <option value="RAF-B1">RAF-B1</option>
+                        <option value="RAF-B2">RAF-B2</option>
+                        <option value="AMELIYATHANE-R1">AMELIYATHANE-R1</option>
+                        <option value="AMELIYATHANE-R2">AMELIYATHANE-R2</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1 text-gray-600">Ürün (ASG - İsim)</label>
+                    <select id="productSelect" class="w-full border p-2 rounded outline-none focus:border-blue-500">
+                        <option value="">Yükleniyor...</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-4 mb-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1 text-gray-600">Miat Tarihi</label>
+                        <input type="date" id="miatDate" class="w-full border p-2 rounded outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1 text-gray-600">Miktar</label>
+                        <input type="number" id="quantity" min="1" class="w-full border p-2 rounded outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-8">
+                    <button id="addStockBtn" class="flex-1 bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition-colors">Stok Ekle</button>
+                    <button id="removeStockBtn" class="flex-1 bg-red-600 text-white py-3 rounded font-bold hover:bg-red-700 transition-colors">Stok Çıkar</button>
+                </div>
+            </div>
+
+            <!-- QR Kod Adresleri -->
+            <div class="bg-white p-6 rounded shadow border-t-4 border-gray-800">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">QR Kod Adresleri</h2>
+                
+                <button onclick="generateQR('MASTER_QR_ALL_RACKS', 'TÜM DEPO ADRESLERİ (ANA QR)')" class="w-full bg-gray-800 text-white py-3 rounded font-bold mb-6 hover:bg-gray-900 transition-colors">
+                    Tüm Adresleri Gösteren Ana QR Kodu Üret
+                </button>
+
+                <div class="grid grid-cols-2 gap-3 mb-6" id="qrButtons">
+                    <!-- Butonlar JS ile eklenecek -->
+                </div>
+
+                <div id="qrDisplayArea" class="hidden flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded bg-gray-50 mt-4">
+                    <canvas id="qrcode"></canvas>
+                    <p id="qrLabel" class="mt-6 font-bold text-xl text-gray-800 tracking-wider"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular v9) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, setDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ÖNEMLİ: Kendi Firebase yapılandırmanı buraya yapıştır
+        const firebaseConfig = {
+            apiKey: "SENIN_API_KEY",
+            authDomain: "senin-projen.firebaseapp.com",
+            projectId: "senin-projen",
+            storageBucket: "senin-projen.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const currentUser = "Personel_01"; // Gerçek sistemde giriş yapan kullanıcının adını buraya çekebilirsin
+
+        // DOM Elementleri
+        const productSelect = document.getElementById('productSelect');
+        const rackSelect = document.getElementById('rackSelect');
+        const miatDate = document.getElementById('miatDate');
+        const quantity = document.getElementById('quantity');
+        const addStockBtn = document.getElementById('addStockBtn');
+        const removeStockBtn = document.getElementById('removeStockBtn');
+
+        // Ürünleri Çek
+        async function loadProducts() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'products'));
+                productSelect.innerHTML = '<option value="">Ürün Seçiniz</option>';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = data.asgCode; 
+                    option.textContent = `${data.asgCode} - ${data.name}`;
+                    productSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Ürünler çekilemedi:", error);
+                productSelect.innerHTML = '<option value="">Bağlantı hatası!</option>';
+            }
+        }
+        loadProducts();
+
+        // Stok İşlemi (Ekle / Çıkar)
+        async function handleTransaction(type) {
+            const rack = rackSelect.value;
+            const product = productSelect.value;
+            const miat = miatDate.value;
+            const qty = parseInt(quantity.value, 10);
+
+            if (!rack || !product || !miat || !qty || isNaN(qty)) {
+                alert("Lütfen raf, ürün, miat ve miktar bilgilerini eksiksiz girin.");
+                return;
+            }
+
+            const docId = `${rack}_${product}_${miat}`;
+            const productRef = doc(db, 'terminux_rack_stocks', docId);
+            
+            try {
+                const productSnap = await getDoc(productRef);
+                let currentStock = 0;
+                
+                if (productSnap.exists()) {
+                    currentStock = productSnap.data().stock;
+                }
+
+                const newStock = type === 'add' ? currentStock + qty : currentStock - qty;
+
+                if (newStock < 0) {
+                    alert("Yetersiz stok! Çıkarmak istediğiniz miktar mevcut stoktan fazla.");
+                    return;
+                }
+
+                // Stoğu Güncelle
+                await setDoc(productRef, {
+                    rackId: rack,
+                    productASG: product,
+                    miat: miat,
+                    stock: newStock,
+                    lastUpdated: serverTimestamp()
+                }, { merge: true });
+
+                // Gizli Log Kaydı Oluştur
+                await addDoc(collection(db, 'terminux_audit_logs'), {
+                    rackId: rack,
+                    productASG: product,
+                    action: type,
+                    quantity: qty,
+                    miat: miat,
+                    user: currentUser,
+                    timestamp: serverTimestamp()
+                });
+
+                alert(`İşlem başarılı. ${type === 'add' ? 'Eklendi' : 'Çıkarıldı'}.`);
+                quantity.value = ''; // Inputu temizle
+
+            } catch (error) {
+                console.error("İşlem hatası:", error);
+                alert("İşlem sırasında bir hata oluştu.");
+            }
+        }
+
+        addStockBtn.addEventListener('click', () => handleTransaction('add'));
+        removeStockBtn.addEventListener('click', () => handleTransaction('remove'));
+
+        // Admin İşlemleri
+        const adminToggleBtn = document.getElementById('adminToggleBtn');
+        const adminLoginPanel = document.getElementById('adminLoginPanel');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminLogsPanel = document.getElementById('adminLogsPanel');
+        const logsTableBody = document.getElementById('logsTableBody');
+
+        adminToggleBtn.addEventListener('click', () => {
+            adminLoginPanel.classList.toggle('hidden');
+        });
+
+        adminLoginBtn.addEventListener('click', async () => {
+            if (adminPassword.value === 'TerminuxAdmin2026') {
+                adminLoginPanel.classList.add('hidden');
+                adminLogsPanel.classList.remove('hidden');
+                
+                // Logları Çek
+                const q = query(collection(db, 'terminux_audit_logs'), orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                logsTableBody.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    const log = doc.data();
+                    const date = log.timestamp ? log.timestamp.toDate().toLocaleString('tr-TR') : 'Tarih Yok';
+                    const actionBadge = log.action === 'add' 
+                        ? '<span class="px-2 py-1 bg-green-500 text-white rounded text-xs">EKLENDİ</span>' 
+                        : '<span class="px-2 py-1 bg-red-500 text-white rounded text-xs">ÇIKARILDI</span>';
+
+                    logsTableBody.innerHTML += `
+                        <tr class="border-b text-sm">
+                            <td class="p-2">${date}</td>
+                            <td class="p-2">${log.user}</td>
+                            <td class="p-2">${actionBadge}</td>
+                            <td class="p-2">${log.rackId}</td>
+                            <td class="p-2">${log.productASG}</td>
+                            <td class="p-2 font-mono">${log.miat}</td>
+                            <td class="p-2 font-bold">${log.quantity}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                alert('Hatalı Şifre!');
+            }
+        });
+
+        // QR Kod İşlemleri
+        const racks = ['RAF-A1', 'RAF-A2', 'RAF-B1', 'RAF-B2', 'AMELIYATHANE-R1', 'AMELIYATHANE-R2'];
+        const qrButtonsContainer = document.getElementById('qrButtons');
+        
+        // Raf butonlarını dinamik oluştur
+        racks.forEach(rack => {
+            const btn = document.createElement('button');
+            btn.className = "border border-gray-300 p-2 rounded text-center hover:bg-gray-100 font-medium text-gray-700";
+            btn.textContent = rack;
+            btn.onclick = () => window.generateQR(rack, rack);
+            qrButtonsContainer.appendChild(btn);
+        });
+
+        const qr = new QRious({
+            element: document.getElementById('qrcode'),
+            size: 200,
+            level: 'H'
+        });
+
+        window.generateQR = function(value, labelText) {
+            document.getElementById('qrDisplayArea').classList.remove('hidden');
+            document.getElementById('qrDisplayArea').classList.add('flex');
+            qr.value = value;
+            document.getElementById('qrLabel').textContent = labelText;
+        };
+    </script>
+</body>
+</html>
