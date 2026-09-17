@@ -13,9 +13,9 @@
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
-        .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; }
+        .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
-        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; }
         .btn-header:hover { background: #222; border-color: #555; }
         
         main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; }
@@ -30,12 +30,12 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
         .btn-action-qr:hover { opacity: 0.8; }
-        .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; }
+        .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; display: none; }
         .btn-action-excel:hover { opacity: 0.8; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         
@@ -51,12 +51,12 @@
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 5%; top: 10%; width: 80%; height: 80%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
+        .aisle-container { position: absolute; left: 5%; top: 10%; width: 80%; height: 75%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: 13px; font-weight: 900; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: 12px; font-weight: 900; background: rgba(0,0,0,0.85); padding: 4px 6px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -65,7 +65,7 @@
         .alert-180 { background: rgba(255, 255, 0, 0.2) !important; border-color: #ffff00 !important; }
         .alert-360 { border-color: #00ff00 !important; }
 
-        .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { text-shadow: 1px 1px 3px #000; }
+        .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { text-shadow: 1px 1px 3px #000; color: #fff; }
 
         @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
         @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
@@ -77,8 +77,8 @@
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; }
-        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 15px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
         .btn-close:hover { color: #ff3333; }
 
@@ -96,7 +96,7 @@
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
         .legend-bar { display: flex; gap: 15px; padding: 10px 40px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; }
@@ -109,7 +109,7 @@
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
         
-        #password-modal .modal-box { max-width: 350px; text-align: center; }
+        #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; }
         #password-modal input { text-align: center; font-size: 24px; letter-spacing: 8px; }
 
         #scanner-modal .modal-box { text-align: center; padding: 20px; }
@@ -117,13 +117,15 @@
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px; gap: 15px; text-align: center; }
+            .header-title { flex-direction: column; gap: 5px; font-size: 20px; }
             .toolbar { flex-direction: column; align-items: stretch; padding: 15px; }
             .search-wrapper { max-width: 100%; }
-            .action-group { flex-wrap: wrap; }
-            .action-group button { flex: 1; }
+            .action-group { flex-wrap: wrap; justify-content: space-between; }
+            .action-group button { flex: 1; min-width: 45%; }
             .map-container { padding: 10px; overflow-x: auto; justify-content: flex-start; }
-            .map-wrapper { min-width: 800px; }
-            .legend-bar { padding: 15px; }
+            .map-wrapper { min-width: 100%; }
+            .shelf-address { font-size: 8px; padding: 2px 4px; }
+            .legend-bar { padding: 15px; padding-bottom: 30px; }
         }
     </style>
 </head>
@@ -131,7 +133,7 @@
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">DEPO YÖNETİMİ</span></div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
             <button id="btn-admin" class="btn-header" onclick="openAdminLogin()">YÖNETİCİ GİRİŞİ</button>
             <a href="index.html" class="btn-header">WMS GEÇİŞ</a>
         </div>
@@ -144,7 +146,7 @@
         </div>
         <div class="action-group">
             <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
-            <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
+            <button id="btn-excel-upload" class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
             <button class="btn-action btn-action-qr" onclick="openScanner()">QR TARA</button>
             <button id="btn-critical-report" class="btn-action btn-danger" onclick="openReportModal()">KRİTİK MİAT RAPORU</button>
             <button class="btn-action" onclick="openMasterQR()">GENEL QR KOD</button>
@@ -197,7 +199,10 @@
         <div class="modal-box">
             <div class="modal-header">
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
-                <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="btn-toggle-edit" class="btn-action" style="display:none; background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
+                    <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
+                </div>
             </div>
             
             <div id="admin-shelf-controls" style="display:none; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #222;">
@@ -252,6 +257,7 @@
                 <input type="number" id="decrease-qty" min="1" value="1" style="text-align:center; font-size:24px;">
             </div>
             <input type="hidden" id="decrease-code">
+            <input type="hidden" id="decrease-name">
             <input type="hidden" id="decrease-miat">
             <button class="btn-save" style="background:#ff3333; color:#fff;" onclick="executeDecreaseStock()">ÇIKART</button>
         </div>
@@ -324,6 +330,7 @@
         const db = getFirestore(app);
 
         let isAdmin = false;
+        let isEditMode = false;
         let catalog = {};
         let addresses = {};
         let roomStock = {};
@@ -336,6 +343,23 @@
             document.getElementById('custom-alert').style.display = 'flex';
         };
 
+        const logOperation = async (type, code, name, qty, miat, shelfId) => {
+            try {
+                const now = new Date();
+                const logId = 'LOG-' + now.getTime();
+                await setDoc(doc(collection(db, "kilitli_depo_logs"), logId), {
+                    tip: type,
+                    urunKodu: code,
+                    urunAdi: name,
+                    miktar: qty,
+                    miat: miat,
+                    raf: addresses[shelfId] || shelfId,
+                    tarih: now.toISOString(),
+                    kullanici: 'Admin'
+                });
+            } catch (e) { console.error("Log error", e); }
+        };
+
         const initMap = () => {
             const container = document.getElementById('aisle-container');
             let html = '';
@@ -345,7 +369,7 @@
                     const sId = `shelf-${i}-${j}`;
                     html += `<div class="shelf" id="${sId}" onclick="openShelf('${sId}')"><span class="shelf-address" id="addr-${sId}"></span></div>`;
                 }
-                html += `<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
+                html += `<div style="position:absolute; bottom:-22px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
                 html += `</div>`;
             }
             container.innerHTML = html;
@@ -379,7 +403,18 @@
                 snap.forEach(d => roomStock[d.id] = d.data());
                 updateMapColors();
                 checkCriticalMiats();
+                
+                if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') {
+                    renderShelfContents(activeShelfId);
+                }
             });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const qrVal = urlParams.get('qr');
+            if(qrVal) {
+                setTimeout(() => handleQRScanResult(`terminux_qr_${qrVal}`), 500);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         };
 
         const updateMapAddresses = () => {
@@ -470,8 +505,11 @@
         window.openAdminLogin = () => {
             if(isAdmin) {
                 isAdmin = false;
+                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'YÖNETİCİ GİRİŞİ';
                 document.getElementById('btn-admin').style.background = '#111';
+                document.getElementById('btn-excel-upload').style.display = 'none';
+                document.getElementById('btn-toggle-edit').style.display = 'none';
                 closeModal('shelf-modal');
             } else {
                 document.getElementById('password-modal').style.display = 'flex';
@@ -483,13 +521,15 @@
             const pw = document.getElementById('admin-pw').value;
             if(pw === "admin") {
                 isAdmin = true;
+                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'ÇIKIŞ YAP (ADMİN)';
                 document.getElementById('btn-admin').style.background = '#ff3333';
+                document.getElementById('btn-excel-upload').style.display = 'inline-block';
                 closeModal('password-modal');
                 document.getElementById('admin-pw').value = '';
                 if(activeShelfId) openShelf(activeShelfId);
             } else {
-                showCustomAlert("HATA", "Hatalı şifre girdiniz!");
+                showCustomAlert("HATA", "Hatalı Şifre Girdiniz!");
                 document.getElementById('admin-pw').value = '';
             }
         };
@@ -498,24 +538,48 @@
             document.getElementById(id).style.display = 'none';
             if(id === 'shelf-modal') {
                 activeShelfId = null;
+                isEditMode = false;
                 document.getElementById('admin-shelf-controls').style.display = 'none';
             }
         };
 
         window.openShelf = (shelfId) => {
             activeShelfId = shelfId;
+            isEditMode = false;
             const addr = addresses[shelfId] || "TANIMSIZ ADRES";
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${addr}</span>`;
             
+            document.getElementById('admin-shelf-controls').style.display = 'none';
+
             if(isAdmin) {
-                document.getElementById('admin-shelf-controls').style.display = 'block';
+                document.getElementById('btn-toggle-edit').style.display = 'block';
+                document.getElementById('btn-toggle-edit').innerText = 'DÜZENLE';
+                document.getElementById('btn-toggle-edit').style.background = '#ffbc00';
                 document.getElementById('edit-shelf-address').value = addresses[shelfId] || "";
             } else {
-                document.getElementById('admin-shelf-controls').style.display = 'none';
+                document.getElementById('btn-toggle-edit').style.display = 'none';
             }
 
             renderShelfContents(shelfId);
             document.getElementById('shelf-modal').style.display = 'flex';
+        };
+
+        window.toggleShelfEdit = () => {
+            if(!isAdmin) return;
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('btn-toggle-edit');
+            const controls = document.getElementById('admin-shelf-controls');
+            
+            if(isEditMode) {
+                btn.innerText = 'DÜZENLEME MODU (AÇIK)';
+                btn.style.background = '#00ff00';
+                controls.style.display = 'block';
+            } else {
+                btn.innerText = 'DÜZENLE';
+                btn.style.background = '#ffbc00';
+                controls.style.display = 'none';
+            }
+            renderShelfContents(activeShelfId);
         };
 
         window.saveShelfAddress = async () => {
@@ -554,11 +618,11 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btn = isAdmin ? `<button class="btn-remove" onclick="openDecreaseModal('${item.urunKodu}', '${m}', ${qty})">ÇIKAR</button>` : '';
+                    let btn = (isAdmin && isEditMode) ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
                     
                     lotsHtml += `
                         <div class="lot-row">
-                            <div class="lot-miat" style="color:${color};">${m} <span style="font-size:9px; color:#666;">(${days} gün)</span></div>
+                            <div class="lot-miat" style="color:${color}; text-shadow: 1px 1px 2px #000;">${m} <span style="font-size:9px; color:#aaa;">(${days} gün)</span></div>
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div class="lot-qty">${qty} ADET</div>
                                 ${btn}
@@ -642,23 +706,27 @@
                 lots: lots
             });
 
-            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi/güncellendi.");
+            await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
+
+            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi.");
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
 
-        window.openDecreaseModal = (code, miat, currentQty) => {
+        window.openDecreaseModal = (code, name, miat, currentQty) => {
             document.getElementById('decrease-code').value = code;
+            document.getElementById('decrease-name').value = name;
             document.getElementById('decrease-miat').value = miat;
             document.getElementById('decrease-qty').value = "1";
             document.getElementById('decrease-qty').max = currentQty;
-            document.getElementById('decrease-info').innerText = `KOD: ${code} | MİAT: ${miat} | MEVCUT: ${currentQty}`;
+            document.getElementById('decrease-info').innerHTML = `<b style="color:#fff;">${name}</b><br>KOD: ${code} | MİAT: <span style="color:#ffbc00;">${miat}</span> | MEVCUT: <span style="color:#00ff00;">${currentQty}</span>`;
             document.getElementById('decrease-stock-modal').style.display = 'flex';
         };
 
         window.executeDecreaseStock = async () => {
             if(!isAdmin || !activeShelfId) return;
             const code = document.getElementById('decrease-code').value;
+            const name = document.getElementById('decrease-name').value;
             const miat = document.getElementById('decrease-miat').value;
             const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
             
@@ -683,6 +751,8 @@
             } else {
                 await setDoc(doc(db, "kilitli_depo_stok", docId), { ...existing, lots: lots });
             }
+            
+            await logOperation("ÇIKARMA", code, name, qtyToRemove, miat, activeShelfId);
             
             closeModal('decrease-stock-modal');
             renderShelfContents(activeShelfId);
@@ -741,12 +811,13 @@
                                 
                                 await setDoc(doc(db, "kilitli_depo_stok", docId), existing);
                                 addedCount++;
+                                await logOperation("EXCEL YÜKLEME", code, rawName || "", qty, miat, shelfId);
                             }
                         }
                     }
                     showCustomAlert("BAŞARILI", `${addedCount} adet ürün veya lot başarıyla sisteme aktarıldı.`);
                 } catch(error) {
-                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Lütfen sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
+                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
                 }
                 document.getElementById('excel-upload').value = '';
             };
@@ -792,18 +863,21 @@
             const shelf = document.getElementById(shelfId);
             if(!shelf) return;
             
-            const startX = (door.left - mapW.left); 
-            const startY = (door.top + door.height/2 - mapW.top);
-            
             const aisle = shelf.parentElement;
             const aisleR = aisle.getBoundingClientRect();
+            
+            const startX = (door.left - mapW.left) - 10;
+            const startY = (door.top + door.height/2 - mapW.top);
+            
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
-            const targetY = (aisleR.bottom - mapW.top) + 10; 
+            const targetY = (aisleR.bottom - mapW.top) + 25; 
+            
+            const bottomCorridorY = mapW.height - 15;
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             
-            const d = `M ${startX} ${startY} L ${targetX} ${startY} L ${targetX} ${targetY}`;
+            const d = `M ${startX} ${startY} L ${startX} ${bottomCorridorY} L ${targetX} ${bottomCorridorY} L ${targetX} ${targetY}`;
             path.setAttribute('d', d);
             path.setAttribute('class', 'path-line');
             path.setAttribute('marker-end', 'url(#arrowhead)');
@@ -858,12 +932,12 @@
         };
 
         window.openMasterQR = () => {
-            generateQR("TERMINUX_ROOM_MASTER", "GENEL DEPO GÖRÜNÜMÜ");
+            generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ");
         };
 
         window.generateAisleQR = (aisleNum, e) => {
             e.stopPropagation();
-            generateQR(`TERMINUX_ROOM_AISLE_${aisleNum}`, `REYON ${aisleNum}`);
+            generateQR(`https://terminux.com.tr/depoyonetimi.html?qr=aisle_${aisleNum}`, `REYON ${aisleNum}`);
         };
 
         const generateQR = (val, label) => {
@@ -902,10 +976,16 @@
         };
 
         const handleQRScanResult = (text) => {
-            if(text.startsWith("TERMINUX_ROOM_AISLE_")) {
-                let num = text.replace("TERMINUX_ROOM_AISLE_", "");
+            let processedText = text;
+            if(text.includes('?qr=')) {
+                const urlObj = new URL(text);
+                processedText = `terminux_qr_${urlObj.searchParams.get('qr')}`;
+            }
+
+            if(processedText.startsWith("terminux_qr_aisle_")) {
+                let num = processedText.replace("terminux_qr_aisle_", "");
                 showQRContent("REYON " + num, "aisle-" + num);
-            } else if(text === "TERMINUX_ROOM_MASTER") {
+            } else if(processedText === "terminux_qr_master") {
                 showQRContent("TÜM DEPO ENVANTERİ", "all");
             } else {
                 showCustomAlert("TANIMSIZ KOD", "Okutulan QR kod depo reyonlarıyla eşleşmiyor.");
