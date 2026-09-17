@@ -10,18 +10,18 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
         
-        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
+        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
         .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
         .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; }
         .btn-header:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; }
-        .search-wrapper { position: relative; flex: 1; max-width: 500px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 500px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
         .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -30,33 +30,42 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
         .btn-action-qr:hover { opacity: 0.8; }
-        .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; display: none; }
+        .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; }
         .btn-action-excel:hover { opacity: 0.8; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         
         .btn-danger-flash { animation: flashBtn 0.8s infinite alternate; }
         @keyframes flashBtn {
             from { background: rgba(255,51,51,0.2); color: #ff3333; border-color: #ff3333; }
-            to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: 0px 1px 3px #000; }
+            to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; }
         }
 
-        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
+        @keyframes successPop {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
+            50% { transform: scale(1.03); box-shadow: 0 0 20px rgba(0,255,0,0.8); border-color: #00ff00; background: #0a1a0a; }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
+        }
+        .success-flash { animation: successPop 0.5s ease; }
+
+        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 10px 40px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+
+        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; width: 100%; }
         .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 5%; top: 10%; width: 80%; height: 75%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
+        .aisle-container { position: absolute; left: 2%; top: 10%; width: 85%; height: 70%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: 12px; font-weight: 900; background: rgba(0,0,0,0.85); padding: 4px 6px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #333; text-align: center; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -64,8 +73,6 @@
         .alert-120 { background: #ffd700 !important; }
         .alert-180 { background: rgba(255, 255, 0, 0.2) !important; border-color: #ffff00 !important; }
         .alert-360 { border-color: #00ff00 !important; }
-
-        .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { text-shadow: 1px 1px 3px #000; color: #fff; }
 
         @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
         @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
@@ -76,7 +83,7 @@
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 15px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
@@ -96,14 +103,15 @@
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
-        .legend-bar { display: flex; gap: 15px; padding: 10px 40px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; }
+        .legend-bar { display: flex; gap: 15px; padding: 10px 40px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
 
-        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table-wrapper { width: 100%; overflow-x: auto; }
+        .report-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .report-table th, .report-table td { padding: 12px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
         .report-table th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
         
@@ -112,20 +120,23 @@
         #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; }
         #password-modal input { text-align: center; font-size: 24px; letter-spacing: 8px; }
 
-        #scanner-modal .modal-box { text-align: center; padding: 20px; }
+        #scanner-modal .modal-box { text-align: center; padding: 20px; margin: auto; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px; gap: 15px; text-align: center; }
             .header-title { flex-direction: column; gap: 5px; font-size: 20px; }
             .toolbar { flex-direction: column; align-items: stretch; padding: 15px; }
-            .search-wrapper { max-width: 100%; }
-            .action-group { flex-wrap: wrap; justify-content: space-between; }
+            .admin-toolbar { padding: 15px; justify-content: stretch; }
+            .search-wrapper { max-width: 100%; min-width: 100%; }
+            .action-group { flex-wrap: wrap; justify-content: stretch; width: 100%; }
             .action-group button { flex: 1; min-width: 45%; }
-            .map-container { padding: 10px; overflow-x: auto; justify-content: flex-start; }
-            .map-wrapper { min-width: 100%; }
-            .shelf-address { font-size: 8px; padding: 2px 4px; }
-            .legend-bar { padding: 15px; padding-bottom: 30px; }
+            .map-container { padding: 10px; overflow: hidden; justify-content: center; align-items: center; }
+            .map-wrapper { width: 100%; aspect-ratio: 4/3; }
+            .aisle-container { gap: 1%; left: 2%; width: 88%; }
+            .shelf-address { font-size: clamp(5px, 2vw, 10px); padding: 1px 2px; }
+            .legend-bar { padding: 15px; padding-bottom: 40px; }
+            .modal-box { width: 95%; padding: 20px; }
         }
     </style>
 </head>
@@ -139,16 +150,21 @@
         </div>
     </header>
 
+    <div class="admin-toolbar" id="admin-toolbar">
+        <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
+        <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
+        <button class="btn-action btn-danger" onclick="promptMassDelete()">TÜM DEPOYU SİL</button>
+    </div>
+
     <div class="toolbar">
         <div class="search-wrapper">
             <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
             <div id="search-dropdown" class="autocomplete-dropdown"></div>
         </div>
         <div class="action-group">
-            <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
-            <button id="btn-excel-upload" class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
             <button class="btn-action btn-action-qr" onclick="openScanner()">QR TARA</button>
-            <button id="btn-critical-report" class="btn-action btn-danger" onclick="openReportModal()">KRİTİK MİAT RAPORU</button>
+            <button id="btn-critical-report" class="btn-action btn-danger" onclick="openReportModal('critical')">KRİTİK MİAT RAPORU</button>
+            <button class="btn-action" style="background:#444;" onclick="openReportModal('all')">TÜM MİAT RAPORU</button>
             <button class="btn-action" onclick="openMasterQR()">GENEL QR KOD</button>
         </div>
     </div>
@@ -196,11 +212,10 @@
     </div>
 
     <div id="shelf-modal" class="modal">
-        <div class="modal-box">
+        <div class="modal-box" id="shelf-modal-box">
             <div class="modal-header">
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button id="btn-toggle-edit" class="btn-action" style="display:none; background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
                     <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
                 </div>
             </div>
@@ -213,7 +228,7 @@
                         <button class="btn-save" style="width:auto;" onclick="saveShelfAddress()">KAYDET</button>
                     </div>
                 </div>
-                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00; padding:15px; font-size:12px;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00; padding:15px; font-size:12px; margin-top: 10px;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
             </div>
 
             <div id="shelf-content-list"></div>
@@ -221,17 +236,20 @@
     </div>
 
     <div id="add-stock-modal" class="modal">
-        <div class="modal-box">
+        <div class="modal-box" id="add-stock-modal-box">
             <div class="modal-header">
                 <div class="modal-title">STOK EKLE</div>
                 <button class="btn-close" onclick="closeModal('add-stock-modal')">×</button>
             </div>
             <div class="form-group" style="position:relative;">
                 <label>ÜRÜN ARA (KATALOGDAN)</label>
-                <input type="text" id="add-search" placeholder="Ürün adı veya kodu...">
+                <input type="text" id="add-search" placeholder="Arama yapın veya sıfırdan oluşturmak için adı yazın...">
                 <div id="add-autocomplete" class="autocomplete-dropdown" style="position:absolute; max-height:150px; z-index:10001;"></div>
             </div>
-            <input type="hidden" id="add-selected-code">
+            <div class="form-group">
+                <label>ÜRÜN KODU (ZORUNLU)</label>
+                <input type="text" id="add-selected-code" placeholder="Örn: 50011165">
+            </div>
             <input type="hidden" id="add-selected-name">
             <div class="form-group">
                 <label>MİAT TARİHİ</label>
@@ -246,7 +264,7 @@
     </div>
 
     <div id="decrease-stock-modal" class="modal" style="z-index:25000;">
-        <div class="modal-box" style="max-width:350px;">
+        <div class="modal-box" style="max-width:350px;" id="decrease-modal-box">
             <div class="modal-header">
                 <div class="modal-title" style="color:#ff3333;">STOK EKSİLT</div>
                 <button class="btn-close" onclick="closeModal('decrease-stock-modal')">×</button>
@@ -266,13 +284,15 @@
     <div id="report-modal" class="modal">
         <div class="modal-box" style="max-width: 900px;">
             <div class="modal-header">
-                <div class="modal-title" style="color:#ff3333;">KRİTİK MİAT RAPORU (< 180 GÜN)</div>
+                <div class="modal-title" id="report-title" style="color:#ff3333;">MİAT RAPORU</div>
                 <button class="btn-close" onclick="closeModal('report-modal')">×</button>
             </div>
-            <table class="report-table">
-                <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr></thead>
-                <tbody id="report-table-body"></tbody>
-            </table>
+            <div class="report-table-wrapper">
+                <table class="report-table">
+                    <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr></thead>
+                    <tbody id="report-table-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -306,10 +326,12 @@
                 <div class="modal-title" id="qr-content-title" style="color:#00ccff;">DEPO İÇERİĞİ</div>
                 <button class="btn-close" onclick="closeModal('qr-content-modal')">×</button>
             </div>
-            <table class="report-table">
-                <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>MİKTAR</th></tr></thead>
-                <tbody id="qr-content-body"></tbody>
-            </table>
+            <div class="report-table-wrapper">
+                <table class="report-table">
+                    <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>MİKTAR</th></tr></thead>
+                    <tbody id="qr-content-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -330,7 +352,6 @@
         const db = getFirestore(app);
 
         let isAdmin = false;
-        let isEditMode = false;
         let catalog = {};
         let addresses = {};
         let roomStock = {};
@@ -338,9 +359,20 @@
         let html5QrCode = null;
 
         window.showCustomAlert = (title, desc) => {
+            const mod = document.getElementById('custom-alert');
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-desc').innerText = desc;
-            document.getElementById('custom-alert').style.display = 'flex';
+            
+            mod.style.display = 'flex';
+        };
+
+        const showSuccessFlash = (elementId) => {
+            const el = document.getElementById(elementId);
+            if(el) {
+                el.classList.remove('success-flash');
+                void el.offsetWidth;
+                el.classList.add('success-flash');
+            }
         };
 
         const logOperation = async (type, code, name, qty, miat, shelfId) => {
@@ -357,7 +389,7 @@
                     tarih: now.toISOString(),
                     kullanici: 'Admin'
                 });
-            } catch (e) { console.error("Log error", e); }
+            } catch (e) {}
         };
 
         const initMap = () => {
@@ -505,11 +537,9 @@
         window.openAdminLogin = () => {
             if(isAdmin) {
                 isAdmin = false;
-                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'YÖNETİCİ GİRİŞİ';
                 document.getElementById('btn-admin').style.background = '#111';
-                document.getElementById('btn-excel-upload').style.display = 'none';
-                document.getElementById('btn-toggle-edit').style.display = 'none';
+                document.getElementById('admin-toolbar').style.display = 'none';
                 closeModal('shelf-modal');
             } else {
                 document.getElementById('password-modal').style.display = 'flex';
@@ -521,10 +551,9 @@
             const pw = document.getElementById('admin-pw').value;
             if(pw === "admin") {
                 isAdmin = true;
-                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'ÇIKIŞ YAP (ADMİN)';
                 document.getElementById('btn-admin').style.background = '#ff3333';
-                document.getElementById('btn-excel-upload').style.display = 'inline-block';
+                document.getElementById('admin-toolbar').style.display = 'flex';
                 closeModal('password-modal');
                 document.getElementById('admin-pw').value = '';
                 if(activeShelfId) openShelf(activeShelfId);
@@ -538,48 +567,24 @@
             document.getElementById(id).style.display = 'none';
             if(id === 'shelf-modal') {
                 activeShelfId = null;
-                isEditMode = false;
                 document.getElementById('admin-shelf-controls').style.display = 'none';
             }
         };
 
         window.openShelf = (shelfId) => {
             activeShelfId = shelfId;
-            isEditMode = false;
             const addr = addresses[shelfId] || "TANIMSIZ ADRES";
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${addr}</span>`;
             
-            document.getElementById('admin-shelf-controls').style.display = 'none';
-
             if(isAdmin) {
-                document.getElementById('btn-toggle-edit').style.display = 'block';
-                document.getElementById('btn-toggle-edit').innerText = 'DÜZENLE';
-                document.getElementById('btn-toggle-edit').style.background = '#ffbc00';
+                document.getElementById('admin-shelf-controls').style.display = 'block';
                 document.getElementById('edit-shelf-address').value = addresses[shelfId] || "";
             } else {
-                document.getElementById('btn-toggle-edit').style.display = 'none';
+                document.getElementById('admin-shelf-controls').style.display = 'none';
             }
 
             renderShelfContents(shelfId);
             document.getElementById('shelf-modal').style.display = 'flex';
-        };
-
-        window.toggleShelfEdit = () => {
-            if(!isAdmin) return;
-            isEditMode = !isEditMode;
-            const btn = document.getElementById('btn-toggle-edit');
-            const controls = document.getElementById('admin-shelf-controls');
-            
-            if(isEditMode) {
-                btn.innerText = 'DÜZENLEME MODU (AÇIK)';
-                btn.style.background = '#00ff00';
-                controls.style.display = 'block';
-            } else {
-                btn.innerText = 'DÜZENLE';
-                btn.style.background = '#ffbc00';
-                controls.style.display = 'none';
-            }
-            renderShelfContents(activeShelfId);
         };
 
         window.saveShelfAddress = async () => {
@@ -591,6 +596,8 @@
 
             await setDoc(doc(db, "kilitli_depo", "adresler"), newAddresses);
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${val || 'TANIMSIZ ADRES'}</span>`;
+            showSuccessFlash('shelf-modal-box');
+            showCustomAlert("BAŞARILI", "Raf adresi güncellendi.");
         };
 
         const renderShelfContents = (shelfId) => {
@@ -618,7 +625,7 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btn = (isAdmin && isEditMode) ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
+                    let btn = isAdmin ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
                     
                     lotsHtml += `
                         <div class="lot-row">
@@ -647,6 +654,8 @@
         window.openAddStockModal = () => {
             document.getElementById('add-search').value = '';
             document.getElementById('add-autocomplete').style.display = 'none';
+            document.getElementById('add-selected-code').value = '';
+            document.getElementById('add-selected-name').value = '';
             document.getElementById('add-miat').value = '';
             document.getElementById('add-qty').value = '1';
             document.getElementById('add-stock-modal').style.display = 'flex';
@@ -655,6 +664,9 @@
         document.getElementById('add-search').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             const ac = document.getElementById('add-autocomplete');
+            
+            document.getElementById('add-selected-name').value = e.target.value; 
+
             if(val.length < 3) { ac.style.display = 'none'; return; }
 
             const terms = val.split(/\s+/);
@@ -682,12 +694,12 @@
 
         window.executeAddStock = async () => {
             if(!isAdmin || !activeShelfId) return;
-            const code = document.getElementById('add-selected-code').value;
-            const name = document.getElementById('add-selected-name').value;
+            const code = document.getElementById('add-selected-code').value.trim();
+            const name = document.getElementById('add-selected-name').value.trim() || document.getElementById('add-search').value.trim();
             const miatRaw = document.getElementById('add-miat').value;
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
 
-            if(!code || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen ürün, miat tarihi ve miktar bilgilerini eksiksiz girin.");
+            if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen ürün kodu, adı, miat tarihi ve miktar bilgilerini eksiksiz girin.");
 
             const parts = miatRaw.split('-');
             const miat = `${parts[2]}.${parts[1]}.${parts[0]}`;
@@ -708,7 +720,8 @@
 
             await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
 
-            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi.");
+            showSuccessFlash('add-stock-modal-box');
+            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi/güncellendi.");
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -754,6 +767,8 @@
             
             await logOperation("ÇIKARMA", code, name, qtyToRemove, miat, activeShelfId);
             
+            showSuccessFlash('decrease-modal-box');
+            showCustomAlert("BAŞARILI", "Ürün stoktan düşüldü.");
             closeModal('decrease-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -817,11 +832,33 @@
                     }
                     showCustomAlert("BAŞARILI", `${addedCount} adet ürün veya lot başarıyla sisteme aktarıldı.`);
                 } catch(error) {
-                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
+                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Lütfen sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
                 }
                 document.getElementById('excel-upload').value = '';
             };
             reader.readAsArrayBuffer(file);
+        };
+
+        window.promptMassDelete = () => {
+            const pw = prompt("DİKKAT: Tüm depo içeriği silinecektir. Devam etmek için yetki şifresini girin:");
+            if(pw === "admin99") {
+                executeMassDelete();
+            } else if(pw) {
+                showCustomAlert("HATA", "Yetki şifresi yanlış.");
+            }
+        };
+
+        const executeMassDelete = async () => {
+            try {
+                const snap = await getDocs(collection(db, "kilitli_depo_stok"));
+                snap.forEach(async (d) => {
+                    await deleteDoc(doc(db, "kilitli_depo_stok", d.id));
+                });
+                await logOperation("TOPLU SİLME", "TÜMÜ", "Tüm Depo Sıfırlandı", 0, "-", "TÜM DEPO");
+                showCustomAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi.");
+            } catch(e) {
+                showCustomAlert("HATA", "İşlem sırasında bir hata oluştu.");
+            }
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
@@ -866,18 +903,17 @@
             const aisle = shelf.parentElement;
             const aisleR = aisle.getBoundingClientRect();
             
-            const startX = (door.left - mapW.left) - 10;
+            const startX = (door.left - mapW.left) + 20; 
             const startY = (door.top + door.height/2 - mapW.top);
             
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
-            const targetY = (aisleR.bottom - mapW.top) + 25; 
-            
-            const bottomCorridorY = mapW.height - 15;
+            const bottomY = mapW.height - 15; 
+            const targetY = (aisleR.bottom - mapW.top); 
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             
-            const d = `M ${startX} ${startY} L ${startX} ${bottomCorridorY} L ${targetX} ${bottomCorridorY} L ${targetX} ${targetY}`;
+            const d = `M ${startX} ${startY} L ${startX} ${bottomY} L ${targetX} ${bottomY} L ${targetX} ${targetY}`;
             path.setAttribute('d', d);
             path.setAttribute('class', 'path-line');
             path.setAttribute('marker-end', 'url(#arrowhead)');
@@ -887,15 +923,24 @@
             setTimeout(() => { shelf.style.animation = ''; updateMapColors(); }, 1800);
         };
 
-        window.openReportModal = () => {
+        window.openReportModal = (type) => {
             const tbody = document.getElementById('report-table-body');
+            const titleEl = document.getElementById('report-title');
             let rows = [];
+
+            if (type === 'critical') {
+                titleEl.innerText = 'KRİTİK MİAT RAPORU (< 180 GÜN)';
+                titleEl.style.color = '#ff3333';
+            } else {
+                titleEl.innerText = 'TÜM MİAT RAPORU';
+                titleEl.style.color = '#fff';
+            }
 
             for(let key in roomStock) {
                 const item = roomStock[key];
                 for(let miat in item.lots) {
                     const days = getDaysDiff(miat);
-                    if(days <= 180) {
+                    if(type === 'all' || days <= 180) {
                         rows.push({
                             code: item.urunKodu,
                             name: item.urunAdi,
@@ -911,10 +956,11 @@
             rows.sort((a,b) => a.days - b.days);
 
             tbody.innerHTML = rows.map(r => {
-                let c = '#ffbc00';
+                let c = '#00ff00';
                 if(r.days <= 30) c = '#ff0000';
                 else if(r.days <= 60) c = '#ff4500';
                 else if(r.days <= 90) c = '#ff8c00';
+                else if(r.days <= 180) c = '#ffbc00';
                 
                 return `
                     <tr>
