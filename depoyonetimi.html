@@ -12,16 +12,19 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
         
-        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
-        .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
-        .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
-        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; }
+        header { padding: 15px 30px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
+        .header-title { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .header-subtitle { color: #ff3333; font-size: 13px; font-weight: 800; letter-spacing: 2px; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; }
         .btn-header:hover { background: #222; border-color: #555; }
         
         main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; }
-        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 500px; }
+        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 30px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+        .admin-toolbar .btn-action { font-size: 11px; padding: 8px 15px; }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 400px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
         .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -30,7 +33,7 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+        .action-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
@@ -47,25 +50,23 @@
 
         @keyframes successPop {
             0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
-            50% { transform: scale(1.03); box-shadow: 0 0 20px rgba(0,255,0,0.8); border-color: #00ff00; background: #0a1a0a; }
+            50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,255,0,0.6); border-color: #00ff00; background: #0a1a0a; }
             100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
         }
-        .success-flash { animation: successPop 0.5s ease; }
+        .success-flash { animation: successPop 0.4s ease; }
 
-        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 10px 40px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
-
-        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; width: 100%; }
-        .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
+        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 15px; width: 100%; }
+        .map-wrapper { width: 100%; max-width: 1200px; aspect-ratio: 16/8; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         
-        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
-        .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
+        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
+        .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 2%; top: 10%; width: 85%; height: 70%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2%; z-index: 5; }
+        .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #333; text-align: center; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -73,6 +74,8 @@
         .alert-120 { background: #ffd700 !important; }
         .alert-180 { background: rgba(255, 255, 0, 0.2) !important; border-color: #ffff00 !important; }
         .alert-360 { border-color: #00ff00 !important; }
+
+        .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { color: #fff !important; text-shadow: none; background: #000 !important; border: 1px solid #555 !important; }
 
         @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
         @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
@@ -82,10 +85,10 @@
         .path-line { stroke: #ff0000; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff0000); }
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
-        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 15px; }
+        .modal-title { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
         .btn-close:hover { color: #ff3333; }
 
@@ -97,45 +100,45 @@
         .btn-save:hover { opacity: 0.8; }
 
         .stock-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-        .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;}
         .stock-name { font-size: 13px; font-weight: 800; color: #fff; }
         .stock-code { font-size: 11px; color: #00ccff; font-family: monospace; }
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
-        .legend-bar { display: flex; gap: 15px; padding: 10px 40px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
+        .legend-bar { display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 30px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
 
-        .report-table-wrapper { width: 100%; overflow-x: auto; }
+        .report-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .report-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .report-table th, .report-table td { padding: 12px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
         .report-table th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
         
-        #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; }
-        #password-modal input { text-align: center; font-size: 24px; letter-spacing: 8px; }
+        #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; padding: 30px 20px; }
+        #password-modal input { width: 100%; box-sizing: border-box; text-align: center; font-size: 24px; letter-spacing: 4px; padding: 15px; }
 
         #scanner-modal .modal-box { text-align: center; padding: 20px; margin: auto; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
-            header { flex-direction: column; padding: 15px; gap: 15px; text-align: center; }
+            header { flex-direction: column; padding: 15px; gap: 10px; text-align: center; }
             .header-title { flex-direction: column; gap: 5px; font-size: 20px; }
+            .admin-toolbar { padding: 10px 15px; justify-content: stretch; }
             .toolbar { flex-direction: column; align-items: stretch; padding: 15px; }
-            .admin-toolbar { padding: 15px; justify-content: stretch; }
             .search-wrapper { max-width: 100%; min-width: 100%; }
-            .action-group { flex-wrap: wrap; justify-content: stretch; width: 100%; }
+            .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; }
             .action-group button { flex: 1; min-width: 45%; }
-            .map-container { padding: 10px; overflow: hidden; justify-content: center; align-items: center; }
-            .map-wrapper { width: 100%; aspect-ratio: 4/3; }
+            .map-container { padding: 10px; justify-content: center; align-items: center; }
+            .map-wrapper { width: 100%; aspect-ratio: 16/12; }
             .aisle-container { gap: 1%; left: 2%; width: 88%; }
-            .shelf-address { font-size: clamp(5px, 2vw, 10px); padding: 1px 2px; }
-            .legend-bar { padding: 15px; padding-bottom: 40px; }
+            .shelf-address { font-size: clamp(6px, 1.5vw, 10px); padding: 1px 2px; }
+            .legend-bar { padding-bottom: 80px; }
             .modal-box { width: 95%; padding: 20px; }
         }
     </style>
@@ -216,19 +219,23 @@
             <div class="modal-header">
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="btn-toggle-edit" class="btn-action" style="display:block; background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
                     <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
                 </div>
             </div>
             
-            <div id="admin-shelf-controls" style="display:none; margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #222;">
+            <div id="shelf-address-control" style="display:none; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
                 <div class="form-group">
-                    <label>RAF ADRESİ TANIMLA</label>
+                    <label>RAF ADRESİ TANIMLA (SADECE ADMİN)</label>
                     <div style="display:flex; gap:10px;">
                         <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01">
                         <button class="btn-save" style="width:auto;" onclick="saveShelfAddress()">KAYDET</button>
                     </div>
                 </div>
-                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00; padding:15px; font-size:12px; margin-top: 10px;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+            </div>
+
+            <div id="shelf-stock-control" style="display:none; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00; padding:15px; font-size:12px;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
             </div>
 
             <div id="shelf-content-list"></div>
@@ -352,6 +359,7 @@
         const db = getFirestore(app);
 
         let isAdmin = false;
+        let isEditMode = false;
         let catalog = {};
         let addresses = {};
         let roomStock = {};
@@ -387,7 +395,7 @@
                     miat: miat,
                     raf: addresses[shelfId] || shelfId,
                     tarih: now.toISOString(),
-                    kullanici: 'Admin'
+                    kullanici: isAdmin ? 'Admin' : 'Kullanıcı'
                 });
             } catch (e) {}
         };
@@ -401,7 +409,7 @@
                     const sId = `shelf-${i}-${j}`;
                     html += `<div class="shelf" id="${sId}" onclick="openShelf('${sId}')"><span class="shelf-address" id="addr-${sId}"></span></div>`;
                 }
-                html += `<div style="position:absolute; bottom:-22px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
+                html += `<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
                 html += `</div>`;
             }
             container.innerHTML = html;
@@ -537,6 +545,7 @@
         window.openAdminLogin = () => {
             if(isAdmin) {
                 isAdmin = false;
+                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'YÖNETİCİ GİRİŞİ';
                 document.getElementById('btn-admin').style.background = '#111';
                 document.getElementById('admin-toolbar').style.display = 'none';
@@ -551,6 +560,7 @@
             const pw = document.getElementById('admin-pw').value;
             if(pw === "admin") {
                 isAdmin = true;
+                isEditMode = false;
                 document.getElementById('btn-admin').innerText = 'ÇIKIŞ YAP (ADMİN)';
                 document.getElementById('btn-admin').style.background = '#ff3333';
                 document.getElementById('admin-toolbar').style.display = 'flex';
@@ -567,7 +577,9 @@
             document.getElementById(id).style.display = 'none';
             if(id === 'shelf-modal') {
                 activeShelfId = null;
-                document.getElementById('admin-shelf-controls').style.display = 'none';
+                isEditMode = false;
+                document.getElementById('shelf-address-control').style.display = 'none';
+                document.getElementById('shelf-stock-control').style.display = 'none';
             }
         };
 
@@ -576,15 +588,49 @@
             const addr = addresses[shelfId] || "TANIMSIZ ADRES";
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${addr}</span>`;
             
+            document.getElementById('shelf-address-control').style.display = 'none';
+            document.getElementById('shelf-stock-control').style.display = 'none';
+
+            const btnEdit = document.getElementById('btn-toggle-edit');
+            btnEdit.style.display = 'block';
+            
             if(isAdmin) {
-                document.getElementById('admin-shelf-controls').style.display = 'block';
-                document.getElementById('edit-shelf-address').value = addresses[shelfId] || "";
+                isEditMode = true; 
             } else {
-                document.getElementById('admin-shelf-controls').style.display = 'none';
+                isEditMode = false;
             }
 
+            updateEditModeUI();
             renderShelfContents(shelfId);
             document.getElementById('shelf-modal').style.display = 'flex';
+        };
+
+        window.toggleShelfEdit = () => {
+            isEditMode = !isEditMode;
+            updateEditModeUI();
+            renderShelfContents(activeShelfId);
+        };
+
+        const updateEditModeUI = () => {
+            const btn = document.getElementById('btn-toggle-edit');
+            const addrControl = document.getElementById('shelf-address-control');
+            const stockControl = document.getElementById('shelf-stock-control');
+
+            if(isEditMode) {
+                btn.innerText = 'DÜZENLEME MODU (AÇIK)';
+                btn.style.background = '#00ff00';
+                
+                stockControl.style.display = 'block';
+                if(isAdmin) {
+                    addrControl.style.display = 'block';
+                    document.getElementById('edit-shelf-address').value = addresses[activeShelfId] || "";
+                }
+            } else {
+                btn.innerText = 'DÜZENLE';
+                btn.style.background = '#ffbc00';
+                addrControl.style.display = 'none';
+                stockControl.style.display = 'none';
+            }
         };
 
         window.saveShelfAddress = async () => {
@@ -597,7 +643,6 @@
             await setDoc(doc(db, "kilitli_depo", "adresler"), newAddresses);
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${val || 'TANIMSIZ ADRES'}</span>`;
             showSuccessFlash('shelf-modal-box');
-            showCustomAlert("BAŞARILI", "Raf adresi güncellendi.");
         };
 
         const renderShelfContents = (shelfId) => {
@@ -625,7 +670,7 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btn = isAdmin ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
+                    let btn = isEditMode ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
                     
                     lotsHtml += `
                         <div class="lot-row">
@@ -693,7 +738,7 @@
         };
 
         window.executeAddStock = async () => {
-            if(!isAdmin || !activeShelfId) return;
+            if(!activeShelfId || !isEditMode) return;
             const code = document.getElementById('add-selected-code').value.trim();
             const name = document.getElementById('add-selected-name').value.trim() || document.getElementById('add-search').value.trim();
             const miatRaw = document.getElementById('add-miat').value;
@@ -721,7 +766,7 @@
             await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
 
             showSuccessFlash('add-stock-modal-box');
-            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi/güncellendi.");
+            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi.");
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -737,7 +782,7 @@
         };
 
         window.executeDecreaseStock = async () => {
-            if(!isAdmin || !activeShelfId) return;
+            if(!activeShelfId || !isEditMode) return;
             const code = document.getElementById('decrease-code').value;
             const name = document.getElementById('decrease-name').value;
             const miat = document.getElementById('decrease-miat').value;
