@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Kilitli Depo Yönetimi</title>
+    <title>Terminux | Depo Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -14,12 +15,12 @@
         header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
         .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
-        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; }
         .btn-header:hover { background: #222; border-color: #555; }
         
         main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; }
         .search-wrapper { position: relative; flex: 1; max-width: 500px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
@@ -29,42 +30,53 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 10px; }
+        .action-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
+        .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
+        .btn-action-qr:hover { opacity: 0.8; }
+        .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; }
+        .btn-action-excel:hover { opacity: 0.8; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
-        .btn-danger:hover { background: #ff3333; color: #000; }
+        
+        .btn-danger-flash { animation: flashBtn 0.8s infinite alternate; }
+        @keyframes flashBtn {
+            from { background: rgba(255,51,51,0.2); color: #ff3333; border-color: #ff3333; }
+            to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: 0px 1px 3px #000; }
+        }
 
         .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
         .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         
-        .map-door { position: absolute; left: 0; top: 40%; width: 40px; height: 20%; border-right: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 0 8px 8px 0; z-index: 10; }
-        .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(-90deg); letter-spacing: 2px; }
+        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
+        .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 15%; top: 10%; width: 80%; height: 80%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2%; z-index: 5; }
-        .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; }
+        .aisle-container { position: absolute; left: 5%; top: 10%; width: 80%; height: 80%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
+        .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .shelf:hover { border-color: #fff; transform: scale(1.02); z-index: 20; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
-        .shelf-address { color: #888; font-family: monospace; font-size: 10px; font-weight: 900; pointer-events: none; z-index: 2; }
+        .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
+        .shelf-address { color: #fff; font-family: monospace; font-size: 13px; font-weight: 900; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; }
 
-        .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #ff0000 !important; }
-        .alert-60 { animation: flash60 1s infinite alternate; border-color: #ff4500 !important; }
-        .alert-90 { animation: flash90 1.2s infinite alternate; border-color: #ff8c00 !important; }
+        .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
+        .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
+        .alert-90 { animation: flash90 1.2s infinite alternate; border-color: #fff !important; }
         .alert-120 { background: #ffd700 !important; }
         .alert-180 { background: rgba(255, 255, 0, 0.2) !important; border-color: #ffff00 !important; }
         .alert-360 { border-color: #00ff00 !important; }
 
-        @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,0.8); box-shadow: 0 0 20px #ff0000; } }
-        @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.6); box-shadow: 0 0 15px #ff4500; } }
-        @keyframes flash90 { from { background: rgba(255,140,0,0.1); box-shadow: 0 0 5px #ff8c00; } to { background: rgba(255,140,0,0.4); box-shadow: 0 0 10px #ff8c00; } }
+        .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { text-shadow: 1px 1px 3px #000; }
+
+        @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
+        @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
+        @keyframes flash90 { from { background: rgba(255,140,0,0.1); box-shadow: 0 0 5px #ff8c00; } to { background: rgba(255,140,0,0.6); box-shadow: 0 0 10px #ff8c00; } }
 
         #svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; }
-        .path-line { stroke: #ff3333; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff3333); }
+        .path-line { stroke: #ff0000; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff0000); }
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 20px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
@@ -72,9 +84,9 @@
 
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; }
+        .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
         .form-group input:focus, .form-group select:focus { border-color: #ffbc00; }
-        .btn-save { background: #00ff00; color: #000; border: none; padding: 12px 20px; font-weight: 900; font-size: 12px; border-radius: 6px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; text-transform: uppercase; }
+        .btn-save { background: #00ff00; color: #000; border: none; padding: 12px 20px; font-weight: 900; font-size: 12px; border-radius: 6px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; text-transform: uppercase; width: 100%; }
         .btn-save:hover { opacity: 0.8; }
 
         .stock-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
@@ -84,7 +96,7 @@
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 4px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
         .legend-bar { display: flex; gap: 15px; padding: 10px 40px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; }
@@ -99,6 +111,9 @@
         
         #password-modal .modal-box { max-width: 350px; text-align: center; }
         #password-modal input { text-align: center; font-size: 24px; letter-spacing: 8px; }
+
+        #scanner-modal .modal-box { text-align: center; padding: 20px; }
+        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px; gap: 15px; text-align: center; }
@@ -115,7 +130,7 @@
 <body>
 
     <header>
-        <div class="header-title">TERMINUX <span class="header-subtitle">KİLİTLİ DEPO</span></div>
+        <div class="header-title">TERMINUX <span class="header-subtitle">DEPO YÖNETİMİ</span></div>
         <div style="display: flex; gap: 10px;">
             <button id="btn-admin" class="btn-header" onclick="openAdminLogin()">YÖNETİCİ GİRİŞİ</button>
             <a href="index.html" class="btn-header">WMS GEÇİŞ</a>
@@ -128,7 +143,10 @@
             <div id="search-dropdown" class="autocomplete-dropdown"></div>
         </div>
         <div class="action-group">
-            <button class="btn-action btn-danger" onclick="openReportModal()">KRİTİK MİAT RAPORU</button>
+            <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
+            <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
+            <button class="btn-action btn-action-qr" onclick="openScanner()">QR TARA</button>
+            <button id="btn-critical-report" class="btn-action btn-danger" onclick="openReportModal()">KRİTİK MİAT RAPORU</button>
             <button class="btn-action" onclick="openMasterQR()">GENEL QR KOD</button>
         </div>
     </div>
@@ -140,7 +158,7 @@
             <svg id="svg-overlay">
                 <defs>
                     <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <polygon points="0 0, 6 3, 0 6" fill="#ff3333" />
+                        <polygon points="0 0, 6 3, 0 6" fill="#ff0000" />
                     </marker>
                 </defs>
             </svg>
@@ -161,9 +179,17 @@
             <h3 style="color:#fff; margin-bottom:20px; font-size:16px; letter-spacing:1px; margin-top:0;">YÖNETİCİ ŞİFRESİ</h3>
             <input type="password" id="admin-pw" autocomplete="new-password">
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn-save" style="background:#333; color:#fff; flex:1;" onclick="closeModal('password-modal')">İPTAL</button>
-                <button class="btn-save" style="flex:1;" onclick="verifyAdmin()">GİRİŞ YAP</button>
+                <button class="btn-save" style="background:#333; color:#fff;" onclick="closeModal('password-modal')">İPTAL</button>
+                <button class="btn-save" onclick="verifyAdmin()">GİRİŞ YAP</button>
             </div>
+        </div>
+    </div>
+
+    <div id="custom-alert" class="modal" style="z-index:30000;">
+        <div class="modal-box" style="max-width:400px; text-align:center;">
+            <div class="modal-title" id="alert-title" style="color:#ffbc00;">UYARI</div>
+            <div id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</div>
+            <button class="btn-save" style="background:#fff; color:#000;" onclick="closeModal('custom-alert')">TAMAM</button>
         </div>
     </div>
 
@@ -179,10 +205,10 @@
                     <label>RAF ADRESİ TANIMLA</label>
                     <div style="display:flex; gap:10px;">
                         <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01">
-                        <button class="btn-save" onclick="saveShelfAddress()">KAYDET</button>
+                        <button class="btn-save" style="width:auto;" onclick="saveShelfAddress()">KAYDET</button>
                     </div>
                 </div>
-                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+                <button class="btn-action" style="width:100%; border-color:#00ff00; color:#00ff00; padding:15px; font-size:12px;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
             </div>
 
             <div id="shelf-content-list"></div>
@@ -195,10 +221,10 @@
                 <div class="modal-title">STOK EKLE</div>
                 <button class="btn-close" onclick="closeModal('add-stock-modal')">×</button>
             </div>
-            <div class="form-group">
-                <label>ÜRÜN ARA (AMELİYATHANE KATALOĞU)</label>
+            <div class="form-group" style="position:relative;">
+                <label>ÜRÜN ARA (KATALOGDAN)</label>
                 <input type="text" id="add-search" placeholder="Ürün adı veya kodu...">
-                <div id="add-autocomplete" class="autocomplete-dropdown" style="position:relative; display:none; max-height:150px;"></div>
+                <div id="add-autocomplete" class="autocomplete-dropdown" style="position:absolute; max-height:150px; z-index:10001;"></div>
             </div>
             <input type="hidden" id="add-selected-code">
             <input type="hidden" id="add-selected-name">
@@ -210,14 +236,31 @@
                 <label>MİKTAR</label>
                 <input type="number" id="add-qty" min="1" value="1">
             </div>
-            <button class="btn-save" style="width:100%; margin-top:10px;" onclick="executeAddStock()">STOĞA EKLE</button>
+            <button class="btn-save" style="margin-top:10px;" onclick="executeAddStock()">STOĞA EKLE</button>
+        </div>
+    </div>
+
+    <div id="decrease-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:350px;">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#ff3333;">STOK EKSİLT</div>
+                <button class="btn-close" onclick="closeModal('decrease-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="decrease-info"></div>
+            <div class="form-group">
+                <label>ÇIKARILACAK MİKTAR</label>
+                <input type="number" id="decrease-qty" min="1" value="1" style="text-align:center; font-size:24px;">
+            </div>
+            <input type="hidden" id="decrease-code">
+            <input type="hidden" id="decrease-miat">
+            <button class="btn-save" style="background:#ff3333; color:#fff;" onclick="executeDecreaseStock()">ÇIKART</button>
         </div>
     </div>
 
     <div id="report-modal" class="modal">
         <div class="modal-box" style="max-width: 900px;">
             <div class="modal-header">
-                <div class="modal-title" style="color:#ff3333;">180 GÜNDEN AZ KALANLAR (KRİTİK MİAT)</div>
+                <div class="modal-title" style="color:#ff3333;">KRİTİK MİAT RAPORU (< 180 GÜN)</div>
                 <button class="btn-close" onclick="closeModal('report-modal')">×</button>
             </div>
             <table class="report-table">
@@ -228,7 +271,7 @@
     </div>
 
     <div id="qr-modal" class="modal">
-        <div class="modal-box" style="text-align:center;">
+        <div class="modal-box" style="text-align:center; max-width:400px;">
             <div class="modal-header">
                 <div class="modal-title" id="qr-modal-title">QR KOD</div>
                 <button class="btn-close" onclick="closeModal('qr-modal')">×</button>
@@ -240,9 +283,33 @@
         </div>
     </div>
 
+    <div id="scanner-modal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#00ccff;">QR OKUT</div>
+                <button class="btn-close" onclick="closeScanner()">×</button>
+            </div>
+            <div id="reader"></div>
+            <button class="btn-save" style="background:#ff3333; color:#fff; margin-top:20px;" onclick="closeScanner()">İPTAL / KAPAT</button>
+        </div>
+    </div>
+
+    <div id="qr-content-modal" class="modal">
+        <div class="modal-box" style="max-width:800px;">
+            <div class="modal-header">
+                <div class="modal-title" id="qr-content-title" style="color:#00ccff;">DEPO İÇERİĞİ</div>
+                <button class="btn-close" onclick="closeModal('qr-content-modal')">×</button>
+            </div>
+            <table class="report-table">
+                <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>MİKTAR</th></tr></thead>
+                <tbody id="qr-content-body"></tbody>
+            </table>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -261,6 +328,13 @@
         let addresses = {};
         let roomStock = {};
         let activeShelfId = null;
+        let html5QrCode = null;
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
 
         const initMap = () => {
             const container = document.getElementById('aisle-container');
@@ -271,18 +345,28 @@
                     const sId = `shelf-${i}-${j}`;
                     html += `<div class="shelf" id="${sId}" onclick="openShelf('${sId}')"><span class="shelf-address" id="addr-${sId}"></span></div>`;
                 }
-                html += `<div style="text-align:center; margin-top:5px;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
+                html += `<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
                 html += `</div>`;
             }
             container.innerHTML = html;
         };
 
         const loadData = async () => {
-            const catSnap = await getDocs(collection(db, "ameliyathane"));
-            catSnap.forEach(d => {
-                const data = d.data();
-                catalog[d.id] = { code: d.id, name: data.urunAdi || "İsimsiz", refNo: data.refNo || "" };
-            });
+            try {
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, "ana_depo")),
+                    getDocs(collection(db, "ameliyathane"))
+                ]);
+                
+                const processSnap = (snap) => {
+                    snap.forEach(d => {
+                        const data = d.data();
+                        catalog[d.id] = { code: d.id, name: data.urunAdi || "İsimsiz", refNo: data.refNo || "" };
+                    });
+                };
+                processSnap(anaSnap);
+                processSnap(amSnap);
+            } catch(e) {}
 
             onSnapshot(doc(db, "kilitli_depo", "adresler"), (docSnap) => {
                 if(docSnap.exists()) addresses = docSnap.data();
@@ -303,16 +387,28 @@
                 for(let j=1; j<=5; j++) {
                     const sId = `shelf-${i}-${j}`;
                     const el = document.getElementById(`addr-${sId}`);
-                    if(el) el.innerText = addresses[sId] || "";
+                    if(el) {
+                        if(addresses[sId]) {
+                            el.innerText = addresses[sId];
+                            el.style.display = 'block';
+                        } else {
+                            el.innerText = "";
+                            el.style.display = 'none';
+                        }
+                    }
                 }
             }
         };
 
         const getDaysDiff = (dateStr) => {
             if(!dateStr) return 9999;
-            const parts = dateStr.split('-');
-            if(parts.length !== 3) return 9999;
-            const d = new Date(parts[0], parts[1]-1, parts[2]);
+            let parts = dateStr.split('-');
+            if(parts.length !== 3) {
+                parts = dateStr.split('.');
+                if(parts.length !== 3) return 9999;
+                dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+            }
+            const d = new Date(dateStr);
             const now = new Date();
             return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
         };
@@ -361,12 +457,12 @@
                     if(getDaysDiff(miat) <= 180) criticalCount++;
                 }
             }
-            const btn = document.querySelector('.btn-danger');
+            const btn = document.getElementById('btn-critical-report');
             if(criticalCount > 0) {
-                btn.style.animation = 'flash30 1s infinite alternate';
+                btn.classList.add('btn-danger-flash');
                 btn.innerText = `KRİTİK MİAT RAPORU (${criticalCount})`;
             } else {
-                btn.style.animation = 'none';
+                btn.classList.remove('btn-danger-flash');
                 btn.innerText = `KRİTİK MİAT RAPORU`;
             }
         };
@@ -391,15 +487,19 @@
                 document.getElementById('btn-admin').style.background = '#ff3333';
                 closeModal('password-modal');
                 document.getElementById('admin-pw').value = '';
+                if(activeShelfId) openShelf(activeShelfId);
             } else {
-                alert("Hatalı Şifre");
+                showCustomAlert("HATA", "Hatalı şifre girdiniz!");
                 document.getElementById('admin-pw').value = '';
             }
         };
 
         window.closeModal = (id) => {
             document.getElementById(id).style.display = 'none';
-            if(id === 'shelf-modal') activeShelfId = null;
+            if(id === 'shelf-modal') {
+                activeShelfId = null;
+                document.getElementById('admin-shelf-controls').style.display = 'none';
+            }
         };
 
         window.openShelf = (shelfId) => {
@@ -441,7 +541,11 @@
             let html = '';
             items.forEach(item => {
                 let lotsHtml = '';
-                let sortedMiats = Object.keys(item.lots).sort((a,b) => new Date(a) - new Date(b));
+                let sortedMiats = Object.keys(item.lots).sort((a,b) => {
+                    const da = a.includes('.') ? `${a.split('.')[2]}-${a.split('.')[1]}-${a.split('.')[0]}` : a;
+                    const dbStr = b.includes('.') ? `${b.split('.')[2]}-${b.split('.')[1]}-${b.split('.')[0]}` : b;
+                    return new Date(da) - new Date(dbStr);
+                });
                 
                 sortedMiats.forEach(m => {
                     const qty = item.lots[m];
@@ -450,7 +554,7 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btn = isAdmin ? `<button class="btn-remove" onclick="removeLot('${item.urunKodu}', '${m}')">ÇIKAR</button>` : '';
+                    let btn = isAdmin ? `<button class="btn-remove" onclick="openDecreaseModal('${item.urunKodu}', '${m}', ${qty})">ÇIKAR</button>` : '';
                     
                     lotsHtml += `
                         <div class="lot-row">
@@ -516,10 +620,13 @@
             if(!isAdmin || !activeShelfId) return;
             const code = document.getElementById('add-selected-code').value;
             const name = document.getElementById('add-selected-name').value;
-            const miat = document.getElementById('add-miat').value;
+            const miatRaw = document.getElementById('add-miat').value;
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
 
-            if(!code || !miat || qty <= 0) return alert("Eksik bilgi girdiniz.");
+            if(!code || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen ürün, miat tarihi ve miktar bilgilerini eksiksiz girin.");
+
+            const parts = miatRaw.split('-');
+            const miat = `${parts[2]}.${parts[1]}.${parts[0]}`;
 
             const docId = `${activeShelfId}_${code}`;
             const existing = roomStock[docId];
@@ -535,14 +642,27 @@
                 lots: lots
             });
 
+            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi/güncellendi.");
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
 
-        window.removeLot = async (code, miat) => {
+        window.openDecreaseModal = (code, miat, currentQty) => {
+            document.getElementById('decrease-code').value = code;
+            document.getElementById('decrease-miat').value = miat;
+            document.getElementById('decrease-qty').value = "1";
+            document.getElementById('decrease-qty').max = currentQty;
+            document.getElementById('decrease-info').innerText = `KOD: ${code} | MİAT: ${miat} | MEVCUT: ${currentQty}`;
+            document.getElementById('decrease-stock-modal').style.display = 'flex';
+        };
+
+        window.executeDecreaseStock = async () => {
             if(!isAdmin || !activeShelfId) return;
-            const qtyToRemove = parseInt(prompt("Çıkarılacak miktarı girin:", "1"));
-            if(isNaN(qtyToRemove) || qtyToRemove <= 0) return;
+            const code = document.getElementById('decrease-code').value;
+            const miat = document.getElementById('decrease-miat').value;
+            const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
+            
+            if(isNaN(qtyToRemove) || qtyToRemove <= 0) return showCustomAlert("HATA", "Geçerli bir miktar girin.");
 
             const docId = `${activeShelfId}_${code}`;
             const existing = roomStock[docId];
@@ -550,6 +670,10 @@
 
             let lots = existing.lots;
             if(!lots[miat]) return;
+
+            if (qtyToRemove > lots[miat]) {
+                return showCustomAlert("HATA", "Mevcut stoktan fazla miktar çıkarılamaz.");
+            }
 
             lots[miat] -= qtyToRemove;
             if(lots[miat] <= 0) delete lots[miat];
@@ -559,7 +683,74 @@
             } else {
                 await setDoc(doc(db, "kilitli_depo_stok", docId), { ...existing, lots: lots });
             }
+            
+            closeModal('decrease-stock-modal');
             renderShelfContents(activeShelfId);
+        };
+
+        window.processExcelUpload = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            if(!isAdmin) {
+                document.getElementById('excel-upload').value = '';
+                return showCustomAlert("YETKİSİZ İŞLEM", "Toplu yükleme yapmak için yönetici girişi yapmalısınız.");
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const data = new Uint8Array(ev.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    
+                    const addrToShelf = {};
+                    for(let sId in addresses) {
+                        addrToShelf[addresses[sId]] = sId;
+                    }
+
+                    let addedCount = 0;
+                    for(let r of rows) {
+                        const rawCode = r['Ürün Kodu'] || r['urun kodu'] || r['Kod'] || r['kod'];
+                        const rawName = r['Ürün Adı'] || r['urun adi'] || r['İsim'];
+                        const rawMiat = r['Miat'] || r['miat'];
+                        const rawAddr = r['Adres'] || r['adres'];
+                        const rawQty = r['Miktar'] || r['miktar'] || 1;
+                        
+                        if(rawCode && rawMiat && rawAddr) {
+                            const code = String(rawCode).trim();
+                            const addr = String(rawAddr).trim();
+                            let miat = String(rawMiat).trim();
+                            
+                            const numCheck = parseFloat(miat);
+                            if(!isNaN(numCheck) && miat.indexOf('.') === -1 && miat.indexOf('-') === -1) {
+                                const d = new Date(Math.round((numCheck - 25569)*86400*1000));
+                                miat = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+                            } else if (miat.includes('-')) {
+                                const p = miat.split('-');
+                                if(p[0].length === 4) miat = `${p[2]}.${p[1]}.${p[0]}`; 
+                            }
+
+                            const qty = parseInt(rawQty) || 1;
+                            const shelfId = addrToShelf[addr];
+                            
+                            if(shelfId) {
+                                const docId = `${shelfId}_${code}`;
+                                let existing = roomStock[docId] || { shelfId: shelfId, urunKodu: code, urunAdi: rawName || "", adres: addr, lots: {} };
+                                existing.lots[miat] = (existing.lots[miat] || 0) + qty;
+                                
+                                await setDoc(doc(db, "kilitli_depo_stok", docId), existing);
+                                addedCount++;
+                            }
+                        }
+                    }
+                    showCustomAlert("BAŞARILI", `${addedCount} adet ürün veya lot başarıyla sisteme aktarıldı.`);
+                } catch(error) {
+                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Lütfen sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
+                }
+                document.getElementById('excel-upload').value = '';
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
@@ -581,7 +772,8 @@
                 `).join('');
                 dd.style.display = 'block';
             } else {
-                dd.style.display = 'none';
+                dd.innerHTML = `<div style="padding:15px; color:#ff3333; font-size:12px; font-weight:bold; text-align:center;">İçeride eşleşen ürün bulunamadı.</div>`;
+                dd.style.display = 'block';
             }
         });
 
@@ -591,7 +783,7 @@
             drawArrow(shelfId);
         };
 
-        const clearSvgPath = () => { document.getElementById('svg-overlay').innerHTML = `<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff3333"/></marker></defs>`; };
+        const clearSvgPath = () => { document.getElementById('svg-overlay').innerHTML = `<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000"/></marker></defs>`; };
 
         const drawArrow = (shelfId) => {
             clearSvgPath();
@@ -599,15 +791,14 @@
             const door = document.getElementById('room-door').getBoundingClientRect();
             const shelf = document.getElementById(shelfId);
             if(!shelf) return;
-            const shelfR = shelf.getBoundingClientRect();
-
-            const startX = (door.right - mapW.left);
+            
+            const startX = (door.left - mapW.left); 
             const startY = (door.top + door.height/2 - mapW.top);
             
             const aisle = shelf.parentElement;
             const aisleR = aisle.getBoundingClientRect();
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
-            const targetY = (shelfR.top + shelfR.height/2 - mapW.top);
+            const targetY = (aisleR.bottom - mapW.top) + 10; 
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -672,7 +863,7 @@
 
         window.generateAisleQR = (aisleNum, e) => {
             e.stopPropagation();
-            generateQR(`TERMINUX_ROOM_AISLE_${aisleNum}`, `REYON ${aisleNum} İÇERİĞİ`);
+            generateQR(`TERMINUX_ROOM_AISLE_${aisleNum}`, `REYON ${aisleNum}`);
         };
 
         const generateQR = (val, label) => {
@@ -685,6 +876,82 @@
                 level: 'H'
             });
             document.getElementById('qr-modal').style.display = 'flex';
+        };
+
+        window.openScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'flex';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    handleQRScanResult(decodedText.trim());
+                    closeScanner();
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Tarayıcı izinlerini kontrol edin.");
+                closeScanner();
+            });
+        };
+
+        window.closeScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'none';
+            if(html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+            }
+        };
+
+        const handleQRScanResult = (text) => {
+            if(text.startsWith("TERMINUX_ROOM_AISLE_")) {
+                let num = text.replace("TERMINUX_ROOM_AISLE_", "");
+                showQRContent("REYON " + num, "aisle-" + num);
+            } else if(text === "TERMINUX_ROOM_MASTER") {
+                showQRContent("TÜM DEPO ENVANTERİ", "all");
+            } else {
+                showCustomAlert("TANIMSIZ KOD", "Okutulan QR kod depo reyonlarıyla eşleşmiyor.");
+            }
+        };
+
+        const showQRContent = (title, target) => {
+            document.getElementById('qr-content-title').innerText = title;
+            const tbody = document.getElementById('qr-content-body');
+            let rows = [];
+
+            for(let key in roomStock) {
+                const item = roomStock[key];
+                const itemAisle = item.shelfId ? item.shelfId.split('-')[1] : null;
+                
+                if(target === "all" || (target.startsWith("aisle-") && itemAisle === target.split('-')[1])) {
+                    for(let miat in item.lots) {
+                        rows.push({
+                            code: item.urunKodu,
+                            name: item.urunAdi,
+                            addr: item.adres,
+                            miat: miat,
+                            qty: item.lots[miat]
+                        });
+                    }
+                }
+            }
+
+            if(rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#ff3333; font-weight:bold;">Bu alanda kayıtlı ürün bulunmuyor.</td></tr>`;
+            } else {
+                rows.sort((a,b) => a.addr.localeCompare(b.addr));
+                tbody.innerHTML = rows.map(r => {
+                    return `
+                        <tr>
+                            <td style="font-family:monospace;">${r.code}</td>
+                            <td style="font-weight:bold;">${r.name}</td>
+                            <td style="font-family:monospace; color:#00ccff;">${r.addr || '-'}</td>
+                            <td style="font-family:monospace; color:#ffbc00;">${r.miat}</td>
+                            <td style="font-weight:bold; color:#00ff00;">${r.qty}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('qr-content-modal').style.display = 'flex';
         };
 
         document.getElementById('admin-pw').addEventListener('keypress', (e) => {
