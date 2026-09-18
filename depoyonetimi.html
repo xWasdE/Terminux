@@ -12,14 +12,14 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
         
-        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; height: 80px; }
+        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; }
         .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
         .header-actions { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; }
         .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; height: 38px; line-height: 16px; }
         .btn-header:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; padding-bottom: 50px; }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; padding-bottom: 40px; }
 
         .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 40px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; flex-shrink: 0; }
         .admin-toolbar .btn-action { font-size: 11px; padding: 8px 15px; }
@@ -57,12 +57,12 @@
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 2%; top: 10%; width: 85%; height: 75%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
+        .aisle-container { position: absolute; left: 2%; top: 5%; width: 85%; height: 80%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(8px, 1vw, 14px); font-weight: 900; background: #000; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -90,19 +90,21 @@
 
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
+        .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #00ff00; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box; }
         .form-group input:focus, .form-group select:focus { border-color: #ffbc00; }
         .btn-save { background: #00ff00; color: #000; border: none; padding: 12px 20px; font-weight: 900; font-size: 12px; border-radius: 6px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; text-transform: uppercase; width: 100%; }
         .btn-save:hover { opacity: 0.8; }
 
         .stock-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-        .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;}
+        .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: flex-start; gap: 10px; }
         .stock-name { font-size: 13px; font-weight: 800; color: #fff; }
-        .stock-code { font-size: 11px; color: #00ccff; font-family: monospace; }
+        .stock-code { font-size: 11px; color: #00ccff; font-family: monospace; margin-top: 4px; }
+        .stock-header-actions { display: flex; flex-shrink: 0; }
+        
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; flex-wrap: wrap; gap: 10px; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
         .legend-bar { display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; flex-shrink: 0; }
@@ -116,33 +118,38 @@
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
         
-        .legal-footer { position: absolute; bottom: 0; left: 0; right: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 10px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; }
         
         #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; padding: 30px 20px; }
-        #password-modal input { width: 100%; box-sizing: border-box; text-align: center; font-size: 24px; letter-spacing: 4px; padding: 15px; }
 
         #scanner-modal .modal-box { text-align: center; padding: 20px; margin: auto; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
-            header { flex-direction: row; padding: 15px; gap: 10px; height: auto; }
-            .header-title { font-size: 16px; gap: 5px; }
+            header { flex-direction: row; padding: 15px; gap: 10px; height: auto; flex-wrap: wrap; }
+            .header-title { font-size: 18px; gap: 5px; flex: 1; min-width: 100%; justify-content: center; margin-bottom: 5px; }
             .header-subtitle { font-size: 10px; }
-            .header-actions { flex-direction: row; }
-            .btn-header { padding: 6px 10px; font-size: 9px; height: auto; }
-            .admin-toolbar { padding: 10px 15px; justify-content: center; gap: 5px; }
+            .header-actions { flex-direction: row; width: 100%; justify-content: center; gap: 5px; }
+            .btn-header { padding: 8px 10px; font-size: 9px; height: auto; }
+            
+            .admin-toolbar { padding: 10px 15px; justify-content: stretch; }
+            .admin-toolbar button { flex: 1; }
+            
             .toolbar { flex-direction: column; align-items: stretch; padding: 10px 15px; gap: 10px; }
             .search-wrapper { max-width: 100%; min-width: 100%; }
             .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; gap: 5px; }
-            .action-group button { flex: 1; min-width: 45%; padding: 12px; }
+            .action-group button { flex: 1; min-width: 45%; padding: 12px; font-size: 10px; }
+            
             .map-container { padding: 5px; justify-content: center; align-items: center; }
             .map-wrapper { width: 100%; aspect-ratio: 4/3; border-radius: 8px; }
             .aisle-container { gap: 1%; left: 2%; width: 88%; }
-            .shelf-address { font-size: clamp(6px, 1.8vw, 12px); padding: 2px; }
-            .legend-bar { padding: 10px; padding-bottom: 50px; gap: 8px; }
+            .shelf-address { font-size: clamp(5px, 2vw, 9px); padding: 2px; }
+            
+            .legend-bar { padding: 10px; padding-bottom: 10px; gap: 8px; justify-content: space-around; }
             .modal-box { width: 95%; padding: 15px; }
             .btn-save { padding: 15px; }
-            main { padding-bottom: 45px; }
+            main { padding-bottom: 45px; } 
+            .legal-footer { font-size: 8px; padding: 6px 10px; }
         }
     </style>
 </head>
@@ -307,14 +314,9 @@
                 <label>HEDEF RAF</label>
                 <select id="move-target-shelf"></select>
             </div>
-            <div class="form-group">
-                <label>TAŞINACAK MİKTAR</label>
-                <input type="number" id="move-qty" min="1" value="1" style="text-align:center; font-size:24px;">
-            </div>
             <input type="hidden" id="move-code">
             <input type="hidden" id="move-name">
-            <input type="hidden" id="move-miat">
-            <button class="btn-save btn-action-move" onclick="executeMoveStock()">TAŞI</button>
+            <button class="btn-save btn-action-move" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
         </div>
     </div>
 
@@ -453,7 +455,7 @@
                     const sId = `shelf-${i}-${j}`;
                     html += `<div class="shelf" id="${sId}" onclick="openShelf('${sId}')"><span class="shelf-address" id="addr-${sId}"></span></div>`;
                 }
-                html += `<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
+                html += `<div style="position:absolute; bottom:-22px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
                 html += `</div>`;
             }
             container.innerHTML = html;
@@ -612,7 +614,7 @@
                 document.getElementById('admin-pw').value = '';
                 if(activeShelfId) openShelf(activeShelfId);
             } else {
-                alert("Hatalı Şifre!");
+                showCustomAlert("HATA", "Hatalı Şifre Girdiniz!");
                 document.getElementById('admin-pw').value = '';
             }
         };
@@ -632,19 +634,21 @@
 
         window.openShelf = (shelfId) => {
             activeShelfId = shelfId;
+            isEditMode = false;
             const addr = addresses[shelfId] || "TANIMSIZ ADRES";
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${addr}</span>`;
             
             document.getElementById('shelf-address-control').style.display = 'none';
             document.getElementById('shelf-stock-control').style.display = 'none';
+            
+            const btnEdit = document.getElementById('btn-toggle-edit');
+            btnEdit.innerText = 'DÜZENLE';
+            btnEdit.style.background = '#ffbc00';
 
             if(isAdmin) {
-                isEditMode = true; 
-            } else {
-                isEditMode = false;
+                document.getElementById('edit-shelf-address').value = addresses[shelfId] || "";
             }
 
-            updateEditModeUI();
             renderShelfContents(shelfId);
             document.getElementById('shelf-modal').style.display = 'flex';
         };
@@ -667,7 +671,6 @@
                 stockControl.style.display = 'block';
                 if(isAdmin) {
                     addrControl.style.display = 'block';
-                    document.getElementById('edit-shelf-address').value = addresses[activeShelfId] || "";
                 }
             } else {
                 btn.innerText = 'DÜZENLE';
@@ -713,30 +716,29 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btns = '';
-                    if(isEditMode) {
-                        btns = `
-                            <button class="btn-action btn-action-move" onclick="openMoveModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">TAŞI</button>
-                            <button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>
-                        `;
-                    }
+                    let btnRemove = isEditMode ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
                     
                     lotsHtml += `
                         <div class="lot-row">
                             <div class="lot-miat" style="color:${color}; text-shadow: 1px 1px 2px #000;">${m} <span style="font-size:9px; color:#aaa;">(${days} gün)</span></div>
                             <div style="display:flex; align-items:center; gap:5px;">
                                 <div class="lot-qty" style="margin-right:10px;">${qty} ADET</div>
-                                ${btns}
+                                ${btnRemove}
                             </div>
                         </div>
                     `;
                 });
 
+                let btnMove = isEditMode ? `<button class="btn-action btn-action-move" onclick="openMoveModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}')">TAŞI</button>` : '';
+
                 html += `
                     <div class="stock-item">
                         <div class="stock-header">
-                            <div class="stock-name">${item.urunAdi}</div>
-                            <div class="stock-code">${item.urunKodu}</div>
+                            <div>
+                                <div class="stock-name">${item.urunAdi}</div>
+                                <div class="stock-code">${item.urunKodu}</div>
+                            </div>
+                            <div class="stock-header-actions">${btnMove}</div>
                         </div>
                         ${lotsHtml}
                     </div>
@@ -793,10 +795,7 @@
             const miatRaw = document.getElementById('add-miat').value;
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
 
-            if(!code || !name || !miatRaw || qty <= 0) {
-                alert("Lütfen ürün kodu, adı, miat tarihi ve miktar bilgilerini eksiksiz girin.");
-                return;
-            }
+            if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen ürün kodu, adı, miat tarihi ve miktar bilgilerini eksiksiz girin.");
 
             const parts = miatRaw.split('-');
             const miat = `${parts[2]}.${parts[1]}.${parts[0]}`;
@@ -837,10 +836,7 @@
             const miat = document.getElementById('decrease-miat').value;
             const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
             
-            if(isNaN(qtyToRemove) || qtyToRemove <= 0) {
-                alert("Geçerli bir miktar girin.");
-                return;
-            }
+            if(isNaN(qtyToRemove) || qtyToRemove <= 0) return showCustomAlert("HATA", "Geçerli bir miktar girin.");
 
             const docId = `${activeShelfId}_${code}`;
             const existing = roomStock[docId];
@@ -850,8 +846,7 @@
             if(!lots[miat]) return;
 
             if (qtyToRemove > lots[miat]) {
-                alert("Mevcut stoktan fazla miktar çıkarılamaz.");
-                return;
+                return showCustomAlert("HATA", "Mevcut stoktan fazla miktar çıkarılamaz.");
             }
 
             lots[miat] -= qtyToRemove;
@@ -868,13 +863,10 @@
             renderShelfContents(activeShelfId);
         };
 
-        window.openMoveModal = (code, name, miat, currentQty) => {
+        window.openMoveModal = (code, name) => {
             document.getElementById('move-code').value = code;
             document.getElementById('move-name').value = name;
-            document.getElementById('move-miat').value = miat;
-            document.getElementById('move-qty').value = "1";
-            document.getElementById('move-qty').max = currentQty;
-            document.getElementById('move-info').innerHTML = `<b style="color:#fff;">${name}</b><br>KOD: ${code} | MİAT: <span style="color:#ffbc00;">${miat}</span> | MEVCUT: <span style="color:#00ff00;">${currentQty}</span>`;
+            document.getElementById('move-info').innerHTML = `<b style="color:#fff;">${name}</b><br>KOD: ${code}<br><span style="color:#ffbc00; font-size:10px;">(Ürüne ait tüm stok taşınacaktır)</span>`;
             
             const sel = document.getElementById('move-target-shelf');
             sel.innerHTML = '<option value="">Raf Seçiniz...</option>';
@@ -893,42 +885,26 @@
             if(!activeShelfId || !isEditMode) return;
             const code = document.getElementById('move-code').value;
             const name = document.getElementById('move-name').value;
-            const miat = document.getElementById('move-miat').value;
-            const qtyToMove = parseInt(document.getElementById('move-qty').value);
             const targetShelfId = document.getElementById('move-target-shelf').value;
             
-            if(isNaN(qtyToMove) || qtyToMove <= 0) {
-                alert("Geçerli bir miktar girin.");
-                return;
-            }
-            if(!targetShelfId) {
-                alert("Hedef raf seçiniz.");
-                return;
-            }
+            if(!targetShelfId) return showCustomAlert("HATA", "Hedef raf seçiniz.");
 
             const sourceDocId = `${activeShelfId}_${code}`;
             const existingSource = roomStock[sourceDocId];
-            if(!existingSource) return;
-
-            let sourceLots = existingSource.lots;
-            if(!sourceLots[miat] || qtyToMove > sourceLots[miat]) {
-                alert("Mevcut stoktan fazla miktar taşınamaz.");
-                return;
-            }
-
-            sourceLots[miat] -= qtyToMove;
-            if(sourceLots[miat] <= 0) delete sourceLots[miat];
-
-            if(Object.keys(sourceLots).length === 0) {
-                await deleteDoc(doc(db, "kilitli_depo_stok", sourceDocId));
-            } else {
-                await setDoc(doc(db, "kilitli_depo_stok", sourceDocId), { ...existingSource, lots: sourceLots });
-            }
+            if(!existingSource || !existingSource.lots) return;
 
             const targetDocId = `${targetShelfId}_${code}`;
             const existingTarget = roomStock[targetDocId];
             let targetLots = existingTarget ? existingTarget.lots : {};
-            targetLots[miat] = (targetLots[miat] || 0) + qtyToMove;
+
+            let totalQtyMoved = 0;
+            for(let miat in existingSource.lots) {
+                const qty = existingSource.lots[miat];
+                targetLots[miat] = (targetLots[miat] || 0) + qty;
+                totalQtyMoved += qty;
+            }
+
+            await deleteDoc(doc(db, "kilitli_depo_stok", sourceDocId));
 
             await setDoc(doc(db, "kilitli_depo_stok", targetDocId), {
                 shelfId: targetShelfId,
@@ -938,7 +914,7 @@
                 lots: targetLots
             });
 
-            await logOperation("TAŞIMA", code, name, qtyToMove, miat, `${addresses[activeShelfId]} -> ${addresses[targetShelfId]}`);
+            await logOperation("TAŞIMA", code, name, totalQtyMoved, "-", `${addresses[activeShelfId]} -> ${addresses[targetShelfId]}`);
             
             closeModal('move-stock-modal');
             renderShelfContents(activeShelfId);
@@ -965,7 +941,6 @@
                         addrToShelf[addresses[sId]] = sId;
                     }
 
-                    let addedCount = 0;
                     for(let r of rows) {
                         const rawCode = r['Ürün Kodu'] || r['urun kodu'] || r['Kod'] || r['kod'];
                         const rawName = r['Ürün Adı'] || r['urun adi'] || r['İsim'];
@@ -996,15 +971,11 @@
                                 existing.lots[miat] = (existing.lots[miat] || 0) + qty;
                                 
                                 await setDoc(doc(db, "kilitli_depo_stok", docId), existing);
-                                addedCount++;
                                 await logOperation("EXCEL YÜKLEME", code, rawName || "", qty, miat, shelfId);
                             }
                         }
                     }
-                    showCustomAlert("BAŞARILI", `${addedCount} adet ürün veya lot başarıyla sisteme aktarıldı.`);
-                } catch(error) {
-                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Lütfen sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
-                }
+                } catch(error) {}
                 document.getElementById('excel-upload').value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -1026,10 +997,7 @@
                     await deleteDoc(doc(db, "kilitli_depo_stok", d.id));
                 });
                 await logOperation("TOPLU SİLME", "TÜMÜ", "Tüm Depo Sıfırlandı", 0, "-", "TÜM DEPO");
-                showCustomAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi.");
-            } catch(e) {
-                showCustomAlert("HATA", "İşlem sırasında bir hata oluştu.");
-            }
+            } catch(e) {}
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
@@ -1078,8 +1046,8 @@
             const startY = (door.top + door.height/2 - mapW.top);
             
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
-            const bottomY = mapW.height - 10; 
-            const targetY = (aisleR.bottom - mapW.top) + 2; 
+            const bottomY = mapW.height - 15; 
+            const targetY = (aisleR.bottom - mapW.top); 
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
