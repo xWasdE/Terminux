@@ -12,19 +12,20 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
         
-        header { padding: 15px 30px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
-        .header-title { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
-        .header-subtitle { color: #ff3333; font-size: 13px; font-weight: 800; letter-spacing: 2px; }
-        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; }
+        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; height: 80px; }
+        .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; height: 38px; line-height: 16px; }
         .btn-header:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; padding-bottom: 50px; }
 
-        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 30px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 40px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; flex-shrink: 0; }
         .admin-toolbar .btn-action { font-size: 11px; padding: 8px 15px; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; }
-        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 400px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; flex-shrink: 0; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 500px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
         .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -33,13 +34,15 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
         .btn-action-qr:hover { opacity: 0.8; }
         .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; }
         .btn-action-excel:hover { opacity: 0.8; }
+        .btn-action-move { background: #9933ff; color: #fff; border-color: #9933ff; }
+        .btn-action-move:hover { opacity: 0.8; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         
         .btn-danger-flash { animation: flashBtn 0.8s infinite alternate; }
@@ -48,25 +51,18 @@
             to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; }
         }
 
-        @keyframes successPop {
-            0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
-            50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,255,0,0.6); border-color: #00ff00; background: #0a1a0a; }
-            100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,0,0); border-color: #333; }
-        }
-        .success-flash { animation: successPop 0.4s ease; }
-
-        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 15px; width: 100%; }
-        .map-wrapper { width: 100%; max-width: 1200px; aspect-ratio: 16/8; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
+        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; width: 100%; }
+        .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         
-        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
-        .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
+        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
+        .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
+        .aisle-container { position: absolute; left: 2%; top: 10%; width: 85%; height: 75%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(8px, 1vw, 14px); font-weight: 900; background: #000; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -88,7 +84,7 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
-        .modal-title { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 15px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
         .btn-close:hover { color: #ff3333; }
 
@@ -103,13 +99,13 @@
         .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;}
         .stock-name { font-size: 13px; font-weight: 800; color: #fff; }
         .stock-code { font-size: 11px; color: #00ccff; font-family: monospace; }
-        .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; }
+        .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; flex-wrap: wrap; gap: 10px; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
-        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
-        .legend-bar { display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; padding-bottom: 30px; }
+        .legend-bar { display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; flex-shrink: 0; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
 
@@ -120,6 +116,8 @@
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
         
+        .legal-footer { position: absolute; bottom: 0; left: 0; right: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; }
+        
         #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; padding: 30px 20px; }
         #password-modal input { width: 100%; box-sizing: border-box; text-align: center; font-size: 24px; letter-spacing: 4px; padding: 15px; }
 
@@ -127,19 +125,24 @@
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
-            header { flex-direction: column; padding: 15px; gap: 10px; text-align: center; }
-            .header-title { flex-direction: column; gap: 5px; font-size: 20px; }
-            .admin-toolbar { padding: 10px 15px; justify-content: stretch; }
-            .toolbar { flex-direction: column; align-items: stretch; padding: 15px; }
+            header { flex-direction: row; padding: 15px; gap: 10px; height: auto; }
+            .header-title { font-size: 16px; gap: 5px; }
+            .header-subtitle { font-size: 10px; }
+            .header-actions { flex-direction: row; }
+            .btn-header { padding: 6px 10px; font-size: 9px; height: auto; }
+            .admin-toolbar { padding: 10px 15px; justify-content: center; gap: 5px; }
+            .toolbar { flex-direction: column; align-items: stretch; padding: 10px 15px; gap: 10px; }
             .search-wrapper { max-width: 100%; min-width: 100%; }
-            .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; }
-            .action-group button { flex: 1; min-width: 45%; }
-            .map-container { padding: 10px; justify-content: center; align-items: center; }
-            .map-wrapper { width: 100%; aspect-ratio: 16/12; }
+            .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; gap: 5px; }
+            .action-group button { flex: 1; min-width: 45%; padding: 12px; }
+            .map-container { padding: 5px; justify-content: center; align-items: center; }
+            .map-wrapper { width: 100%; aspect-ratio: 4/3; border-radius: 8px; }
             .aisle-container { gap: 1%; left: 2%; width: 88%; }
-            .shelf-address { font-size: clamp(6px, 1.5vw, 10px); padding: 1px 2px; }
-            .legend-bar { padding-bottom: 80px; }
-            .modal-box { width: 95%; padding: 20px; }
+            .shelf-address { font-size: clamp(6px, 1.8vw, 12px); padding: 2px; }
+            .legend-bar { padding: 10px; padding-bottom: 50px; gap: 8px; }
+            .modal-box { width: 95%; padding: 15px; }
+            .btn-save { padding: 15px; }
+            main { padding-bottom: 45px; }
         }
     </style>
 </head>
@@ -147,7 +150,7 @@
 
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">DEPO YÖNETİMİ</span></div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+        <div class="header-actions">
             <button id="btn-admin" class="btn-header" onclick="openAdminLogin()">YÖNETİCİ GİRİŞİ</button>
             <a href="index.html" class="btn-header">WMS GEÇİŞ</a>
         </div>
@@ -156,6 +159,7 @@
     <div class="admin-toolbar" id="admin-toolbar">
         <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
         <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
+        <button class="btn-action btn-action-qr" onclick="openLogModal()">İŞLEM LOGLARI</button>
         <button class="btn-action btn-danger" onclick="promptMassDelete()">TÜM DEPOYU SİL</button>
     </div>
 
@@ -195,6 +199,10 @@
         <div class="legend-item"><div class="legend-color" style="background:transparent; border-color:#00ff00;"></div> +360 GÜN</div>
     </div>
 
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
     <div id="password-modal" class="modal">
         <div class="modal-box">
             <h3 style="color:#fff; margin-bottom:20px; font-size:16px; letter-spacing:1px; margin-top:0;">YÖNETİCİ ŞİFRESİ</h3>
@@ -219,14 +227,14 @@
             <div class="modal-header">
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button id="btn-toggle-edit" class="btn-action" style="display:block; background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
+                    <button id="btn-toggle-edit" class="btn-action" style="background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
                     <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
                 </div>
             </div>
             
             <div id="shelf-address-control" style="display:none; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
                 <div class="form-group">
-                    <label>RAF ADRESİ TANIMLA (SADECE ADMİN)</label>
+                    <label>RAF ADRESİ TANIMLA (SADECE YÖNETİCİ)</label>
                     <div style="display:flex; gap:10px;">
                         <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01">
                         <button class="btn-save" style="width:auto;" onclick="saveShelfAddress()">KAYDET</button>
@@ -249,8 +257,8 @@
                 <button class="btn-close" onclick="closeModal('add-stock-modal')">×</button>
             </div>
             <div class="form-group" style="position:relative;">
-                <label>ÜRÜN ARA (KATALOGDAN)</label>
-                <input type="text" id="add-search" placeholder="Arama yapın veya sıfırdan oluşturmak için adı yazın...">
+                <label>ÜRÜN ARA VEYA SIFIRDAN OLUŞTUR</label>
+                <input type="text" id="add-search" placeholder="Arama yapın veya ürün adı yazın...">
                 <div id="add-autocomplete" class="autocomplete-dropdown" style="position:absolute; max-height:150px; z-index:10001;"></div>
             </div>
             <div class="form-group">
@@ -263,7 +271,7 @@
                 <input type="date" id="add-miat">
             </div>
             <div class="form-group">
-                <label>MİKTAR</label>
+                <label>EKLENECEK MİKTAR</label>
                 <input type="number" id="add-qty" min="1" value="1">
             </div>
             <button class="btn-save" style="margin-top:10px;" onclick="executeAddStock()">STOĞA EKLE</button>
@@ -285,6 +293,28 @@
             <input type="hidden" id="decrease-name">
             <input type="hidden" id="decrease-miat">
             <button class="btn-save" style="background:#ff3333; color:#fff;" onclick="executeDecreaseStock()">ÇIKART</button>
+        </div>
+    </div>
+
+    <div id="move-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:400px;" id="move-modal-box">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#9933ff;">ÜRÜNÜ TAŞI</div>
+                <button class="btn-close" onclick="closeModal('move-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="move-info"></div>
+            <div class="form-group">
+                <label>HEDEF RAF</label>
+                <select id="move-target-shelf"></select>
+            </div>
+            <div class="form-group">
+                <label>TAŞINACAK MİKTAR</label>
+                <input type="number" id="move-qty" min="1" value="1" style="text-align:center; font-size:24px;">
+            </div>
+            <input type="hidden" id="move-code">
+            <input type="hidden" id="move-name">
+            <input type="hidden" id="move-miat">
+            <button class="btn-save btn-action-move" onclick="executeMoveStock()">TAŞI</button>
         </div>
     </div>
 
@@ -342,9 +372,28 @@
         </div>
     </div>
 
+    <div id="log-modal" class="modal">
+        <div class="modal-box" style="max-width:900px;">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#00ff00;">İŞLEM LOGLARI</div>
+                <button class="btn-close" onclick="closeModal('log-modal')">×</button>
+            </div>
+            <div class="form-group" style="max-width: 200px;">
+                <label>TARİH SEÇİNİZ</label>
+                <input type="date" id="log-date-picker" onchange="fetchLogs()">
+            </div>
+            <div class="report-table-wrapper" style="max-height: 50vh; overflow-y: auto;">
+                <table class="report-table">
+                    <thead><tr><th>SAAT</th><th>KULLANICI</th><th>TİP</th><th>ÜRÜN</th><th>MİAT</th><th>MİKTAR</th><th>RAF</th></tr></thead>
+                    <tbody id="log-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -370,34 +419,29 @@
             const mod = document.getElementById('custom-alert');
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-desc').innerText = desc;
-            
             mod.style.display = 'flex';
-        };
-
-        const showSuccessFlash = (elementId) => {
-            const el = document.getElementById(elementId);
-            if(el) {
-                el.classList.remove('success-flash');
-                void el.offsetWidth;
-                el.classList.add('success-flash');
-            }
         };
 
         const logOperation = async (type, code, name, qty, miat, shelfId) => {
             try {
                 const now = new Date();
-                const logId = 'LOG-' + now.getTime();
-                await setDoc(doc(collection(db, "kilitli_depo_logs"), logId), {
-                    tip: type,
-                    urunKodu: code,
-                    urunAdi: name,
-                    miktar: qty,
-                    miat: miat,
-                    raf: addresses[shelfId] || shelfId,
-                    tarih: now.toISOString(),
-                    kullanici: isAdmin ? 'Admin' : 'Kullanıcı'
-                });
-            } catch (e) {}
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toLocaleTimeString('tr-TR');
+                const logRef = doc(db, "kilitli_depo_logs", dateStr);
+                
+                await setDoc(logRef, {
+                    kayitlar: arrayUnion({
+                        tip: type,
+                        urunKodu: code,
+                        urunAdi: name,
+                        miktar: qty,
+                        miat: miat,
+                        raf: addresses[shelfId] || shelfId,
+                        saat: timeStr,
+                        user: isAdmin ? 'Admin' : 'Kullanıcı'
+                    })
+                }, { merge: true });
+            } catch (e) { console.error("Log kaydı hatası", e); }
         };
 
         const initMap = () => {
@@ -568,7 +612,7 @@
                 document.getElementById('admin-pw').value = '';
                 if(activeShelfId) openShelf(activeShelfId);
             } else {
-                showCustomAlert("HATA", "Hatalı Şifre Girdiniz!");
+                alert("Hatalı Şifre!");
                 document.getElementById('admin-pw').value = '';
             }
         };
@@ -580,6 +624,9 @@
                 isEditMode = false;
                 document.getElementById('shelf-address-control').style.display = 'none';
                 document.getElementById('shelf-stock-control').style.display = 'none';
+                const btnEdit = document.getElementById('btn-toggle-edit');
+                btnEdit.innerText = 'DÜZENLE';
+                btnEdit.style.background = '#ffbc00';
             }
         };
 
@@ -591,9 +638,6 @@
             document.getElementById('shelf-address-control').style.display = 'none';
             document.getElementById('shelf-stock-control').style.display = 'none';
 
-            const btnEdit = document.getElementById('btn-toggle-edit');
-            btnEdit.style.display = 'block';
-            
             if(isAdmin) {
                 isEditMode = true; 
             } else {
@@ -642,7 +686,6 @@
 
             await setDoc(doc(db, "kilitli_depo", "adresler"), newAddresses);
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${val || 'TANIMSIZ ADRES'}</span>`;
-            showSuccessFlash('shelf-modal-box');
         };
 
         const renderShelfContents = (shelfId) => {
@@ -670,14 +713,20 @@
                     if(days <= 60) color = '#ff0000';
                     else if(days <= 180) color = '#ffbc00';
 
-                    let btn = isEditMode ? `<button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>` : '';
+                    let btns = '';
+                    if(isEditMode) {
+                        btns = `
+                            <button class="btn-action btn-action-move" onclick="openMoveModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">TAŞI</button>
+                            <button class="btn-remove" style="display:block;" onclick="openDecreaseModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}', '${m}', ${qty})">ÇIKART</button>
+                        `;
+                    }
                     
                     lotsHtml += `
                         <div class="lot-row">
                             <div class="lot-miat" style="color:${color}; text-shadow: 1px 1px 2px #000;">${m} <span style="font-size:9px; color:#aaa;">(${days} gün)</span></div>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="lot-qty">${qty} ADET</div>
-                                ${btn}
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <div class="lot-qty" style="margin-right:10px;">${qty} ADET</div>
+                                ${btns}
                             </div>
                         </div>
                     `;
@@ -744,7 +793,10 @@
             const miatRaw = document.getElementById('add-miat').value;
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
 
-            if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen ürün kodu, adı, miat tarihi ve miktar bilgilerini eksiksiz girin.");
+            if(!code || !name || !miatRaw || qty <= 0) {
+                alert("Lütfen ürün kodu, adı, miat tarihi ve miktar bilgilerini eksiksiz girin.");
+                return;
+            }
 
             const parts = miatRaw.split('-');
             const miat = `${parts[2]}.${parts[1]}.${parts[0]}`;
@@ -764,9 +816,6 @@
             });
 
             await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
-
-            showSuccessFlash('add-stock-modal-box');
-            showCustomAlert("BAŞARILI", "Ürün başarıyla rafa eklendi.");
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -788,7 +837,10 @@
             const miat = document.getElementById('decrease-miat').value;
             const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
             
-            if(isNaN(qtyToRemove) || qtyToRemove <= 0) return showCustomAlert("HATA", "Geçerli bir miktar girin.");
+            if(isNaN(qtyToRemove) || qtyToRemove <= 0) {
+                alert("Geçerli bir miktar girin.");
+                return;
+            }
 
             const docId = `${activeShelfId}_${code}`;
             const existing = roomStock[docId];
@@ -798,7 +850,8 @@
             if(!lots[miat]) return;
 
             if (qtyToRemove > lots[miat]) {
-                return showCustomAlert("HATA", "Mevcut stoktan fazla miktar çıkarılamaz.");
+                alert("Mevcut stoktan fazla miktar çıkarılamaz.");
+                return;
             }
 
             lots[miat] -= qtyToRemove;
@@ -811,10 +864,83 @@
             }
             
             await logOperation("ÇIKARMA", code, name, qtyToRemove, miat, activeShelfId);
-            
-            showSuccessFlash('decrease-modal-box');
-            showCustomAlert("BAŞARILI", "Ürün stoktan düşüldü.");
             closeModal('decrease-stock-modal');
+            renderShelfContents(activeShelfId);
+        };
+
+        window.openMoveModal = (code, name, miat, currentQty) => {
+            document.getElementById('move-code').value = code;
+            document.getElementById('move-name').value = name;
+            document.getElementById('move-miat').value = miat;
+            document.getElementById('move-qty').value = "1";
+            document.getElementById('move-qty').max = currentQty;
+            document.getElementById('move-info').innerHTML = `<b style="color:#fff;">${name}</b><br>KOD: ${code} | MİAT: <span style="color:#ffbc00;">${miat}</span> | MEVCUT: <span style="color:#00ff00;">${currentQty}</span>`;
+            
+            const sel = document.getElementById('move-target-shelf');
+            sel.innerHTML = '<option value="">Raf Seçiniz...</option>';
+            
+            const sortedAddresses = Object.keys(addresses).sort((a,b) => addresses[a].localeCompare(addresses[b]));
+            sortedAddresses.forEach(sId => {
+                if(sId !== activeShelfId) {
+                    sel.innerHTML += `<option value="${sId}">${addresses[sId]}</option>`;
+                }
+            });
+
+            document.getElementById('move-stock-modal').style.display = 'flex';
+        };
+
+        window.executeMoveStock = async () => {
+            if(!activeShelfId || !isEditMode) return;
+            const code = document.getElementById('move-code').value;
+            const name = document.getElementById('move-name').value;
+            const miat = document.getElementById('move-miat').value;
+            const qtyToMove = parseInt(document.getElementById('move-qty').value);
+            const targetShelfId = document.getElementById('move-target-shelf').value;
+            
+            if(isNaN(qtyToMove) || qtyToMove <= 0) {
+                alert("Geçerli bir miktar girin.");
+                return;
+            }
+            if(!targetShelfId) {
+                alert("Hedef raf seçiniz.");
+                return;
+            }
+
+            const sourceDocId = `${activeShelfId}_${code}`;
+            const existingSource = roomStock[sourceDocId];
+            if(!existingSource) return;
+
+            let sourceLots = existingSource.lots;
+            if(!sourceLots[miat] || qtyToMove > sourceLots[miat]) {
+                alert("Mevcut stoktan fazla miktar taşınamaz.");
+                return;
+            }
+
+            sourceLots[miat] -= qtyToMove;
+            if(sourceLots[miat] <= 0) delete sourceLots[miat];
+
+            if(Object.keys(sourceLots).length === 0) {
+                await deleteDoc(doc(db, "kilitli_depo_stok", sourceDocId));
+            } else {
+                await setDoc(doc(db, "kilitli_depo_stok", sourceDocId), { ...existingSource, lots: sourceLots });
+            }
+
+            const targetDocId = `${targetShelfId}_${code}`;
+            const existingTarget = roomStock[targetDocId];
+            let targetLots = existingTarget ? existingTarget.lots : {};
+            targetLots[miat] = (targetLots[miat] || 0) + qtyToMove;
+
+            await setDoc(doc(db, "kilitli_depo_stok", targetDocId), {
+                shelfId: targetShelfId,
+                urunKodu: code,
+                urunAdi: name,
+                adres: addresses[targetShelfId] || "",
+                lots: targetLots
+            });
+
+            await logOperation("TAŞIMA", code, name, qtyToMove, miat, `${addresses[activeShelfId]} -> ${addresses[targetShelfId]}`);
+            
+            closeModal('move-stock-modal');
             renderShelfContents(activeShelfId);
         };
 
@@ -952,8 +1078,8 @@
             const startY = (door.top + door.height/2 - mapW.top);
             
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
-            const bottomY = mapW.height - 15; 
-            const targetY = (aisleR.bottom - mapW.top); 
+            const bottomY = mapW.height - 10; 
+            const targetY = (aisleR.bottom - mapW.top) + 2; 
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -998,7 +1124,10 @@
                 }
             }
 
-            rows.sort((a,b) => a.days - b.days);
+            rows.sort((a,b) => {
+                if(a.code === b.code) return a.days - b.days;
+                return a.code.localeCompare(b.code);
+            });
 
             tbody.innerHTML = rows.map(r => {
                 let c = '#00ff00';
@@ -1020,6 +1149,55 @@
             }).join('');
 
             document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.openLogModal = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('log-date-picker').value = today;
+            fetchLogs();
+            document.getElementById('log-modal').style.display = 'flex';
+        };
+
+        window.fetchLogs = async () => {
+            const dateStr = document.getElementById('log-date-picker').value;
+            if(!dateStr) return;
+
+            const tbody = document.getElementById('log-table-body');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">Yükleniyor...</td></tr>`;
+
+            try {
+                const docSnap = await getDoc(doc(db, "kilitli_depo_logs", dateStr));
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    const logs = data.kayitlar || [];
+                    logs.sort((a,b) => {
+                        return a.saat > b.saat ? -1 : 1;
+                    });
+                    
+                    tbody.innerHTML = logs.map(l => {
+                        let c = '#fff';
+                        if(l.tip === 'EKLEME' || l.tip === 'EXCEL YÜKLEME') c = '#00ff00';
+                        if(l.tip === 'ÇIKARMA' || l.tip === 'TOPLU SİLME') c = '#ff3333';
+                        if(l.tip === 'TAŞIMA') c = '#9933ff';
+
+                        return `
+                            <tr>
+                                <td style="color:#888;">${l.saat}</td>
+                                <td>${l.user}</td>
+                                <td style="color:${c}; font-weight:bold;">${l.tip}</td>
+                                <td>${l.urunKodu}<br><span style="color:#aaa; font-size:10px;">${l.urunAdi}</span></td>
+                                <td style="color:#ffbc00;">${l.miat}</td>
+                                <td style="font-weight:bold;">${l.miktar}</td>
+                                <td>${l.raf}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ff3333; font-weight:bold;">Bu tarihte log kaydı bulunamadı.</td></tr>`;
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ff3333; font-weight:bold;">Loglar çekilirken hata oluştu.</td></tr>`;
+            }
         };
 
         window.openMasterQR = () => {
