@@ -12,20 +12,18 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
         
-        header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; }
-        .header-title { font-weight: 900; font-size: 24px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
-        .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
+        header { padding: 15px 30px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
+        .header-title { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .header-subtitle { color: #ff3333; font-size: 13px; font-weight: 800; letter-spacing: 2px; }
         .header-actions { display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; }
-        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; height: 38px; line-height: 16px; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; height: 38px; line-height: 16px; }
         .btn-header:hover { background: #222; border-color: #555; }
         
-        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; padding-bottom: 40px; }
-
-        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 40px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; flex-shrink: 0; }
+        .admin-toolbar { display: none; width: 100%; background: #1a0505; border-bottom: 1px solid #330000; padding: 12px 30px; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; flex-shrink: 0; }
         .admin-toolbar .btn-action { font-size: 11px; padding: 8px 15px; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; flex-shrink: 0; }
-        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 500px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; flex-shrink: 0; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 400px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
         .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -34,15 +32,15 @@
         .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
         .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
         
-        .action-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+        .action-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         .btn-action-qr { background: #00ccff; color: #000; border-color: #00ccff; }
         .btn-action-qr:hover { opacity: 0.8; }
         .btn-action-excel { background: #00ff00; color: #000; border-color: #00ff00; }
         .btn-action-excel:hover { opacity: 0.8; }
-        .btn-action-move { background: #9933ff; color: #fff; border-color: #9933ff; }
-        .btn-action-move:hover { opacity: 0.8; }
+        .btn-action-stock { background: #9933ff; color: #fff; border-color: #9933ff; }
+        .btn-action-stock:hover { opacity: 0.8; }
         .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         
         .btn-danger-flash { animation: flashBtn 0.8s infinite alternate; }
@@ -51,18 +49,20 @@
             to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; }
         }
 
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; }
+
         .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; width: 100%; }
         .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         
-        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 40px; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
-        .map-door span { color: #ffbc00; font-weight: 900; font-size: 10px; transform: rotate(90deg); letter-spacing: 2px; }
+        .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
+        .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
 
-        .aisle-container { position: absolute; left: 2%; top: 5%; width: 85%; height: 80%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 3%; z-index: 5; }
+        .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
-        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(6px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 2px 4px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; }
+        .shelf-address { color: #fff; font-family: monospace; font-size: clamp(8px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; }
 
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -80,6 +80,12 @@
         #svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; }
         .path-line { stroke: #ff0000; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff0000); }
         @keyframes dash { to { stroke-dashoffset: 20; } }
+
+        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; position: relative; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
+
+        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; position: relative; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
@@ -107,10 +113,6 @@
         .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; display: none; }
         .btn-remove:hover { background: #ff3333; color: #000; }
 
-        .legend-bar { display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; flex-shrink: 0; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
-        .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
-
         .report-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .report-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .report-table th, .report-table td { padding: 12px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
@@ -118,15 +120,14 @@
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
         
-        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 10px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; line-height: 1.4; box-sizing: border-box; }
-        
         #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; padding: 30px 20px; }
+        #password-modal input { width: 100%; box-sizing: border-box; text-align: center; font-size: 24px; letter-spacing: 4px; padding: 15px; }
 
         #scanner-modal .modal-box { text-align: center; padding: 20px; margin: auto; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
 
         @media (max-width: 900px) {
-            header { flex-direction: row; padding: 15px; gap: 10px; height: auto; flex-wrap: wrap; }
+            header { flex-direction: column; padding: 15px; gap: 10px; height: auto; }
             .header-title { font-size: 18px; gap: 5px; flex: 1; min-width: 100%; justify-content: center; margin-bottom: 5px; }
             .header-subtitle { font-size: 10px; }
             .header-actions { flex-direction: row; width: 100%; justify-content: center; gap: 5px; }
@@ -140,15 +141,14 @@
             .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; gap: 5px; }
             .action-group button { flex: 1; min-width: 45%; padding: 12px; font-size: 10px; }
             
-            .map-container { padding: 5px; justify-content: center; align-items: center; }
-            .map-wrapper { width: 100%; aspect-ratio: 4/3; border-radius: 8px; }
+            .map-container { padding: 5px; justify-content: flex-start; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
+            .map-wrapper { min-width: 1000px; aspect-ratio: 16/7; border-radius: 8px; }
             .aisle-container { gap: 1%; left: 2%; width: 88%; }
-            .shelf-address { font-size: clamp(5px, 2vw, 9px); padding: 2px; }
+            .shelf-address { font-size: 10px; padding: 2px 4px; }
             
-            .legend-bar { padding: 10px; padding-bottom: 10px; gap: 8px; justify-content: space-around; }
+            .legend-bar { padding: 10px; gap: 8px; justify-content: space-around; }
             .modal-box { width: 95%; padding: 15px; }
             .btn-save { padding: 15px; }
-            main { padding-bottom: 45px; } 
             .legal-footer { font-size: 8px; padding: 6px 10px; }
         }
     </style>
@@ -166,6 +166,7 @@
     <div class="admin-toolbar" id="admin-toolbar">
         <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display:none;" onchange="processExcelUpload(event)">
         <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
+        <button class="btn-action btn-action-stock" onclick="openReportModal('stock')">STOK RAPORU</button>
         <button class="btn-action btn-action-qr" onclick="openLogModal()">İŞLEM LOGLARI</button>
         <button class="btn-action btn-danger" onclick="promptMassDelete()">TÜM DEPOYU SİL</button>
     </div>
@@ -183,19 +184,21 @@
         </div>
     </div>
 
-    <div class="map-container">
-        <div class="map-wrapper" id="room-map">
-            <div class="map-door" id="room-door"><span>KAPI</span></div>
-            <div class="aisle-container" id="aisle-container"></div>
-            <svg id="svg-overlay">
-                <defs>
-                    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <polygon points="0 0, 6 3, 0 6" fill="#ff0000" />
-                    </marker>
-                </defs>
-            </svg>
+    <main>
+        <div class="map-container">
+            <div class="map-wrapper" id="room-map">
+                <div class="map-door" id="room-door"><span>KAPI</span></div>
+                <div class="aisle-container" id="aisle-container"></div>
+                <svg id="svg-overlay">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <polygon points="0 0, 6 3, 0 6" fill="#ff0000" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
         </div>
-    </div>
+    </main>
 
     <div class="legend-bar">
         <div class="legend-item"><div class="legend-color" style="background:#ff0000; animation:flash30 1s infinite alternate;"></div> < 30 GÜN</div>
@@ -321,14 +324,17 @@
     </div>
 
     <div id="report-modal" class="modal">
-        <div class="modal-box" style="max-width: 900px;">
+        <div class="modal-box" style="max-width: 900px; width: 95%;">
             <div class="modal-header">
                 <div class="modal-title" id="report-title" style="color:#ff3333;">MİAT RAPORU</div>
-                <button class="btn-close" onclick="closeModal('report-modal')">×</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-action btn-action-excel" onclick="exportReportExcel()">EXCEL İNDİR</button>
+                    <button class="btn-close" onclick="closeModal('report-modal')">×</button>
+                </div>
             </div>
             <div class="report-table-wrapper">
                 <table class="report-table">
-                    <thead><tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr></thead>
+                    <thead id="report-thead"></thead>
                     <tbody id="report-table-body"></tbody>
                 </table>
             </div>
@@ -416,6 +422,8 @@
         let roomStock = {};
         let activeShelfId = null;
         let html5QrCode = null;
+        let currentReportData = [];
+        let currentReportType = 'all';
 
         window.showCustomAlert = (title, desc) => {
             const mod = document.getElementById('custom-alert');
@@ -455,7 +463,7 @@
                     const sId = `shelf-${i}-${j}`;
                     html += `<div class="shelf" id="${sId}" onclick="openShelf('${sId}')"><span class="shelf-address" id="addr-${sId}"></span></div>`;
                 }
-                html += `<div style="position:absolute; bottom:-22px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
+                html += `<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(${i}, event)">QR</button></div>`;
                 html += `</div>`;
             }
             container.innerHTML = html;
@@ -606,7 +614,7 @@
             const pw = document.getElementById('admin-pw').value;
             if(pw === "admin") {
                 isAdmin = true;
-                isEditMode = false;
+                isEditMode = true;
                 document.getElementById('btn-admin').innerText = 'ÇIKIŞ YAP (ADMİN)';
                 document.getElementById('btn-admin').style.background = '#ff3333';
                 document.getElementById('admin-toolbar').style.display = 'flex';
@@ -623,7 +631,7 @@
             document.getElementById(id).style.display = 'none';
             if(id === 'shelf-modal') {
                 activeShelfId = null;
-                isEditMode = false;
+                isEditMode = isAdmin; 
                 document.getElementById('shelf-address-control').style.display = 'none';
                 document.getElementById('shelf-stock-control').style.display = 'none';
                 const btnEdit = document.getElementById('btn-toggle-edit');
@@ -634,21 +642,20 @@
 
         window.openShelf = (shelfId) => {
             activeShelfId = shelfId;
-            isEditMode = false;
             const addr = addresses[shelfId] || "TANIMSIZ ADRES";
             document.getElementById('shelf-modal-title').innerHTML = `RAF: <span style="color:#00ccff;">${addr}</span>`;
             
             document.getElementById('shelf-address-control').style.display = 'none';
             document.getElementById('shelf-stock-control').style.display = 'none';
-            
-            const btnEdit = document.getElementById('btn-toggle-edit');
-            btnEdit.innerText = 'DÜZENLE';
-            btnEdit.style.background = '#ffbc00';
 
+            const btnEdit = document.getElementById('btn-toggle-edit');
+            btnEdit.style.display = 'block';
+            
             if(isAdmin) {
-                document.getElementById('edit-shelf-address').value = addresses[shelfId] || "";
+                isEditMode = true; 
             }
 
+            updateEditModeUI();
             renderShelfContents(shelfId);
             document.getElementById('shelf-modal').style.display = 'flex';
         };
@@ -671,6 +678,7 @@
                 stockControl.style.display = 'block';
                 if(isAdmin) {
                     addrControl.style.display = 'block';
+                    document.getElementById('edit-shelf-address').value = addresses[activeShelfId] || "";
                 }
             } else {
                 btn.innerText = 'DÜZENLE';
@@ -720,7 +728,7 @@
                     
                     lotsHtml += `
                         <div class="lot-row">
-                            <div class="lot-miat" style="color:${color}; text-shadow: 1px 1px 2px #000;">${m} <span style="font-size:9px; color:#aaa;">(${days} gün)</span></div>
+                            <div class="lot-miat" style="color:${color}; text-shadow: none;">${m} <span style="font-size:9px; color:#aaa;">(${days} gün)</span></div>
                             <div style="display:flex; align-items:center; gap:5px;">
                                 <div class="lot-qty" style="margin-right:10px;">${qty} ADET</div>
                                 ${btnRemove}
@@ -815,6 +823,7 @@
             });
 
             await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
+
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -859,6 +868,7 @@
             }
             
             await logOperation("ÇIKARMA", code, name, qtyToRemove, miat, activeShelfId);
+            
             closeModal('decrease-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -941,6 +951,7 @@
                         addrToShelf[addresses[sId]] = sId;
                     }
 
+                    let addedCount = 0;
                     for(let r of rows) {
                         const rawCode = r['Ürün Kodu'] || r['urun kodu'] || r['Kod'] || r['kod'];
                         const rawName = r['Ürün Adı'] || r['urun adi'] || r['İsim'];
@@ -971,11 +982,15 @@
                                 existing.lots[miat] = (existing.lots[miat] || 0) + qty;
                                 
                                 await setDoc(doc(db, "kilitli_depo_stok", docId), existing);
+                                addedCount++;
                                 await logOperation("EXCEL YÜKLEME", code, rawName || "", qty, miat, shelfId);
                             }
                         }
                     }
-                } catch(error) {}
+                    showCustomAlert("BAŞARILI", `${addedCount} adet ürün veya lot başarıyla sisteme aktarıldı.`);
+                } catch(error) {
+                    showCustomAlert("HATA", "Excel dosyası okunurken hata oluştu. Lütfen sütun isimlerini (Ürün Kodu, Ürün Adı, Miat, Adres, Miktar) kontrol edin.");
+                }
                 document.getElementById('excel-upload').value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -997,7 +1012,10 @@
                     await deleteDoc(doc(db, "kilitli_depo_stok", d.id));
                 });
                 await logOperation("TOPLU SİLME", "TÜMÜ", "Tüm Depo Sıfırlandı", 0, "-", "TÜM DEPO");
-            } catch(e) {}
+                showCustomAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi.");
+            } catch(e) {
+                showCustomAlert("HATA", "İşlem sırasında bir hata oluştu.");
+            }
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
@@ -1042,12 +1060,12 @@
             const aisle = shelf.parentElement;
             const aisleR = aisle.getBoundingClientRect();
             
-            const startX = (door.left - mapW.left) + 20; 
+            const startX = (door.left - mapW.left) - 10;
             const startY = (door.top + door.height/2 - mapW.top);
             
             const targetX = (aisleR.left + aisleR.width/2 - mapW.left);
             const bottomY = mapW.height - 15; 
-            const targetY = (aisleR.bottom - mapW.top); 
+            const targetY = (aisleR.bottom - mapW.top) + 2; 
 
             const svg = document.getElementById('svg-overlay');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -1063,60 +1081,124 @@
         };
 
         window.openReportModal = (type) => {
+            currentReportType = type;
             const tbody = document.getElementById('report-table-body');
+            const thead = document.getElementById('report-thead');
             const titleEl = document.getElementById('report-title');
             let rows = [];
+            currentReportData = [];
 
             if (type === 'critical') {
                 titleEl.innerText = 'KRİTİK MİAT RAPORU (< 180 GÜN)';
                 titleEl.style.color = '#ff3333';
-            } else {
-                titleEl.innerText = 'TÜM MİAT RAPORU';
-                titleEl.style.color = '#fff';
-            }
-
-            for(let key in roomStock) {
-                const item = roomStock[key];
-                for(let miat in item.lots) {
-                    const days = getDaysDiff(miat);
-                    if(type === 'all' || days <= 180) {
-                        rows.push({
-                            code: item.urunKodu,
-                            name: item.urunAdi,
-                            addr: item.adres,
-                            miat: miat,
-                            days: days,
-                            qty: item.lots[miat]
-                        });
+                thead.innerHTML = `<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr>`;
+                
+                for(let key in roomStock) {
+                    const item = roomStock[key];
+                    for(let miat in item.lots) {
+                        const days = getDaysDiff(miat);
+                        if(days <= 180) {
+                            rows.push({ code: item.urunKodu, name: item.urunAdi, addr: item.adres, miat: miat, days: days, qty: item.lots[miat] });
+                        }
                     }
                 }
+                rows.sort((a,b) => {
+                    if(a.code === b.code) return a.days - b.days;
+                    return a.code.localeCompare(b.code);
+                });
+                
+                currentReportData = rows;
+                tbody.innerHTML = rows.map(r => {
+                    let c = '#ffbc00';
+                    if(r.days <= 30) c = '#ff0000';
+                    else if(r.days <= 60) c = '#ff4500';
+                    else if(r.days <= 90) c = '#ff8c00';
+                    return `<tr><td style="font-family:monospace;">${r.code}</td><td style="font-weight:bold;">${r.name}</td><td style="font-family:monospace; color:#00ccff;">${r.addr || '-'}</td><td style="font-family:monospace; color:${c};">${r.miat}</td><td style="font-weight:900; color:${c};">${r.days}</td><td style="font-weight:bold; color:#00ff00;">${r.qty}</td></tr>`;
+                }).join('');
+
+            } else if (type === 'all') {
+                titleEl.innerText = 'TÜM MİAT RAPORU';
+                titleEl.style.color = '#fff';
+                thead.innerHTML = `<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr>`;
+                
+                for(let key in roomStock) {
+                    const item = roomStock[key];
+                    for(let miat in item.lots) {
+                        const days = getDaysDiff(miat);
+                        rows.push({ code: item.urunKodu, name: item.urunAdi, addr: item.adres, miat: miat, days: days, qty: item.lots[miat] });
+                    }
+                }
+                rows.sort((a,b) => {
+                    if(a.code === b.code) return a.days - b.days;
+                    return a.code.localeCompare(b.code);
+                });
+                
+                currentReportData = rows;
+                tbody.innerHTML = rows.map(r => {
+                    let c = '#00ff00';
+                    if(r.days <= 30) c = '#ff0000';
+                    else if(r.days <= 60) c = '#ff4500';
+                    else if(r.days <= 90) c = '#ff8c00';
+                    else if(r.days <= 180) c = '#ffbc00';
+                    return `<tr><td style="font-family:monospace;">${r.code}</td><td style="font-weight:bold;">${r.name}</td><td style="font-family:monospace; color:#00ccff;">${r.addr || '-'}</td><td style="font-family:monospace; color:${c};">${r.miat}</td><td style="font-weight:900; color:${c};">${r.days}</td><td style="font-weight:bold; color:#00ff00;">${r.qty}</td></tr>`;
+                }).join('');
+
+            } else if (type === 'stock') {
+                titleEl.innerText = 'STOK BÜYÜKLÜĞÜ RAPORU';
+                titleEl.style.color = '#9933ff';
+                thead.innerHTML = `<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>TOPLAM MİKTAR</th><th>MİAT DETAYLARI</th></tr>`;
+                
+                for(let key in roomStock) {
+                    const item = roomStock[key];
+                    let total = 0;
+                    let miatList = [];
+                    let sortedMiats = Object.keys(item.lots).sort((a,b) => {
+                        const da = a.includes('.') ? `${a.split('.')[2]}-${a.split('.')[1]}-${a.split('.')[0]}` : a;
+                        const dbStr = b.includes('.') ? `${b.split('.')[2]}-${b.split('.')[1]}-${b.split('.')[0]}` : b;
+                        return new Date(da) - new Date(dbStr);
+                    });
+
+                    for(let m of sortedMiats) {
+                        total += item.lots[m];
+                        miatList.push(`${m} (${item.lots[m]} Adet)`);
+                    }
+                    if(total > 0) {
+                        rows.push({ code: item.urunKodu, name: item.urunAdi, addr: item.adres, total: total, miats: miatList.join(' | ') });
+                    }
+                }
+                rows.sort((a,b) => b.total - a.total);
+                
+                currentReportData = rows;
+                tbody.innerHTML = rows.map(r => {
+                    return `<tr><td style="font-family:monospace;">${r.code}</td><td style="font-weight:bold;">${r.name}</td><td style="font-family:monospace; color:#00ccff;">${r.addr || '-'}</td><td style="font-weight:900; color:#00ff00; font-size:14px;">${r.total}</td><td style="color:#aaa; font-size:10px;">${r.miats}</td></tr>`;
+                }).join('');
             }
 
-            rows.sort((a,b) => {
-                if(a.code === b.code) return a.days - b.days;
-                return a.code.localeCompare(b.code);
-            });
-
-            tbody.innerHTML = rows.map(r => {
-                let c = '#00ff00';
-                if(r.days <= 30) c = '#ff0000';
-                else if(r.days <= 60) c = '#ff4500';
-                else if(r.days <= 90) c = '#ff8c00';
-                else if(r.days <= 180) c = '#ffbc00';
-                
-                return `
-                    <tr>
-                        <td style="font-family:monospace;">${r.code}</td>
-                        <td style="font-weight:bold;">${r.name}</td>
-                        <td style="font-family:monospace; color:#00ccff;">${r.addr || '-'}</td>
-                        <td style="font-family:monospace; color:${c};">${r.miat}</td>
-                        <td style="font-weight:900; color:${c};">${r.days}</td>
-                        <td style="font-weight:bold; color:#00ff00;">${r.qty}</td>
-                    </tr>
-                `;
-            }).join('');
-
             document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.exportReportExcel = () => {
+            if(!currentReportData || currentReportData.length === 0) return showCustomAlert("BOŞ LİSTE", "Dışa aktarılacak veri bulunmuyor.");
+            
+            let exportData = [];
+            let fileName = "Terminux_Rapor.xlsx";
+
+            if (currentReportType === 'stock') {
+                fileName = "Terminux_Stok_Raporu.xlsx";
+                exportData = currentReportData.map(i => ({
+                    "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "ADRES": i.addr, "TOPLAM MİKTAR": i.total, "MİAT DETAYLARI": i.miats
+                }));
+            } else {
+                fileName = currentReportType === 'critical' ? "Terminux_Kritik_Miat_Raporu.xlsx" : "Terminux_Tum_Miat_Raporu.xlsx";
+                exportData = currentReportData.map(i => ({
+                    "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "ADRES": i.addr, "MİAT": i.miat, "KALAN GÜN": i.days, "MİKTAR": i.qty
+                }));
+            }
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "RAPOR");
+            XLSX.writeFile(wb, fileName);
         };
 
         window.openLogModal = () => {
