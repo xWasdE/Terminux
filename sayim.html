@@ -10,32 +10,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script>
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted) { window.location.reload(); }
-        });
-
+        window.addEventListener('pageshow', function (event) { if (event.persisted) { window.location.reload(); } });
         window.playBeep = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
+                osc.connect(gain); gain.connect(ctx.destination);
                 if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-                    osc.stop(ctx.currentTime + 0.1);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(1000, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); osc.stop(ctx.currentTime + 0.1);
                 } else if (type === 'error') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
-                    osc.stop(ctx.currentTime + 0.4);
+                    osc.type = 'square'; osc.frequency.setValueAtTime(300, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4); osc.stop(ctx.currentTime + 0.4);
                 }
             } catch(e) {}
         };
@@ -43,21 +30,16 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
         header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ffbc00; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-        
         main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; }
-        
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
-        
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
         .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ff00; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
         .input-group input:focus, .input-group select:focus { border-color: #ffbc00; }
-        
         .btn-primary { background: #ffbc00; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary:hover { opacity: 0.8; }
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
@@ -66,7 +48,6 @@
         .btn-danger:hover { background: #ff3333; color: #000; }
         .btn-success { background: #00ff00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-success:hover { opacity: 0.8; }
-
         .history-container { max-width: 1000px; margin: 0 auto; }
         .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
         .history-list { display: flex; flex-direction: column; gap: 10px; }
@@ -76,13 +57,11 @@
         .history-name { font-size: 18px; font-weight: 800; color: #00ff00; }
         .history-detail { font-size: 12px; color: #888; font-family: monospace; }
         .history-actions { display: flex; gap: 10px; }
-
         .active-count-header { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
         .session-info { display: flex; flex-direction: column; gap: 5px; }
         .session-name { font-size: 20px; font-weight: 800; color: #00ff00; }
         .session-details { font-size: 12px; color: #888; font-family: monospace; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
-        
         .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-input { flex: 2; min-width: 250px; }
         .scan-wrapper { display: flex; gap: 10px; width: 100%; }
@@ -91,24 +70,18 @@
         .btn-scan:hover { border-color: #00ff00; color: #00ff00; }
         .btn-add { background: #00ff00; color: #000; border: none; padding: 0 30px; height: 50px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
-
         .system-stock-bar { width: 100%; display: flex; justify-content: flex-end; margin-bottom: 15px; }
         .upload-label { cursor: pointer; }
-
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; }
         .list-item { display: grid; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; border-left: 6px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
-        
         .row-match { background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); border-left-color: #00ff00; }
         .row-diff { background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); border-left-color: #ff3333; }
-
         .grid-cols-normal { grid-template-columns: 2fr 3fr 1fr 1fr; gap: 15px; }
         .grid-cols-reconcile { grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; gap: 15px; }
-
         .item-code { font-family: monospace; color: #00ff00; font-size: 14px; font-weight: bold; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
-        
         .qty-grid { display: contents; }
         .item-qty { font-size: 20px; font-weight: 900; color: #fff; text-align: center; }
         .item-sys { font-size: 18px; font-weight: 700; color: #666; text-align: center; font-family: monospace; }
@@ -116,33 +89,26 @@
         .diff-pos { color: #00ff00; }
         .diff-neg { color: #ff3333; }
         .diff-zero { color: #555; }
-        
         .item-action { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-action-sm { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-action-sm:hover { color: #fff; border-color: #666; }
         .btn-action-del { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         .btn-action-del:hover { background: #ff3333; color: #000; border-color: #ff3333; }
-
         .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
-        
         .modal-actions { display: flex; flex-direction: column; gap: 15px; align-items: center; justify-content: center; width: 100%; }
         .modal-actions button { width: 100%; max-width: 300px; padding: 15px 20px; }
-        
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
-
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
-
         .autocomplete-results { display:none; position:absolute; top:100%; left:0; width:100%; background:#111; border:1px solid #333; z-index:100; max-height:250px; overflow-y:auto; border-radius:6px; margin-top:5px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
         .autocomplete-item { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; transition: 0.2s; text-align: left; }
         .autocomplete-item:last-child { border-bottom: none; }
         .autocomplete-item:hover { background: #222; }
         .autocomplete-name { font-weight: bold; color: #fff; font-size: 13px; margin-bottom: 5px; }
         .autocomplete-detail { font-size: 11px; color: #00ff00; font-family: monospace; }
-
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px 15px 80px 15px; display: flex; flex-direction: column; }
@@ -151,14 +117,12 @@
             .header-actions { flex-direction: column; }
             .header-actions button, .header-actions a { width: 100%; margin: 0; max-width: 100%; }
             .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
-            
-            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; margin-bottom: 30px; }
             .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
             .scan-wrapper input { width: 100%; flex: 1; }
             .scan-wrapper button { width: 100%; height: 50px; }
             .scan-input, .qty-input { width: 100%; max-width: 100%; margin: 0; }
             .btn-add { width: 100%; height: 50px; }
-            
             .list-header { display: none; }
             .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; }
             .item-code { grid-column: 1 / -1; font-size: 16px; }
@@ -166,14 +130,11 @@
             .item-action { grid-column: 1 / -1; margin-top: 10px; }
             .item-val { font-size: 16px; text-align: left; display: flex; flex-direction: column; gap: 5px; }
             .item-val::before { content: attr(data-label); font-size: 9px; color: #666; font-family: sans-serif; letter-spacing: 1px; }
-            
             .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
             .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
             .item-qty::before, .item-sys::before, .item-diff::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
-            
             .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
             .item-action button { flex: 1; padding: 12px; font-size: 12px; }
-            
             .modal-actions { flex-direction: column; align-items: center; justify-content: center; }
             .modal-actions button { width: 100%; max-width: 100%; }
             .legal-footer { display: none; }
@@ -308,26 +269,12 @@
     </div>
 
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır.
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
-            authDomain: "terminux-wms.firebaseapp.com",
-            projectId: "terminux-wms",
-            storageBucket: "terminux-wms.firebasestorage.app",
-            messagingSenderId: "427323493367",
-            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        import { db, auth } from './core-auth.js';
+        import { collection, onSnapshot, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalogDb = {};
         let allSessions = [];
@@ -369,16 +316,6 @@
             closeCustomConfirm();
         });
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loadCatalog();
-            } else {
-                setTimeout(() => {
-                    if(!auth.currentUser) window.location.href = 'index.html';
-                }, 1000);
-            }
-        });
-
         const loadCatalog = async () => {
             try {
                 const cachedData = localStorage.getItem('terminux_catalog_cache');
@@ -388,12 +325,7 @@
                         if (Array.isArray(parsed)) {
                             parsed.forEach(item => {
                                 const uKodu = String(item.urunKodu || item.docId || "");
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || "") 
-                                };
+                                catalogDb[uKodu] = { urunKodu: uKodu, urunAdi: String(item.urunAdi || "İsimsiz Ürün"), barkod: String(item.barkod || ""), refNo: String(item.refNo || "") };
                             });
                             setupRealtimeSessions();
                             return;
@@ -412,12 +344,7 @@
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
                         if (!catalogDb[key]) {
-                            catalogDb[key] = { 
-                                urunKodu: key, 
-                                urunAdi: String(d.urunAdi || "İsimsiz Ürün"), 
-                                barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "") 
-                            };
+                            catalogDb[key] = { urunKodu: key, urunAdi: String(d.urunAdi || "İsimsiz Ürün"), barkod: String(d.barkod || ""), refNo: String(d.refNo || "") };
                         }
                     });
                 };
@@ -453,25 +380,12 @@
                 const statusText = s.status === 'active' ? 'DEVAM EDİYOR' : 'TAMAMLANDI';
                 const itemCount = Object.keys(s.items || {}).length;
                 
-                return `
-                    <div class="history-card">
-                        <div class="history-info">
-                            <div class="history-name" style="color:${statusColor}">${s.name}</div>
-                            <div class="history-detail">${s.type} | ${s.date} | ${itemCount} Çeşit Ürün | Durum: ${statusText}</div>
-                        </div>
-                        <div class="history-actions">
-                            <button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button>
-                            <button class="btn-secondary" style="margin:0;" onclick="resumeSession('${s.id}')">DÜZENLE / DEVAM ET</button>
-                        </div>
-                    </div>
-                `;
+                return `<div class="history-card"><div class="history-info"><div class="history-name" style="color:${statusColor}">${s.name}</div><div class="history-detail">${s.type} | ${s.date} | ${itemCount} Çeşit Ürün | Durum: ${statusText}</div></div><div class="history-actions"><button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button><button class="btn-secondary" style="margin:0;" onclick="resumeSession('${s.id}')">DÜZENLE / DEVAM ET</button></div></div>`;
             }).reverse().join('');
         };
 
         const saveSessionToDb = async (session) => {
-            try {
-                await setDoc(doc(db, "sayim_sessions", session.id), session);
-            } catch(e) {}
+            try { await setDoc(doc(db, "sayim_sessions", session.id), session); } catch(e) {}
         };
 
         window.startCountSession = async () => {
@@ -558,59 +472,34 @@
             const finalKey = matchedKey || searchCode;
             if(!session.items) session.items = {};
 
-            if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") {
-                window.playBeep('error');
-            } else {
-                window.playBeep('success');
-            }
+            if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") window.playBeep('error');
+            else window.playBeep('success');
 
-            if (session.items[finalKey]) {
-                session.items[finalKey].qty += qty;
-            } else {
-                session.items[finalKey] = { code: finalKey, name: matchedName, qty: qty, sysQty: 0 };
-            }
+            if (session.items[finalKey]) session.items[finalKey].qty += qty;
+            else session.items[finalKey] = { code: finalKey, name: matchedName, qty: qty, sysQty: 0 };
 
-            codeInput.value = '';
-            qtyInput.value = '1';
-            codeInput.focus();
-
+            codeInput.value = ''; qtyInput.value = '1'; codeInput.focus();
             await saveSessionToDb(session);
         };
 
         document.getElementById('scan-code').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             const resultsContainer = document.getElementById('autocomplete-results');
-            
-            if (val.length < 4) {
-                resultsContainer.style.display = 'none';
-                return;
-            }
+            if (val.length < 4) { resultsContainer.style.display = 'none'; return; }
 
             let matches = [];
             for (const key in catalogDb) {
                 const item = catalogDb[key];
-                if (
-                    item.urunAdi.toLowerCase().includes(val) || 
-                    (item.refNo && item.refNo.toLowerCase().includes(val)) ||
-                    item.urunKodu.toLowerCase().includes(val) ||
-                    (item.barkod && item.barkod.toLowerCase().includes(val))
-                ) {
+                if (item.urunAdi.toLowerCase().includes(val) || (item.refNo && item.refNo.toLowerCase().includes(val)) || item.urunKodu.toLowerCase().includes(val) || (item.barkod && item.barkod.toLowerCase().includes(val))) {
                     matches.push(item);
                     if(matches.length >= 5) break; 
                 }
             }
 
             if (matches.length > 0) {
-                resultsContainer.innerHTML = matches.map(m => `
-                    <div class="autocomplete-item" onclick="selectAutocomplete('${m.urunKodu}')">
-                        <div class="autocomplete-name">${m.urunAdi}</div>
-                        <div class="autocomplete-detail">KOD: ${m.urunKodu} | REF: ${m.refNo || '-'}</div>
-                    </div>
-                `).join('');
+                resultsContainer.innerHTML = matches.map(m => `<div class="autocomplete-item" onclick="selectAutocomplete('${m.urunKodu}')"><div class="autocomplete-name">${m.urunAdi}</div><div class="autocomplete-detail">KOD: ${m.urunKodu} | REF: ${m.refNo || '-'}</div></div>`).join('');
                 resultsContainer.style.display = 'block';
-            } else {
-                resultsContainer.style.display = 'none';
-            }
+            } else { resultsContainer.style.display = 'none'; }
         });
 
         window.selectAutocomplete = (kod) => {
@@ -626,19 +515,8 @@
             }
         });
 
-        document.getElementById('scan-code').addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('scan-qty').focus();
-            }
-        });
-        
-        document.getElementById('scan-qty').addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                window.processScan();
-            }
-        });
+        document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('scan-qty').focus(); } });
+        document.getElementById('scan-qty').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); window.processScan(); } });
 
         window.removeItem = (key) => {
             showCustomConfirm("SATIRI SİL", "Okutulan ürün listeden çıkarılacaktır. Emin misiniz?", "SATIRI SİL", "btn-danger", async () => {
@@ -654,13 +532,12 @@
             editItemKey = key;
             const session = allSessions.find(s => s.id === currentSessionId);
             if(!session) return;
-            const item = session.items[key];
-            
-            document.getElementById('qty-item-name').innerText = item.name;
-            document.getElementById('edit-qty-input').value = item.qty;
+            document.getElementById('qty-item-name').innerText = session.items[key].name;
+            document.getElementById('edit-qty-input').value = session.items[key].qty;
             document.getElementById('qty-modal').style.display = 'flex';
             setTimeout(() => document.getElementById('edit-qty-input').focus(), 100);
         };
+        
         window.closeQtyModal = () => { document.getElementById('qty-modal').style.display = 'none'; editItemKey = null; };
         
         document.getElementById('qty-save-btn').addEventListener('click', async () => {
@@ -680,9 +557,7 @@
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
                 const normK = normalizeStr(k);
-                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
-                    return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
-                }
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
             }
             return "";
         };
@@ -700,22 +575,15 @@
                 if(!session.items) session.items = {};
                 
                 let addedCount = 0;
-
                 rows.forEach(r => {
                     const code = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod"]);
-                    const sysQtyStr = getCol(r, ["stok miktarı", "stok", "miktar", "sistem stok"]);
-                    const sysQty = parseInt(sysQtyStr) || 0;
+                    const sysQty = parseInt(getCol(r, ["stok miktarı", "stok", "miktar", "sistem stok"])) || 0;
                     let name = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim"]) || "Tanımsız Sistem Ürünü";
                     
                     if(code) {
                         if (catalogDb[code] && name === "Tanımsız Sistem Ürünü") name = catalogDb[code].urunAdi;
-                        
-                        if(session.items[code]) {
-                            session.items[code].sysQty = sysQty;
-                        } else {
-                            session.items[code] = { code: code, name: name, qty: 0, sysQty: sysQty };
-                            addedCount++;
-                        }
+                        if(session.items[code]) session.items[code].sysQty = sysQty;
+                        else { session.items[code] = { code: code, name: name, qty: 0, sysQty: sysQty }; addedCount++; }
                     }
                 });
 
@@ -742,7 +610,6 @@
             }
 
             headerUI.style.display = 'grid';
-            
             if (session.hasSystemStock) {
                 headerUI.className = 'list-header grid-cols-reconcile';
                 headerUI.innerHTML = `<div>ÜRÜN KODU</div><div>ÜRÜN İSMİ</div><div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div><div style="text-align:center; color:#aaa;">SİSTEM STOK</div><div style="text-align:center; color:#fff;">FARK</div><div style="text-align:right;">İŞLEM</div>`;
@@ -756,9 +623,7 @@
                 itemsToRender.sort((a, b) => {
                     const diffA = Math.abs((a.qty || 0) - (a.sysQty || 0));
                     const diffB = Math.abs((b.qty || 0) - (b.sysQty || 0));
-                    const isDiffA = diffA !== 0 ? 1 : 0;
-                    const isDiffB = diffB !== 0 ? 1 : 0;
-                    return isDiffB - isDiffA; 
+                    return (diffB !== 0 ? 1 : 0) - (diffA !== 0 ? 1 : 0); 
                 });
             }
 
@@ -769,36 +634,13 @@
                 if (session.hasSystemStock) {
                     const diff = (item.qty || 0) - (item.sysQty || 0);
                     let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
-                    let diffText = diff > 0 ? `+${diff}` : diff;
-                    
                     rowClass = diff === 0 ? 'row-match' : 'row-diff';
-                    
-                    extraCols = `
-                        <div class="qty-grid">
-                            <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
-                            <div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div>
-                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
-                        </div>
-                    `;
+                    extraCols = `<div class="qty-grid"><div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div><div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div><div class="item-diff ${diffClass}" data-label="FARK">${diff > 0 ? `+${diff}` : diff}</div></div>`;
                 } else {
-                    extraCols = `
-                        <div class="qty-grid">
-                            <div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div>
-                        </div>
-                    `;
+                    extraCols = `<div class="qty-grid"><div class="item-qty" data-label="FİZİKİ STOK">${item.qty}</div></div>`;
                 }
 
-                return `
-                    <div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'} ${rowClass}">
-                        <div class="item-code">${item.code}</div>
-                        <div class="item-name">${item.name}</div>
-                        ${extraCols}
-                        <div class="item-action">
-                            <button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button>
-                            <button class="btn-action-sm btn-action-del" onclick="removeItem('${item.code}')">SİL</button>
-                        </div>
-                    </div>
-                `;
+                return `<div class="list-item ${session.hasSystemStock ? 'grid-cols-reconcile' : 'grid-cols-normal'} ${rowClass}"><div class="item-code">${item.code}</div><div class="item-name">${item.name}</div>${extraCols}<div class="item-action"><button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button><button class="btn-action-sm btn-action-del" onclick="removeItem('${item.code}')">SİL</button></div></div>`;
             }).join('');
         };
 
@@ -820,11 +662,8 @@
             
             if (format === 'excel') {
                 let exportData = [];
-                if(session.hasSystemStock) {
-                    exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty, "SİSTEM STOK": i.sysQty || 0, "FARK": i.qty - (i.sysQty || 0) }));
-                } else {
-                    exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty }));
-                }
+                if(session.hasSystemStock) exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty, "SİSTEM STOK": i.sysQty || 0, "FARK": i.qty - (i.sysQty || 0) }));
+                else exportData = items.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "FİZİKİ STOK": i.qty }));
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "SAYIM");
@@ -847,7 +686,7 @@
                     return [i.code, cleanName, i.qty];
                 });
 
-                doc.autoTable({ startY: 30, head: head, body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [40, 40, 40] } });
+                doc.autoTable({ startY: 30, head: head, body: body, theme: 'grid', styles: { fontSize: 8 } });
                 doc.save(`Terminux_Sayim_${safeName}.pdf`);
             }
 
@@ -881,6 +720,8 @@
                 html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
             }
         };
+
+        auth.onAuthStateChanged((user) => { if(user) loadCatalog(); });
 
     </script>
 </body>
