@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Lens Envanteri</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
+        <div class="menu">
+            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item active"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+        </div>
+        <div class="user-info">
+            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
+            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><h2>LENS YÜKLEME MERKEZİ</h2></div>
+        <div class="content-area">
+            <div class="card">
+                <div class="card-header">LENS ENVANTERİ YÜKLEME</div>
+                <div class="form-grid">
+                    <div class="form-group"><label style="color:#00ccff;">ALCON LENS LİSTESİ</label><input type="file" id="f-alcon" accept=".xlsx"><button class="btn-primary" id="btn-alcon">EXCEL YÜKLE</button></div>
+                    <div class="form-group"><label style="color:#ffbc00;">TECNIS LENS LİSTESİ</label><input type="file" id="f-tecnis" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-tecnis">EXCEL YÜKLE</button></div>
+                </div>
+            </div>
+            <div class="card"><div class="card-header">LENS İŞLEM KAYITLARI</div><div id="lens-log" class="log-box">Sistem hazır...</div></div>
+        </div>
+    </div>
+    <script type="module">
+        import { db } from './admin.js';
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const sysLog = (msg) => {
+            const div = document.getElementById('lens-log');
+            div.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            div.scrollTop = div.scrollHeight;
+        };
+
+        const getColVal = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) if (keys.some(sk => sk === k.toString().replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase())) return (row[k] !== null && row[k] !== undefined) ? row[k].toString().trim() : "";
+            return "";
+        };
+
+        async function processLensExcel(inputId, brand) {
+            const file = document.getElementById(inputId).files[0];
+            if(!file) return sysLog("Dosya seçilmedi.");
+            const collectionName = brand === "ALCON" ? "lens_alcon" : "lens_tecnis";
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                let count = 0;
+                for(let r of rows) {
+                    const id = getColVal(r, ["ürünkodu", "urunkodu", "kod"]);
+                    if(!id) continue;
+                    let urunAdiStr = getColVal(r, ["ürünismi", "ürünadı", "urunadi", "isim"]);
+                    let data = { urunKodu: id, urunAdi: urunAdiStr, lensNo: getColVal(r, ["lensno", "lensnumarası", "numara", "no"]), miktar: parseInt(getColVal(r, ["stokmiktar", "stok", "miktar", "adet"])) || 0, marka: brand };
+                    if (urunAdiStr.includes(",")) data.refNo = urunAdiStr.split(",")[urunAdiStr.split(",").length - 1].trim();
+                    await setDoc(doc(db, collectionName, id), data, { merge: true });
+                    count++;
+                }
+                sysLog(`Yükleme Bitti. (${brand} - ${count} Kayıt)`);
+                document.getElementById(inputId).value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        document.getElementById('btn-alcon').addEventListener('click', () => processLensExcel('f-alcon', 'ALCON'));
+        document.getElementById('btn-tecnis').addEventListener('click', () => processLensExcel('f-tecnis', 'TECNIS'));
+    </script>
+</body>
+</html>
