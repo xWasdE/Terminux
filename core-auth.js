@@ -62,10 +62,11 @@ onAuthStateChanged(auth, async (user) => {
 
     } else {
 
-        if (!path.includes('index.html') && !path.includes('bakim.html')) {
+        if (!path.includes('index.html') && !path.includes('bakim.html') && path !== '/' && path !== '') {
             window.location.href = 'index.html';
         }
     }
 });
 
-export { app, auth, db };
+
+export { app, auth, db, onAuthStateChanged };
