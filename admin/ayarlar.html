@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Sistem Ayarları</title>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #222; }
+        .switch-label { display: flex; flex-direction: column; gap: 4px; }
+        .switch-title { font-weight: 800; font-size: 14px; color: #fff; }
+        .switch-desc { font-size: 11px; color: #888; }
+        .switch-btn { background: #ff3333; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .switch-btn.active { background: #00ff00; color: #000; }
+    </style>
+</head>
+<body>
+    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
+        <div class="menu">
+            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item active"><span>SİSTEM AYARLARI</span></a>
+        </div>
+        <div class="user-info">
+            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
+            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><h2>SİSTEM AYARLARI</h2></div>
+        <div class="content-area">
+            <div class="card" style="border-color: #ffbc00;">
+                <div class="card-header" style="color: #ffbc00;">SİSTEM BAKIM MODU (MAINTENANCE)</div>
+                <div class="switch-container">
+                    <div class="switch-label">
+                        <div class="switch-title">Bakım Modu Durumu</div>
+                        <div class="switch-desc">Aktif edildiğinde tüm modüller erişime kapatılır ve personel Bakım sayfasına yönlendirilir.</div>
+                    </div>
+                    <button id="btn-toggle-maintenance" class="switch-btn">KAPALI</button>
+                </div>
+            </div>
+            <div class="card" style="border-color: #ff3333;">
+                <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
+                <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
+                <button class="btn-primary" style="background: #ff3333; color: #fff; width:100%; padding:20px; font-size:16px;" id="btn-sync-global">SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET</button>
+                <div id="sync-log" style="color:#00ff00; font-size:12px; margin-top:15px; font-weight:bold;"></div>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        import { db } from './admin.js';
+        import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+            const btn = document.getElementById('btn-toggle-maintenance');
+            if(docSnap.exists() && docSnap.data().maintenanceMode === true) {
+                btn.innerText = "AÇIK (AKTİF)"; btn.classList.add("active");
+            } else {
+                btn.innerText = "KAPALI"; btn.classList.remove("active");
+            }
+        });
+
+        document.getElementById('btn-toggle-maintenance').addEventListener('click', async () => {
+            const isActive = document.getElementById('btn-toggle-maintenance').classList.contains("active");
+            try { await setDoc(doc(db, "system", "settings"), { maintenanceMode: !isActive }, { merge: true }); } catch(e) {}
+        });
+
+        document.getElementById('btn-sync-global').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-sync-global');
+            btn.innerText = "SİNYAL GÖNDERİLİYOR...";
+            try {
+                await setDoc(doc(db, "system", "version"), { lastUpdate: Date.now() });
+                document.getElementById('sync-log').innerText = "✅ SİSTEM GÜNCELLENDİ!";
+            } catch(e) {}
+            btn.innerText = "SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET";
+        });
+    </script>
+</body>
+</html>
