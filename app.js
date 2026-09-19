@@ -188,11 +188,27 @@ let initFallback = setTimeout(() => {
     }
 }, 3000);
 
+onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+    if(docSnap.exists()) {
+        const data = docSnap.data();
+        const btnLens = document.getElementById('btn-lens-redirect');
+        if (btnLens) {
+            btnLens.style.display = data.publicLensEnabled ? 'block' : 'none';
+        }
+    }
+});
+
 onAuthStateChanged(auth, async (user) => {
     clearTimeout(initFallback);
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
+        const uDoc = await getDoc(doc(db, "users", user.uid));
+        if (uDoc.exists() && uDoc.data().role === 'admin') {
+            const adminBtn = document.getElementById('btn-admin-panel');
+            if (adminBtn) adminBtn.style.display = 'inline-block';
+        }
+
         if(loadingScreen) loadingScreen.classList.add('hidden');
         if(loginScreen) loginScreen.classList.add('hidden');
         if(appScreen) appScreen.classList.remove('hidden');
@@ -271,11 +287,11 @@ async function buildCatalog(forceUpdate = false) {
         const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, "ana_depo")), getDocs(collection(db, "ameliyathane"))]);
         const tempMap = new Map();
         
-        const processDoc = (doc) => {
-            const data = doc.data();
-            if (!tempMap.has(doc.id)) {
-                tempMap.set(doc.id, {
-                    docId: doc.id,
+        const processDoc = (d) => {
+            const data = d.data();
+            if (!tempMap.has(d.id)) {
+                tempMap.set(d.id, {
+                    docId: d.id,
                     urunKodu: String(data.urunKodu || ""),
                     urunAdi: String(data.urunAdi || ""),
                     barkod: String(data.barkod || ""),
