@@ -792,4 +792,3 @@ document.addEventListener('input', (e) => {
         }
     }
 });
-</script>
