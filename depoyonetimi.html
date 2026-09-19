@@ -119,9 +119,6 @@
         .report-table th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
         
         .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
-        
-        #password-modal .modal-box { max-width: 350px; text-align: center; margin: auto; padding: 30px 20px; }
-        #password-modal input { width: 100%; box-sizing: border-box; text-align: center; font-size: 24px; letter-spacing: 4px; padding: 15px; }
 
         #scanner-modal .modal-box { text-align: center; padding: 20px; margin: auto; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; margin: 0 auto; }
@@ -158,7 +155,7 @@
     <header>
         <div class="header-title">TERMINUX <span class="header-subtitle">DEPO YÖNETİMİ</span></div>
         <div class="header-actions">
-            <button id="btn-admin" class="btn-header" onclick="openAdminLogin()">YÖNETİCİ GİRİŞİ</button>
+            <button id="btn-admin" class="btn-header" style="display:none; background:#ffbc00; color:#000;"></button>
             <a href="index.html" class="btn-header">WMS GEÇİŞ</a>
         </div>
     </header>
@@ -168,7 +165,6 @@
         <button class="btn-action btn-action-excel" onclick="document.getElementById('excel-upload').click()">EXCEL TOPLU YÜKLE</button>
         <button class="btn-action btn-action-stock" onclick="openReportModal('stock')">STOK RAPORU</button>
         <button class="btn-action btn-action-qr" onclick="openLogModal()">İŞLEM LOGLARI</button>
-        <button class="btn-action btn-danger" onclick="promptMassDelete()">TÜM DEPOYU SİL</button>
     </div>
 
     <div class="toolbar">
@@ -213,17 +209,6 @@
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
-    <div id="password-modal" class="modal">
-        <div class="modal-box">
-            <h3 style="color:#fff; margin-bottom:20px; font-size:16px; letter-spacing:1px; margin-top:0;">YÖNETİCİ ŞİFRESİ</h3>
-            <input type="password" id="admin-pw" autocomplete="new-password">
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn-save" style="background:#333; color:#fff;" onclick="closeModal('password-modal')">İPTAL</button>
-                <button class="btn-save" onclick="verifyAdmin()">GİRİŞ YAP</button>
-            </div>
-        </div>
-    </div>
-
     <div id="custom-alert" class="modal" style="z-index:30000;">
         <div class="modal-box" style="max-width:400px; text-align:center;">
             <div class="modal-title" id="alert-title" style="color:#ffbc00;">UYARI</div>
@@ -237,7 +222,7 @@
             <div class="modal-header">
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button id="btn-toggle-edit" class="btn-action" style="background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
+                    <button id="btn-toggle-edit" class="btn-action" style="display:none; background:#ffbc00; color:#000; border:none;" onclick="toggleShelfEdit()">DÜZENLE</button>
                     <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
                 </div>
             </div>
@@ -319,7 +304,7 @@
             </div>
             <input type="hidden" id="move-code">
             <input type="hidden" id="move-name">
-            <button class="btn-save btn-action-move" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
+            <button class="btn-save btn-action-stock" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
         </div>
     </div>
 
@@ -401,7 +386,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, getDocs, doc, setDoc, deleteDoc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
@@ -414,6 +400,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         let isAdmin = false;
         let isEditMode = false;
@@ -422,6 +409,7 @@
         let roomStock = {};
         let activeShelfId = null;
         let html5QrCode = null;
+        let searchTimeout = null;
         let currentReportData = [];
         let currentReportType = 'all';
 
@@ -431,6 +419,41 @@
             document.getElementById('alert-desc').innerText = desc;
             mod.style.display = 'flex';
         };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.status !== 'active') return window.location.href = 'index.html';
+                    
+                    if (userData.role === 'admin') {
+                        isAdmin = true;
+                        isEditMode = true;
+                        document.getElementById('btn-admin').innerText = 'YÖNETİCİ (AKTİF)';
+                        document.getElementById('btn-admin').style.display = 'inline-block';
+                        document.getElementById('admin-toolbar').style.display = 'flex';
+                        const btnToggleEdit = document.getElementById('btn-toggle-edit');
+                        if (btnToggleEdit) btnToggleEdit.style.display = 'block';
+                    } else {
+                        document.getElementById('btn-admin').style.display = 'none';
+                    }
+                } else {
+                    return window.location.href = 'index.html';
+                }
+
+                onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
+                        if (!sessionStorage.getItem('bypass_maintenance')) window.location.href = 'bakim.html';
+                    }
+                });
+
+                initMap();
+                loadData();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
 
         const logOperation = async (type, code, name, qty, miat, shelfId) => {
             try {
@@ -451,7 +474,7 @@
                         user: isAdmin ? 'Admin' : 'Kullanıcı'
                     })
                 }, { merge: true });
-            } catch (e) { console.error("Log kaydı hatası", e); }
+            } catch (e) {}
         };
 
         const initMap = () => {
@@ -596,37 +619,6 @@
             }
         };
 
-        window.openAdminLogin = () => {
-            if(isAdmin) {
-                isAdmin = false;
-                isEditMode = false;
-                document.getElementById('btn-admin').innerText = 'YÖNETİCİ GİRİŞİ';
-                document.getElementById('btn-admin').style.background = '#111';
-                document.getElementById('admin-toolbar').style.display = 'none';
-                closeModal('shelf-modal');
-            } else {
-                document.getElementById('password-modal').style.display = 'flex';
-                document.getElementById('admin-pw').focus();
-            }
-        };
-
-        window.verifyAdmin = () => {
-            const pw = document.getElementById('admin-pw').value;
-            if(pw === "admin") {
-                isAdmin = true;
-                isEditMode = true;
-                document.getElementById('btn-admin').innerText = 'ÇIKIŞ YAP (ADMİN)';
-                document.getElementById('btn-admin').style.background = '#ff3333';
-                document.getElementById('admin-toolbar').style.display = 'flex';
-                closeModal('password-modal');
-                document.getElementById('admin-pw').value = '';
-                if(activeShelfId) openShelf(activeShelfId);
-            } else {
-                showCustomAlert("HATA", "Hatalı Şifre Girdiniz!");
-                document.getElementById('admin-pw').value = '';
-            }
-        };
-
         window.closeModal = (id) => {
             document.getElementById(id).style.display = 'none';
             if(id === 'shelf-modal') {
@@ -635,8 +627,10 @@
                 document.getElementById('shelf-address-control').style.display = 'none';
                 document.getElementById('shelf-stock-control').style.display = 'none';
                 const btnEdit = document.getElementById('btn-toggle-edit');
-                btnEdit.innerText = 'DÜZENLE';
-                btnEdit.style.background = '#ffbc00';
+                if(btnEdit) {
+                    btnEdit.innerText = 'DÜZENLE';
+                    btnEdit.style.background = '#ffbc00';
+                }
             }
         };
 
@@ -648,9 +642,6 @@
             document.getElementById('shelf-address-control').style.display = 'none';
             document.getElementById('shelf-stock-control').style.display = 'none';
 
-            const btnEdit = document.getElementById('btn-toggle-edit');
-            btnEdit.style.display = 'block';
-            
             if(isAdmin) {
                 isEditMode = true; 
             }
@@ -661,6 +652,7 @@
         };
 
         window.toggleShelfEdit = () => {
+            if(!isAdmin) return;
             isEditMode = !isEditMode;
             updateEditModeUI();
             renderShelfContents(activeShelfId);
@@ -671,18 +663,19 @@
             const addrControl = document.getElementById('shelf-address-control');
             const stockControl = document.getElementById('shelf-stock-control');
 
-            if(isEditMode) {
-                btn.innerText = 'DÜZENLEME MODU (AÇIK)';
-                btn.style.background = '#00ff00';
-                
-                stockControl.style.display = 'block';
-                if(isAdmin) {
-                    addrControl.style.display = 'block';
-                    document.getElementById('edit-shelf-address').value = addresses[activeShelfId] || "";
+            if(isEditMode && isAdmin) {
+                if(btn) {
+                    btn.innerText = 'DÜZENLEME MODU (AÇIK)';
+                    btn.style.background = '#00ff00';
                 }
+                stockControl.style.display = 'block';
+                addrControl.style.display = 'block';
+                document.getElementById('edit-shelf-address').value = addresses[activeShelfId] || "";
             } else {
-                btn.innerText = 'DÜZENLE';
-                btn.style.background = '#ffbc00';
+                if(btn) {
+                    btn.innerText = 'DÜZENLE';
+                    btn.style.background = '#ffbc00';
+                }
                 addrControl.style.display = 'none';
                 stockControl.style.display = 'none';
             }
@@ -737,7 +730,7 @@
                     `;
                 });
 
-                let btnMove = isEditMode ? `<button class="btn-action btn-action-move" onclick="openMoveModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}')">TAŞI</button>` : '';
+                let btnMove = isEditMode ? `<button class="btn-action btn-action-stock" onclick="openMoveModal('${item.urunKodu}', '${item.urunAdi.replace(/'/g, "\\'")}')">TAŞI</button>` : '';
 
                 html += `
                     <div class="stock-item">
@@ -994,28 +987,6 @@
                 document.getElementById('excel-upload').value = '';
             };
             reader.readAsArrayBuffer(file);
-        };
-
-        window.promptMassDelete = () => {
-            const pw = prompt("DİKKAT: Tüm depo içeriği silinecektir. Devam etmek için yetki şifresini girin:");
-            if(pw === "admin99") {
-                executeMassDelete();
-            } else if(pw) {
-                showCustomAlert("HATA", "Yetki şifresi yanlış.");
-            }
-        };
-
-        const executeMassDelete = async () => {
-            try {
-                const snap = await getDocs(collection(db, "kilitli_depo_stok"));
-                snap.forEach(async (d) => {
-                    await deleteDoc(doc(db, "kilitli_depo_stok", d.id));
-                });
-                await logOperation("TOPLU SİLME", "TÜMÜ", "Tüm Depo Sıfırlandı", 0, "-", "TÜM DEPO");
-                showCustomAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi.");
-            } catch(e) {
-                showCustomAlert("HATA", "İşlem sırasında bir hata oluştu.");
-            }
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
@@ -1352,13 +1323,6 @@
 
             document.getElementById('qr-content-modal').style.display = 'flex';
         };
-
-        document.getElementById('admin-pw').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') verifyAdmin();
-        });
-
-        initMap();
-        loadData();
 
     </script>
 </body>
