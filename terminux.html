@@ -12,6 +12,15 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hidden; }
 
+        #auth-lock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .auth-lock-box { background: #0a0a0a; border: 1px solid #222; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        .auth-lock-box h2 { color: #ff3333; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px; font-size: 22px; }
+        .auth-lock-box p { color: #888; font-size: 12px; margin-bottom: 25px; }
+        .auth-lock-box input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 15px; font-size: 20px; text-align: center; border-radius: 6px; margin-bottom: 20px; outline: none; letter-spacing: 5px; font-family: monospace; transition: 0.2s; }
+        .auth-lock-box input:focus { border-color: #ff3333; box-shadow: 0 0 15px rgba(255,51,51,0.2); }
+        .auth-lock-box button { width: 100%; background: #ff3333; color: #fff; border: none; padding: 15px; font-weight: 900; letter-spacing: 2px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .auth-lock-box button:hover { background: #cc0000; }
+
         .sidebar { width: 280px; background: #050505; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
         .sidebar-header { padding: 30px 20px; border-bottom: 1px solid #1a1a1a; text-align: center; }
         .sidebar-title { font-weight: 900; font-size: 24px; color: #fff; letter-spacing: -1px; }
@@ -24,7 +33,7 @@
         .user-info { padding: 20px; border-top: 1px solid #1a1a1a; background: #080808; display: flex; flex-direction: column; gap: 10px; }
         .user-name { font-size: 12px; font-weight: bold; color: #00ff00; word-break: break-all; text-align: center; margin-bottom: 5px; }
         .btn-logout { background: #111; border: 1px solid #333; color: #ff3333; padding: 10px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
-        .btn-logout:hover { background: #ff3333; color: #000; }
+        .btn-logout:hover { background: #ff3333; color: #fff; border-color: #ff3333; }
         .btn-home { background: #00ccff; border: none; color: #000; padding: 10px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-align: center; text-decoration: none; text-transform: uppercase; }
         .btn-home:hover { opacity: 0.8; }
 
@@ -43,11 +52,16 @@
         .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
         .form-group input, .form-group select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-family: monospace; font-size: 14px; transition: 0.2s; }
         .form-group input:focus, .form-group select:focus { border-color: #00ccff; }
-        .btn-primary { background: #00ccff; color: #000; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; }
+        
+        .btn-primary { background: #00ccff; color: #000; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
         .btn-primary:hover { opacity: 0.8; }
+        .btn-danger-outline { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
+        .btn-danger-outline:hover { background: #ff3333; color: #fff; }
+
         .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #000; padding: 15px; border: 1px solid #222; border-radius: 6px; }
         .module-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #aaa; cursor: pointer; }
         .module-check input { width: 16px; height: 16px; accent-color: #00ccff; cursor: pointer; }
+        
         .log-box { margin-top: 20px; font-family: monospace; font-size: 12px; color: #00ff00; border: 1px solid #1a1a1a; background:#050505; padding: 15px; height: 150px; overflow-y: auto; border-radius:6px; }
 
         .user-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -64,25 +78,39 @@
         .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
+        
         .map-outer { width: 100%; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; border-radius:8px; border:1px solid #1a1a1a; }
         .map-container { position: relative; margin: auto; transition: width 0.2s, height 0.2s; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; }
         .map-wrapper-am { min-width: 1050px; }
         .map-wrapper-ana { min-width: 1200px; }
-        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; border-radius: 3px; cursor: pointer; }
-        .cell:hover { background: #ffbc00; color: #000; }
-        .cell-hidden { visibility: hidden; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; }
-        .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; }
+        .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
 
         #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00ccff; font-weight:bold; font-size:18px; letter-spacing:2px; }
+        
+        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #222; }
+        .switch-label { display: flex; flex-direction: column; gap: 4px; }
+        .switch-title { font-weight: 800; font-size: 14px; color: #fff; }
+        .switch-desc { font-size: 11px; color: #888; }
+        .switch-btn { background: #ff3333; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .switch-btn.active { background: #00ff00; color: #000; }
     </style>
 </head>
 <body>
 
     <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+
+    <div id="auth-lock-overlay">
+        <div class="auth-lock-box">
+            <h2>GÜVENLİK DUVARI</h2>
+            <p>Super Admin paneline erişmek için ana güvenlik şifresini giriniz.</p>
+            <input type="password" id="master-password" autocomplete="new-password">
+            <button id="btn-master-unlock">KİLİDİ AÇ VE GİRİŞ YAP</button>
+        </div>
+    </div>
 
     <div class="sidebar">
         <div class="sidebar-header">
@@ -92,13 +120,13 @@
         <div class="menu">
             <div class="menu-item active" onclick="switchSection('sec-users', 'KULLANICI YÖNETİMİ', this)"><span>KULLANICI YÖNETİMİ</span></div>
             <div class="menu-item" onclick="switchSection('sec-address', 'KROKİ & ADRES YÖNETİMİ', this)"><span>ADRES YÖNETİMİ</span></div>
-            <div class="menu-item" onclick="switchSection('sec-stock', 'STOK & EXCEL İŞLEMLERİ', this)"><span>STOK / EXCEL YÜKLE</span></div>
+            <div class="menu-item" onclick="switchSection('sec-stock', 'DEPO & STOK İŞLEMLERİ', this)"><span>DEPO / STOK YÖNETİMİ</span></div>
             <div class="menu-item" onclick="switchSection('sec-lens', 'LENS YÜKLEME MERKEZİ', this)"><span>LENS YÖNETİMİ</span></div>
             <div class="menu-item" onclick="switchSection('sec-settings', 'SİSTEM AYARLARI', this)"><span>SİSTEM AYARLARI</span></div>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
-            <a href="index.html" class="btn-home">ANA SAYFAYA DÖN</a>
+            <a href="index.html" class="btn-home">WMS ANA SAYFA</a>
             <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
         </div>
     </div>
@@ -132,7 +160,6 @@
 
                 <div class="card">
                     <div class="card-header">SİSTEMDEKİ KULLANICILAR</div>
-                    <p style="font-size:11px; color:#888; margin-bottom:15px;">NOT: Personelin şifresini değiştirmek veya kalıcı olarak sistemden kaldırmak istiyorsanız bu işlemleri Firebase Console üzerinden yapmalısınız.</p>
                     <table class="user-list">
                         <thead><tr><th>KULLANICI BİLGİSİ</th><th>ROL</th><th>YETKİLER</th><th>DURUM</th><th style="text-align: right;">İŞLEMLER</th></tr></thead>
                         <tbody id="user-table-body"></tbody>
@@ -165,8 +192,8 @@
                 <div class="card">
                     <div class="card-header">ANA LİSTE YÜKLEME (Barkod Koruma)</div>
                     <div class="form-grid">
-                        <div class="form-group"><label style="color:#00ff00;">ANA DEPO</label><input type="file" id="f-ana" accept=".xlsx"><button class="btn-primary" style="background:#00ff00; color:#000;" id="btn-ana">YÜKLE</button></div>
-                        <div class="form-group"><label style="color:#00ccff;">AMELİYATHANE</label><input type="file" id="f-am" accept=".xlsx"><button class="btn-primary" id="btn-am">YÜKLE</button></div>
+                        <div class="form-group"><label style="color:#00ff00;">ANA DEPO LİSTESİ</label><input type="file" id="f-ana" accept=".xlsx"><button class="btn-primary" style="background:#00ff00; color:#000;" id="btn-ana">YÜKLE</button></div>
+                        <div class="form-group"><label style="color:#00ccff;">AMELİYATHANE LİSTESİ</label><input type="file" id="f-am" accept=".xlsx"><button class="btn-primary" id="btn-am">YÜKLE</button></div>
                     </div>
                 </div>
                 <div class="card">
@@ -176,6 +203,10 @@
                         <div class="form-group"><label style="color:#ffbc00;">AMELİYATHANE EK VERİ</label><input type="file" id="f-am-ext" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-am-ext">GÜNCELLE</button></div>
                     </div>
                 </div>
+                <div class="card" style="border-color: #330000; background: #110000;">
+                    <div class="card-header" style="color:#ff3333; border-bottom-color:#330000;">TEHLİKELİ İŞLEMLER</div>
+                    <button class="btn-danger-outline" style="width:100%; padding:20px; font-size:16px;" onclick="promptMassDelete()">TÜM DEPO ENVANTERİNİ VE STOKLARI SIFIRLA</button>
+                </div>
                 <div class="card"><div class="card-header">İŞLEM KAYITLARI</div><div id="stock-log" class="log-box">Sistem hazır...</div></div>
             </div>
 
@@ -183,14 +214,25 @@
                 <div class="card">
                     <div class="card-header">LENS ENVANTERİ YÜKLEME</div>
                     <div class="form-grid">
-                        <div class="form-group"><label style="color:#00ccff;">ALCON LENS</label><input type="file" id="f-alcon" accept=".xlsx"><button class="btn-primary" id="btn-alcon">EXCEL YÜKLE</button></div>
-                        <div class="form-group"><label style="color:#ffbc00;">TECNIS LENS</label><input type="file" id="f-tecnis" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-tecnis">EXCEL YÜKLE</button></div>
+                        <div class="form-group"><label style="color:#00ccff;">ALCON LENS LİSTESİ</label><input type="file" id="f-alcon" accept=".xlsx"><button class="btn-primary" id="btn-alcon">EXCEL YÜKLE</button></div>
+                        <div class="form-group"><label style="color:#ffbc00;">TECNIS LENS LİSTESİ</label><input type="file" id="f-tecnis" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-tecnis">EXCEL YÜKLE</button></div>
                     </div>
                 </div>
                 <div class="card"><div class="card-header">LENS İŞLEM KAYITLARI</div><div id="lens-log" class="log-box">Sistem hazır...</div></div>
             </div>
 
             <div id="sec-settings" class="section">
+                <div class="card" style="border-color: #ffbc00;">
+                    <div class="card-header" style="color: #ffbc00;">SİSTEM BAKIM MODU (MAINTENANCE)</div>
+                    <div class="switch-container">
+                        <div class="switch-label">
+                            <div class="switch-title">Bakım Modu Durumu</div>
+                            <div class="switch-desc">Aktif edildiğinde tüm modüller erişime kapatılır ve kullanıcılar Bakım sayfasına yönlendirilir.</div>
+                        </div>
+                        <button id="btn-toggle-maintenance" class="switch-btn">KAPALI</button>
+                    </div>
+                </div>
+                
                 <div class="card" style="border-color: #ff3333;">
                     <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
                     <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
@@ -202,7 +244,6 @@
         </div>
     </div>
 
-    <!-- YETKİ DÜZENLEME MODAL -->
     <div id="edit-user-modal" class="modal">
         <div class="modal-box">
             <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
@@ -226,7 +267,6 @@
         </div>
     </div>
 
-    <!-- UYARI MODAL -->
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
@@ -262,6 +302,21 @@
             document.getElementById('custom-alert').style.display = 'flex';
         };
 
+        document.getElementById('btn-master-unlock').addEventListener('click', () => {
+            const pw = document.getElementById('master-password').value;
+            if (pw === "admin") {
+                document.getElementById('auth-lock-overlay').style.display = 'none';
+                document.getElementById('master-password').value = '';
+            } else {
+                window.showAlert("HATA", "Güvenlik şifresi hatalı.");
+                document.getElementById('master-password').value = '';
+            }
+        });
+
+        document.getElementById('master-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('btn-master-unlock').click();
+        });
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
@@ -282,6 +337,7 @@
                     document.getElementById('global-loader').style.display = 'none';
                     document.getElementById('display-user').innerText = `${user.email}`;
                     loadUsers();
+                    loadMaintenanceStatus();
                     window.switchAdresDepo('am');
                 } else {
                     document.getElementById('global-loader').style.display = 'none';
@@ -357,9 +413,9 @@
                         if(d.modules.adres) modsArr.push('Adres');
                     }
                     const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
-                    const s = d.status === 'active' ? 'BANLA (PASİF)' : 'BAN KALDIR';
+                    const s = d.status === 'active' ? 'BANLA' : 'KALDIR';
                     const sColor = d.status === 'active' ? '#ff3333' : '#00ff00';
-                    const sBg = d.status === 'active' ? '#330000' : '#003300';
+                    const sBg = d.status === 'active' ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,0,0.1)';
                     const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
 
                     html += `
@@ -370,8 +426,9 @@
                             <td><strong>${statusText}</strong></td>
                             <td style="text-align: right;">
                                 <div class="action-btns">
-                                    <button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${sMod}')">YETKİLERİ DÜZENLE</button>
-                                    <button class="btn-sm" style="background:${sBg}; color:${sColor};" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button>
+                                    <button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${sMod}')">DÜZENLE</button>
+                                    <button class="btn-sm" style="background:${sBg}; color:${sColor}; border: 1px solid ${sColor};" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button>
+                                    <button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser('${docSnap.id}')">SİL</button>
                                 </div>
                             </td>
                         </tr>
@@ -415,6 +472,39 @@
             await updateDoc(doc(db, "users", uid), { status: newStatus });
         };
 
+        window.deleteSystemUser = async (uid) => {
+            const pw = prompt("Kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? Onaylamak için 'SİL' yazın.");
+            if (pw === "SİL") {
+                try {
+                    await deleteDoc(doc(db, "users", uid));
+                    window.showAlert("BAŞARILI", "Kullanıcı veritabanından kalıcı olarak silindi. Aktif oturumu varsa düşecektir.");
+                } catch(e) {
+                    window.showAlert("HATA", "Kullanıcı silinirken hata oluştu.");
+                }
+            }
+        };
+
+        function loadMaintenanceStatus() {
+            onSnapshot(doc(db, "system", "settings"), (docSnap) => {
+                const btn = document.getElementById('btn-toggle-maintenance');
+                if(docSnap.exists() && docSnap.data().maintenanceMode === true) {
+                    btn.innerText = "AÇIK (AKTİF)";
+                    btn.classList.add("active");
+                } else {
+                    btn.innerText = "KAPALI";
+                    btn.classList.remove("active");
+                }
+            });
+        }
+
+        document.getElementById('btn-toggle-maintenance').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-toggle-maintenance');
+            const isActive = btn.classList.contains("active");
+            try {
+                await setDoc(doc(db, "system", "settings"), { maintenanceMode: !isActive }, { merge: true });
+            } catch(e) {}
+        });
+
         let currentAdresDepo = 'am';
         window.switchAdresDepo = (depo) => {
             currentAdresDepo = depo;
@@ -429,6 +519,27 @@
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
                 mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
+            }
+        };
+
+        window.promptMassDelete = () => {
+            const pw = prompt("DİKKAT: Tüm depo içeriği, kilitli alanlar ve stoklar sıfırlanacaktır. Bu işlem geri alınamaz! Devam etmek için yetki şifresini girin:");
+            if(pw === "admin99") {
+                executeMassDelete();
+            } else if(pw) {
+                window.showAlert("HATA", "Yetki şifresi yanlış.");
+            }
+        };
+
+        const executeMassDelete = async () => {
+            try {
+                const snapshot = await getDocs(collection(db, "kilitli_depo_stok"));
+                snapshot.forEach(async (d) => {
+                    await deleteDoc(doc(db, "kilitli_depo_stok", d.id));
+                });
+                window.showAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi ve veritabanı sıfırlandı.");
+            } catch(e) {
+                window.showAlert("HATA", "İşlem sırasında bir hata oluştu.");
             }
         };
 
@@ -498,6 +609,10 @@
                     let extraData = {};
                     if (hasCol(r, ["alt grup adı"])) extraData.altGrup = getColVal(r, ["alt grup adı"]);
                     if (hasCol(r, ["stok adresi", "adres"])) extraData.stokAdresi = getColVal(r, ["stok adresi", "adres"]);
+                    if (hasCol(r, ["dummy"])) {
+                        let rawDummy = getColVal(r, ["dummy"]).toUpperCase();
+                        extraData.isDummy = (rawDummy === "EVET" || rawDummy === "DUMMY");
+                    }
                     if (Object.keys(extraData).length > 0) {
                         await setDoc(doc(db, collectionName, id), extraData, { merge: true });
                         updateCount++;
