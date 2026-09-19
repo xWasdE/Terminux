@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Kullanıcı Yönetimi</title>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #000; padding: 15px; border: 1px solid #222; border-radius: 6px; }
+        .module-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #aaa; cursor: pointer; }
+        .module-check input { width: 16px; height: 16px; accent-color: #00ccff; cursor: pointer; }
+        .user-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .user-list th, .user-list td { padding: 15px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+        .user-list th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge.admin { background: rgba(0,204,255,0.1); color: #00ccff; border: 1px solid #00ccff; }
+        .badge.user { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
+        .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
+        .btn-sm { padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; text-transform: uppercase; }
+        .btn-sm:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
+        <div class="menu">
+            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item active"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+        </div>
+        <div class="user-info">
+            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
+            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><h2>KULLANICI YÖNETİMİ</h2></div>
+        <div class="content-area">
+            <div class="card">
+                <div class="card-header">YENİ KULLANICI OLUŞTUR</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>KULLANICI ADI</label><input type="text" id="u-name" placeholder="Örn: murat"></div>
+                    <div class="form-group"><label>ŞİFRE (En az 6 hane)</label><input type="password" id="u-pass" placeholder="******"></div>
+                    <div class="form-group"><label>ROLÜ</label><select id="u-role"><option value="user">Standart Personel</option><option value="admin">Sistem Yöneticisi</option></select></div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>MODÜL ERİŞİM YETKİLERİ</label>
+                    <div class="modules-grid">
+                        <label class="module-check"><input type="checkbox" id="mod-sayim" checked> Sayım Terminali</label>
+                        <label class="module-check"><input type="checkbox" id="mod-etiket" checked> Etiket Terminali</label>
+                        <label class="module-check"><input type="checkbox" id="mod-sevkiyat" checked> Sevkiyat Terminali</label>
+                        <label class="module-check"><input type="checkbox" id="mod-lens" checked> Lens Terminali</label>
+                        <label class="module-check"><input type="checkbox" id="mod-adres" checked> Adres Bulucu</label>
+                    </div>
+                </div>
+                <button class="btn-primary" id="btn-create-user">KULLANICIYI SİSTEME EKLE</button>
+                <div id="user-log" style="color:#00ff00; font-size:12px; margin-top:10px; font-weight:bold;"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">SİSTEMDEKİ KULLANICILAR</div>
+                <p style="font-size:11px; color:#888; margin-bottom:15px;">Şifre değiştirme işlemleri Firebase üzerinden yapılmalıdır.</p>
+                <table class="user-list">
+                    <thead><tr><th>KULLANICI BİLGİSİ</th><th>ROL</th><th>YETKİLER</th><th>DURUM</th><th style="text-align: right;">İŞLEMLER</th></tr></thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-box">
+            <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
+            <p id="edit-user-email" style="color:#888; font-size:13px; margin-bottom:20px; font-family:monospace;"></p>
+            <input type="hidden" id="edit-uid">
+            <div class="form-group" style="text-align:left; margin-bottom:25px;">
+                <div class="modules-grid">
+                    <label class="module-check"><input type="checkbox" id="edit-sayim"> Sayım Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-etiket"> Etiket Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-sevkiyat"> Sevkiyat Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-lens"> Lens Terminali</label>
+                    <label class="module-check"><input type="checkbox" id="edit-adres"> Adres Bulucu</label>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" style="background:#222; color:#fff;" onclick="document.getElementById('edit-user-modal').style.display='none'">İPTAL</button>
+                <button class="btn-primary" onclick="saveUserEdit()">YETKİLERİ GÜNCELLE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-alert" class="modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
+            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './admin.js';
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+        const secondaryApp = initializeApp(auth.app.options, "SecondaryApp");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        document.getElementById('btn-create-user').addEventListener('click', async () => {
+            let uname = document.getElementById('u-name').value.trim();
+            const pass = document.getElementById('u-pass').value;
+            const role = document.getElementById('u-role').value;
+            if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
+            if(!uname.includes('@')) uname += "@terminux.com.tr";
+            const mods = { sayim: document.getElementById('mod-sayim').checked, etiket: document.getElementById('mod-etiket').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
+            const logEl = document.getElementById('user-log');
+            logEl.innerText = "Kullanıcı oluşturuluyor..."; logEl.style.color = '#ffbc00';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, uname, pass);
+                await setDoc(doc(db, "users", userCredential.user.uid), { email: uname, role: role, status: 'active', modules: mods, createdAt: Date.now() });
+                await secondaryAuth.signOut();
+                logEl.style.color = '#00ff00'; logEl.innerText = "Kullanıcı başarıyla eklendi!";
+                document.getElementById('u-name').value = ''; document.getElementById('u-pass').value = '';
+            } catch(e) { logEl.style.color = '#ff3333'; logEl.innerText = "Hata: " + e.message; }
+        });
+
+        onSnapshot(collection(db, "users"), (snap) => {
+            let html = "";
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                const badgeRole = d.role === 'admin' ? '<span class="badge admin">YÖNETİCİ</span>' : '<span class="badge user">PERSONEL</span>';
+                const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif (Banlı)</span>';
+                let modsArr = [];
+                if(d.modules) {
+                    if(d.modules.sayim) modsArr.push('Sayım'); if(d.modules.etiket) modsArr.push('Etiket');
+                    if(d.modules.sevkiyat) modsArr.push('Sevkiyat'); if(d.modules.lens) modsArr.push('Lens'); if(d.modules.adres) modsArr.push('Adres');
+                }
+                const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
+                const s = d.status === 'active' ? 'BANLA' : 'KALDIR';
+                const sColor = d.status === 'active' ? '#ff3333' : '#00ff00';
+                const sBg = d.status === 'active' ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,0,0.1)';
+                const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
+
+                html += `<tr><td><strong style="color:#fff;">${d.email}</strong><br><span style="font-size:10px; color:#555;">ID: ${docSnap.id}</span></td><td>${badgeRole}</td><td style="font-size:11px; color:#aaa;">${d.role==='admin' ? 'Tüm Sistem' : modStr}</td><td><strong>${statusText}</strong></td><td style="text-align: right;"><div class="action-btns"><button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${sMod}')">DÜZENLE</button><button class="btn-sm" style="background:${sBg}; color:${sColor}; border: 1px solid ${sColor};" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button><button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser('${docSnap.id}')">SİL</button></div></td></tr>`;
+            });
+            document.getElementById('user-table-body').innerHTML = html;
+        });
+
+        window.openEdit = (uid, email, modStr) => {
+            document.getElementById('edit-uid').value = uid; document.getElementById('edit-user-email').innerText = email;
+            const mods = JSON.parse(decodeURIComponent(modStr));
+            ['sayim', 'etiket', 'sevkiyat', 'lens', 'adres'].forEach(m => document.getElementById(`edit-${m}`).checked = mods[m] || false);
+            document.getElementById('edit-user-modal').style.display = 'flex';
+        };
+
+        window.saveUserEdit = async () => {
+            const uid = document.getElementById('edit-uid').value;
+            const mods = { sayim: document.getElementById('edit-sayim').checked, etiket: document.getElementById('edit-etiket').checked, sevkiyat: document.getElementById('edit-sevkiyat').checked, lens: document.getElementById('edit-lens').checked, adres: document.getElementById('edit-adres').checked };
+            await updateDoc(doc(db, "users", uid), { modules: mods });
+            document.getElementById('edit-user-modal').style.display = 'none';
+            window.showAlert("BAŞARILI", "Personel yetkileri güncellendi.");
+        };
+
+        window.toggleBan = async (uid, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+            await updateDoc(doc(db, "users", uid), { status: newStatus });
+        };
+
+        window.deleteSystemUser = async (uid) => {
+            const pw = prompt("Kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? Onaylamak için 'SİL' yazın.");
+            if (pw === "SİL") {
+                try { await deleteDoc(doc(db, "users", uid)); window.showAlert("BAŞARILI", "Kullanıcı veritabanından kalıcı olarak silindi."); } 
+                catch(e) { window.showAlert("HATA", "Kullanıcı silinirken hata oluştu."); }
+            }
+        };
+    </script>
+</body>
+</html>
