@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap');
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hidden; }
+
 .sidebar { width: 280px; background: #050505; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
 .sidebar-header { padding: 30px 20px; border-bottom: 1px solid #1a1a1a; text-align: center; }
 .sidebar-title { font-weight: 900; font-size: 24px; color: #fff; letter-spacing: -1px; }
@@ -15,23 +16,60 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
 .btn-logout:hover { background: #ff3333; color: #fff; border-color: #ff3333; }
 .btn-home { background: #00ccff; border: none; color: #000; padding: 10px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 11px; text-align: center; text-decoration: none; text-transform: uppercase; }
 .btn-home:hover { opacity: 0.8; }
+
 .main-content { flex: 1; background: #000; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 .topbar { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; background: #020202; display: flex; justify-content: space-between; align-items: center; }
 .topbar h2 { font-size: 18px; font-weight: 800; color: #fff; }
 .content-area { flex: 1; padding: 40px; overflow-y: auto; }
-.card { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 30px; margin-bottom: 20px; }
+.card { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 30px; margin-bottom: 20px; overflow-x: auto; }
 .card-header { font-size: 14px; font-weight: 800; color: #ffbc00; margin-bottom: 20px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; text-transform: uppercase; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
 .form-group label { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-.form-group input, .form-group select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-family: monospace; font-size: 14px; transition: 0.2s; }
+.form-group input, .form-group select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-family: monospace; font-size: 14px; transition: 0.2s; width: 100%; }
 .form-group input:focus, .form-group select:focus { border-color: #00ccff; }
 .btn-primary { background: #00ccff; color: #000; border: none; padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
 .btn-primary:hover { opacity: 0.8; }
 .btn-danger-outline { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; font-weight: 900; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
 .btn-danger-outline:hover { background: #ff3333; color: #fff; }
 .log-box { margin-top: 20px; font-family: monospace; font-size: 12px; color: #00ff00; border: 1px solid #1a1a1a; background:#050505; padding: 15px; height: 150px; overflow-y: auto; border-radius:6px; }
+
 #global-loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#00ccff; font-weight:bold; font-size:18px; letter-spacing:2px; }
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
 .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; }
 .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+
+.legal-footer {
+    flex-shrink: 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+    width: 100vw !important; background-color: rgba(5, 5, 5, 0.95) !important; color: #888 !important; text-align: center !important;
+    padding: 6px 10px !important; font-size: 9px !important; z-index: 9999 !important; border-top: 1px solid #1a1a1a !important;
+    backdrop-filter: blur(8px) !important; line-height: 1.2 !important; box-sizing: border-box !important; overflow-wrap: break-word !important;
+}
+.legal-footer b { color: #aaa !important; font-weight: bold !important; }
+
+@media (max-width: 900px) {
+    body { flex-direction: column; overflow: auto; height: 100dvh; }
+    .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; display: block; }
+    .sidebar-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-title { font-size: 18px; }
+    .sidebar-subtitle { display: none; }
+    .menu { display: flex; flex-direction: row; overflow-x: auto; padding: 0; background: #000; border-top: 1px solid #1a1a1a; -webkit-overflow-scrolling: touch; }
+    .menu-item { padding: 15px; font-size: 11px; white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; flex: 0 0 auto; justify-content: center; }
+    .menu-item.active { border-left: none; border-bottom-color: #00ccff; background: #111; }
+    .user-info { flex-direction: row; flex-wrap: wrap; padding: 10px; gap: 5px; }
+    .user-name { width: 100%; text-align: center; margin-bottom: 5px; font-size: 11px; }
+    .btn-home, .btn-logout { flex: 1; padding: 12px; font-size: 10px; }
+    
+    .main-content { overflow: visible; display: block; flex: none; min-height: 100vh; }
+    .topbar { padding: 15px; justify-content: center; }
+    .topbar h2 { font-size: 14px; text-align: center; }
+    .content-area { padding: 10px; padding-bottom: 60px; overflow: visible; }
+    .card { padding: 15px; margin-bottom: 15px; }
+    .card-header { font-size: 12px; text-align: center; }
+    .form-grid { grid-template-columns: 1fr; gap: 10px; }
+    
+    table { width: 100%; min-width: 600px; }
+    .modal-box { padding: 20px; width: 95%; margin: 20px auto; }
+    
+    .legal-footer { font-size: 7px !important; padding: 4px 6px !important; line-height: 1.1 !important; }
+}
