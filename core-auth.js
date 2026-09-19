@@ -19,8 +19,9 @@ const path = window.location.pathname.toLowerCase();
 let requiredModule = null;
 if (path.includes('sayim.html')) requiredModule = 'sayim';
 else if (path.includes('sevkiyat.html')) requiredModule = 'sevkiyat';
-else if (path.includes('lens.html')) requiredModule = 'lens';
-else if (path.includes('adres.html') || path.includes('teyit.html')) requiredModule = 'adres';
+else if (path.includes('lens.html') && !path.includes('admin/lens.html')) requiredModule = 'lens';
+else if (path.includes('adres.html') && !path.includes('admin/adres.html')) requiredModule = 'adres';
+else if (path.includes('teyit.html')) requiredModule = 'adres';
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -29,13 +30,11 @@ onAuthStateChanged(auth, async (user) => {
         if (userDoc.exists()) {
             const userData = userDoc.data();
             
-
             if (userData.status !== 'active') {
                 await signOut(auth);
                 window.location.href = 'index.html';
                 return;
             }
-
 
             if (userData.role !== 'admin' && requiredModule) {
                 if (!userData.modules || userData.modules[requiredModule] !== true) {
@@ -50,22 +49,21 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
-
         onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
                 if (!sessionStorage.getItem('bypass_maintenance')) {
-                    window.location.href = 'bakim.html';
+                    if (!path.includes('bakim.html') && !path.includes('admin')) {
+                        window.location.href = 'bakim.html';
+                    }
                 }
             }
         });
 
     } else {
-
         if (!path.includes('index.html') && !path.includes('bakim.html') && path !== '/' && path !== '') {
             window.location.href = 'index.html';
         }
     }
 });
-
 
 export { app, auth, db, onAuthStateChanged };
