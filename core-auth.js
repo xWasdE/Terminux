@@ -34,20 +34,20 @@ onAuthStateChanged(auth, async (user) => {
                 
                 if (userData.status !== 'active') {
                     await signOut(auth);
-                    window.location.href = '/index.html';
+                    window.location.replace('/index.html');
                     return;
                 }
 
                 if (userData.role !== 'admin' && requiredModule) {
                     if (!userData.modules || userData.modules[requiredModule] !== true) {
                         alert("YETKİSİZ ERİŞİM: Bu modüle giriş yetkiniz bulunmuyor.");
-                        window.location.href = '/index.html';
+                        window.location.replace('/index.html');
                         return;
                     }
                 }
             } else {
                 await signOut(auth);
-                window.location.href = '/index.html';
+                window.location.replace('/index.html');
                 return;
             }
 
@@ -55,7 +55,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (docSnap.exists() && docSnap.data().maintenanceMode === true) {
                     if (!sessionStorage.getItem('bypass_maintenance')) {
                         if (!path.includes('bakim.html') && !path.includes('admin')) {
-                            window.location.href = '/bakim.html';
+                            window.location.replace('/bakim.html');
                         }
                     }
                 }
@@ -64,12 +64,12 @@ onAuthStateChanged(auth, async (user) => {
         } else {
 
             if (path !== '/' && !path.includes('index.html') && !path.includes('bakim.html')) {
-                window.location.href = '/index.html';
+                window.location.replace('/index.html');
             }
         }
     } catch (error) {
-        console.error("Auth Hata:", error);
-        window.location.href = '/index.html';
+        console.error("Auth Hatası:", error);
+        if (path !== '/' && !path.includes('index.html')) window.location.replace('/index.html');
     }
 });
 
