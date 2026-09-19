@@ -110,6 +110,17 @@ if (loginForm) {
     mobileHeader.className = 'mobile-login-header';
     mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
     loginForm.insertBefore(mobileHeader, loginForm.firstChild);
+
+    if (!document.getElementById('cf-turnstile-widget')) {
+        const cfWrapper = document.createElement('div');
+        cfWrapper.id = 'cf-turnstile-widget';
+        cfWrapper.className = 'cf-turnstile';
+        cfWrapper.setAttribute('data-sitekey', '0x4AAAAAADYmA33uynV7f5VV'); 
+        cfWrapper.style.margin = '15px auto';
+        cfWrapper.style.display = 'flex';
+        cfWrapper.style.justifyContent = 'center';
+        loginForm.insertBefore(cfWrapper, loginForm.querySelector('button[type="submit"]'));
+    }
 }
 
 let productCatalog = [];
