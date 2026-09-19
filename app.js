@@ -1,4 +1,4 @@
-import { app, auth, db } from './core-auth.js';
+import { app, auth, db, onAuthStateChanged } from './core-auth.js';
 import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -176,7 +176,7 @@ let initFallback = setTimeout(() => {
     }
 }, 3000);
 
-auth.onAuthStateChanged(async (user) => {
+onAuthStateChanged(auth, async (user) => {
     clearTimeout(initFallback);
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
@@ -792,3 +792,4 @@ document.addEventListener('input', (e) => {
         }
     }
 });
+</script>
