@@ -6,6 +6,16 @@
     <title>Terminux | Lens Envanteri</title>
     <link rel="stylesheet" href="admin.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-input { flex: 1; padding: 12px; background: #000; border: 1px solid #333; color: #0f0; border-radius: 6px; outline: none; font-family: monospace; }
+        .filter-brand { padding: 12px; background: #111; color: #fff; border: 1px solid #333; border-radius: 6px; outline: none; font-weight: bold; }
+        .lens-row { background: #111; border: 1px solid #222; border-radius: 6px; padding: 15px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 10px; }
+        .lens-row:hover { border-color: #444; }
+        .brand-badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .brand-alcon { background: rgba(0,204,255,0.1); color: #00ccff; border: 1px solid rgba(0,204,255,0.3); }
+        .brand-tecnis { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
+    </style>
 </head>
 <body>
     <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
@@ -26,21 +36,60 @@
         </div>
     </div>
     <div class="main-content">
-        <div class="topbar"><h2>LENS YÜKLEME MERKEZİ</h2></div>
+        <div class="topbar"><h2>LENS YÖNETİM MERKEZİ</h2></div>
         <div class="content-area">
+            
             <div class="card">
-                <div class="card-header">LENS ENVANTERİ YÜKLEME</div>
+                <div class="card-header">EXCEL İLE TOPLU LENS YÜKLEME</div>
                 <div class="form-grid">
                     <div class="form-group"><label style="color:#00ccff;">ALCON LENS LİSTESİ</label><input type="file" id="f-alcon" accept=".xlsx"><button class="btn-primary" id="btn-alcon">EXCEL YÜKLE</button></div>
                     <div class="form-group"><label style="color:#ffbc00;">TECNIS LENS LİSTESİ</label><input type="file" id="f-tecnis" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-tecnis">EXCEL YÜKLE</button></div>
                 </div>
+                <div id="lens-log" class="log-box" style="height: 100px;">Sistem hazır...</div>
             </div>
-            <div class="card"><div class="card-header">LENS İŞLEM KAYITLARI</div><div id="lens-log" class="log-box">Sistem hazır...</div></div>
+
+            <div class="card" style="border-color: #00ff00;">
+                <div class="card-header" style="color: #00ff00;">MANUEL LENS EKLE / GÜNCELLE</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>MARKA</label><select id="m-brand"><option value="ALCON">ALCON</option><option value="TECNIS">TECNIS</option></select></div>
+                    <div class="form-group"><label>ÜRÜN KODU</label><input type="text" id="m-kod" placeholder="Örn: LENS123"></div>
+                    <div class="form-group"><label>ÜRÜN ADI</label><input type="text" id="m-ad" placeholder="Örn: AcrySof IQ"></div>
+                    <div class="form-group"><label>LENS NO</label><input type="text" id="m-no" placeholder="Örn: +21.5"></div>
+                    <div class="form-group"><label>STOK MİKTARI</label><input type="number" id="m-mik" value="1" min="0"></div>
+                </div>
+                <button class="btn-primary" style="background: #00ff00;" id="btn-manuel-ekle">LENSİ SİSTEME EKLE VE KAYDET</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">MEVCUT LENS ENVANTERİ VE STOK DÜZENLEME</div>
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Lens Kodu, Adı veya Numarası Ara...">
+                    <select id="filter-brand" class="filter-brand">
+                        <option value="ALL">TÜM MARKALAR</option>
+                        <option value="ALCON">ALCON</option>
+                        <option value="TECNIS">TECNIS</option>
+                    </select>
+                </div>
+                <div id="lens-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </div>
+
         </div>
     </div>
+
+    <!-- Alert Modal -->
+    <div id="custom-alert" class="modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
+            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
+        </div>
+    </div>
+
     <script type="module">
         import { db } from './admin.js';
-        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { doc, setDoc, deleteDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let lensData = [];
 
         const sysLog = (msg) => {
             const div = document.getElementById('lens-log');
@@ -54,6 +103,7 @@
             return "";
         };
 
+        // Excel Yükleme Fonksiyonu
         async function processLensExcel(inputId, brand) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog("Dosya seçilmedi.");
@@ -74,12 +124,117 @@
                 }
                 sysLog(`Yükleme Bitti. (${brand} - ${count} Kayıt)`);
                 document.getElementById(inputId).value = '';
+                fetchLenses(); // Güncel listeyi çek
             };
             reader.readAsArrayBuffer(file);
         }
 
         document.getElementById('btn-alcon').addEventListener('click', () => processLensExcel('f-alcon', 'ALCON'));
         document.getElementById('btn-tecnis').addEventListener('click', () => processLensExcel('f-tecnis', 'TECNIS'));
+
+        // Manuel Ekleme Fonksiyonu
+        document.getElementById('btn-manuel-ekle').addEventListener('click', async () => {
+            const brand = document.getElementById('m-brand').value;
+            const kod = document.getElementById('m-kod').value.trim();
+            const ad = document.getElementById('m-ad').value.trim();
+            const no = document.getElementById('m-no').value.trim();
+            const mik = parseInt(document.getElementById('m-mik').value) || 0;
+
+            if(!kod || !ad || !no) return window.showAlert("HATA", "Lütfen Kod, Ad ve Lens No alanlarını eksiksiz doldurun.");
+
+            const col = brand === "ALCON" ? "lens_alcon" : "lens_tecnis";
+            await setDoc(doc(db, col, kod), { urunKodu: kod, urunAdi: ad, lensNo: no, miktar: mik, marka: brand }, { merge: true });
+            
+            window.showAlert("BAŞARILI", "Manuel lens sisteme kaydedildi.");
+            sysLog(`${kod} stoklara manuel eklendi/güncellendi.`);
+            ['m-kod', 'm-ad', 'm-no'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('m-mik').value = '1';
+            fetchLenses();
+        });
+
+        // Tüm Lensleri Çekme ve Render
+        async function fetchLenses() {
+            lensData = [];
+            const [alconSnap, tecnisSnap] = await Promise.all([
+                getDocs(collection(db, "lens_alcon")),
+                getDocs(collection(db, "lens_tecnis"))
+            ]);
+            alconSnap.forEach(d => lensData.push({ id: d.id, col: "lens_alcon", ...d.data() }));
+            tecnisSnap.forEach(d => lensData.push({ id: d.id, col: "lens_tecnis", ...d.data() }));
+            renderLenses();
+        }
+
+        function renderLenses() {
+            const search = (document.getElementById('search-input').value || "").toLowerCase().trim();
+            const brand = document.getElementById('filter-brand').value;
+            const container = document.getElementById('lens-list');
+
+            let filtered = lensData;
+            if (brand !== "ALL") filtered = filtered.filter(l => l.marka === brand);
+            if (search) filtered = filtered.filter(l => (l.urunKodu||"").toLowerCase().includes(search) || (l.urunAdi||"").toLowerCase().includes(search) || (l.lensNo||"").toLowerCase().includes(search));
+
+            filtered.sort((a,b) => {
+                const numA = parseFloat(String(a.lensNo || "0").replace(',', '.')) || 0;
+                const numB = parseFloat(String(b.lensNo || "0").replace(',', '.')) || 0;
+                return numA - numB;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div style="color:#ff3333; text-align:center; padding: 20px; font-weight:bold;">EŞLEŞEN KAYIT BULUNAMADI.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(l => {
+                const bClass = l.marka === 'ALCON' ? 'brand-alcon' : 'brand-tecnis';
+                let num = parseFloat(String(l.lensNo || "0").replace(',', '.'));
+                let fmtNo = !isNaN(num) ? (num > 0 ? "+" : "") + num.toFixed(2) : l.lensNo;
+
+                return `
+                <div class="lens-row">
+                    <div style="flex:2; min-width:200px;">
+                        <span class="brand-badge ${bClass}">${l.marka}</span>
+                        <div style="font-family:monospace; color:#fff; margin-top:8px; font-size:14px; font-weight:bold;">${l.urunKodu}</div>
+                        <div style="font-size:12px; color:#aaa; margin-top:4px;">${l.urunAdi}</div>
+                    </div>
+                    <div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">
+                        <label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">LENS NO</label>
+                        <input type="text" id="edit-no-${l.id}" value="${fmtNo}" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#fff; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">
+                    </div>
+                    <div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">
+                        <label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">MİKTAR</label>
+                        <input type="number" id="edit-mik-${l.id}" value="${l.miktar || 0}" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#0f0; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">
+                    </div>
+                    <div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">
+                        <button class="btn-primary" style="background:#00ccff; padding:10px 15px;" onclick="updateL('${l.id}', '${l.col}')">KAYDET</button>
+                        <button class="btn-danger-outline" style="padding:10px 15px;" onclick="deleteL('${l.id}', '${l.col}')">SİL</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        window.updateL = async (id, col) => {
+            const mik = parseInt(document.getElementById(`edit-mik-${id}`).value) || 0;
+            const no = document.getElementById(`edit-no-${id}`).value.trim();
+            await updateDoc(doc(db, col, id), { miktar: mik, lensNo: no });
+            
+            const idx = lensData.findIndex(x => x.id === id);
+            if(idx > -1) { lensData[idx].miktar = mik; lensData[idx].lensNo = no; }
+            window.showAlert("BAŞARILI", "Lens stoğu güncellendi.");
+        };
+
+        window.deleteL = async (id, col) => {
+            if(confirm("Bu lensi kalıcı olarak silmek istediğinize emin misiniz?")) {
+                await deleteDoc(doc(db, col, id));
+                lensData = lensData.filter(x => x.id !== id);
+                renderLenses();
+            }
+        };
+
+        document.getElementById('search-input').addEventListener('input', renderLenses);
+        document.getElementById('filter-brand').addEventListener('change', renderLenses);
+
+        fetchLenses();
     </script>
 </body>
 </html>
