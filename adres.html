@@ -11,91 +11,58 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
         header { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; }
         .header-title { font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #ff3333; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
         .btn-secondary:hover { background: #222; border-color: #555; }
-        
         main { flex: 1; padding: 20px; padding-bottom: 60px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; background: #000; scroll-behavior: smooth; position: relative; }
-
         .toolbar { display: flex; gap: 15px; width: 100%; max-width: 1000px; margin-bottom: 15px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .depo-tabs { display: flex; gap: 8px; background: #080808; padding: 6px; border-radius: 8px; border: 1px solid #1a1a1a; flex-shrink: 0; }
         .depo-btn { padding: 8px 12px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
         .depo-btn.inactive:hover { border-color: #ffbc00; color: #ffbc00; }
-
         .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px 10px; height: 35px; }
         .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 25px; cursor: pointer; }
         .zoom-val { font-size: 14px; font-weight: bold; font-family: monospace; width: 45px; text-align: center; color: #00ccff; background: transparent; border: none; outline: none; -moz-appearance: textfield; }
         .zoom-val::-webkit-outer-spin-button, .zoom-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
         .search-container { width: 100%; max-width: 1000px; margin-bottom: 15px; position: relative; flex-shrink: 0; }
         .search-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
         .search-input-box { flex: 1; position: relative; display: flex; align-items: center; }
-        
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 16px 90px 16px 16px; font-size: 15px; border-radius: 8px; outline: none; transition: 0.2s; font-family: monospace; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         .search-input:focus { border-color: #ff3333; }
         .clear-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ff3333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; display: none; z-index: 10; letter-spacing: 1px; transition: 0.2s; }
         .clear-icon:hover { background: #cc0000; }
-        
         .btn-scan { background: #111; border: 2px solid #333; color: #fff; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #ff3333; color: #ff3333; }
-
         .result-banner { display: none; width: 100%; max-width: 1000px; background: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 10px 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; animation: fadeIn 0.3s ease; flex-shrink: 0; }
         .result-title { font-size: 10px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
         .result-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
         .result-address { font-size: 24px; font-weight: 900; color: #ff3333; font-family: monospace; letter-spacing: 2px; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
         .dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 5px; }
         .dropdown-item { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
         .dropdown-item:hover { background: #111; border-color: #ff3333; border-left: 4px solid #ff3333; }
         .di-name { color: #fff; font-size: 13px; font-weight: 600; }
         .di-code { color: #888; font-size: 11px; font-family: monospace; }
-
         .map-outer-wrapper { position: relative; width: 100%; overflow: auto; display: flex; justify-content: center; }
         .map-scroll-container { display: flex; justify-content: center; padding-bottom: 10px; flex-shrink: 0; }
         .map-container { position: relative; transition: width 0.2s, height 0.2s; }
         .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
-
         .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; }
         .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
         .cell-hidden { visibility: hidden; pointer-events: none; }
-
-        .cell.active { 
-            animation: flashRed 0.8s infinite alternate; 
-            background: #ff0000 !important; 
-            color: #fff !important; 
-            font-weight: 900 !important; 
-            font-size: clamp(7px, 1.5vw, 14px) !important; 
-            box-shadow: 0 0 20px #ff0000 !important; 
-            z-index: 10; 
-            position: relative; 
-            border-color: #ffaa00 !important;
-        }
-
+        .cell.active { animation: flashRed 0.8s infinite alternate; background: #ff0000 !important; color: #fff !important; font-weight: 900 !important; font-size: clamp(7px, 1.5vw, 14px) !important; box-shadow: 0 0 20px #ff0000 !important; z-index: 10; position: relative; border-color: #ffaa00 !important; }
         .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; }
-
-        @keyframes flashRed {
-            from { background: rgba(255,0,0,0.6); box-shadow: 0 0 10px red; transform: scale(1); }
-            to { background: rgba(255,0,0,1); box-shadow: 0 0 30px red; transform: scale(1.1); }
-        }
-
+        @keyframes flashRed { from { background: rgba(255,0,0,0.6); box-shadow: 0 0 10px red; transform: scale(1); } to { background: rgba(255,0,0,1); box-shadow: 0 0 30px red; transform: scale(1.1); } }
         .path-animation { stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; }
         @keyframes dash { to { stroke-dashoffset: 20; } }
-
         #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
-        
         .custom-alert { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
-
         .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
-
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 15px 20px; gap: 15px; text-align: center; }
             main { padding: 15px; padding-bottom: 90px; }
@@ -114,7 +81,6 @@
         <div class="header-title">TERMINUX <span class="header-subtitle">DEPO ADRES BULUCU</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <a href="index.html" class="btn-secondary" style="border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
-            <a href="adresadmin.html" class="btn-secondary" style="border-color: #ffbc00; color: #ffbc00;">YÖNETİM</a>
         </div>
     </header>
 
@@ -159,7 +125,7 @@
     </main>
 
     <div class="legal-footer">
-        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        YASAL BİLGİLENDİRME: Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır.
     </div>
 
     <div id="scanner-modal">
@@ -177,20 +143,8 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
-            authDomain: "terminux-wms.firebaseapp.com",
-            projectId: "terminux-wms",
-            storageBucket: "terminux-wms.firebasestorage.app",
-            messagingSenderId: "427323493367",
-            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        import { db, auth } from './core-auth.js';
+        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let mappingData = [];
         let searchTimeout = null;
@@ -198,10 +152,7 @@
 
         window.cleanBarcode = (code) => {
             if(!code) return '';
-            let cleaned = code.toString();
-            cleaned = cleaned.replace(/^\][a-zA-Z0-9]{2}/, '');
-            cleaned = cleaned.replace(/^JD/i, '');
-            return cleaned.trimStart();
+            return code.toString().replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '').trimStart();
         };
 
         let currentDepo = 'am';
@@ -219,7 +170,6 @@
         window.switchDepo = (depo) => {
             currentDepo = depo;
             const mapArea = document.getElementById('map-area');
-
             if(depo === 'am') {
                 document.getElementById('tab-am').classList.replace('inactive', 'active');
                 document.getElementById('tab-ana').classList.replace('active', 'inactive');
@@ -231,21 +181,14 @@
                 currentCollection = 'kroki_adresleri_ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
             }
-            clearSearch();
-            loadMappingData();
-            applyZoom();
-        }
-
-        window.changeZoom = (delta) => {
-            let newVal = (currentScale + delta) * 100;
-            setCustomZoom(newVal);
+            clearSearch(); loadMappingData(); applyZoom();
         };
 
+        window.changeZoom = (delta) => setCustomZoom((currentScale + delta) * 100);
         window.setCustomZoom = (val) => {
             let parsed = parseInt(val);
             if(isNaN(parsed)) parsed = 100;
-            if(parsed < 25) parsed = 25;
-            if(parsed > 250) parsed = 250;
+            if(parsed < 25) parsed = 25; if(parsed > 250) parsed = 250;
             currentScale = parsed / 100;
             document.getElementById('zoom-val').value = parsed;
             applyZoom();
@@ -254,25 +197,18 @@
         function applyZoom() {
             const mapWrapper = document.getElementById('map-area');
             const mapContainer = document.getElementById('map-container');
-            
             mapWrapper.style.transform = `scale(${currentScale})`;
-            
             const baseW = currentDepo === 'am' ? 1050 : 1200;
             const baseH = (baseW * 9) / 16; 
-            
             mapContainer.style.width = (baseW * currentScale) + 'px';
             mapContainer.style.height = (baseH * currentScale) + 'px';
-
-            if(window.currentActiveAdres) {
-                setTimeout(() => window.drawPath(window.currentActiveAdres), 50);
-            }
+            if(window.currentActiveAdres) setTimeout(() => window.drawPath(window.currentActiveAdres), 50);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if(window.haritaAmeliyathane) {
-                switchDepo('am');
-            } else {
-                setTimeout(() => switchDepo('am'), 500);
+        auth.onAuthStateChanged((user) => {
+            if(user) {
+                if(window.haritaAmeliyathane) switchDepo('am');
+                else setTimeout(() => switchDepo('am'), 500);
             }
         });
 
@@ -283,213 +219,98 @@
                 mappingData = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    mappingData.push({
-                        id: doc.id,
-                        urunKodu: data.urunKodu || "",
-                        urunAdi: data.urunAdi || "",
-                        barkod: data.barkod || "",
-                        refNo: data.refNo || "",
-                        adres: data.adres || "",
-                        searchStr: `${data.urunKodu} ${data.urunAdi} ${data.barkod || ""} ${data.refNo || ""}`.toLowerCase()
-                    });
+                    mappingData.push({ id: doc.id, urunKodu: data.urunKodu || "", urunAdi: data.urunAdi || "", barkod: data.barkod || "", refNo: data.refNo || "", adres: data.adres || "", searchStr: `${data.urunKodu} ${data.urunAdi} ${data.barkod || ""} ${data.refNo || ""}`.toLowerCase() });
                 });
             });
         }
 
         window.showCustomAlert = (title, desc) => {
-            document.getElementById('alert-title').innerText = title;
-            document.getElementById('alert-desc').innerText = desc;
-            document.getElementById('custom-alert').style.display = 'flex';
+            document.getElementById('alert-title').innerText = title; document.getElementById('alert-desc').innerText = desc; document.getElementById('custom-alert').style.display = 'flex';
         };
         window.closeAlert = () => document.getElementById('custom-alert').style.display = 'none';
 
         window.playBeep = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-                    osc.stop(ctx.currentTime + 0.1);
-                } else if (type === 'error') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0);
-                    osc.stop(ctx.currentTime + 1.0);
-                }
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(1000, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); osc.stop(ctx.currentTime + 0.1); } 
+                else if (type === 'error') { osc.type = 'square'; osc.frequency.setValueAtTime(300, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.0); osc.stop(ctx.currentTime + 1.0); }
             } catch(e) {}
         };
 
-        window.clearSearch = () => {
-            inputEl.value = '';
-            clearIcon.style.display = 'none';
-            clearHighlights();
-            inputEl.focus();
-        };
+        window.clearSearch = () => { inputEl.value = ''; clearIcon.style.display = 'none'; clearHighlights(); inputEl.focus(); };
 
         const clearHighlights = () => {
             document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
             bannerEl.style.display = 'none';
-            const mapArea = document.getElementById('map-area');
-            if (mapArea) {
-                const svgEl = mapArea.querySelector(`svg`);
-                if (svgEl) {
-                    svgEl.innerHTML = '';
-                    svgEl.style.display = 'none';
-                }
-            }
+            const svgEl = document.getElementById('map-area')?.querySelector('svg');
+            if (svgEl) { svgEl.innerHTML = ''; svgEl.style.display = 'none'; }
             window.currentActiveAdres = null;
         };
 
         const getRectCenter = (el, mapRect) => {
             const rect = el.getBoundingClientRect();
-            return {
-                left: (rect.left - mapRect.left) / currentScale,
-                right: (rect.right - mapRect.left) / currentScale,
-                top: (rect.top - mapRect.top) / currentScale,
-                bottom: (rect.bottom - mapRect.top) / currentScale,
-                cx: ((rect.left + rect.width / 2) - mapRect.left) / currentScale,
-                cy: ((rect.top + rect.height / 2) - mapRect.top) / currentScale,
-            };
+            return { left: (rect.left - mapRect.left) / currentScale, right: (rect.right - mapRect.left) / currentScale, top: (rect.top - mapRect.top) / currentScale, bottom: (rect.bottom - mapRect.top) / currentScale, cx: ((rect.left + rect.width / 2) - mapRect.left) / currentScale, cy: ((rect.top + rect.height / 2) - mapRect.top) / currentScale };
         };
 
         window.drawPath = function(targetId) {
             const isAm = currentDepo === 'am';
             const map = document.getElementById('map-area');
             const mapRect = map.getBoundingClientRect();
-            
             let targetIdRaw = targetId.trim();
-            
-            if (targetIdRaw.toUpperCase().startsWith("BDM")) {
-                targetIdRaw = targetIdRaw.substring(3);
-            }
-
-            if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) {
-                targetIdRaw = targetIdRaw.replace('.06', '.05');
-            }
+            if (targetIdRaw.toUpperCase().startsWith("BDM")) targetIdRaw = targetIdRaw.substring(3);
+            if (isAm && (targetIdRaw === "02.01.06" || targetIdRaw === "03.01.06")) targetIdRaw = targetIdRaw.replace('.06', '.05');
             
             const targetCells = map.querySelectorAll(`[id="cell-${targetIdRaw}"]`);
             const doorId = isAm ? 'door-am' : 'main-door';
             const door = document.getElementById(doorId);
             
             if(targetCells.length === 0 || !door || !map) return;
-
             const isMobile = window.innerWidth <= 900;
-            const strokeW = isMobile ? 3 : 4;
-            const dashArr = isMobile ? "8, 8" : "12, 12";
-
+            const strokeW = isMobile ? 3 : 4, dashArr = isMobile ? "8, 8" : "12, 12";
             const d = getRectCenter(door, mapRect);
-            
             let pathsHtml = ""; 
 
             targetCells.forEach(targetCell => {
                 const t = getRectCenter(targetCell, mapRect);
                 let pathStr = "";
-
                 if (isAm) {
-                    let startX = d.right; 
-                    let startY = d.cy;
+                    let startX = d.right, startY = d.cy;
                     const s1 = getRectCenter(map.querySelector('.map-shelf-1-am'), mapRect);
                     const s2 = getRectCenter(map.querySelector('.map-shelf-2-am'), mapRect);
                     const cX = (s1.right + s2.left) / 2;
-
-                    if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") {
-                        let endX = t.right;
-                        pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`;
-                    } else {
-                        let endX = t.cx < cX ? t.right : t.left;
-                        pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`;
-                    }
+                    if (targetIdRaw === "05.01.01" || targetIdRaw === "04.01.01") { let endX = t.right; pathStr = `M ${startX} ${startY} L ${startX} ${t.cy} L ${endX} ${t.cy}`; } 
+                    else { let endX = t.cx < cX ? t.right : t.left; pathStr = `M ${startX} ${startY} L ${cX} ${startY} L ${cX} ${t.cy} L ${endX} ${t.cy}`; }
                 } else {
-                    let mapW = mapRect.width / currentScale;
-                    let mapH = mapRect.height / currentScale;
-
-                    let Y_MAIN = 0.285 * mapH;
-                    let X_FAR_LEFT = 0.188 * mapW;
-                    let X_RIGHT = 0.681 * mapW;
-                    let X_FAR_RIGHT = 0.947 * mapW;
-                    let X_OFFICE = 0.560 * mapW;
-
-                    let startX = d.left;
-                    let startY = d.cy;
-                    let doorOutX = startX - (0.02 * mapW);
-
+                    let mapW = mapRect.width / currentScale, mapH = mapRect.height / currentScale;
+                    let Y_MAIN = 0.285 * mapH, X_FAR_LEFT = 0.188 * mapW, X_RIGHT = 0.681 * mapW, X_FAR_RIGHT = 0.947 * mapW, X_OFFICE = 0.560 * mapW;
+                    let startX = d.left, startY = d.cy, doorOutX = startX - (0.02 * mapW);
                     pathStr = `M ${startX} ${startY} L ${doorOutX} ${startY} L ${doorOutX} ${Y_MAIN}`;
-
-                    let isOffice = t.cy < Y_MAIN && t.cx > (0.30 * mapW) && t.cx < (0.75 * mapW);
-                    
-                    if (isOffice) {
-                        pathStr += ` L ${X_OFFICE} ${Y_MAIN} L ${X_OFFICE} ${t.cy}`;
-                        let endX = t.cx < X_OFFICE ? t.right : t.left;
-                        pathStr += ` L ${endX} ${t.cy}`;
-                    } else {
-                        let v_corridors = [X_FAR_LEFT, X_RIGHT, X_FAR_RIGHT];
-                        let bestVX = v_corridors.reduce((prev, curr) => Math.abs(curr - t.cx) < Math.abs(prev - t.cx) ? curr : prev);
-
+                    if (t.cy < Y_MAIN && t.cx > (0.30 * mapW) && t.cx < (0.75 * mapW)) { pathStr += ` L ${X_OFFICE} ${Y_MAIN} L ${X_OFFICE} ${t.cy} L ${t.cx < X_OFFICE ? t.right : t.left} ${t.cy}`; } 
+                    else {
+                        let bestVX = [X_FAR_LEFT, X_RIGHT, X_FAR_RIGHT].reduce((prev, curr) => Math.abs(curr - t.cx) < Math.abs(prev - t.cx) ? curr : prev);
                         pathStr += ` L ${bestVX} ${Y_MAIN} L ${bestVX} ${t.cy}`;
-                        
                         let endX = t.cx < bestVX ? t.right : t.left;
-                        if (t.cx > bestVX && endX < bestVX) endX = t.cx; 
-                        if (t.cx < bestVX && endX > bestVX) endX = t.cx;
-
+                        if (t.cx > bestVX && endX < bestVX) endX = t.cx; if (t.cx < bestVX && endX > bestVX) endX = t.cx;
                         pathStr += ` L ${endX} ${t.cy}`;
                     }
                 }
-                
                 pathsHtml += `<path d="${pathStr}" fill="none" stroke="#ff0000" stroke-width="${strokeW}" stroke-dasharray="${dashArr}" marker-end="url(#arrowhead)" class="path-animation" />`;
             });
-
             const targetSvg = map.querySelector(`svg`);
-            if(targetSvg) {
-                targetSvg.style.display = 'block';
-                targetSvg.innerHTML = `
-                    <defs>
-                        <marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto">
-                            <polygon points="0 0, ${isMobile ? 6 : 8} ${isMobile ? 3 : 4}, 0 ${isMobile ? 6 : 8}" fill="#ff0000" />
-                        </marker>
-                    </defs>
-                    ${pathsHtml}
-                `;
-            }
+            if(targetSvg) { targetSvg.style.display = 'block'; targetSvg.innerHTML = `<defs><marker id="arrowhead" markerWidth="${isMobile ? 6 : 8}" markerHeight="${isMobile ? 6 : 8}" refX="${isMobile ? 5 : 7}" refY="${isMobile ? 3 : 4}" orient="auto"><polygon points="0 0, ${isMobile ? 6 : 8} ${isMobile ? 3 : 4}, 0 ${isMobile ? 6 : 8}" fill="#ff0000" /></marker></defs>${pathsHtml}`; }
         };
 
         const executeSearch = (val) => {
-            clearTimeout(searchTimeout);
-            clearHighlights();
-            
-            if(val.length > 0) clearIcon.style.display = 'block';
-            else clearIcon.style.display = 'none';
-
-            if (val.length < 3) {
-                dropdownEl.style.display = 'none';
-                return;
-            }
-
+            clearTimeout(searchTimeout); clearHighlights();
+            if(val.length > 0) clearIcon.style.display = 'block'; else clearIcon.style.display = 'none';
+            if (val.length < 3) { dropdownEl.style.display = 'none'; return; }
             searchTimeout = setTimeout(() => {
                 const terms = val.split(/\s+/);
                 const matches = mappingData.filter(m => terms.every(t => m.searchStr.includes(t))).slice(0, 15);
-
                 if (matches.length > 0) {
-                    dropdownEl.innerHTML = matches.map(m => {
-                        const refText = m.refNo ? ` | REF: ${m.refNo}` : '';
-                        return `
-                            <div class="dropdown-item" onclick="selectProduct('${m.id}')">
-                                <div class="di-name">${m.urunAdi}</div>
-                                <div class="di-code">KOD: ${m.urunKodu}${refText}</div>
-                            </div>
-                        `;
-                    }).join('');
+                    dropdownEl.innerHTML = matches.map(m => `<div class="dropdown-item" onclick="selectProduct('${m.id}')"><div class="di-name">${m.urunAdi}</div><div class="di-code">KOD: ${m.urunKodu}${m.refNo ? ` | REF: ${m.refNo}` : ''}</div></div>`).join('');
                     dropdownEl.style.display = 'block';
                 } else {
                     dropdownEl.innerHTML = '<div style="padding: 15px; color: #ff3333; text-align: center; font-size: 12px; font-weight:bold;">Sistemde haritalanmış eşleşme bulunamadı.</div>';
@@ -498,113 +319,41 @@
             }, 250);
         };
 
-        inputEl.addEventListener('input', (e) => {
-            e.target.value = window.cleanBarcode(e.target.value);
-            executeSearch(e.target.value.toLowerCase().trim());
-        });
+        inputEl.addEventListener('input', (e) => { e.target.value = window.cleanBarcode(e.target.value); executeSearch(e.target.value.toLowerCase().trim()); });
 
         window.selectProduct = (id) => {
-            const product = mappingData.find(m => m.id === id);
-            dropdownEl.style.display = 'none';
-            
+            const product = mappingData.find(m => m.id === id); dropdownEl.style.display = 'none';
             if (product) {
-                inputEl.value = product.urunAdi;
-                clearIcon.style.display = 'block';
+                inputEl.value = product.urunAdi; clearIcon.style.display = 'block';
                 if (product.adres) {
                     window.currentActiveAdres = product.adres;
-                    const isAm = currentDepo === 'am';
-                    let targetCellId = product.adres.trim();
-                    
-                    let displayAdres = targetCellId;
-                    if (displayAdres.toUpperCase().startsWith("BDM")) {
-                        displayAdres = displayAdres.substring(3);
-                    }
-                    
-                    if (targetCellId.toUpperCase().startsWith("BDM")) {
-                        targetCellId = targetCellId.substring(3);
-                    }
-                    
-                    if(isAm && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
-                    
+                    let targetCellId = product.adres.trim().toUpperCase().startsWith("BDM") ? product.adres.trim().substring(3) : product.adres.trim();
+                    if(currentDepo === 'am' && (targetCellId === "02.01.06" || targetCellId === "03.01.06")) targetCellId = targetCellId.replace(".06", ".05");
                     const map = document.getElementById('map-area');
-                    
                     const targetCells = map.querySelectorAll(`[id="cell-${targetCellId}"]`);
-                    
                     if (targetCells.length > 0) {
                         targetCells.forEach(tc => tc.classList.add('active'));
-                        
-                        nameEl.innerText = product.urunAdi;
-                        addressEl.innerText = displayAdres;
-                        bannerEl.style.display = 'block';
-                        
-                        setTimeout(() => { 
-                            drawPath(targetCellId);
-                            document.getElementById('main-content-scroll').scrollTo({
-                                top: document.getElementById('main-content-scroll').scrollHeight,
-                                behavior: 'smooth'
-                            });
-                        }, 50);
-                        
+                        nameEl.innerText = product.urunAdi; addressEl.innerText = product.adres.trim().toUpperCase().startsWith("BDM") ? product.adres.trim().substring(3) : product.adres.trim(); bannerEl.style.display = 'block';
+                        setTimeout(() => { drawPath(targetCellId); document.getElementById('main-content-scroll').scrollTo({ top: document.getElementById('main-content-scroll').scrollHeight, behavior: 'smooth' }); }, 50);
                         window.playBeep('success');
-                    } else {
-                        window.playBeep('error');
-                        showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${displayAdres}) krokide mevcut değil.`);
-                    }
-                } else {
-                    window.playBeep('error');
-                    showCustomAlert("HATA", "Bu ürüne ait bir adres tanımlanmamış.");
-                }
+                    } else { window.playBeep('error'); showCustomAlert("HATA", `Ürün bulundu ancak tanımlı adres (${product.adres.trim()}) krokide mevcut değil.`); }
+                } else { window.playBeep('error'); showCustomAlert("HATA", "Bu ürüne ait bir adres tanımlanmamış."); }
             }
         };
 
-        document.addEventListener('click', (e) => {
-            if (!document.querySelector('.search-input-box').contains(e.target) && !dropdownEl.contains(e.target)) {
-                dropdownEl.style.display = 'none';
-            }
-        });
+        document.addEventListener('click', (e) => { if (!document.querySelector('.search-input-box').contains(e.target) && !dropdownEl.contains(e.target)) dropdownEl.style.display = 'none'; });
 
-       window.openScanner = () => {
+        window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    let cleanedText = window.cleanBarcode(decodedText);
-                    inputEl.value = cleanedText;
-                    closeScanner();
-                    
-                    const directMatch = mappingData.find(m => 
-                        m.urunKodu === cleanedText || 
-                        m.barkod === cleanedText || 
-                        m.refNo === cleanedText
-                    );
-
-                    if (directMatch) {
-                        selectProduct(directMatch.id);
-                    } else {
-                        executeSearch(cleanedText.toLowerCase().trim());
-                    }
-                },
-                (errorMessage) => {}
-            ).catch((err) => {
-                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
-                closeScanner();
-            });
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => {
+                let cleanedText = window.cleanBarcode(decodedText); inputEl.value = cleanedText; closeScanner();
+                const directMatch = mappingData.find(m => m.urunKodu === cleanedText || m.barkod === cleanedText || m.refNo === cleanedText);
+                if (directMatch) selectProduct(directMatch.id); else executeSearch(cleanedText.toLowerCase().trim());
+            }, () => {}).catch(() => { showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı."); closeScanner(); });
         };
-
-        window.closeScanner = () => {
-            document.getElementById('scanner-modal').style.display = 'none';
-            if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
-            }
-        };
-
-        window.addEventListener('resize', () => {
-            if (window.currentActiveAdres) {
-                drawPath(window.currentActiveAdres);
-            }
-        });
-
+        window.closeScanner = () => { document.getElementById('scanner-modal').style.display = 'none'; if(html5QrCode && html5QrCode.isScanning) html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {}); };
+        window.addEventListener('resize', () => { if (window.currentActiveAdres) drawPath(window.currentActiveAdres); });
     </script>
 </body>
 </html>
