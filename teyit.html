@@ -8,54 +8,30 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted) { window.location.reload(); }
-        });
-
+        window.addEventListener('pageshow', function (event) { if (event.persisted) { window.location.reload(); } });
         window.playBeep = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-                    osc.stop(ctx.currentTime + 0.1);
-                } else if (type === 'error') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4);
-                    osc.stop(ctx.currentTime + 0.4);
-                }
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if (type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(1000, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); osc.stop(ctx.currentTime + 0.1); } 
+                else if (type === 'error') { osc.type = 'square'; osc.frequency.setValueAtTime(300, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4); osc.stop(ctx.currentTime + 0.4); }
             } catch(e) {}
         };
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        
         header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
         .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
         .header-subtitle { color: #9c27b0; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
-        
         main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; scroll-behavior: smooth; }
-        
         .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
         .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
-        
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
         .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ccff; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
         .input-group input:focus, .input-group select:focus { border-color: #00ccff; }
-        
         .btn-primary { background: #00ccff; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-primary:hover { opacity: 0.8; }
         .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
@@ -66,7 +42,6 @@
         .btn-success:hover { opacity: 0.8; }
         .btn-warning { background: #ffbc00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .btn-warning:hover { opacity: 0.8; }
-
         .history-container { max-width: 1000px; margin: 0 auto; }
         .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
         .history-list { display: flex; flex-direction: column; gap: 10px; }
@@ -76,13 +51,11 @@
         .history-name { font-size: 18px; font-weight: 800; color: #9c27b0; }
         .history-detail { font-size: 12px; color: #888; font-family: monospace; }
         .history-actions { display: flex; gap: 10px; }
-
         .active-count-header { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
         .session-info { display: flex; flex-direction: column; gap: 5px; }
         .session-name { font-size: 20px; font-weight: 800; color: #9c27b0; }
         .session-details { font-size: 12px; color: #888; font-family: monospace; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
-        
         .scan-area { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
         .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; margin: 0; position: relative; }
         .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
@@ -91,63 +64,51 @@
         .scan-area input:focus { border-color: #00ccff; }
         .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
         .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
-
         .scan-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 250px; overflow-y: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 5px; }
         .scan-dropdown-item { padding: 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; }
         .scan-dropdown-item:hover { background: #111; border-color: #00ccff; }
         .scan-dropdown-item-title { color: #fff; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
         .scan-dropdown-item-sub { color: #888; font-size: 11px; font-family: monospace; }
-
         .verify-panel { display: none; background: #0a0a0a; border: 1px solid #333; padding: 25px; border-radius: 8px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .vp-header { display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .vp-name { font-size: 20px; font-weight: 800; color: #00ccff; }
         .vp-code { font-size: 13px; color: #888; font-family: monospace; }
         .vp-miat { font-size: 12px; font-weight: bold; color: #ffbc00; margin-top: 5px; }
         .vp-actions { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
-
         .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
         .list-header { display: grid; grid-template-columns: 1.5fr 3fr 1.5fr 1.5fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
         .list-item { display: grid; grid-template-columns: 1.5fr 3fr 1.5fr 1.5fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
         .list-item:hover { background: #0c0c0c; }
-        
         .status-correct { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.05) 0%, transparent 100%); }
         .status-changed { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.05) 0%, transparent 100%); }
         .status-pending { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.05) 0%, transparent 100%); }
-
         .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; }
         .item-addr { font-family: monospace; font-size: 15px; font-weight: bold; color: #888; }
         .item-addr-new { font-family: monospace; font-size: 15px; font-weight: bold; color: #ffbc00; }
         .item-addr-correct { font-family: monospace; font-size: 15px; font-weight: bold; color: #00ff00; }
         .item-addr-pending { font-family: monospace; font-size: 15px; font-weight: bold; color: #ff3333; }
-        
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: inline-block; text-align: center; }
         .badge-correct { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid rgba(0,255,0,0.3); }
         .badge-changed { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid rgba(255,188,0,0.3); }
         .badge-pending { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
         .badge-miat { background: #222; color: #00ccff; border: 1px solid #333; width: fit-content; }
-
         .item-action { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-edit { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-edit:hover { border-color: #00ccff; color: #00ccff; }
         .btn-del { background: transparent; color: #ff3333; border: 1px solid #ff3333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-del:hover { background: #ff3333; color: #000; }
-
         .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
         .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
-        
         .modal-actions { display: flex; flex-direction: row; gap: 15px; justify-content: center; align-items: center; width: 100%; }
         .modal-actions button { flex: 1; padding: 15px 20px; }
-        
-        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
-
-        .legal-footer { flex-shrink: 0; width: 100%; background-color: rgba(5, 5, 5, 1); color: #888; text-align: center; padding: 16px 20px; font-size: 13px; border-top: 1px solid #1a1a1a; line-height: 1.5; box-sizing: border-box; overflow-wrap: break-word; }
+        .legal-footer { position: fixed; bottom: 0; left: 0; right: 0; width: 100vw; background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center; padding: 12px 20px; font-size: 11px; z-index: 9999; border-top: 1px solid #1a1a1a; backdrop-filter: blur(8px); line-height: 1.4; box-sizing: border-box; overflow-wrap: break-word; }
         .btn-scroll-top { display: none; position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 25px; background: #9c27b0; color: #fff; border: none; font-size: 24px; font-weight: 900; cursor: pointer; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.3s; }
         .btn-scroll-top:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(156,39,176,0.4); }
-
         @media (max-width: 900px) {
             header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
             main { padding: 15px; display: block; }
@@ -163,7 +124,6 @@
             .vp-actions { flex-direction: column; align-items: stretch; }
             .vp-actions .input-group { width: 100%; }
             .vp-actions button { width: 100%; height: 50px; }
-            
             .list-container { overflow: visible; border: none; background: transparent; }
             .list-header { display: none; }
             .list-item { grid-template-columns: 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; border: 1px solid #1a1a1a; border-left-style: solid; border-left-width: 8px;}
@@ -306,26 +266,12 @@
     </div>
 
     <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır.
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCX-X3ri95oQtO53tgEyAwqHuu1mmYKONM",
-            authDomain: "terminux-wms.firebaseapp.com",
-            projectId: "terminux-wms",
-            storageBucket: "terminux-wms.firebasestorage.app",
-            messagingSenderId: "427323493367",
-            appId: "1:427323493367:web:8c0f7bdd21fe5b83c3bcf2"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        import { db, auth } from './core-auth.js';
+        import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalogDb = {};
         let allSessions = [];
@@ -340,18 +286,13 @@
 
         document.getElementById('main-content').addEventListener('scroll', function() {
             const btn = document.getElementById('scroll-to-top');
-            if (this.scrollTop > 300) {
-                btn.style.display = 'block';
-            } else {
-                btn.style.display = 'none';
-            }
+            if (this.scrollTop > 300) btn.style.display = 'block';
+            else btn.style.display = 'none';
         });
 
         window.cleanBarcode = (code) => {
             if(!code) return '';
-            let cleaned = code.toString();
-            cleaned = cleaned.replace(/^\][a-zA-Z0-9]{2}/, '');
-            cleaned = cleaned.replace(/^JD/i, '');
+            let cleaned = code.toString().replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '');
             return cleaned.trimStart();
         };
 
@@ -366,60 +307,30 @@
             document.getElementById('confirm-title').innerText = title;
             document.getElementById('confirm-desc').innerText = desc;
             const yesBtn = document.getElementById('confirm-yes-btn');
-            yesBtn.innerText = confirmBtnText;
-            yesBtn.className = "btn-primary " + confirmBtnClass;
+            yesBtn.innerText = confirmBtnText; yesBtn.className = "btn-primary " + confirmBtnClass;
             confirmActionCallback = callback;
             document.getElementById('custom-confirm').style.display = 'flex';
         };
-        window.closeCustomConfirm = () => {
-            document.getElementById('custom-confirm').style.display = 'none';
-            confirmActionCallback = null;
-        };
-        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
-            if(confirmActionCallback) confirmActionCallback();
-            closeCustomConfirm();
-        });
+        window.closeCustomConfirm = () => { document.getElementById('custom-confirm').style.display = 'none'; confirmActionCallback = null; };
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => { if(confirmActionCallback) confirmActionCallback(); closeCustomConfirm(); });
 
         document.addEventListener('click', (e) => {
             const scanCode = document.getElementById('scan-code');
             const dropdown = document.getElementById('scan-dropdown');
-            
-            if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = 'none';
-            }
+            if (scanCode && dropdown && !scanCode.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
         });
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loadCatalog();
-            } else {
-                setTimeout(() => {
-                    if(!auth.currentUser) window.location.href = 'index.html';
-                }, 3500);
-            }
-        });
+        auth.onAuthStateChanged((user) => { if (user) loadCatalog(); });
 
         window.updateAddressDropdowns = () => {
             const setupType = document.getElementById('setup-type').value;
             const sel = document.getElementById('setup-address');
-            
             sel.innerHTML = '<option value="">-- BOŞ LİSTE İLE BAŞLA --</option>';
-            
             let sourceSet = setupType === 'ANA DEPO' ? anaAddresses : amAddresses;
             let sorted = Array.from(sourceSet).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-            
             sorted.forEach(addr => {
                 let depth = (addr.match(/\./g) || []).length;
-                let prefix = "";
-                
-                if (depth === 0) {
-                    prefix = "■ ";
-                } else if (depth === 1) {
-                    prefix = "\u00A0\u00A0\u00A0├─ ";
-                } else {
-                    prefix = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0└─ ";
-                }
-                
+                let prefix = depth === 0 ? "■ " : (depth === 1 ? "\u00A0\u00A0\u00A0├─ " : "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0└─ ");
                 sel.innerHTML += `<option value="${addr}">${prefix}${addr}</option>`;
             });
         };
@@ -433,12 +344,7 @@
                         if (Array.isArray(parsed)) {
                             parsed.forEach(item => {
                                 const uKodu = String(item.urunKodu || item.docId || "");
-                                catalogDb[uKodu] = { 
-                                    urunKodu: uKodu, 
-                                    urunAdi: String(item.urunAdi || "İsimsiz Ürün"), 
-                                    barkod: String(item.barkod || ""), 
-                                    refNo: String(item.refNo || "")
-                                };
+                                catalogDb[uKodu] = { urunKodu: uKodu, urunAdi: String(item.urunAdi || "İsimsiz Ürün"), barkod: String(item.barkod || ""), refNo: String(item.refNo || "") };
                             });
                         }
                     } catch(e) { }
@@ -454,104 +360,60 @@
                     snap.forEach(doc => {
                         const d = doc.data();
                         const key = String(d.urunKodu || doc.id || "");
-                        
                         if (!catalogDb[key]) {
-                            catalogDb[key] = { 
-                                urunKodu: key, 
-                                urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), 
-                                barkod: String(d.barkod || ""), 
-                                refNo: String(d.refNo || "")
-                            };
+                            catalogDb[key] = { urunKodu: key, urunAdi: String(d.urunAdi || d.isim || "İsimsiz Ürün"), barkod: String(d.barkod || ""), refNo: String(d.refNo || "") };
                         }
                         
                         const addrRaw = String(d.stokAdresi || d.StokAdresi || d.adres || d.Adres || d.lokasyon || d.Lokasyon || d.raf || d.Raf || "-").trim();
                         let cleanAddr = addrRaw.toUpperCase().replace(/^(BDA|BDM)/, '');
-                        
                         catalogDb[key][locKey + '_adres'] = cleanAddr || "-";
-                        
                         const miat = d.miat || d.miatTarihi || d.skt || d.sonKullanma || d.sonKullanmaTarihi || "-";
                         catalogDb[key][locKey + '_miat'] = String(miat);
 
                         if (cleanAddr !== "-" && cleanAddr !== "") {
                             addressSet.add(cleanAddr);
-                            
                             if (cleanAddr.includes(".")) {
                                 let parts = cleanAddr.split(".");
-                                let cumulative = parts[0];
-                                addressSet.add(cumulative);
-                                for(let i=1; i<parts.length-1; i++) {
-                                    cumulative += "." + parts[i];
-                                    addressSet.add(cumulative);
-                                }
+                                let cumulative = parts[0]; addressSet.add(cumulative);
+                                for(let i=1; i<parts.length-1; i++) { cumulative += "." + parts[i]; addressSet.add(cumulative); }
                             }
                         }
                     });
                 };
-                
-                processSnap(anaSnap, 'ana', anaAddresses); 
-                processSnap(amSnap, 'am', amAddresses);
-                
+                processSnap(anaSnap, 'ana', anaAddresses); processSnap(amSnap, 'am', amAddresses);
                 window.updateAddressDropdowns();
-            } catch (err) {
-            } finally {
-                setupRealtimeSessions();
-            }
+            } catch (err) { } 
+            finally { setupRealtimeSessions(); }
         };
 
         const setupRealtimeSessions = () => {
             onSnapshot(collection(db, "teyit_sessions"), (snapshot) => {
-                allSessions = [];
-                snapshot.forEach(doc => allSessions.push(doc.data()));
-                renderHomeList();
-                if (currentSessionId) renderTeyitList();
+                allSessions = []; snapshot.forEach(doc => allSessions.push(doc.data()));
+                renderHomeList(); if (currentSessionId) renderTeyitList();
             });
         };
 
-        const saveSessionToDb = async (sessionData) => {
-            try {
-                await setDoc(doc(db, "teyit_sessions", sessionData.id), sessionData);
-            } catch(e) {}
-        };
+        const saveSessionToDb = async (sessionData) => { try { await setDoc(doc(db, "teyit_sessions", sessionData.id), sessionData); } catch(e) {} };
 
         const renderHomeList = () => {
             const container = document.getElementById('history-container');
             const list = document.getElementById('history-list');
-            
-            if (allSessions.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
+            if (allSessions.length === 0) { container.style.display = 'none'; return; }
             
             container.style.display = 'block';
             list.innerHTML = allSessions.map(s => {
                 const statusColor = s.status === 'active' ? '#9c27b0' : '#00ff00';
                 const statusText = s.status === 'active' ? 'TEYİT EDİLİYOR' : 'TAMAMLANDI';
-                
-                return `
-                    <div class="history-card">
-                        <div class="history-info">
-                            <div class="history-name" style="color:${statusColor}">${s.name}</div>
-                            <div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items || {}).length} Teyitli Ürün | Durum: ${statusText}</div>
-                        </div>
-                        <div class="history-actions">
-                            <button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button>
-                            <button class="btn-secondary" style="margin:0;" onclick="resumeSession('${s.id}')">KONTROL ET</button>
-                        </div>
-                    </div>
-                `;
+                return `<div class="history-card"><div class="history-info"><div class="history-name" style="color:${statusColor}">${s.name}</div><div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items || {}).length} Teyitli Ürün | Durum: ${statusText}</div></div><div class="history-actions"><button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button><button class="btn-secondary" style="margin:0;" onclick="resumeSession('${s.id}')">KONTROL ET</button></div></div>`;
             }).reverse().join('');
         };
 
-        const trToLower = (text) => {
-            if (text === null || text === undefined) return "";
-            return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
-        };
+        const trToLower = (text) => { if (text === null || text === undefined) return ""; return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR'); };
 
         window.createTeyitSession = async () => {
             const name = document.getElementById('setup-name').value.trim();
             const type = document.getElementById('setup-type').value;
             const targetAddress = document.getElementById('setup-address').value;
-            
             if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen teyit oturumu için bir isim belirleyin.");
 
             const now = new Date();
@@ -561,63 +423,43 @@
 
             if (targetAddress !== "") {
                 const locKey = type === 'ANA DEPO' ? 'ana' : 'am';
-                
                 Object.values(catalogDb).forEach(item => {
                     const addr = String(item[`${locKey}_adres`] || "").toUpperCase();
                     const itemMiat = item[`${locKey}_miat`] || "-";
-                    
                     if (addr !== "-" && addr.startsWith(targetAddress)) {
-                        initialItems[item.urunKodu] = {
-                            code: item.urunKodu,
-                            name: item.urunAdi,
-                            oldAddress: addr,
-                            newAddress: addr,
-                            status: 'KONTROL BEKLİYOR',
-                            miat: itemMiat
-                        };
+                        initialItems[item.urunKodu] = { code: item.urunKodu, name: item.urunAdi, oldAddress: addr, newAddress: addr, status: 'KONTROL BEKLİYOR', miat: itemMiat };
                     }
                 });
             }
 
             const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: initialItems };
             await saveSessionToDb(newSession);
-            
-            document.getElementById('setup-name').value = '';
-            document.getElementById('setup-address').value = '';
+            document.getElementById('setup-name').value = ''; document.getElementById('setup-address').value = '';
             resumeSession(newId);
         };
 
         window.deleteSession = (id) => {
             showCustomConfirm("OTURUMU SİL", "Bu teyit listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", async () => {
-                try {
-                    await deleteDoc(doc(db, "teyit_sessions", id));
-                } catch(e) {}
+                try { await deleteDoc(doc(db, "teyit_sessions", id)); } catch(e) {}
             });
         };
 
         window.resumeSession = (id) => {
-            currentSessionId = id;
-            selectedVerifyCode = null;
+            currentSessionId = id; selectedVerifyCode = null;
             document.getElementById('verify-panel').style.display = 'none';
-            document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('active-screen').style.display = 'block';
-            
+            document.getElementById('home-screen').style.display = 'none'; document.getElementById('active-screen').style.display = 'block';
             const sessionData = allSessions.find(s => s.id === id);
             if(sessionData) {
                 document.getElementById('ui-session-name').innerText = sessionData.name;
                 document.getElementById('ui-session-details').innerText = `${sessionData.type} ADRES TEYİDİ | ${sessionData.date}`;
-                document.getElementById('scan-code').value = '';
-                document.getElementById('scan-code').focus();
+                document.getElementById('scan-code').value = ''; document.getElementById('scan-code').focus();
                 renderTeyitList();
             }
         };
 
         window.closeActiveScreen = () => {
-            document.getElementById('home-screen').style.display = 'block';
-            document.getElementById('active-screen').style.display = 'none';
-            currentSessionId = null;
-            selectedVerifyCode = null;
-            document.getElementById('verify-panel').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'block'; document.getElementById('active-screen').style.display = 'none';
+            currentSessionId = null; selectedVerifyCode = null; document.getElementById('verify-panel').style.display = 'none';
             renderHomeList();
         };
 
@@ -627,35 +469,12 @@
             const dropdown = document.getElementById('scan-dropdown');
             clearTimeout(searchTimeout);
             
-            if (val.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-            if (val.length < 2) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
+            if (val.length < 2) { dropdown.style.display = 'none'; return; }
             searchTimeout = setTimeout(() => {
                 const terms = val.split(/\s+/);
-                
-                let matches = Object.values(catalogDb).filter(item => {
-                    const refNo = item.refNo || "";
-                    const barkod = item.barkod || "";
-                    const searchStr = trToLower(`${item.urunAdi} ${item.urunKodu} ${refNo} ${barkod}`);
-                    return terms.every(t => searchStr.includes(t));
-                }).slice(0, 15);
-
+                let matches = Object.values(catalogDb).filter(item => terms.every(t => trToLower(`${item.urunAdi} ${item.urunKodu} ${item.refNo || ""} ${item.barkod || ""}`).includes(t))).slice(0, 15);
                 if (matches.length > 0) {
-                    dropdown.innerHTML = matches.map(m => {
-                        const refNo = m.refNo || "-";
-                        return `
-                            <div class="scan-dropdown-item" onclick="window.selectFromDropdown(event, '${m.urunKodu}')">
-                                <div class="scan-dropdown-item-title">${m.urunAdi}</div>
-                                <div class="scan-dropdown-item-sub">KOD: <span style="color:#00ccff;">${m.urunKodu}</span> | REF: ${refNo}</div>
-                            </div>
-                        `;
-                    }).join('');
+                    dropdown.innerHTML = matches.map(m => `<div class="scan-dropdown-item" onclick="window.selectFromDropdown(event, '${m.urunKodu}')"><div class="scan-dropdown-item-title">${m.urunAdi}</div><div class="scan-dropdown-item-sub">KOD: <span style="color:#00ccff;">${m.urunKodu}</span> | REF: ${m.refNo || "-"}</div></div>`).join('');
                     dropdown.style.display = 'block';
                 } else {
                     dropdown.innerHTML = '<div style="padding: 15px; color: #ff3333; font-size: 12px; font-weight: bold; text-align: center;">Katalogda eşleşen ürün bulunamadı.</div>';
@@ -664,21 +483,10 @@
             }, 150);
         });
 
-        window.selectFromDropdown = (e, code) => {
-            if (e) e.stopPropagation();
-            document.getElementById('scan-dropdown').style.display = 'none';
-            window.openVerifyPanel(code);
-        };
+        window.selectFromDropdown = (e, code) => { if (e) e.stopPropagation(); document.getElementById('scan-dropdown').style.display = 'none'; window.openVerifyPanel(code); };
 
         document.getElementById('scan-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const code = document.getElementById('scan-code').value.trim();
-                document.getElementById('scan-dropdown').style.display = 'none';
-                if(code) {
-                    window.openVerifyPanel(window.cleanBarcode(code));
-                }
-            }
+            if (e.key === 'Enter') { e.preventDefault(); const code = document.getElementById('scan-code').value.trim(); document.getElementById('scan-dropdown').style.display = 'none'; if(code) window.openVerifyPanel(window.cleanBarcode(code)); }
         });
 
         window.openVerifyPanel = (code) => {
@@ -692,147 +500,78 @@
                 itemData = Object.values(catalogDb).find(c => trToLower(c.urunKodu) === lowerCode || trToLower(c.barkod) === lowerCode || trToLower(c.refNo) === lowerCode);
             }
 
-            if (!itemData) {
-                window.playBeep('error');
-                showCustomAlert("BULUNAMADI", "Okutulan kod katalogda bulunamadı.");
-                return;
-            }
+            if (!itemData) { window.playBeep('error'); showCustomAlert("BULUNAMADI", "Okutulan kod katalogda bulunamadı."); return; }
             
             window.playBeep('success');
             selectedVerifyCode = itemData.urunKodu;
             
-            let currentAddress = "-";
-            let miat = "-";
-            if (sessionData.type === 'ANA DEPO') {
-                currentAddress = itemData.ana_adres || "-";
-                miat = itemData.ana_miat || "-";
-            } else {
-                currentAddress = itemData.am_adres || "-";
-                miat = itemData.am_miat || "-";
-            }
+            let currentAddress = "-", miat = "-";
+            if (sessionData.type === 'ANA DEPO') { currentAddress = itemData.ana_adres || "-"; miat = itemData.ana_miat || "-"; } 
+            else { currentAddress = itemData.am_adres || "-"; miat = itemData.am_miat || "-"; }
 
             let existingNewAddr = '';
             if (sessionData.items && sessionData.items[itemData.urunKodu] && sessionData.items[itemData.urunKodu].status === 'DEĞİŞTİ') {
                 existingNewAddr = sessionData.items[itemData.urunKodu].newAddress;
             }
 
-            document.getElementById('vp-name').innerText = itemData.urunAdi;
-            document.getElementById('vp-code').innerText = `KOD: ${itemData.urunKodu}`;
-            document.getElementById('vp-miat').innerText = `MİAT: ${miat}`;
-            document.getElementById('vp-old-address').value = currentAddress;
+            document.getElementById('vp-name').innerText = itemData.urunAdi; document.getElementById('vp-code').innerText = `KOD: ${itemData.urunKodu}`;
+            document.getElementById('vp-miat').innerText = `MİAT: ${miat}`; document.getElementById('vp-old-address').value = currentAddress;
             document.getElementById('vp-new-address').value = existingNewAddr;
             
-            document.getElementById('verify-panel').style.display = 'block';
-            document.getElementById('scan-code').value = '';
-            document.getElementById('vp-new-address').focus();
+            document.getElementById('verify-panel').style.display = 'block'; document.getElementById('scan-code').value = ''; document.getElementById('vp-new-address').focus();
         };
 
         window.verifyAddress = async (isCorrect) => {
             if(!selectedVerifyCode || !currentSessionId) return;
-            
             const sessionData = allSessions.find(s => s.id === currentSessionId);
             if(!sessionData) return;
 
-            const name = document.getElementById('vp-name').innerText;
-            const oldAddr = document.getElementById('vp-old-address').value;
+            const name = document.getElementById('vp-name').innerText, oldAddr = document.getElementById('vp-old-address').value;
             let newAddr = document.getElementById('vp-new-address').value.trim();
             
             const itemData = catalogDb[selectedVerifyCode];
             let exactMiat = "-";
-            if (itemData) {
-                exactMiat = sessionData.type === 'ANA DEPO' ? (itemData.ana_miat || "-") : (itemData.am_miat || "-");
-            }
+            if (itemData) exactMiat = sessionData.type === 'ANA DEPO' ? (itemData.ana_miat || "-") : (itemData.am_miat || "-");
 
-            let status = 'DOĞRU';
-            let finalAddr = oldAddr;
-
+            let status = 'DOĞRU', finalAddr = oldAddr;
             if (!isCorrect) {
-                if(!newAddr) {
-                    showCustomAlert("EKSİK BİLGİ", "Lütfen güncellenecek yeni adresi girin.");
-                    return;
-                }
-                status = 'DEĞİŞTİ';
-                finalAddr = newAddr.toUpperCase().trim();
-            } else {
-                finalAddr = oldAddr;
+                if(!newAddr) { showCustomAlert("EKSİK BİLGİ", "Lütfen güncellenecek yeni adresi girin."); return; }
+                status = 'DEĞİŞTİ'; finalAddr = newAddr.toUpperCase().trim();
             }
 
             if (!sessionData.items) sessionData.items = {};
-            
-            sessionData.items[selectedVerifyCode] = {
-                code: selectedVerifyCode,
-                name: name,
-                oldAddress: oldAddr,
-                newAddress: finalAddr,
-                status: status,
-                miat: exactMiat
-            };
-
+            sessionData.items[selectedVerifyCode] = { code: selectedVerifyCode, name: name, oldAddress: oldAddr, newAddress: finalAddr, status: status, miat: exactMiat };
             await saveSessionToDb(sessionData);
             
-            selectedVerifyCode = null;
-            document.getElementById('verify-panel').style.display = 'none';
-            document.getElementById('scan-code').focus();
+            selectedVerifyCode = null; document.getElementById('verify-panel').style.display = 'none'; document.getElementById('scan-code').focus();
         };
 
         window.removeItem = async (code) => {
             const sessionData = allSessions.find(s => s.id === currentSessionId);
             if(sessionData && sessionData.items && sessionData.items[code]) {
-                delete sessionData.items[code];
-                await saveSessionToDb(sessionData);
+                delete sessionData.items[code]; await saveSessionToDb(sessionData);
             }
         };
 
         const renderTeyitList = () => {
             const sessionData = allSessions.find(s => s.id === currentSessionId);
             if(!sessionData) return;
-
             const container = document.getElementById('teyit-list');
             let items = Object.values(sessionData.items || {});
             
             items.sort((a, b) => {
-                const addrA = a.newAddress || "";
-                const addrB = b.newAddress || "";
+                const addrA = a.newAddress || ""; const addrB = b.newAddress || "";
                 if (addrA !== addrB) return addrA.localeCompare(addrB);
                 return a.name.localeCompare(b.name);
             });
             
             container.innerHTML = items.map(item => {
-                const isCorrect = item.status === 'DOĞRU';
-                const isPending = item.status === 'KONTROL BEKLİYOR';
-                
-                let statusClass = 'status-changed';
-                let badgeClass = 'badge-changed';
-                let addrClass = 'item-addr-new';
+                const isCorrect = item.status === 'DOĞRU', isPending = item.status === 'KONTROL BEKLİYOR';
+                let statusClass = 'status-changed', badgeClass = 'badge-changed', addrClass = 'item-addr-new';
+                if (isCorrect) { statusClass = 'status-correct'; badgeClass = 'badge-correct'; addrClass = 'item-addr-correct'; } 
+                else if (isPending) { statusClass = 'status-pending'; badgeClass = 'badge-pending'; addrClass = 'item-addr-pending'; }
 
-                if (isCorrect) {
-                    statusClass = 'status-correct';
-                    badgeClass = 'badge-correct';
-                    addrClass = 'item-addr-correct';
-                } else if (isPending) {
-                    statusClass = 'status-pending';
-                    badgeClass = 'badge-pending';
-                    addrClass = 'item-addr-pending';
-                }
-
-                return `
-                    <div class="list-item ${statusClass}">
-                        <div class="item-code">${item.code}</div>
-                        <div class="item-name">
-                            ${item.name}
-                            <span class="badge badge-miat" style="margin-top: 4px;">MİAT: ${item.miat || '-'}</span>
-                        </div>
-                        <div class="item-addr">${item.oldAddress}</div>
-                        <div class="${addrClass}">${isPending ? 'ONAY BEKLİYOR' : item.newAddress}</div>
-                        <div style="text-align:center;">
-                            <span class="badge ${badgeClass}">${item.status}</span>
-                        </div>
-                        <div class="item-action">
-                            <button class="btn-edit" onclick="window.openVerifyPanel('${item.code}')">${isPending ? 'TARA' : 'DÜZENLE'}</button>
-                            <button class="btn-del" onclick="removeItem('${item.code}')">SİL</button>
-                        </div>
-                    </div>
-                `;
+                return `<div class="list-item ${statusClass}"><div class="item-code">${item.code}</div><div class="item-name">${item.name}<span class="badge badge-miat" style="margin-top: 4px;">MİAT: ${item.miat || '-'}</span></div><div class="item-addr">${item.oldAddress}</div><div class="${addrClass}">${isPending ? 'ONAY BEKLİYOR' : item.newAddress}</div><div style="text-align:center;"><span class="badge ${badgeClass}">${item.status}</span></div><div class="item-action"><button class="btn-edit" onclick="window.openVerifyPanel('${item.code}')">${isPending ? 'TARA' : 'DÜZENLE'}</button><button class="btn-del" onclick="removeItem('${item.code}')">SİL</button></div></div>`;
             }).join('');
         };
 
@@ -840,91 +579,48 @@
             const sessionData = allSessions.find(s => s.id === currentSessionId);
             if(!sessionData) return;
             const items = Object.values(sessionData.items || {});
-            
-            if (items.length === 0) {
-                return showCustomAlert("BOŞ LİSTE", "İndirilecek teyit edilmiş adres bulunmuyor.");
-            }
+            if (items.length === 0) return showCustomAlert("BOŞ LİSTE", "İndirilecek teyit edilmiş adres bulunmuyor.");
 
             items.sort((a, b) => {
-                const addrA = a.newAddress || "";
-                const addrB = b.newAddress || "";
+                const addrA = a.newAddress || ""; const addrB = b.newAddress || "";
                 if (addrA !== addrB) return addrA.localeCompare(addrB);
                 return a.name.localeCompare(b.name);
             });
 
-            const exportData = items.map(i => ({
-                "Kategori / Adres": i.newAddress,
-                "Ürün Kodu": i.code, 
-                "ÜRÜN İSMİ": i.name, 
-                "ESKİ ADRES": i.oldAddress, 
-                "DURUM": i.status,
-                "MİAT": i.miat || "-"
-            }));
-
+            const exportData = items.map(i => ({ "Kategori / Adres": i.newAddress, "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "ESKİ ADRES": i.oldAddress, "DURUM": i.status, "MİAT": i.miat || "-" }));
             const splitData = items.map(i => {
-                let addr = i.newAddress || "";
-                let parts = addr.split('.');
-                let blok = "-", kat = "-", bolme = "-";
-                
+                let addr = i.newAddress || "", parts = addr.split('.'), blok = "-", kat = "-", bolme = "-";
                 if (parts.length > 0 && parts[0].trim() !== "") {
                     blok = parts[0].trim().toUpperCase();
                     if (parts.length > 1) kat = parts[1].trim();
                     if (parts.length > 2) bolme = parts[2].trim();
                 }
-
-                return {
-                    "Ürün Kodu": i.code,
-                    "ÜRÜN İSMİ": i.name,
-                    "TAM ADRES": addr,
-                    "BLOK": blok,
-                    "KAT": kat,
-                    "BÖLME": bolme,
-                    "DURUM": i.status,
-                    "MİAT": i.miat || "-"
-                };
+                return { "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "TAM ADRES": addr, "BLOK": blok, "KAT": kat, "BÖLME": bolme, "DURUM": i.status, "MİAT": i.miat || "-" };
             });
 
             const safeName = sessionData.name.replace(/[^a-z0-9]/gi, '_');
-            const ws1 = XLSX.utils.json_to_sheet(exportData);
-            const ws2 = XLSX.utils.json_to_sheet(splitData);
+            const ws1 = XLSX.utils.json_to_sheet(exportData); const ws2 = XLSX.utils.json_to_sheet(splitData);
             const wb = XLSX.utils.book_new();
-            
-            XLSX.utils.book_append_sheet(wb, ws1, "ADRES TEYITLERI");
-            XLSX.utils.book_append_sheet(wb, ws2, "AYRISTIRILMIS ADRESLER");
-            
+            XLSX.utils.book_append_sheet(wb, ws1, "ADRES TEYITLERI"); XLSX.utils.book_append_sheet(wb, ws2, "AYRISTIRILMIS ADRESLER");
             XLSX.writeFile(wb, `Terminux_Adres_Teyit_${safeName}.xlsx`);
 
             showCustomConfirm("OTURUMU KAPAT", "Excel dosyası indirildi. Oturumu tamamlandı olarak işaretlemek ister misiniz?", "KAPAT", "btn-success", async () => {
-                sessionData.status = 'finished';
-                await saveSessionToDb(sessionData);
-                closeActiveScreen();
+                sessionData.status = 'finished'; await saveSessionToDb(sessionData); closeActiveScreen();
             });
         };
 
         window.openScanner = () => {
             document.getElementById('scanner-modal').style.display = 'flex';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    document.getElementById('scan-code').value = window.cleanBarcode(decodedText);
-                    closeScanner();
-                    window.openVerifyPanel(window.cleanBarcode(decodedText));
-                },
-                (errorMessage) => {}
-            ).catch((err) => {
-                showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
-                closeScanner();
-            });
+                (decodedText) => { document.getElementById('scan-code').value = window.cleanBarcode(decodedText); closeScanner(); window.openVerifyPanel(window.cleanBarcode(decodedText)); },
+                (errorMessage) => {}).catch((err) => { showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin."); closeScanner(); });
         };
 
         window.closeScanner = () => {
             document.getElementById('scanner-modal').style.display = 'none';
-            if(html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
-            }
+            if(html5QrCode && html5QrCode.isScanning) html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
         };
-
     </script>
 </body>
 </html>
