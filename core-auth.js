@@ -15,7 +15,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-
 const path = window.location.pathname.toLowerCase();
 let requiredModule = null;
 if (path.includes('sayim.html')) requiredModule = 'sayim';
