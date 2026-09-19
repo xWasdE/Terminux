@@ -30,10 +30,10 @@ onAuthStateChanged(auth, async (user) => {
             const displayUser = document.getElementById('display-user');
             if (displayUser) displayUser.innerText = user.email;
         } else {
-            window.location.href = "../index.html";
+            window.location.href = "/index.html";
         }
     } else {
-        window.location.href = "../index.html";
+        window.location.href = "/index.html";
     }
 });
 
