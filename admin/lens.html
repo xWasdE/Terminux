@@ -76,7 +76,7 @@
         </div>
     </div>
 
-    <!-- Alert Modal -->
+
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
@@ -103,7 +103,7 @@
             return "";
         };
 
-        // Excel Yükleme Fonksiyonu
+
         async function processLensExcel(inputId, brand) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog("Dosya seçilmedi.");
@@ -124,7 +124,7 @@
                 }
                 sysLog(`Yükleme Bitti. (${brand} - ${count} Kayıt)`);
                 document.getElementById(inputId).value = '';
-                fetchLenses(); // Güncel listeyi çek
+                fetchLenses();
             };
             reader.readAsArrayBuffer(file);
         }
@@ -132,7 +132,7 @@
         document.getElementById('btn-alcon').addEventListener('click', () => processLensExcel('f-alcon', 'ALCON'));
         document.getElementById('btn-tecnis').addEventListener('click', () => processLensExcel('f-tecnis', 'TECNIS'));
 
-        // Manuel Ekleme Fonksiyonu
+
         document.getElementById('btn-manuel-ekle').addEventListener('click', async () => {
             const brand = document.getElementById('m-brand').value;
             const kod = document.getElementById('m-kod').value.trim();
@@ -152,7 +152,7 @@
             fetchLenses();
         });
 
-        // Tüm Lensleri Çekme ve Render
+
         async function fetchLenses() {
             lensData = [];
             const [alconSnap, tecnisSnap] = await Promise.all([
