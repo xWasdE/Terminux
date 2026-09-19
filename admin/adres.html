@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Kroki Yönetimi</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="../harita-am.js"></script>
+    <script src="../harita-ana.js"></script>
+    <style>
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
+        .depo-tabs { display: flex; gap: 8px; }
+        .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
+        .depo-btn.active { background: #00ccff; color: #000; }
+        .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
+        .action-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .zoom-group { display: flex; align-items: center; background: #111; border: 1px solid #333; border-radius: 6px; padding: 2px 10px; height: 35px; }
+        .zoom-btn { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: bold; width: 25px; cursor: pointer; }
+        .zoom-val { font-size: 14px; font-weight: bold; font-family: monospace; width: 45px; text-align: center; color: #00ccff; background: transparent; border: none; outline: none; }
+        .map-outer { flex: 1; overflow: auto; padding: 20px; background: #050505; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #1a1a1a; min-height: 600px;}
+        .map-container { position: relative; transition: width 0.2s, height 0.2s; margin: auto; }
+        .map-wrapper { width: 100%; aspect-ratio: 16/9; position: relative; background: #050505; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden; transform-origin: top left; transition: transform 0.2s; }
+        .map-wrapper-am { min-width: 1050px; }
+        .map-wrapper-ana { min-width: 1200px; }
+        .cell { background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #888; font-family: monospace; font-size: clamp(5px, 1.2vw, 11px); font-weight: bold; transition: 0.3s; border-radius: 3px; text-align: center; overflow: hidden; position: relative; cursor: pointer; pointer-events: auto !important; }
+        .cell-lens { border: 2px solid #333; font-size: clamp(6px, 1.4vw, 12px); }
+        .cell-hidden { visibility: hidden; }
+        .cell:hover { background: #ffbc00; color: #000; border-color: #fff; box-shadow: 0 0 15px rgba(255,188,0,0.5); z-index: 10; font-size: 14px; }
+        .map-inner-door { border: 2px dashed #888; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; font-size: 10px; z-index: 10; pointer-events: none; }
+        #be-grid { display: grid; gap: 5px; overflow: auto; padding: 15px; background: #050505; border: 1px solid #222; border-radius: 8px; margin-top: 15px; max-height: 400px; }
+        .edit-cell-wrap { position: relative; background: #111; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column; transition: 0.2s; }
+        .edit-cell-wrap.over { border-color: #00ff00; background: #0a0a0a; transform: scale(1.05); z-index: 10; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .edit-cell-drag { background: #222; color: #888; font-size: 10px; text-align: center; cursor: grab; padding: 4px 0; border-bottom: 1px solid #444; border-radius: 4px 4px 0 0; }
+        .edit-cell-drag:active { cursor: grabbing; background: #333; }
+        .edit-cell { background: transparent; border: none; color: #fff; padding: 10px; text-align: center; font-family: monospace; font-size: 12px; outline: none; width: 100%; }
+        .edit-cell:focus { color: #ffbc00; }
+    </style>
+</head>
+<body>
+    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
+        <div class="menu">
+            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item active"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+        </div>
+        <div class="user-info">
+            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
+            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="topbar"><h2>KROKİ VE ADRES YÖNETİMİ</h2></div>
+        <div class="content-area" style="display:flex; flex-direction:column; padding:20px;">
+            <div class="toolbar">
+                <div class="depo-tabs">
+                    <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE DEPO</button>
+                    <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
+                </div>
+                <div class="zoom-group">
+                    <button class="zoom-btn" onclick="changeZoom(-0.25)">-</button>
+                    <input type="number" class="zoom-val" id="zoom-val" value="100" min="25" max="250" onchange="setCustomZoom(this.value)">
+                    <span style="color:#00ccff; font-weight:bold; margin-right:5px;">%</span>
+                    <button class="zoom-btn" onclick="changeZoom(0.25)">+</button>
+                </div>
+                <div class="action-group">
+                    <input type="file" id="import-file" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
+                    <button class="btn-primary" style="background:#00ff00; color:#000;" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
+                    <button class="btn-primary" style="background:#00ccff; color:#000;" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
+                    <button class="btn-primary" style="background:#ff3333; color:#fff;" onclick="exportMapCode()">KROKİYİ KAYDET (İNDİR)</button>
+                </div>
+            </div>
+            <div class="map-outer">
+                <div class="map-container" id="map-container">
+                    <div id="admin-map-area" class="map-wrapper map-wrapper-am"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="block-editor-modal" class="modal">
+        <div class="modal-box" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#00ccff;">MİNİ RAF KROKİSİ DÜZENLEYİCİ</h3>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="document.getElementById('block-editor-modal').style.display='none'">×</button>
+            </div>
+            <div style="display:flex; gap:15px; margin-bottom:15px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <div class="form-group" style="flex:1; margin:0;"><label>SÜTUN SAYISI (Yatay)</label><input type="number" id="be-cols" value="1" min="1" onchange="generateGridInputs()"></div>
+                <div class="form-group" style="flex:1; margin:0;"><label>SATIR SAYISI (Dikey - Katlar)</label><input type="number" id="be-rows" value="1" min="1" onchange="generateGridInputs()"></div>
+            </div>
+            <div style="display:flex; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:8px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; margin:0;"><label>ÖN EK</label><input type="text" id="be-prefix" placeholder="A1-"></div>
+                <div class="form-group" style="flex:1; margin:0;"><label>BAŞLANGIÇ</label><input type="number" id="be-start" value="1"></div>
+                <div class="form-group" style="flex:1; margin:0;"><label>DOLDURMA YÖNÜ</label><select id="be-fill-dir"><option value="normal">Normal (İleri)</option><option value="reverse">Ters (Aşağıdan Yukarı)</option></select></div>
+                <button class="btn-primary" style="padding:13px 20px;" onclick="autoFillGrid()">OTOMATİK DOLDUR</button>
+            </div>
+            <div class="form-group" style="margin-top:15px;"><label>HÜCRE İÇİ YAZI AÇISI (Görsel)</label><select id="be-text-rot"><option value="0">Yatay (0°)</option><option value="90">Dikey (Yukarıdan Aşağıya 90°)</option><option value="-90">Dikey (Aşağıdan Yukarıya -90°)</option></select></div>
+            <div id="be-grid"></div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-primary" style="flex:1; background:#333; color:#fff;" onclick="clearGridVisuals()">TÜM KUTULARI SİL</button>
+                <button class="btn-primary" style="flex:2; background:#00ff00;" onclick="applyBlockToMap()">KROKİYE UYGULA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-alert" class="modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
+            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './admin.js';
+        import { collection, getDocs, doc, addDoc, updateDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let currentDepo = 'am';
+        let currentCollection = 'kroki_adresleri';
+        let currentScale = 1.0;
+        let activeBlockParent = null; 
+        let draggedGridCell = null;
+
+        window.switchDepo = (depo) => {
+            currentDepo = depo;
+            const mapArea = document.getElementById('admin-map-area');
+            if(depo === 'am') {
+                document.getElementById('tab-am').classList.replace('inactive', 'active');
+                document.getElementById('tab-ana').classList.replace('active', 'inactive');
+                currentCollection = 'kroki_adresleri';
+                mapArea.className = 'map-wrapper map-wrapper-am';
+                mapArea.innerHTML = window.haritaAmeliyathane || "";
+            } else {
+                document.getElementById('tab-ana').classList.replace('inactive', 'active');
+                document.getElementById('tab-am').classList.replace('active', 'inactive');
+                currentCollection = 'kroki_adresleri_ana';
+                mapArea.className = 'map-wrapper map-wrapper-ana';
+                mapArea.innerHTML = window.haritaAnaDepo || "";
+            }
+            const svgEl = mapArea.querySelector('svg');
+            if(svgEl) svgEl.style.display = 'none';
+            mapArea.querySelectorAll('.map-pathway').forEach(p => p.style.display = 'none');
+            setTimeout(() => bindCellEvents(mapArea), 300);
+            applyZoom();
+        };
+
+        function bindCellEvents(parentArea) {
+            parentArea.querySelectorAll('.cell').forEach(cell => {
+                if(cell.classList.contains('cell-hidden') || !cell.id || cell.id.trim() === '') {
+                    cell.style.visibility = 'visible'; cell.style.opacity = '0.3'; cell.innerText = '+'; cell.classList.remove('cell-hidden'); cell.id = ''; 
+                }
+                cell.style.pointerEvents = 'auto';
+                const newCell = cell.cloneNode(true);
+                cell.parentNode.replaceChild(newCell, cell);
+                newCell.addEventListener('click', () => {
+                    activeBlockParent = newCell.parentElement;
+                    openBlockEditorFromParent(activeBlockParent);
+                });
+            });
+        }
+
+        function openBlockEditorFromParent(parent) {
+            let cols = parseInt((parent.style.gridTemplateColumns.match(/repeat\((\d+)/) || [])[1]) || 1;
+            let rows = parseInt((parent.style.gridTemplateRows.match(/repeat\((\d+)/) || [])[1]) || 1;
+            document.getElementById('be-cols').value = cols; document.getElementById('be-rows').value = rows;
+            let existingData = [], foundRot = 0;
+            Array.from(parent.querySelectorAll('.cell')).forEach(c => {
+                if(c.classList.contains('cell-hidden') || c.innerText === '+') existingData.push('');
+                else {
+                    existingData.push(c.innerText.trim());
+                    let span = c.querySelector('span');
+                    if(span) { let rotMatch = span.style.transform.match(/rotate\(([\d\-]+)deg\)/); if(rotMatch) foundRot = parseInt(rotMatch[1]); }
+                }
+            });
+            document.getElementById('be-text-rot').value = foundRot;
+            window.generateGridInputs(cols, rows, existingData);
+            document.getElementById('block-editor-modal').style.display = 'flex';
+        }
+
+        window.generateGridInputs = (colsOverride, rowsOverride, existingData = []) => {
+            let cols = colsOverride !== undefined ? colsOverride : parseInt(document.getElementById('be-cols').value) || 1;
+            let rows = rowsOverride !== undefined ? rowsOverride : parseInt(document.getElementById('be-rows').value) || 1;
+            const container = document.getElementById('be-grid');
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; container.innerHTML = '';
+            for(let i=0; i<cols*rows; i++) {
+                const wrap = document.createElement('div'); wrap.className = 'edit-cell-wrap'; wrap.draggable = true;
+                const handle = document.createElement('div'); handle.className = 'edit-cell-drag'; handle.innerHTML = '&#9776; KAYDIR';
+                const input = document.createElement('input'); input.className = 'edit-cell'; input.type = 'text'; input.placeholder = 'BOŞ (+)'; input.value = existingData[i] || '';
+                wrap.appendChild(handle); wrap.appendChild(input);
+                wrap.addEventListener('dragstart', handleDragStart); wrap.addEventListener('dragenter', handleDragEnter); wrap.addEventListener('dragover', handleDragOver); wrap.addEventListener('dragleave', handleDragLeave); wrap.addEventListener('drop', handleDrop); wrap.addEventListener('dragend', handleDragEnd);
+                container.appendChild(wrap);
+            }
+        };
+
+        window.autoFillGrid = () => {
+            const prefix = document.getElementById('be-prefix').value.trim(); 
+            let startNum = parseInt(document.getElementById('be-start').value) || 1;
+            const fillDir = document.getElementById('be-fill-dir').value;
+            const inputs = Array.from(document.querySelectorAll('#be-grid .edit-cell'));
+            if(fillDir === 'reverse') {
+                for(let i = inputs.length - 1; i >= 0; i--) { let sep = prefix===''||prefix.endsWith('.')||prefix.endsWith('-')?'':'.'; inputs[i].value = prefix===''?startNum:prefix+sep+startNum.toString().padStart(2,'0'); startNum++; }
+            } else {
+                for(let i = 0; i < inputs.length; i++) { let sep = prefix===''||prefix.endsWith('.')||prefix.endsWith('-')?'':'.'; inputs[i].value = prefix===''?startNum:prefix+sep+startNum.toString().padStart(2,'0'); startNum++; }
+            }
+        };
+
+        window.clearGridVisuals = () => document.querySelectorAll('#be-grid .edit-cell').forEach(inp => inp.value = '');
+
+        window.applyBlockToMap = () => {
+            if(!activeBlockParent) return;
+            let cols = parseInt(document.getElementById('be-cols').value) || 1, rows = parseInt(document.getElementById('be-rows').value) || 1, rot = document.getElementById('be-text-rot').value;
+            activeBlockParent.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; activeBlockParent.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            let baseStyle = activeBlockParent.firstElementChild ? activeBlockParent.firstElementChild.getAttribute('style').replace(/opacity:\s*[^;]+;/gi, '').replace(/visibility:\s*[^;]+;/gi, '') : 'background:#0a0a0a; border:1px solid #222; display:flex; align-items:center; justify-content:center; color:#888; font-family:monospace; font-size:11px; font-weight:bold; border-radius:3px;';
+            activeBlockParent.innerHTML = '';
+            Array.from(document.querySelectorAll('#be-grid .edit-cell')).forEach(inp => {
+                let val = inp.value.trim();
+                let newCell = document.createElement('div'); newCell.className = 'cell'; newCell.style.cssText = baseStyle;
+                if(!val) { newCell.classList.remove('cell-hidden'); newCell.style.visibility = 'visible'; newCell.style.opacity = '0.3'; newCell.innerText = '+'; newCell.id = ''; } 
+                else { newCell.id = 'cell-' + val; newCell.innerHTML = `<span style="display:inline-block; transform: rotate(${rot}deg); white-space: nowrap; pointer-events: none;">${val}</span>`; newCell.style.opacity = '1'; }
+                newCell.style.pointerEvents = 'auto'; activeBlockParent.appendChild(newCell);
+            });
+            bindCellEvents(activeBlockParent); document.getElementById('block-editor-modal').style.display='none';
+            document.getElementById('alert-title').innerText="BAŞARILI"; document.getElementById('alert-desc').innerText="Kroki kodunu kaydetmeyi unutmayın."; document.getElementById('custom-alert').style.display='flex';
+        };
+
+        function handleDragStart(e) { draggedGridCell = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.style.opacity = '0.4'; }
+        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+        function handleDragEnter(e) { this.classList.add('over'); }
+        function handleDragLeave(e) { this.classList.remove('over'); }
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (draggedGridCell !== this) {
+                let sourceInput = draggedGridCell.querySelector('.edit-cell'), targetInput = this.querySelector('.edit-cell');
+                let tempVal = sourceInput.value; sourceInput.value = targetInput.value; targetInput.value = tempVal;
+            }
+            return false;
+        }
+        function handleDragEnd(e) { this.style.opacity = '1'; document.querySelectorAll('.edit-cell-wrap').forEach(item => item.classList.remove('over')); }
+
+        window.exportMapCode = () => {
+            const clone = document.getElementById('admin-map-area').cloneNode(true);
+            clone.querySelectorAll('.cell').forEach(cell => {
+                cell.style.pointerEvents = ''; 
+                if(!cell.id || cell.id.trim() === '' || cell.innerText.trim() === '+') { cell.id = ''; cell.innerHTML = ''; cell.className = 'cell cell-hidden'; cell.style.visibility = 'hidden'; cell.style.opacity = ''; }
+            });
+            let html = clone.innerHTML.replace(/ active"/g, '"');
+            let jsVar = currentDepo === 'am' ? 'haritaAmeliyathane' : 'haritaAnaDepo', filename = currentDepo === 'am' ? 'harita-am.js' : 'harita-ana.js';
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([`window.${jsVar} = \`\n${html}\n\`;`], { type: 'text/javascript' })); a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+        };
+
+        window.changeZoom = (delta) => setCustomZoom((currentScale + delta) * 100);
+        window.setCustomZoom = (val) => {
+            let parsed = parseInt(val); if(isNaN(parsed)) parsed = 100; if(parsed < 25) parsed = 25; if(parsed > 250) parsed = 250;
+            currentScale = parsed / 100; document.getElementById('zoom-val').value = parsed; applyZoom();
+        };
+        function applyZoom() {
+            document.getElementById('admin-map-area').style.transform = `scale(${currentScale})`;
+            const baseW = currentDepo === 'am' ? 1050 : 1200;
+            document.getElementById('map-container').style.width = (baseW * currentScale) + 'px';
+            document.getElementById('map-container').style.height = ((baseW * 9) / 16 * currentScale) + 'px';
+        }
+
+        window.exportExcel = async () => {
+            const snapshot = await getDocs(query(collection(db, currentCollection)));
+            let data = [];
+            snapshot.forEach(doc => { let d = doc.data(); data.push({ "Adres": d.adres || "", "Ürün Adı": d.urunAdi || "", "Ürün Kodu": d.urunKodu || "", "Barkod": d.barkod || "", "Ref No": d.refNo || "" }); });
+            if(data.length === 0) return alert("Veri yok.");
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Adresler");
+            XLSX.writeFile(wb, `terminux_${currentDepo}_yedek.xlsx`);
+        };
+
+        window.importExcel = (event) => {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const rows = XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(e.target.result), {type: 'array'}).Sheets[XLSX.read(new Uint8Array(e.target.result), {type: 'array'}).SheetNames[0]]);
+                if(confirm(`${rows.length} satır işlenecek. Onaylıyor musunuz?`)) {
+                    const btnUpload = document.getElementById('btn-excel-upload'); btnUpload.innerText = 'İŞLENİYOR...'; btnUpload.disabled = true;
+                    const mevcutUrunler = new Map();
+                    (await getDocs(query(collection(db, currentCollection)))).forEach(d => { if (d.data().urunKodu || d.data().barkod) mevcutUrunler.set(String(d.data().urunKodu || d.data().barkod).trim(), { id: d.id, adres: d.data().adres }); });
+                    let eklendi = 0, guncellendi = 0;
+                    for(let row of rows) {
+                        let adres = String(row["Adres"] || row["adres"] || "").trim().toUpperCase().startsWith("BDM") ? String(row["Adres"] || row["adres"] || "").trim().substring(3) : String(row["Adres"] || row["adres"] || "").trim();
+                        let kod = String(row["Ürün Kodu"] || row["urunKodu"] || "").trim(), barkod = String(row["Barkod"] || row["barkod"] || "").trim();
+                        if(adres) {
+                            let obj = { adres: adres, urunAdi: String(row["Ürün Adı"] || "").trim(), urunKodu: kod, barkod: barkod, refNo: String(row["Ref No"] || "").trim() };
+                            if ((kod || barkod) && mevcutUrunler.has(kod || barkod)) { if (mevcutUrunler.get(kod || barkod).adres !== adres) { await updateDoc(doc(db, currentCollection, mevcutUrunler.get(kod || barkod).id), obj); guncellendi++; } }
+                            else { await addDoc(collection(db, currentCollection), obj); eklendi++; }
+                        }
+                    }
+                    btnUpload.innerText = 'EXCEL İLE YÜKLE'; btnUpload.disabled = false;
+                    document.getElementById('alert-title').innerText="TAMAMLANDI"; document.getElementById('alert-desc').innerText=`Eklenen: ${eklendi}\nGüncellenen: ${guncellendi}`; document.getElementById('custom-alert').style.display='flex';
+                    switchDepo(currentDepo);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        setTimeout(() => switchDepo('am'), 500);
+    </script>
+</body>
+</html>
