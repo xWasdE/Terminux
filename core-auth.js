@@ -62,13 +62,19 @@ onAuthStateChanged(auth, async (user) => {
             });
 
         } else {
+            let allowPublicLens = false;
+            if (path.includes('lens.html') && !path.includes('admin')) {
+                const settingsSnap = await getDoc(doc(db, "system", "settings"));
+                if (settingsSnap.exists() && settingsSnap.data().publicLensEnabled === true) {
+                    allowPublicLens = true;
+                }
+            }
 
-            if (path !== '/' && !path.includes('index.html') && !path.includes('bakim.html')) {
+            if (!allowPublicLens && path !== '/' && !path.includes('index.html') && !path.includes('bakim.html')) {
                 window.location.replace('/index.html');
             }
         }
     } catch (error) {
-        console.error("Auth Hatası:", error);
         if (path !== '/' && !path.includes('index.html')) window.location.replace('/index.html');
     }
 });
