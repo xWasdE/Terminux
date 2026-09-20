@@ -11,6 +11,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
+        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; width: 100%; }
+        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; width: 100%; }
+        
         .map-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; margin: auto; min-width: 1000px; flex-shrink: 0; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
@@ -106,7 +109,7 @@
     
     <div class="main-content">
         <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
-        <div class="content-area" style="overflow-y: auto; padding-right: 15px;">
+        <div class="content-area">
 
             <div class="admin-toolbar">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -267,6 +270,7 @@
     <script type="module">
         import { db, auth } from './admin.js';
         import { collection, onSnapshot, getDoc, getDocs, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         let catalog = {};
         let addresses = {};
@@ -286,21 +290,35 @@
             return el ? (el.value || 'merkez') : 'merkez';
         };
 
-        setTimeout(async () => {
-            const u = auth.currentUser;
-            if(u) {
-                const uDoc = await getDoc(doc(db, "users", u.uid));
-                if(uDoc.exists()) {
-                    const r = uDoc.data().role || 'personel';
-                    const uloc = uDoc.data().location || 'merkez';
-                    const modules = uDoc.data().modules || {};
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                try {
+                    let role = 'personel';
+                    let modules = {};
+                    let uloc = 'merkez';
                     
-                    if(r !== 'superadmin' && !modules.depo) {
+                    const snap = await getDoc(doc(db, "users", user.uid));
+                    if(snap.exists()) {
+                        role = snap.data().role || 'personel';
+                        uloc = snap.data().location || 'merkez';
+                        modules = snap.data().modules || {};
+                    }
+
+                    // TERMİNUX OWNER OVERRIDE - Asla dışarı atılmaz
+                    if(user.email === 'admin@terminux.com.tr') {
+                        role = 'superadmin';
+                        uloc = 'tumu';
+                        modules = { depo: true, adres: true, stok: true, lens: true, ayarlar: true };
+                    }
+
+                    if(role !== 'superadmin' && !modules.depo) {
                         showAccessDenied(); return;
                     }
 
-                    if(r !== 'superadmin') {
-                        if(r !== 'admin') document.getElementById('nav-users').style.display = 'none';
+                    if(role !== 'superadmin') {
+                        if(role !== 'admin') {
+                            document.getElementById('nav-users').style.display = 'none';
+                        }
                         if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
                         if(!modules.stok) document.getElementById('nav-stok').style.display = 'none';
                         if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
@@ -309,9 +327,9 @@
 
                     document.getElementById('global-loader').style.display = 'none';
 
-                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                    onSnapshot(doc(db, "system", "locations"), (locSnap) => {
                         let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
-                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        if(role !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
                         let html = '';
                         locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
                         const sel = document.getElementById('admin-loc-select');
@@ -323,9 +341,14 @@
                         initMap();
                         loadData();
                     });
-                } else { showAccessDenied(); }
-            } else { window.location.href = '../index.html'; }
-        }, 1500);
+                } catch(err) {
+                    console.error("Yetki kontrol hatası:", err);
+                    window.location.href = '../index.html';
+                }
+            } else {
+                window.location.href = '../index.html';
+            }
+        });
 
         window.loadCatalogFromDB = async () => {
             const loc = getActiveLoc();
