@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Veritabanı Taşıma</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#000;">
+    <div style="background:#0c0c0c; border:1px solid #333; padding:40px; border-radius:12px; max-width:600px; text-align:center;">
+        <h2 style="color:#00ff00; margin-bottom:20px;">VERİTABANI TAŞIMA ARACI</h2>
+        <p style="color:#aaa; font-size:14px; margin-bottom:30px;">Bu araç eski "merkez" koleksiyonlarındaki tüm verileri yeni "bodrum" koleksiyonlarına kopyalayacaktır. İşlem bitince bu dosyayı sunucudan silebilirsiniz.</p>
+        <button id="btn-migrate" style="background:#00ccff; color:#000; border:none; padding:15px 30px; font-weight:bold; font-size:16px; border-radius:6px; cursor:pointer; width:100%;">MERKEZ -> BODRUM TAŞIMAYI BAŞLAT</button>
+        <div id="log" style="margin-top:20px; color:#ffbc00; font-family:monospace; font-size:12px; text-align:left; background:#000; padding:15px; border-radius:6px; height:200px; overflow-y:auto;">Sistem hazır...</div>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './admin.js';
+        import { getDocs, collection, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        document.getElementById('btn-migrate').addEventListener('click', async () => {
+            if (!confirm("Taşıma işlemini başlatmak istediğinize emin misiniz?")) return;
+
+            const btn = document.getElementById('btn-migrate');
+            const logEl = document.getElementById('log');
+            btn.disabled = true;
+            btn.style.background = "#333";
+            btn.style.color = "#aaa";
+            btn.innerText = "KOPYALANIYOR, LÜTFEN BEKLEYİN...";
+
+            const appendLog = (msg) => {
+                logEl.innerHTML += `<div>> ${msg}</div>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            const collectionsToMigrate = [
+                { src: "ana_depo", dest: "ana_depo_bodrum" },
+                { src: "ameliyathane", dest: "ameliyathane_bodrum" },
+                { src: "kilitli_depo_stok", dest: "kilitli_depo_stok_bodrum" },
+                { src: "lens_alcon", dest: "lens_alcon_bodrum" },
+                { src: "lens_tecnis", dest: "lens_tecnis_bodrum" }
+            ];
+
+            try {
+                for (let cols of collectionsToMigrate) {
+                    appendLog(`${cols.src} okunuyor...`);
+                    const snap = await getDocs(collection(db, cols.src));
+                    let count = 0;
+                    for (let docSnap of snap.docs) {
+                        await setDoc(doc(db, cols.dest, docSnap.id), docSnap.data());
+                        count++;
+                    }
+                    appendLog(`<span style="color:#00ff00;">${cols.src} => ${cols.dest} aktarıldı (${count} kayıt).</span>`);
+                }
+
+                appendLog(`Kilitli depo adresleri taşınıyor...`);
+                const adresSnap = await getDoc(doc(db, "kilitli_depo", "adresler"));
+                if (adresSnap.exists()) {
+                    await setDoc(doc(db, "kilitli_depo_bodrum", "adresler"), adresSnap.data());
+                    appendLog(`<span style="color:#00ff00;">Adresler aktarıldı.</span>`);
+                }
+
+                appendLog(`<br><span style="color:#00ccff; font-size:14px;">✅ TÜM VERİLER BAŞARIYLA KOPYALANDI! Bu dosyayı silebilirsiniz.</span>`);
+                btn.innerText = "TAŞIMA İŞLEMİ TAMAMLANDI";
+            } catch(e) {
+                appendLog(`<span style="color:#ff3333;">Hata oluştu: ${e.message}</span>`);
+                btn.innerText = "HATA OLUŞTU";
+            }
+        });
+    </script>
+</body>
+</html>
