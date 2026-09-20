@@ -40,6 +40,12 @@
         <div class="topbar"><h2>LENS YÖNETİM MERKEZİ</h2></div>
         <div class="content-area">
             
+            <div class="card" style="border-color: #00ccff; margin-bottom: 20px;">
+                <div class="card-header" style="color: #00ccff;">LOKASYON SEÇİMİ</div>
+                <select id="admin-loc-select" style="width: 100%; background: #111; color: #00ccff; border: 1px solid #333; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 6px;"></select>
+                <p style="font-size:11px; color:#888; margin-top:10px;">Aşağıdaki tüm lens işlemleri seçilen bu lokasyon üzerinden yapılacaktır.</p>
+            </div>
+
             <div class="card">
                 <div class="card-header">EXCEL İLE TOPLU LENS YÜKLEME</div>
                 <div class="form-grid">
@@ -77,6 +83,10 @@
         </div>
     </div>
 
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
@@ -86,14 +96,35 @@
     </div>
 
     <script type="module">
-        import { db } from './admin.js';
-        import { doc, setDoc, deleteDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from './admin.js';
+        import { doc, setDoc, deleteDoc, collection, getDocs, updateDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let lensData = [];
 
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role;
+                    const uloc = uDoc.data().location || 'merkez';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        const sel = document.getElementById('admin-loc-select');
+                        sel.innerHTML = html;
+                        sel.onchange = fetchLenses;
+                        fetchLenses();
+                    });
+                }
+            }
+        }, 1500);
+
         const sysLog = (msg) => {
             const div = document.getElementById('lens-log');
-            div.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            div.innerHTML += '<div>[' + new Date().toLocaleTimeString() + '] ' + msg + '</div>';
             div.scrollTop = div.scrollHeight;
         };
 
@@ -103,10 +134,19 @@
             return "";
         };
 
+        const getActiveCollections = () => {
+            const loc = document.getElementById('admin-loc-select').value;
+            const alcon = loc === 'merkez' ? 'lens_alcon' : 'lens_alcon_' + loc;
+            const tecnis = loc === 'merkez' ? 'lens_tecnis' : 'lens_tecnis_' + loc;
+            return { alcon, tecnis };
+        };
+
         async function processLensExcel(inputId, brand) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog("Dosya seçilmedi.");
-            const collectionName = brand === "ALCON" ? "lens_alcon" : "lens_tecnis";
+            const cols = getActiveCollections();
+            const collectionName = brand === "ALCON" ? cols.alcon : cols.tecnis;
+            
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
@@ -121,7 +161,7 @@
                     await setDoc(doc(db, collectionName, id), data, { merge: true });
                     count++;
                 }
-                sysLog(`Yükleme Bitti. (${brand} - ${count} Kayıt)`);
+                sysLog('Yükleme Bitti. (' + brand + ' - ' + count + ' Kayıt)');
                 document.getElementById(inputId).value = '';
                 fetchLenses(); 
             };
@@ -138,13 +178,22 @@
             const no = document.getElementById('m-no').value.trim();
             const mik = parseInt(document.getElementById('m-mik').value) || 0;
 
-            if(!kod || !ad || !no) return window.showAlert("HATA", "Lütfen Kod, Ad ve Lens No alanlarını eksiksiz doldurun.");
+            if(!kod || !ad || !no) {
+                document.getElementById('alert-title').innerText = "HATA";
+                document.getElementById('alert-desc').innerText = "Lütfen Kod, Ad ve Lens No alanlarını eksiksiz doldurun.";
+                document.getElementById('custom-alert').style.display = 'flex';
+                return;
+            }
 
-            const col = brand === "ALCON" ? "lens_alcon" : "lens_tecnis";
+            const cols = getActiveCollections();
+            const col = brand === "ALCON" ? cols.alcon : cols.tecnis;
             await setDoc(doc(db, col, kod), { urunKodu: kod, urunAdi: ad, lensNo: no, miktar: mik, marka: brand }, { merge: true });
             
-            window.showAlert("BAŞARILI", "Manuel lens sisteme kaydedildi.");
-            sysLog(`${kod} stoklara manuel eklendi/güncellendi.`);
+            document.getElementById('alert-title').innerText = "BAŞARILI";
+            document.getElementById('alert-desc').innerText = "Manuel lens sisteme kaydedildi.";
+            document.getElementById('custom-alert').style.display = 'flex';
+
+            sysLog(kod + ' stoklara manuel eklendi/güncellendi.');
             ['m-kod', 'm-ad', 'm-no'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('m-mik').value = '1';
             fetchLenses();
@@ -152,12 +201,13 @@
 
         async function fetchLenses() {
             lensData = [];
+            const cols = getActiveCollections();
             const [alconSnap, tecnisSnap] = await Promise.all([
-                getDocs(collection(db, "lens_alcon")),
-                getDocs(collection(db, "lens_tecnis"))
+                getDocs(collection(db, cols.alcon)),
+                getDocs(collection(db, cols.tecnis))
             ]);
-            alconSnap.forEach(d => lensData.push({ id: d.id, col: "lens_alcon", ...d.data() }));
-            tecnisSnap.forEach(d => lensData.push({ id: d.id, col: "lens_tecnis", ...d.data() }));
+            alconSnap.forEach(d => lensData.push({ id: d.id, col: cols.alcon, ...d.data() }));
+            tecnisSnap.forEach(d => lensData.push({ id: d.id, col: cols.tecnis, ...d.data() }));
             renderLenses();
         }
 
@@ -177,7 +227,7 @@
             });
 
             if(filtered.length === 0) {
-                container.innerHTML = `<div style="color:#ff3333; text-align:center; padding: 20px; font-weight:bold;">EŞLEŞEN KAYIT BULUNAMADI.</div>`;
+                container.innerHTML = '<div style="color:#ff3333; text-align:center; padding: 20px; font-weight:bold;">EŞLEŞEN KAYIT BULUNAMADI.</div>';
                 return;
             }
 
@@ -186,38 +236,38 @@
                 let num = parseFloat(String(l.lensNo || "0").replace(',', '.'));
                 let fmtNo = !isNaN(num) ? (num > 0 ? "+" : "") + num.toFixed(2) : l.lensNo;
 
-                return `
-                <div class="lens-row">
-                    <div style="flex:2; min-width:200px;">
-                        <span class="brand-badge ${bClass}">${l.marka}</span>
-                        <div style="font-family:monospace; color:#fff; margin-top:8px; font-size:14px; font-weight:bold;">${l.urunKodu}</div>
-                        <div style="font-size:12px; color:#aaa; margin-top:4px;">${l.urunAdi}</div>
-                    </div>
-                    <div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">
-                        <label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">LENS NO</label>
-                        <input type="text" id="edit-no-${l.id}" value="${fmtNo}" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#fff; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">
-                    </div>
-                    <div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">
-                        <label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">MİKTAR</label>
-                        <input type="number" id="edit-mik-${l.id}" value="${l.miktar || 0}" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#0f0; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">
-                    </div>
-                    <div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">
-                        <button class="btn-primary" style="background:#00ccff; padding:10px 15px;" onclick="updateL('${l.id}', '${l.col}')">KAYDET</button>
-                        <button class="btn-danger-outline" style="padding:10px 15px;" onclick="deleteL('${l.id}', '${l.col}')">SİL</button>
-                    </div>
-                </div>
-                `;
+                return '<div class="lens-row">' +
+                    '<div style="flex:2; min-width:200px;">' +
+                    '<span class="brand-badge ' + bClass + '">' + l.marka + '</span>' +
+                    '<div style="font-family:monospace; color:#fff; margin-top:8px; font-size:14px; font-weight:bold;">' + l.urunKodu + '</div>' +
+                    '<div style="font-size:12px; color:#aaa; margin-top:4px;">' + l.urunAdi + '</div>' +
+                    '</div>' +
+                    '<div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">' +
+                    '<label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">LENS NO</label>' +
+                    '<input type="text" id="edit-no-' + l.id + '" value="' + fmtNo + '" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#fff; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">' +
+                    '</div>' +
+                    '<div style="flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center;">' +
+                    '<label style="font-size:9px; color:#666; font-weight:bold; margin-bottom:4px;">MİKTAR</label>' +
+                    '<input type="number" id="edit-mik-' + l.id + '" value="' + (l.miktar || 0) + '" style="width:100%; max-width:80px; background:#000; border:1px solid #333; color:#0f0; text-align:center; padding:10px; border-radius:4px; font-weight:bold;">' +
+                    '</div>' +
+                    '<div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">' +
+                    '<button class="btn-primary" style="background:#00ccff; padding:10px 15px;" onclick="updateL(\'' + l.id + '\', \'' + l.col + '\')">KAYDET</button>' +
+                    '<button class="btn-danger-outline" style="padding:10px 15px;" onclick="deleteL(\'' + l.id + '\', \'' + l.col + '\')">SİL</button>' +
+                    '</div>' +
+                    '</div>';
             }).join('');
         }
 
         window.updateL = async (id, col) => {
-            const mik = parseInt(document.getElementById(`edit-mik-${id}`).value) || 0;
-            const no = document.getElementById(`edit-no-${id}`).value.trim();
+            const mik = parseInt(document.getElementById('edit-mik-' + id).value) || 0;
+            const no = document.getElementById('edit-no-' + id).value.trim();
             await updateDoc(doc(db, col, id), { miktar: mik, lensNo: no });
             
             const idx = lensData.findIndex(x => x.id === id);
             if(idx > -1) { lensData[idx].miktar = mik; lensData[idx].lensNo = no; }
-            window.showAlert("BAŞARILI", "Lens stoğu güncellendi.");
+            document.getElementById('alert-title').innerText = "BAŞARILI";
+            document.getElementById('alert-desc').innerText = "Lens stoğu güncellendi.";
+            document.getElementById('custom-alert').style.display = 'flex';
         };
 
         window.deleteL = async (id, col) => {
@@ -230,8 +280,6 @@
 
         document.getElementById('search-input').addEventListener('input', renderLenses);
         document.getElementById('filter-brand').addEventListener('change', renderLenses);
-
-        fetchLenses();
     </script>
 </body>
 </html>
