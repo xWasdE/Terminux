@@ -16,6 +16,7 @@
             <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
             <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
             <a href="stok.html" class="menu-item active"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
             <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
             <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
         </div>
@@ -28,6 +29,17 @@
     <div class="main-content">
         <div class="topbar"><h2>DEPO VE STOK YÖNETİMİ</h2></div>
         <div class="content-area">
+            
+            <div class="card" style="border-color: #00ccff; margin-bottom: 20px;">
+                <div class="card-header" style="color: #00ccff;">LOKASYON SEÇİMİ</div>
+                <select id="admin-loc-select" style="width: 100%; background: #111; color: #00ccff; border: 1px solid #333; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 6px;">
+                    <option value="merkez">MERKEZ DEPO</option>
+                    <option value="bodrum">BODRUM DEPO</option>
+                    <option value="eskisehir">ESKİŞEHİR DEPO</option>
+                </select>
+                <p style="font-size:11px; color:#888; margin-top:10px;">Aşağıdaki tüm Excel yükleme ve silme işlemleri seçilen bu lokasyon üzerinden yapılacaktır.</p>
+            </div>
+
             <div class="card">
                 <div class="card-header">ANA LİSTE YÜKLEME (Barkod Koruma)</div>
                 <div class="form-grid">
@@ -35,6 +47,7 @@
                     <div class="form-group"><label style="color:#00ccff;">AMELİYATHANE LİSTESİ</label><input type="file" id="f-am" accept=".xlsx"><button class="btn-primary" id="btn-am">YÜKLE</button></div>
                 </div>
             </div>
+            
             <div class="card">
                 <div class="card-header">EK VERİ GÜNCELLEME (REUSE, DUMMY, ALT GRUP)</div>
                 <div class="form-grid">
@@ -42,10 +55,12 @@
                     <div class="form-group"><label style="color:#ffbc00;">AMELİYATHANE EK VERİ</label><input type="file" id="f-am-ext" accept=".xlsx"><button class="btn-primary" style="background:#ffbc00; color:#000;" id="btn-am-ext">GÜNCELLE</button></div>
                 </div>
             </div>
+            
             <div class="card" style="border-color: #330000; background: #110000;">
                 <div class="card-header" style="color:#ff3333; border-bottom-color:#330000;">TEHLİKELİ İŞLEMLER</div>
-                <button class="btn-danger-outline" style="width:100%; padding:20px; font-size:16px;" onclick="promptMassDelete()">TÜM DEPO ENVANTERİNİ VE STOKLARI SIFIRLA</button>
+                <button class="btn-danger-outline" style="width:100%; padding:20px; font-size:16px;" onclick="promptMassDelete()">SEÇİLİ LOKASYONDAKİ TÜM KİLİTLİ DEPO STOKLARINI SIFIRLA</button>
             </div>
+            
             <div class="card"><div class="card-header">İŞLEM KAYITLARI</div><div id="stock-log" class="log-box">Sistem hazır...</div></div>
         </div>
     </div>
@@ -64,7 +79,7 @@
 
         const sysLog = (elId, msg) => {
             const div = document.getElementById(elId);
-            div.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            div.innerHTML += '<div>[' + new Date().toLocaleTimeString() + '] ' + msg + '</div>';
             div.scrollTop = div.scrollHeight;
         };
 
@@ -76,9 +91,13 @@
 
         const hasCol = (row, keys) => Object.keys(row).some(k => keys.includes(k.trim().toLowerCase()));
 
-        async function processMainExcel(inputId, collectionName) {
+        async function processMainExcel(inputId, baseCollection) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog('stock-log', "Dosya seçilmedi.");
+            
+            const loc = document.getElementById('admin-loc-select').value;
+            const collectionName = loc === 'merkez' ? baseCollection : baseCollection + '_' + loc;
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
@@ -91,7 +110,7 @@
                     await setDoc(doc(db, collectionName, id), data, { merge: true });
                     count++;
                 }
-                sysLog('stock-log', `Yükleme Bitti. (${count} Kayıt)`);
+                sysLog('stock-log', 'Yükleme Bitti. [' + collectionName + '] (' + count + ' Kayıt)');
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -100,7 +119,11 @@
         async function processExtraDataExcel(inputId, depoType) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog('stock-log', "Lütfen Güncelleme Excel dosyası seçin.");
-            const collectionName = depoType === "ANA" ? "ana_depo" : "ameliyathane";
+            
+            const loc = document.getElementById('admin-loc-select').value;
+            const baseCollection = depoType === "ANA" ? "ana_depo" : "ameliyathane";
+            const collectionName = loc === 'merkez' ? baseCollection : baseCollection + '_' + loc;
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const workbook = XLSX.read(e.target.result, { type: 'array' });
@@ -115,7 +138,7 @@
                     if (hasCol(r, ["dummy"])) extraData.isDummy = (getColVal(r, ["dummy"]).toUpperCase() === "EVET" || getColVal(r, ["dummy"]).toUpperCase() === "DUMMY");
                     if (Object.keys(extraData).length > 0) { await setDoc(doc(db, collectionName, id), extraData, { merge: true }); updateCount++; }
                 }
-                sysLog('stock-log', `GÜNCELLEME BİTTİ! (${updateCount} Kayıt)`);
+                sysLog('stock-log', 'GÜNCELLEME BİTTİ! [' + collectionName + '] (' + updateCount + ' Kayıt)');
                 document.getElementById(inputId).value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -127,12 +150,13 @@
         document.getElementById('btn-am-ext').addEventListener('click', () => processExtraDataExcel('f-am-ext', 'AMELİYATHANE'));
 
         window.promptMassDelete = async () => {
-            const pw = prompt("DİKKAT: Tüm depo içeriği, kilitli alanlar ve stoklar sıfırlanacaktır. Bu işlem geri alınamaz! Devam etmek için yetki şifresini girin:");
+            const loc = document.getElementById('admin-loc-select').value;
+            const pw = prompt("DİKKAT: " + loc.toUpperCase() + " lokasyonundaki kilitli alanlar ve stoklar sıfırlanacaktır. Bu işlem geri alınamaz! Devam etmek için yetki şifresini girin:");
             if(pw === "admin99") {
                 try {
                     const snapshot = await getDocs(collection(db, "kilitli_depo_stok"));
                     snapshot.forEach(async (d) => await deleteDoc(doc(db, "kilitli_depo_stok", d.id)));
-                    window.showAlert("BAŞARILI", "Tüm depo stoğu başarıyla silindi ve veritabanı sıfırlandı.");
+                    window.showAlert("BAŞARILI", loc.toUpperCase() + " lokasyonuna ait depo stoğu başarıyla silindi ve veritabanı sıfırlandı.");
                 } catch(e) { window.showAlert("HATA", "İşlem sırasında bir hata oluştu."); }
             } else if(pw) {
                 window.showAlert("HATA", "Yetki şifresi yanlış.");
