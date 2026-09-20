@@ -38,6 +38,9 @@ onAuthStateChanged(auth, async (user) => {
                     return;
                 }
 
+                localStorage.setItem('user_loc', userData.location || 'merkez');
+                localStorage.setItem('user_role', userData.role || 'user');
+
                 if (userData.role !== 'admin' && requiredModule) {
                     if (!userData.modules || userData.modules[requiredModule] !== true) {
                         window.location.replace('/index.html');
