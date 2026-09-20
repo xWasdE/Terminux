@@ -6,8 +6,11 @@
     <title>Terminux | Depo Yönetimi</title>
     <link rel="stylesheet" href="admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        .map-wrapper { width: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; min-width: 1000px; }
+        .map-wrapper { width: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; min-width: 1000px; margin: auto; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
         .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
@@ -26,7 +29,7 @@
         @keyframes flash90 { from { background: rgba(255,140,0,0.1); box-shadow: 0 0 5px #ff8c00; } to { background: rgba(255,140,0,0.6); box-shadow: 0 0 10px #ff8c00; } }
         @keyframes flashBtn { from { background: rgba(255,51,51,0.2); color: #ff3333; border-color: #ff3333; } to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; } }
         
-        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; border-radius: 8px; margin-top: 15px; }
+        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; border-radius: 8px; margin-top: 15px; margin-bottom: 40px; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
         
@@ -107,7 +110,7 @@
                 </div>
             </div>
 
-            <div style="flex:1; overflow-x:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:20px; display:flex; align-items:center;">
+            <div style="flex:1; overflow:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:20px; display:flex;">
                 <div class="map-wrapper" id="room-map">
                     <div class="map-door" id="room-door"><span>KAPI</span></div>
                     <div class="aisle-container" id="aisle-container"></div>
@@ -215,7 +218,11 @@
         <div class="modal-box" style="max-width: 900px; width: 95%;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
                 <div style="font-size:18px; font-weight:900;" id="report-title">RAPOR</div>
-                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('report-modal')">×</button>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-primary" style="background:#00ff00; color:#000; padding:8px 12px; font-size:10px;" onclick="exportReportExcel()">EXCEL İNDİR</button>
+                    <button class="btn-primary" style="background:#ff3333; color:#fff; padding:8px 12px; font-size:10px;" onclick="exportReportPDF()">PDF İNDİR</button>
+                    <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer; margin-left:10px;" onclick="closeModal('report-modal')">×</button>
+                </div>
             </div>
             <div class="report-table-wrapper">
                 <table class="report-table"><thead id="report-thead"></thead><tbody id="report-table-body"></tbody></table>
@@ -609,6 +616,7 @@
         window.openReportModal = (type) => {
             const tbody = document.getElementById('report-table-body'), thead = document.getElementById('report-thead'), titleEl = document.getElementById('report-title');
             let rows = [];
+            window.currentReportType = type;
             
             if(type === 'critical') { titleEl.innerText = 'YAKLAŞAN MİAT RAPORU (< 180 GÜN)'; titleEl.style.color = '#ff3333'; }
             else if (type === 'all') { titleEl.innerText = 'TÜM MİAT RAPORU'; titleEl.style.color = '#fff'; }
@@ -638,7 +646,48 @@
                 tbody.innerHTML = rows.map(r => '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + ' ADET</td></tr>').join('');
             }
             
+            window.currentReportData = rows;
             document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.exportReportExcel = () => {
+            if(!window.currentReportData || window.currentReportData.length === 0) return;
+            const mappedData = window.currentReportData.map(r => {
+                if(window.currentReportType === 'stock') {
+                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "TOPLAM MİKTAR": r.qty };
+                } else {
+                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "MİAT": r.miat, "KALAN GÜN": r.days, "MİKTAR": r.qty };
+                }
+            });
+            const ws = XLSX.utils.json_to_sheet(mappedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rapor");
+            XLSX.writeFile(wb, "terminux_rapor.xlsx");
+        };
+
+        window.exportReportPDF = () => {
+            if(!window.currentReportData || window.currentReportData.length === 0) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const trMap = { 'ç':'c', 'ğ':'g', 'ı':'i', 'i':'i', 'ö':'o', 'ş':'s', 'ü':'u', 'Ç':'C', 'Ğ':'G', 'İ':'I', 'I':'I', 'Ö':'O', 'Ş':'S', 'Ü':'U' };
+            const replaceTR = (text) => text ? String(text).replace(/[çğıiöşüÇĞİIÖŞÜ]/g, m => trMap[m]) : '';
+
+            let head = window.currentReportType === 'stock' 
+                ? [['URUN KODU', 'URUN ISMI', 'ADRES', 'TOPLAM MIKTAR']] 
+                : [['URUN KODU', 'URUN ISMI', 'ADRES', 'MIAT', 'KALAN GUN', 'MIKTAR']];
+
+            let body = window.currentReportData.map(r => {
+                if(window.currentReportType === 'stock') {
+                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.qty)];
+                } else {
+                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.miat), replaceTR(r.days), replaceTR(r.qty)];
+                }
+            });
+
+            doc.text("TERMINUX " + replaceTR(document.getElementById('report-title').innerText), 14, 15);
+            doc.autoTable({ startY: 20, head: head, body: body, styles: { fontSize: 8 }, headStyles: { fillColor: [0, 204, 255], textColor: [0,0,0] } });
+            doc.save("terminux_rapor.pdf");
         };
 
         window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
