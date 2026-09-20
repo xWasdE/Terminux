@@ -14,6 +14,7 @@
         .user-list th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
         .badge.admin { background: rgba(0,204,255,0.1); color: #00ccff; border: 1px solid #00ccff; }
+        .badge.super { background: rgba(153,51,255,0.1); color: #9933ff; border: 1px solid #9933ff; }
         .badge.user { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; }
         .badge.loc { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid #ffbc00; margin-top: 4px; display: inline-block; }
         .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
@@ -48,16 +49,8 @@
                 <div class="form-grid">
                     <div class="form-group"><label>KULLANICI ADI</label><input type="text" id="u-name" placeholder="Örn: murat"></div>
                     <div class="form-group"><label>ŞİFRE (En az 6 hane)</label><input type="password" id="u-pass" placeholder="******"></div>
-                    <div class="form-group"><label>ROLÜ</label><select id="u-role"><option value="user">Standart Personel</option><option value="admin">Sistem Yöneticisi</option></select></div>
-                    <div class="form-group">
-                        <label>LOKASYON YETKİSİ</label>
-                        <select id="u-loc">
-                            <option value="merkez">Merkez</option>
-                            <option value="bodrum">Bodrum</option>
-                            <option value="eskisehir">Eskişehir</option>
-                            <option value="tumu">Tüm Lokasyonlar (Sadece Yönetici)</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>ROLÜ</label><select id="u-role"><option value="user">Standart Personel</option><option value="admin">Lokasyon Yöneticisi</option><option value="superadmin">Sistem Yöneticisi (Tümü)</option></select></div>
+                    <div class="form-group"><label>LOKASYON YETKİSİ</label><select id="u-loc"></select></div>
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>MODÜL ERİŞİM YETKİLERİ</label>
@@ -73,7 +66,6 @@
             </div>
             <div class="card">
                 <div class="card-header">SİSTEMDEKİ KULLANICILAR</div>
-                <p style="font-size:11px; color:#888; margin-bottom:15px;">Şifre değiştirme işlemleri Firebase üzerinden yapılmalıdır.</p>
                 <table class="user-list">
                     <thead><tr><th>KULLANICI BİLGİSİ</th><th>ROL & LOKASYON</th><th>YETKİLER</th><th>DURUM</th><th style="text-align: right;">İŞLEMLER</th></tr></thead>
                     <tbody id="user-table-body"></tbody>
@@ -90,12 +82,7 @@
             
             <div class="form-group" style="text-align:left; margin-bottom:15px;">
                 <label>LOKASYON YETKİSİ</label>
-                <select id="edit-loc" style="width:100%;">
-                    <option value="merkez">Merkez</option>
-                    <option value="bodrum">Bodrum</option>
-                    <option value="eskisehir">Eskişehir</option>
-                    <option value="tumu">Tüm Lokasyonlar (Sadece Yönetici)</option>
-                </select>
+                <select id="edit-loc" style="width:100%;"></select>
             </div>
 
             <div class="form-group" style="text-align:left; margin-bottom:25px;">
@@ -113,22 +100,22 @@
         </div>
     </div>
 
-    <div id="custom-alert" class="modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
-            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
-            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
-        </div>
-    </div>
-
     <script type="module">
         import { db, auth } from './admin.js';
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
         const secondaryApp = initializeApp(auth.app.options, "SecondaryApp");
         const secondaryAuth = getAuth(secondaryApp);
+
+        onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+            let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+            let html = '<option value="tumu">Tüm Lokasyonlar (Sadece Superadmin)</option>';
+            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name + '</option>');
+            document.getElementById('u-loc').innerHTML = html;
+            document.getElementById('edit-loc').innerHTML = html;
+        });
 
         document.getElementById('btn-create-user').addEventListener('click', async () => {
             let uname = document.getElementById('u-name').value.trim();
@@ -136,7 +123,7 @@
             const role = document.getElementById('u-role').value;
             const loc = document.getElementById('u-loc').value;
             
-            if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
+            if(!uname || pass.length < 6) return alert("Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
             if(!uname.includes('@')) uname += "@terminux.com.tr";
             
             const mods = { sayim: document.getElementById('mod-sayim').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
@@ -156,7 +143,10 @@
             let html = "";
             snap.forEach(docSnap => {
                 const d = docSnap.data();
-                const badgeRole = d.role === 'admin' ? '<span class="badge admin">YÖNETİCİ</span>' : '<span class="badge user">PERSONEL</span>';
+                let badgeRole = '<span class="badge user">PERSONEL</span>';
+                if(d.role === 'admin') badgeRole = '<span class="badge admin">YÖNETİCİ</span>';
+                else if(d.role === 'superadmin') badgeRole = '<span class="badge super">SİSTEM YÖNETİCİSİ</span>';
+                
                 const badgeLoc = '<span class="badge loc">' + (d.location || 'merkez').toUpperCase() + '</span>';
                 const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif (Banlı)</span>';
                 
@@ -172,7 +162,7 @@
                 const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
                 const userLoc = d.location || 'merkez';
 
-                html += '<tr><td><strong style="color:#fff;">' + d.email + '</strong><br><span style="font-size:10px; color:#555;">ID: ' + docSnap.id + '</span></td><td>' + badgeRole + '<br>' + badgeLoc + '</td><td style="font-size:11px; color:#aaa;">' + (d.role==='admin' ? 'Tüm Sistem' : modStr) + '</td><td><strong>' + statusText + '</strong></td><td style="text-align: right;"><div class="action-btns"><button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit(\'' + docSnap.id + '\', \'' + d.email + '\', \'' + sMod + '\', \'' + userLoc + '\')">DÜZENLE</button><button class="btn-sm" style="background:' + sBg + '; color:' + sColor + '; border: 1px solid ' + sColor + ';" onclick="window.toggleBan(\'' + docSnap.id + '\', \'' + d.status + '\')">' + s + '</button><button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser(\'' + docSnap.id + '\')">SİL</button></div></td></tr>';
+                html += '<tr><td><strong style="color:#fff;">' + d.email + '</strong><br><span style="font-size:10px; color:#555;">ID: ' + docSnap.id + '</span></td><td>' + badgeRole + '<br>' + badgeLoc + '</td><td style="font-size:11px; color:#aaa;">' + (d.role==='admin'||d.role==='superadmin' ? 'Tüm Sistem' : modStr) + '</td><td><strong>' + statusText + '</strong></td><td style="text-align: right;"><div class="action-btns"><button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit(\'' + docSnap.id + '\', \'' + d.email + '\', \'' + sMod + '\', \'' + userLoc + '\')">DÜZENLE</button><button class="btn-sm" style="background:' + sBg + '; color:' + sColor + '; border: 1px solid ' + sColor + ';" onclick="window.toggleBan(\'' + docSnap.id + '\', \'' + d.status + '\')">' + s + '</button><button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser(\'' + docSnap.id + '\')">SİL</button></div></td></tr>';
             });
             document.getElementById('user-table-body').innerHTML = html;
         });
@@ -194,7 +184,6 @@
             const mods = { sayim: document.getElementById('edit-sayim').checked, sevkiyat: document.getElementById('edit-sevkiyat').checked, lens: document.getElementById('edit-lens').checked, adres: document.getElementById('edit-adres').checked };
             await updateDoc(doc(db, "users", uid), { modules: mods, location: newLoc });
             document.getElementById('edit-user-modal').style.display = 'none';
-            window.showAlert("BAŞARILI", "Personel yetkileri güncellendi.");
         };
 
         window.toggleBan = async (uid, currentStatus) => {
@@ -205,8 +194,7 @@
         window.deleteSystemUser = async (uid) => {
             const pw = prompt("Kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? Onaylamak için 'SİL' yazın.");
             if (pw === "SİL") {
-                try { await deleteDoc(doc(db, "users", uid)); window.showAlert("BAŞARILI", "Kullanıcı veritabanından kalıcı olarak silindi."); } 
-                catch(e) { window.showAlert("HATA", "Kullanıcı silinirken hata oluştu."); }
+                try { await deleteDoc(doc(db, "users", uid)); } catch(e) {}
             }
         };
     </script>
