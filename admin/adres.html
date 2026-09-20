@@ -10,7 +10,7 @@
     <script src="../harita-ana.js"></script>
     <style>
         .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-        .depo-tabs { display: flex; gap: 8px; }
+        .depo-tabs { display: flex; gap: 8px; align-items: center; }
         .depo-btn { padding: 10px 15px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: 0.2s; border: none; }
         .depo-btn.active { background: #00ccff; color: #000; }
         .depo-btn.inactive { background: #111; color: #666; border: 1px solid #333; }
@@ -44,8 +44,9 @@
         <div class="menu">
             <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
             <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item active"><span>ADRES YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
             <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item active"><span>KROKİ YÖNETİMİ</span></a>
             <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
             <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
         </div>
@@ -55,11 +56,13 @@
             <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
         </div>
     </div>
+    
     <div class="main-content">
         <div class="topbar"><h2>KROKİ VE ADRES YÖNETİMİ</h2></div>
         <div class="content-area" style="display:flex; flex-direction:column; padding:20px;">
             <div class="toolbar">
                 <div class="depo-tabs">
+                    <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 12px; border-radius:6px; font-size:11px; font-weight:bold; margin-right:10px;"></select>
                     <button class="depo-btn active" id="tab-am" onclick="switchDepo('am')">AMELİYATHANE DEPO</button>
                     <button class="depo-btn inactive" id="tab-ana" onclick="switchDepo('ana')">ANA DEPO</button>
                 </div>
@@ -71,7 +74,7 @@
                 </div>
                 <div class="action-group">
                     <input type="file" id="import-file" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
-                    <button class="btn-primary" style="background:#00ff00; color:#000;" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
+                    <button id="btn-excel-upload" class="btn-primary" style="background:#00ff00; color:#000;" onclick="document.getElementById('import-file').click()">EXCEL İLE YÜKLE</button>
                     <button class="btn-primary" style="background:#00ccff; color:#000;" onclick="exportExcel()">YEDEĞİ İNDİR (EXCEL)</button>
                     <button class="btn-primary" style="background:#ff3333; color:#fff;" onclick="exportMapCode()">KROKİYİ KAYDET (İNDİR)</button>
                 </div>
@@ -119,8 +122,8 @@
     </div>
 
     <script type="module">
-        import { db } from './admin.js';
-        import { collection, getDocs, doc, addDoc, updateDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from './admin.js';
+        import { collection, getDocs, doc, addDoc, updateDoc, query, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let currentDepo = 'am';
         let currentCollection = 'kroki_adresleri';
@@ -128,19 +131,49 @@
         let activeBlockParent = null; 
         let draggedGridCell = null;
 
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role;
+                    const uloc = uDoc.data().location || 'merkez';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        const sel = document.getElementById('admin-loc-select');
+                        sel.innerHTML = html;
+                        sel.onchange = () => { switchDepo(currentDepo); };
+                        
+                        switchDepo('am');
+                        
+                        const loader = document.getElementById('global-loader');
+                        if (loader) loader.style.display = 'none';
+                    });
+                }
+            } else {
+                window.location.replace('/index.html');
+            }
+        }, 1500);
+
         window.switchDepo = (depo) => {
             currentDepo = depo;
+            const locEl = document.getElementById('admin-loc-select');
+            const loc = locEl ? (locEl.value || 'merkez') : 'merkez';
+
             const mapArea = document.getElementById('admin-map-area');
             if(depo === 'am') {
                 document.getElementById('tab-am').classList.replace('inactive', 'active');
                 document.getElementById('tab-ana').classList.replace('active', 'inactive');
-                currentCollection = 'kroki_adresleri';
+                currentCollection = loc === 'merkez' ? 'kroki_adresleri' : 'kroki_adresleri_' + loc;
                 mapArea.className = 'map-wrapper map-wrapper-am';
                 mapArea.innerHTML = window.haritaAmeliyathane || "";
             } else {
                 document.getElementById('tab-ana').classList.replace('inactive', 'active');
                 document.getElementById('tab-am').classList.replace('active', 'inactive');
-                currentCollection = 'kroki_adresleri_ana';
+                currentCollection = loc === 'merkez' ? 'kroki_adresleri_ana' : 'kroki_adresleri_ana_' + loc;
                 mapArea.className = 'map-wrapper map-wrapper-ana';
                 mapArea.innerHTML = window.haritaAnaDepo || "";
             }
@@ -274,7 +307,8 @@
             snapshot.forEach(doc => { let d = doc.data(); data.push({ "Adres": d.adres || "", "Ürün Adı": d.urunAdi || "", "Ürün Kodu": d.urunKodu || "", "Barkod": d.barkod || "", "Ref No": d.refNo || "" }); });
             if(data.length === 0) return alert("Veri yok.");
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Adresler");
-            XLSX.writeFile(wb, `terminux_${currentDepo}_yedek.xlsx`);
+            const loc = document.getElementById('admin-loc-select') ? (document.getElementById('admin-loc-select').value || 'merkez') : 'merkez';
+            XLSX.writeFile(wb, `terminux_${currentDepo}_${loc}_yedek.xlsx`);
         };
 
         window.importExcel = (event) => {
@@ -283,7 +317,8 @@
             reader.onload = async (e) => {
                 const rows = XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(e.target.result), {type: 'array'}).Sheets[XLSX.read(new Uint8Array(e.target.result), {type: 'array'}).SheetNames[0]]);
                 if(confirm(`${rows.length} satır işlenecek. Onaylıyor musunuz?`)) {
-                    const btnUpload = document.getElementById('btn-excel-upload'); btnUpload.innerText = 'İŞLENİYOR...'; btnUpload.disabled = true;
+                    const btnUpload = document.getElementById('btn-excel-upload'); 
+                    if(btnUpload) { btnUpload.innerText = 'İŞLENİYOR...'; btnUpload.disabled = true; }
                     const mevcutUrunler = new Map();
                     (await getDocs(query(collection(db, currentCollection)))).forEach(d => { if (d.data().urunKodu || d.data().barkod) mevcutUrunler.set(String(d.data().urunKodu || d.data().barkod).trim(), { id: d.id, adres: d.data().adres }); });
                     let eklendi = 0, guncellendi = 0;
@@ -296,14 +331,13 @@
                             else { await addDoc(collection(db, currentCollection), obj); eklendi++; }
                         }
                     }
-                    btnUpload.innerText = 'EXCEL İLE YÜKLE'; btnUpload.disabled = false;
+                    if(btnUpload) { btnUpload.innerText = 'EXCEL İLE YÜKLE'; btnUpload.disabled = false; }
                     document.getElementById('alert-title').innerText="TAMAMLANDI"; document.getElementById('alert-desc').innerText=`Eklenen: ${eklendi}\nGüncellenen: ${guncellendi}`; document.getElementById('custom-alert').style.display='flex';
                     switchDepo(currentDepo);
                 }
             };
             reader.readAsArrayBuffer(file);
         };
-        setTimeout(() => switchDepo('am'), 500);
     </script>
 </body>
 </html>
