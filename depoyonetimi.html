@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Depo Görsel Yönetimi</title>
+    <title>Terminux | Depo Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -30,8 +30,8 @@
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
         main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; min-height: 0; }
-        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 10px; width: 100%; min-height: 0; border-bottom: 1px solid #1a1a1a; }
-        .map-wrapper { height: 100%; max-height: 100%; width: auto; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; flex-shrink: 0; min-width: 1000px; margin: auto; }
+        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 15px; width: 100%; min-height: 0; border-bottom: 1px solid #1a1a1a; }
+        .map-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; margin: auto; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
         .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
@@ -122,16 +122,16 @@
                 <div class="map-door" id="room-door"><span>KAPI</span></div>
                 <div class="aisle-container" id="aisle-container"></div>
                 <svg id="svg-overlay">
-                    <defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000" /></marker></defs>
+                    <defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000"/></marker></defs>
                 </svg>
             </div>
         </div>
     </main>
 
     <div class="legend-bar">
-        <div class="legend-item"><div class="legend-color" style="background:#ff0000;"></div> < 30 GÜN</div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff4500;"></div> < 60 GÜN</div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff8c00;"></div> < 90 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff0000; animation:flash30 1s infinite alternate;"></div> < 30 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff4500; animation:flash60 1s infinite alternate;"></div> < 60 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff8c00; animation:flash90 1s infinite alternate;"></div> < 90 GÜN</div>
         <div class="legend-item"><div class="legend-color" style="background:#ffd700;"></div> < 120 GÜN</div>
         <div class="legend-item"><div class="legend-color" style="background:rgba(255,255,0,0.2); border-color:#ffff00;"></div> < 180 GÜN</div>
         <div class="legend-item"><div class="legend-color" style="background:transparent; border-color:#00ff00;"></div> +360 GÜN</div>
@@ -148,7 +148,79 @@
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
             </div>
+            <div id="shelf-address-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <div class="form-group" style="text-align:left;">
+                    <label>RAF ADRESİ TANIMLA</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01" style="flex:1; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+                        <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="saveShelfAddress()">KAYDET</button>
+                    </div>
+                </div>
+            </div>
+            <div id="shelf-stock-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <button class="btn-primary" style="width:100%; background:transparent; border:1px solid #00ff00; color:#00ff00;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+            </div>
             <div id="shelf-content-list"></div>
+        </div>
+    </div>
+
+    <div id="add-stock-modal" class="modal">
+        <div class="modal-box" id="add-stock-modal-box" style="overflow:visible;">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#fff;">STOK EKLE</div>
+                <button class="btn-close" onclick="closeModal('add-stock-modal')">×</button>
+            </div>
+            <div class="form-group" style="position:relative; text-align:left; margin-bottom: 15px;">
+                <label>ÜRÜN ARA</label>
+                <input type="text" id="add-search" placeholder="Arama yapın veya ürün adı yazın..." style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+                <div id="add-autocomplete" class="autocomplete-dropdown"></div>
+            </div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label>ÜRÜN KODU (ZORUNLU)</label>
+                <input type="text" id="add-selected-code" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <input type="hidden" id="add-selected-name">
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label>MİAT TARİHİ</label>
+                <input type="date" id="add-miat" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label>EKLENECEK MİKTAR</label>
+                <input type="number" id="add-qty" min="1" value="1" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <button class="btn-primary" style="margin-top:10px; width:100%; background:#00ff00;" onclick="executeAddStock()">STOĞA EKLE</button>
+        </div>
+    </div>
+
+    <div id="decrease-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:350px;" id="decrease-modal-box">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#ff3333;">STOK EKSİLT</div>
+                <button class="btn-close" onclick="closeModal('decrease-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="decrease-info"></div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label>ÇIKARILACAK MİKTAR</label>
+                <input type="number" id="decrease-qty" min="1" value="1" style="width:100%; text-align:center; font-size:24px; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <input type="hidden" id="decrease-code"><input type="hidden" id="decrease-name"><input type="hidden" id="decrease-miat">
+            <button class="btn-primary" style="background:#ff3333; color:#fff; width:100%; margin-top:10px;" onclick="executeDecreaseStock()">ÇIKART</button>
+        </div>
+    </div>
+
+    <div id="move-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:400px;" id="move-modal-box">
+            <div class="modal-header">
+                <div class="modal-title" style="color:#9933ff;">ÜRÜNÜ TAŞI</div>
+                <button class="btn-close" onclick="closeModal('move-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="move-info"></div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label>HEDEF RAF</label>
+                <select id="move-target-shelf" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;"></select>
+            </div>
+            <input type="hidden" id="move-code"><input type="hidden" id="move-name">
+            <button class="btn-primary" style="background:#9933ff; color:#fff; width:100%; margin-top:10px;" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
         </div>
     </div>
 
@@ -157,8 +229,8 @@
             <div class="modal-header">
                 <div class="modal-title" id="report-title" style="color:#ff3333;">RAPOR</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-primary" style="background:#00ff00; color:#000; padding:8px 12px; font-size:10px;" onclick="exportReportExcel()">EXCEL İNDİR</button>
-                    <button class="btn-primary" style="background:#ff3333; color:#fff; padding:8px 12px; font-size:10px;" onclick="exportReportPDF()">PDF İNDİR</button>
+                    <button class="btn-action" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 8px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'" onclick="exportReportExcel()">EXCEL İNDİR</button>
+                    <button class="btn-action" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 8px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#ff3333'; this.style.color='#fff'" onmouseout="this.style.background='rgba(255, 51, 51, 0.1)'; this.style.color='#ff3333'" onclick="exportReportPDF()">PDF İNDİR</button>
                     <button class="btn-close" onclick="closeModal('report-modal')" style="margin-left:10px;">×</button>
                 </div>
             </div>
@@ -178,9 +250,17 @@
         </div>
     </div>
 
+    <div id="custom-alert" class="modal" style="z-index:30000;">
+        <div class="modal-box" style="max-width:400px; text-align:center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</p>
+            <button class="btn-primary" style="background:#fff; color:#000; width:100%;" onclick="closeModal('custom-alert')">TAMAM</button>
+        </div>
+    </div>
+
     <script type="module">
         import { db, auth, onAuthStateChanged } from './core-auth.js';
-        import { collection, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, onSnapshot, getDoc, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
         let addresses = {};
@@ -289,6 +369,26 @@
             const btn = document.getElementById('btn-critical-report');
             if(criticalCount > 0) { btn.style.animation = 'flashBtn 0.8s infinite alternate'; btn.innerText = 'YAKLAŞAN MİAT (' + criticalCount + ')'; }
             else { btn.style.animation = 'none'; btn.innerText = 'YAKLAŞAN MİAT'; }
+        };
+
+        const logOperation = async (type, code, name, qty, miat, shelfId) => {
+            try {
+                let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+                if(activeLoc === 'tumu') activeLoc = 'bodrum';
+                const logCol = activeLoc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + activeLoc;
+                
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toLocaleTimeString('tr-TR');
+                const userEmail = auth.currentUser ? auth.currentUser.email : 'Bilinmeyen Kullanıcı';
+                
+                const logRef = doc(db, logCol, dateStr);
+                await setDoc(logRef, {
+                    kayitlar: arrayUnion({
+                        tip: type, urunKodu: code, urunAdi: name, miktar: qty, miat: miat, raf: addresses[shelfId] || shelfId, saat: timeStr, user: userEmail
+                    })
+                }, { merge: true });
+            } catch (e) { console.error("Log hatası:", e); }
         };
 
         window.openShelf = (shelfId) => {
@@ -429,14 +529,6 @@
             doc.text("TERMINUX " + replaceTR(document.getElementById('report-title').innerText), 14, 15);
             doc.autoTable({ startY: 20, head: head, body: body, styles: { fontSize: 8 }, headStyles: { fillColor: [0, 204, 255], textColor: [0,0,0] } });
             doc.save("terminux_rapor.pdf");
-        };
-
-        window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
-        window.generateAisleQR = (aisleNum, e) => { e.stopPropagation(); generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); };
-        const generateQR = (val, label) => {
-            document.getElementById('qr-label').innerText = label;
-            new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
-            document.getElementById('qr-modal').style.display = 'flex';
         };
 
         onAuthStateChanged(auth, (user) => {
