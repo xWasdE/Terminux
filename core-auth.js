@@ -15,15 +15,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { app, auth, db, onAuthStateChanged };
-
 const path = window.location.pathname.toLowerCase();
 let requiredModule = null;
 
 if (path.includes('sayim.html')) requiredModule = 'sayim';
 else if (path.includes('sevkiyat.html')) requiredModule = 'sevkiyat';
-else if (path.includes('lens.html') && !path.includes('admin/lens.html')) requiredModule = 'lens';
-else if (path.includes('adres.html') && !path.includes('admin/adres.html')) requiredModule = 'adres';
+else if (path.includes('lens.html') && !path.includes('admin')) requiredModule = 'lens';
+else if (path.includes('adres.html') && !path.includes('admin')) requiredModule = 'adres';
 else if (path.includes('teyit.html')) requiredModule = 'adres';
 
 onAuthStateChanged(auth, async (user) => {
@@ -43,7 +41,7 @@ onAuthStateChanged(auth, async (user) => {
                 localStorage.setItem('user_loc', userData.location || 'merkez');
                 localStorage.setItem('user_role', userData.role || 'user');
 
-                if (userData.role !== 'admin' && requiredModule) {
+                if (userData.role !== 'admin' && userData.role !== 'superadmin' && requiredModule) {
                     if (!userData.modules || userData.modules[requiredModule] !== true) {
                         window.location.replace('/index.html');
                         return;
