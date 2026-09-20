@@ -49,20 +49,26 @@
         .welcome-banner { background: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 100 C 20 0 50 0 100 100 Z" fill="rgba(255,51,51,0.03)"/></svg>') center/cover; border: 1px solid #222; border-radius: 16px; padding: 40px 30px; margin-bottom: 30px; text-align: center; }
         .welcome-banner h1 { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 10px; letter-spacing: 1px; }
         .welcome-banner p { font-size: 14px; color: #aaa; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+
+        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
     </style>
 </head>
 <body>
-    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div id="global-loader">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 15px; color:#00ccff;"></i>
+        SİSTEM YETKİLERİ KONTROL EDİLİYOR...
+    </div>
+    
     <div class="sidebar">
         <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
         <div class="menu">
-            <a href="index.html" class="menu-item active"><span>ANA SAYFA</span></a>
-            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
-            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
-            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
-            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
-            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+            <a href="index.html" class="menu-item active" id="nav-index"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item" id="nav-users"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item" id="nav-adres"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item" id="nav-stok"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item" id="nav-depo"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item" id="nav-lens"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item" id="nav-ayarlar"><span>SİSTEM AYARLARI</span></a>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
@@ -80,28 +86,28 @@
             </div>
 
             <div class="dashboard-grid">
-                <div class="feature-card">
+                <div class="feature-card" id="feat-users">
                     <div class="f-icon blue"><i class="fa-solid fa-users-gear"></i></div>
                     <div class="f-content">
                         <h3>KULLANICI VE ERİŞİM</h3>
                         <p>Kullanıcı Yönetimi modülü üzerinden personellerin lokasyon yetkilendirmelerini, şifre sıfırlamalarını ve sistem erişim seviyelerini kontrol edin.</p>
                     </div>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card" id="feat-adres">
                     <div class="f-icon orange"><i class="fa-solid fa-map-location-dot"></i></div>
                     <div class="f-content">
                         <h3>FİZİKİ DÜZEN VE ADRESLEME</h3>
                         <p>Adres Yönetimi ve Görsel Depo Yönetimi araçları ile depoların fiziki tasarımlarını yapın, raf koordinatlarını haritalandırın ve görsel stok takibi sağlayın.</p>
                     </div>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card" id="feat-stok">
                     <div class="f-icon green"><i class="fa-solid fa-file-excel"></i></div>
                     <div class="f-content">
                         <h3>VERİ VE STOK AKTARIMI</h3>
                         <p>Depo / Stok ve Lens Yönetimi modüllerini kullanarak veritabanına toplu Excel verileri aktarın, manuel stok müdahalelerinde bulunun veya hatalı kayıtları düzeltin.</p>
                     </div>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card" id="feat-ayarlar">
                     <div class="f-icon purple"><i class="fa-solid fa-server"></i></div>
                     <div class="f-content">
                         <h3>SİSTEM KONFİGÜRASYONU</h3>
@@ -122,22 +128,78 @@
                         <div class="vip-avatar"><i class="fa-solid fa-chess-king"></i></div>
                         <h3>OSMAN GÜNEY BORA</h3>
                         <div class="vip-role">PROJE VİZYONERİ VE DESTEKÇİSİ</div>
-                        <div class="vip-desc">"Sistemin geliştirilme sürecinde başından sonuna kadar vizyonuyla bana yol gösteren, süreçteki her türlü engele karşı sonsuz desteğini esirgemeyen değerli yöneticimiz."</div>
+                        <div class="vip-desc">"Sistemin geliştirilme sürecinde başından sonuna kadar vizyonuyla bana yol gösteren, süreçteki her türlü engele karşı sonsuz desteğini esirgemeyen değerli yöneticim."</div>
                     </div>
                     
                     <div class="vip-card vip-alturk">
                         <div class="vip-avatar"><i class="fa-solid fa-chess-queen"></i></div>
                         <h3>MURAT ALTÜRK</h3>
                         <div class="vip-role">SAHA OPERASYONU VE TEST UZMANI</div>
-                        <div class="vip-desc">"Yazılımın sahaya entegrasyonu aşamasındaki zorlu test süreçlerinde bizzat sahada bulunarak sistemin kusursuzlaşması için bana her türlü operasyonel desteği sağlayan değerli takım arkadaşımız."</div>
+                        <div class="vip-desc">"Yazılımın sahaya entegrasyonu aşamasındaki zorlu test süreçlerinde bizzat sahada bulunarak sistemin kusursuzlaşması için bana her türlü operasyonel desteği sağlayan değerli takım arkadaşım."</div>
                     </div>
                 </div>
             </div>
 
         </div>
     </div>
+    
     <script type="module">
-        import { auth } from './admin.js';
+        import { db, auth } from './admin.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                try {
+                    let role = 'personel';
+                    let modules = {};
+                    
+                    const snap = await getDoc(doc(db, "users", user.uid));
+                    if(snap.exists()) {
+                        role = snap.data().role || 'personel';
+                        modules = snap.data().modules || {};
+                    }
+
+
+                    if(user.email === 'admin@terminux.com.tr') {
+                        role = 'superadmin';
+                        modules = { adres: true, stok: true, depo: true, lens: true, ayarlar: true };
+                    }
+                    
+                    if(role !== 'superadmin') {
+                        if(role !== 'admin') {
+                            document.getElementById('nav-users').style.display = 'none';
+                            document.getElementById('feat-users').style.display = 'none';
+                        }
+                        if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
+                        if(!modules.stok) {
+                            document.getElementById('nav-stok').style.display = 'none';
+                            document.getElementById('feat-stok').style.display = 'none';
+                        }
+                        if(!modules.depo) document.getElementById('nav-depo').style.display = 'none';
+                        if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
+                        if(!modules.ayarlar) {
+                            document.getElementById('nav-ayarlar').style.display = 'none';
+                            document.getElementById('feat-ayarlar').style.display = 'none';
+                        }
+                        if(!modules.adres && !modules.depo) document.getElementById('feat-adres').style.display = 'none';
+                        
+
+                        if(role !== 'admin' && !modules.adres && !modules.stok && !modules.depo && !modules.lens && !modules.ayarlar) {
+                            window.location.href = '../index.html';
+                            return;
+                        }
+                    }
+                    
+                    document.getElementById('global-loader').style.display = 'none';
+                } catch(err) {
+                    console.error("Yetki kontrol hatası:", err);
+                    window.location.href = '../index.html';
+                }
+            } else {
+                window.location.href = '../index.html';
+            }
+        });
     </script>
 </body>
 </html>
