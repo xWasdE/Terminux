@@ -14,6 +14,8 @@
         .switch-btn.active { background: #00ff00; color: #000; }
         .loc-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; background: #111; }
         .loc-row:last-child { border-bottom: none; }
+        .btn-loc-del { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .btn-loc-del:hover { background: #ff3333; color: #fff; }
     </style>
 </head>
 <body>
@@ -79,6 +81,11 @@
             
         </div>
     </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
+    </div>
+
     <script type="module">
         import { db, auth } from './admin.js';
         import { doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -118,13 +125,15 @@
             const u = auth.currentUser;
             if(u) {
                 const uDoc = await getDoc(doc(db, "users", u.uid));
-                if(uDoc.exists() && uDoc.data().role === 'superadmin') {
+                if(uDoc.exists() && (uDoc.data().role === 'superadmin' || uDoc.data().email === 'admin@terminux.com.tr')) {
                     document.getElementById('card-locations').style.display = 'block';
                     onSnapshot(doc(db, "system", "locations"), (docSnap) => {
                         let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
                         let html = '';
                         locs.forEach(l => {
-                            html += '<div class="loc-row"><div><strong style="color:#fff;">' + l.name + '</strong><div style="font-family:monospace; color:#00ccff; font-size:11px; margin-top:4px;">ID: ' + l.id + '</div></div></div>';
+                            html += '<div class="loc-row"><div><strong style="color:#fff;">' + l.name + '</strong><div style="font-family:monospace; color:#00ccff; font-size:11px; margin-top:4px;">ID: ' + l.id + '</div></div>';
+                            if(l.id !== 'merkez') html += '<button class="btn-loc-del" onclick="window.deleteLocation(\'' + l.id + '\')">SİL</button>';
+                            html += '</div>';
                         });
                         document.getElementById('loc-list').innerHTML = html;
                     });
@@ -133,7 +142,7 @@
         }, 1500);
 
         window.addLocation = async () => {
-            const id = document.getElementById('new-loc-id').value.trim().toLowerCase();
+            const id = document.getElementById('new-loc-id').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
             const name = document.getElementById('new-loc-name').value.trim();
             if(!id || !name) return;
             const ref = doc(db, "system", "locations");
@@ -143,6 +152,16 @@
             list.push({ id, name });
             await setDoc(ref, { list });
             document.getElementById('new-loc-id').value = ''; document.getElementById('new-loc-name').value = '';
+        };
+
+        window.deleteLocation = async (id) => {
+            if(id === 'merkez') return;
+            if(!confirm(id.toUpperCase() + " lokasyonunu silmek istediğinize emin misiniz? (Veritabanındaki lokasyona ait tablolar manuel silinmelidir)")) return;
+            const ref = doc(db, "system", "locations");
+            const snap = await getDoc(ref);
+            let list = snap.exists() ? snap.data().list || [] : [];
+            list = list.filter(l => l.id !== id);
+            await setDoc(ref, { list });
         };
     </script>
 </body>
