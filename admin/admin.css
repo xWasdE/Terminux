@@ -39,8 +39,13 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
 .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; }
 .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
 
-.legal-footer { flex-shrink: 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100vw !important; background-color: rgba(5, 5, 5, 0.95) !important; color: #888 !important; text-align: center !important; padding: 6px 10px !important; font-size: 9px !important; z-index: 9999 !important; border-top: 1px solid #1a1a1a !important; backdrop-filter: blur(8px) !important; line-height: 1.2 !important; box-sizing: border-box !important; overflow-wrap: break-word !important; }
-.legal-footer b { color: #aaa !important; font-weight: bold !important; }
+.legal-footer {
+    flex-shrink: 0; position: fixed; bottom: 0; left: 0; right: 0; width: 100vw;
+    background-color: rgba(5, 5, 5, 0.95); color: #888; text-align: center;
+    padding: 16px 20px; font-size: 13px; z-index: 9999; border-top: 1px solid #1a1a1a;
+    backdrop-filter: blur(8px); line-height: 1.5; box-sizing: border-box;
+}
+.legal-footer b { color: #aaa; font-weight: bold; }
 
 @media (max-width: 900px) {
     body { flex-direction: column; overflow: auto; height: 100dvh; }
@@ -63,5 +68,5 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
     .form-grid { grid-template-columns: 1fr; gap: 10px; }
     table { width: 100%; min-width: 600px; }
     .modal-box { padding: 20px; width: 95%; margin: 20px auto; }
-    .legal-footer { font-size: 7px !important; padding: 4px 6px !important; line-height: 1.1 !important; }
+    .legal-footer { font-size: 10px; padding: 10px 15px; }
 }
