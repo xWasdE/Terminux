@@ -125,53 +125,58 @@
         onAuthStateChanged(auth, async (user) => {
             if(user) {
                 currentUserEmail = user.email;
-                const uDoc = await getDoc(doc(db, "users", user.uid));
-                if(uDoc.exists()) {
-                    const d = uDoc.data();
-                    currentUserRole = d.role || 'user';
-                    currentUserLoc = d.location || 'merkez';
-                    if(currentUserEmail === 'admin@terminux.com.tr') currentUserRole = 'superadmin';
+                let uDocData = null;
+                
+                try {
+                    const uDoc = await getDoc(doc(db, "users", user.uid));
+                    if(uDoc.exists()) uDocData = uDoc.data();
+                } catch(e){}
 
-                    if(currentUserRole !== 'superadmin' && currentUserRole !== 'admin') {
-                        document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</div></div>';
-                        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-                        return;
-                    }
+                currentUserRole = uDocData ? (uDocData.role || 'user') : 'user';
+                currentUserLoc = uDocData ? (uDocData.location || 'merkez') : 'merkez';
+                let modules = uDocData ? (uDocData.modules || {}) : {};
 
 
-                    const modules = d.modules || {};
-                    if(currentUserRole !== 'superadmin') {
-                        if(!modules.adres) document.querySelector('[href="adres.html"]').style.display = 'none';
-                        if(!modules.stok) document.querySelector('[href="stok.html"]').style.display = 'none';
-                        if(!modules.depo) document.querySelector('[href="depoyonetimi.html"]').style.display = 'none';
-                        if(!modules.lens) document.querySelector('[href="lens.html"]').style.display = 'none';
-                        if(!modules.ayarlar) document.querySelector('[href="ayarlar.html"]').style.display = 'none';
-                        
-                        document.getElementById('u-role').querySelector('option[value="superadmin"]').disabled = true;
-                    }
-
-                    document.getElementById('global-loader').style.display = 'none';
-
-                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
-                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
-                        let html = '';
-                        if(currentUserRole === 'superadmin') {
-                            html += '<option value="tumu">Tüm Lokasyonlar (Sadece Superadmin)</option>';
-                            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name + '</option>');
-                        } else {
-                            let myLoc = locs.find(l => l.id === currentUserLoc);
-                            if(myLoc) html += '<option value="' + myLoc.id + '">' + myLoc.name + '</option>';
-                            else html += '<option value="' + currentUserLoc + '">' + (currentUserLoc).toUpperCase() + '</option>';
-                        }
-                        document.getElementById('u-loc').innerHTML = html;
-                        document.getElementById('edit-loc').innerHTML = html;
-                    });
-
-                    loadUsers();
-                } else {
-                    document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">KULLANICI BULUNAMADI</div></div>';
-                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                if(currentUserEmail === 'admin@terminux.com.tr') {
+                    currentUserRole = 'superadmin';
+                    currentUserLoc = 'tumu';
+                    modules = { sayim:true, sevkiyat:true, lens:true, adres:true, depo:true, ayarlar:true };
                 }
+
+                if(currentUserRole !== 'superadmin' && currentUserRole !== 'admin') {
+                    document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</div></div>';
+                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                    return;
+                }
+
+
+                if(currentUserRole !== 'superadmin') {
+                    if(!modules.adres) document.querySelector('[href="adres.html"]').style.display = 'none';
+                    if(!modules.stok) document.querySelector('[href="stok.html"]').style.display = 'none';
+                    if(!modules.depo) document.querySelector('[href="depoyonetimi.html"]').style.display = 'none';
+                    if(!modules.lens) document.querySelector('[href="lens.html"]').style.display = 'none';
+                    if(!modules.ayarlar) document.querySelector('[href="ayarlar.html"]').style.display = 'none';
+                    document.getElementById('u-role').querySelector('option[value="superadmin"]').disabled = true;
+                }
+
+                document.getElementById('global-loader').style.display = 'none';
+
+                onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                    let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                    let html = '';
+                    if(currentUserRole === 'superadmin') {
+                        html += '<option value="tumu">Tüm Lokasyonlar (Sadece Superadmin)</option>';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name + '</option>');
+                    } else {
+                        let myLoc = locs.find(l => l.id === currentUserLoc);
+                        if(myLoc) html += '<option value="' + myLoc.id + '">' + myLoc.name + '</option>';
+                        else html += '<option value="' + currentUserLoc + '">' + (currentUserLoc).toUpperCase() + '</option>';
+                    }
+                    document.getElementById('u-loc').innerHTML = html;
+                    document.getElementById('edit-loc').innerHTML = html;
+                });
+
+                loadUsers();
             } else {
                 window.location.href = '../index.html';
             }
