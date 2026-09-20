@@ -15,6 +15,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+export { app, auth, db, onAuthStateChanged };
+
 const path = window.location.pathname.toLowerCase();
 let requiredModule = null;
 
