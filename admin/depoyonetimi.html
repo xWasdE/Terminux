@@ -2,17 +2,42 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Depo Yönetimi</title>
-    <link rel="stylesheet" href="admin.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Depo Görsel Yönetimi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
-        .map-wrapper { width: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; min-width: 1000px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100vw; max-width: 100vw; }
+        header { padding: 15px 30px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; z-index: 100; width: 100%; flex-wrap: wrap; gap: 15px; }
+        .header-title { font-weight: 900; font-size: 22px; letter-spacing: -1px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .header-subtitle { color: #ff3333; font-size: 13px; font-weight: 800; letter-spacing: 2px; }
+        .btn-header { background: #111; color: #fff; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; white-space: nowrap; height: 38px; line-height: 16px; }
+        .btn-header:hover { background: #222; border-color: #555; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #080808; border-bottom: 1px solid #1a1a1a; gap: 15px; flex-wrap: wrap; width: 100%; flex-shrink: 0; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 400px; }
+        .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 12px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
+        .search-input:focus { border-color: #ff3333; }
+        .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .autocomplete-item { padding: 12px 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; }
+        .autocomplete-item:hover { background: #111; border-left: 3px solid #ff3333; }
+        .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
+        .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
+        .action-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+        .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .btn-action:hover { border-color: #fff; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); }
+        .btn-danger-flash { animation: flashBtn 0.8s infinite alternate; }
+        @keyframes flashBtn { from { background: rgba(255,51,51,0.2); color: #ff3333; border-color: #ff3333; } to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; } }
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #000; position: relative; width: 100%; }
+        .map-container { flex: 1; position: relative; background: #050505; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; width: 100%; }
+        .map-wrapper { width: 100%; max-width: 1400px; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
         .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .shelf:hover { border-color: #ffbc00; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(255,188,0,0.4); }
         .shelf-address { color: #fff; font-family: monospace; font-size: clamp(8px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; }
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
@@ -24,11 +49,19 @@
         @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
         @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
         @keyframes flash90 { from { background: rgba(255,140,0,0.1); box-shadow: 0 0 5px #ff8c00; } to { background: rgba(255,140,0,0.6); box-shadow: 0 0 10px #ff8c00; } }
-        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; border-radius: 8px; margin-top: 15px; }
+        #svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; }
+        .path-line { stroke: #ff0000; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff0000); }
+        @keyframes dash { to { stroke-dashoffset: 20; } }
+        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; position: relative; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
-        
-        .stock-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 10px; text-align: left; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+        .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
+        .btn-close:hover { color: #ff3333; }
+        .stock-item { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
         .stock-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: flex-start; gap: 10px; }
         .stock-name { font-size: 13px; font-weight: 800; color: #fff; }
         .stock-code { font-size: 11px; color: #00ccff; font-family: monospace; margin-top: 4px; }
@@ -37,63 +70,84 @@
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
         .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .btn-remove:hover { background: #ff3333; color: #000; }
-        
-        .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 10000; max-height: 300px; overflow-y: auto; border-radius: 6px; margin-top: 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: left; }
-        .autocomplete-item { padding: 12px 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; }
-        .autocomplete-item:hover { background: #111; border-left: 3px solid #ff3333; }
-        .ac-name { color: #fff; font-size: 12px; font-weight: 800; }
-        .ac-code { color: #888; font-size: 10px; font-family: monospace; margin-top: 4px; }
+        .report-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .report-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .report-table th, .report-table td { padding: 12px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
+        .report-table th { color: #666; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+        .qr-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #fff; border-radius: 12px; margin-top: 20px; }
+        .legal-footer { flex-shrink: 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100vw !important; background-color: rgba(5, 5, 5, 0.95) !important; color: #888 !important; text-align: center !important; padding: 6px 10px !important; font-size: 9px !important; z-index: 9999 !important; border-top: 1px solid #1a1a1a !important; backdrop-filter: blur(8px) !important; line-height: 1.2 !important; box-sizing: border-box !important; overflow-wrap: break-word !important; }
+        .legal-footer b { color: #aaa !important; font-weight: bold !important; }
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 15px; gap: 10px; height: auto; }
+            .header-title { font-size: 18px; gap: 5px; flex: 1; min-width: 100%; justify-content: center; margin-bottom: 5px; }
+            .header-actions { flex-direction: row; width: 100%; justify-content: center; gap: 5px; }
+            .toolbar { flex-direction: column; align-items: stretch; padding: 10px 15px; gap: 10px; }
+            .search-wrapper { max-width: 100%; min-width: 100%; }
+            .action-group { flex-wrap: wrap; justify-content: space-between; width: 100%; gap: 5px; }
+            .action-group button { flex: 1; min-width: 45%; padding: 12px; font-size: 10px; }
+            .map-container { padding: 5px; justify-content: flex-start; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
+            .map-wrapper { min-width: 1000px; aspect-ratio: 16/7; border-radius: 8px; }
+            .aisle-container { gap: 1%; left: 2%; width: 88%; }
+            .shelf-address { font-size: 10px; padding: 2px 4px; }
+            .legend-bar { padding: 10px; gap: 8px; justify-content: space-around; }
+            .modal-box { width: 95%; padding: 15px; }
+            .legal-footer { font-size: 7px !important; padding: 4px 6px !important; line-height: 1.1 !important; }
+        }
     </style>
 </head>
 <body>
-    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
-    <div class="sidebar">
-        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
-        <div class="menu">
-            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
-            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
-            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
-            <a href="depoyonetimi.html" class="menu-item active"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
-            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
-            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">DEPO GÖRÜNTÜLEME</span></div>
+        <div class="header-actions">
+            <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 12px; border-radius:6px; font-size:11px; font-weight:bold; margin-right:10px;"></select>
+            <a href="index.html" class="btn-header">WMS GEÇİŞ</a>
         </div>
-        <div class="user-info">
-            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
-            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
-            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+    </header>
+
+    <div class="toolbar">
+        <div class="search-wrapper">
+            <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
+            <div id="search-dropdown" class="autocomplete-dropdown"></div>
+        </div>
+        <div class="action-group">
+            <button id="btn-critical-report" class="btn-action btn-danger" onclick="openReportModal('critical')">KRİTİK MİAT RAPORU</button>
+            <button class="btn-action" style="background:#444;" onclick="openReportModal('all')">TÜM MİAT RAPORU</button>
+            <button class="btn-action" style="background:#00ccff; color:#000;" onclick="openMasterQR()">GENEL QR KOD</button>
         </div>
     </div>
-    
-    <div class="main-content">
-        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
-        <div class="content-area" style="display:flex; flex-direction:column; overflow:hidden;">
-            <div style="background:#080808; padding:15px; border:1px solid #1a1a1a; border-radius:8px; display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px; overflow-x:auto;">
-                <button class="btn-primary" style="background:#00ff00; color:#000;" onclick="window.location.href='stok.html'">EXCEL TOPLU YÜKLE</button>
-            </div>
-            <div style="flex:1; overflow-x:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:20px; display:flex; align-items:center;">
-                <div class="map-wrapper" id="room-map">
-                    <div class="map-door" id="room-door"><span>KAPI</span></div>
-                    <div class="aisle-container" id="aisle-container"></div>
-                </div>
-            </div>
-            <div class="legend-bar">
-                <div class="legend-item"><div class="legend-color" style="background:#ff0000; animation:flash30 1s infinite alternate;"></div> < 30 GÜN</div>
-                <div class="legend-item"><div class="legend-color" style="background:#ff4500; animation:flash60 1s infinite alternate;"></div> < 60 GÜN</div>
-                <div class="legend-item"><div class="legend-color" style="background:#ff8c00; animation:flash90 1s infinite alternate;"></div> < 90 GÜN</div>
-                <div class="legend-item"><div class="legend-color" style="background:#ffd700;"></div> < 120 GÜN</div>
-                <div class="legend-item"><div class="legend-color" style="background:rgba(255,255,0,0.2); border-color:#ffff00;"></div> < 180 GÜN</div>
-                <div class="legend-item"><div class="legend-color" style="background:transparent; border-color:#00ff00;"></div> +360 GÜN</div>
+
+    <main>
+        <div class="map-container">
+            <div class="map-wrapper" id="room-map">
+                <div class="map-door" id="room-door"><span>KAPI</span></div>
+                <div class="aisle-container" id="aisle-container"></div>
+                <svg id="svg-overlay">
+                    <defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000" /></marker></defs>
+                </svg>
             </div>
         </div>
+    </main>
+
+    <div class="legend-bar">
+        <div class="legend-item"><div class="legend-color" style="background:#ff0000; animation:flash30 1s infinite alternate;"></div> < 30 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff4500; animation:flash60 1s infinite alternate;"></div> < 60 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff8c00; animation:flash90 1s infinite alternate;"></div> < 90 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ffd700;"></div> < 120 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:rgba(255,255,0,0.2); border-color:#ffff00;"></div> < 180 GÜN</div>
+        <div class="legend-item"><div class="legend-color" style="background:transparent; border-color:#00ff00;"></div> +360 GÜN</div>
+    </div>
+
+    <div class="legal-footer">
+        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
     <!-- Modals -->
     <div id="shelf-modal" class="modal">
         <div class="modal-box" id="shelf-modal-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
-                <div style="font-size:18px; font-weight:900; color:#fff;" id="shelf-modal-title">RAF BİLGİSİ</div>
-                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('shelf-modal')">×</button>
+            <div class="modal-header">
+                <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
+                <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
             </div>
             <div id="shelf-address-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
                 <div class="form-group" style="text-align:left;">
@@ -113,9 +167,9 @@
 
     <div id="add-stock-modal" class="modal">
         <div class="modal-box" id="add-stock-modal-box" style="overflow:visible;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
-                <div style="font-size:18px; font-weight:900; color:#fff;">STOK EKLE</div>
-                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('add-stock-modal')">×</button>
+            <div class="modal-header">
+                <div class="modal-title" style="color:#fff;">STOK EKLE</div>
+                <button class="btn-close" onclick="closeModal('add-stock-modal')">×</button>
             </div>
             <div class="form-group" style="position:relative; text-align:left;">
                 <label>ÜRÜN ARA</label>
@@ -132,9 +186,9 @@
 
     <div id="decrease-stock-modal" class="modal" style="z-index:25000;">
         <div class="modal-box" style="max-width:350px;" id="decrease-modal-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
-                <div style="font-size:18px; font-weight:900; color:#ff3333;">STOK EKSİLT</div>
-                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('decrease-stock-modal')">×</button>
+            <div class="modal-header">
+                <div class="modal-title" style="color:#ff3333;">STOK EKSİLT</div>
+                <button class="btn-close" onclick="closeModal('decrease-stock-modal')">×</button>
             </div>
             <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="decrease-info"></div>
             <div class="form-group" style="text-align:left;"><label>ÇIKARILACAK MİKTAR</label><input type="number" id="decrease-qty" min="1" value="1" style="text-align:center; font-size:24px;"></div>
@@ -145,9 +199,9 @@
 
     <div id="move-stock-modal" class="modal" style="z-index:25000;">
         <div class="modal-box" style="max-width:400px;" id="move-modal-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
-                <div style="font-size:18px; font-weight:900; color:#9933ff;">ÜRÜNÜ TAŞI</div>
-                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('move-stock-modal')">×</button>
+            <div class="modal-header">
+                <div class="modal-title" style="color:#9933ff;">ÜRÜNÜ TAŞI</div>
+                <button class="btn-close" onclick="closeModal('move-stock-modal')">×</button>
             </div>
             <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="move-info"></div>
             <div class="form-group" style="text-align:left;"><label>HEDEF RAF</label><select id="move-target-shelf"></select></div>
@@ -156,32 +210,88 @@
         </div>
     </div>
 
+    <div id="report-modal" class="modal">
+        <div class="modal-box" style="max-width: 900px; width: 95%;">
+            <div class="modal-header">
+                <div class="modal-title" id="report-title" style="color:#ff3333;">MİAT RAPORU</div>
+                <button class="btn-close" onclick="closeModal('report-modal')">×</button>
+            </div>
+            <div class="report-table-wrapper">
+                <table class="report-table"><thead id="report-thead"></thead><tbody id="report-table-body"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-modal" class="modal">
+        <div class="modal-box" style="text-align:center; max-width:400px;">
+            <div class="modal-header">
+                <div class="modal-title" id="qr-modal-title">QR KOD</div>
+                <button class="btn-close" onclick="closeModal('qr-modal')">×</button>
+            </div>
+            <div class="qr-display"><canvas id="qr-canvas"></canvas><div id="qr-label" style="margin-top:15px; font-weight:900; color:#000; font-size:18px; letter-spacing:2px;"></div></div>
+        </div>
+    </div>
+
     <div id="custom-alert" class="modal" style="z-index:30000;">
         <div class="modal-box" style="max-width:400px; text-align:center;">
-            <div style="font-size:18px; font-weight:900; color:#ffbc00; margin-bottom:15px;" id="alert-title">UYARI</div>
-            <div id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</div>
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</p>
             <button class="btn-primary" style="background:#fff; color:#000; width:100%;" onclick="closeModal('custom-alert')">TAMAM</button>
         </div>
     </div>
 
     <script type="module">
-        import { db } from './admin.js';
-        import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from './admin.js';
+        import { collection, onSnapshot, getDoc, getDocs, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
         let addresses = {};
         let roomStock = {};
         let activeShelfId = null;
+        let unsubAdres = null;
+        let unsubStok = null;
 
-        const loadCatalogFromCache = () => {
-            try {
-                const cached = localStorage.getItem('terminux_catalog_cache');
-                if (cached) {
-                    JSON.parse(cached).forEach(c => catalog[c.urunKodu || c.docId] = { code: c.urunKodu || c.docId, name: c.urunAdi });
+        const getActiveLoc = () => {
+            const el = document.getElementById('admin-loc-select');
+            return el ? (el.value || 'merkez') : 'merkez';
+        };
+
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role;
+                    const uloc = uDoc.data().location || 'merkez';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        const sel = document.getElementById('admin-loc-select');
+                        sel.innerHTML = html;
+                        sel.onchange = () => {
+                            initMap();
+                            loadData();
+                        };
+                        initMap();
+                        loadData();
+                    });
                 }
-            } catch(e){}
-            getDocs(collection(db, "ana_depo")).then(snap => { snap.forEach(d => { catalog[d.id] = { code: d.id, name: d.data().urunAdi || "İsimsiz" }; }); });
-            getDocs(collection(db, "ameliyathane")).then(snap => { snap.forEach(d => { catalog[d.id] = { code: d.id, name: d.data().urunAdi || "İsimsiz" }; }); });
+            }
+        }, 1500);
+
+        window.loadCatalogFromDB = async () => {
+            const loc = getActiveLoc();
+            catalog = {};
+            const colAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+            const colAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
+            try {
+                const anaSnap = await getDocs(collection(db, colAna));
+                anaSnap.forEach(d => { catalog[d.id] = { code: d.id, name: d.data().urunAdi || "İsimsiz" }; });
+                const amSnap = await getDocs(collection(db, colAm));
+                amSnap.forEach(d => { catalog[d.id] = { code: d.id, name: d.data().urunAdi || "İsimsiz" }; });
+            } catch(e) {}
         };
 
         window.showCustomAlert = (title, desc) => {
@@ -218,9 +328,32 @@
                     const sId = 'shelf-' + i + '-' + j;
                     html += '<div class="shelf" id="' + sId + '" onclick="openShelf(\'' + sId + '\')"><span class="shelf-address" id="addr-' + sId + '"></span></div>';
                 }
-                html += '</div>';
+                html += '<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(' + i + ', event)">QR</button></div></div>';
             }
             container.innerHTML = html;
+        };
+
+        const loadData = () => {
+            window.loadCatalogFromDB();
+            const loc = getActiveLoc();
+            
+            const docAdresler = loc === 'merkez' ? doc(db, "kilitli_depo", "adresler") : doc(db, "kilitli_depo_" + loc, "adresler");
+            const colStok = loc === 'merkez' ? collection(db, "kilitli_depo_stok") : collection(db, "kilitli_depo_stok_" + loc);
+
+            if(unsubAdres) unsubAdres();
+            unsubAdres = onSnapshot(docAdresler, (docSnap) => {
+                if(docSnap.exists()) addresses = docSnap.data(); else addresses = {};
+                updateMapAddresses();
+            });
+
+            if(unsubStok) unsubStok();
+            unsubStok = onSnapshot(colStok, (snap) => {
+                roomStock = {};
+                snap.forEach(d => roomStock[d.id] = d.data());
+                updateMapColors();
+                checkCriticalMiats();
+                if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
+            });
         };
 
         const updateMapAddresses = () => {
@@ -273,6 +406,14 @@
             }
         };
 
+        const checkCriticalMiats = () => {
+            let criticalCount = 0;
+            for(let key in roomStock) { for(let miat in roomStock[key].lots) { if(getDaysDiff(miat) <= 180) criticalCount++; } }
+            const btn = document.getElementById('btn-critical-report');
+            if(criticalCount > 0) { btn.classList.add('btn-danger-flash'); btn.innerText = 'KRİTİK MİAT RAPORU (' + criticalCount + ')'; }
+            else { btn.classList.remove('btn-danger-flash'); btn.innerText = 'KRİTİK MİAT RAPORU'; }
+        };
+
         window.openShelf = (shelfId) => {
             activeShelfId = shelfId;
             document.getElementById('shelf-modal-title').innerHTML = 'RAF: <span style="color:#00ccff;">' + (addresses[shelfId] || "TANIMSIZ ADRES") + '</span>';
@@ -283,10 +424,14 @@
 
         window.saveShelfAddress = async () => {
             if(!activeShelfId) return;
+            const loc = getActiveLoc();
+            const col = loc === 'merkez' ? 'kilitli_depo' : 'kilitli_depo_' + loc;
+            
             const val = document.getElementById('edit-shelf-address').value.trim();
             const newAddresses = { ...addresses };
             if(val) newAddresses[activeShelfId] = val; else delete newAddresses[activeShelfId];
-            await setDoc(doc(db, "kilitli_depo", "adresler"), newAddresses);
+            
+            await setDoc(doc(db, col, "adresler"), newAddresses);
             document.getElementById('shelf-modal-title').innerHTML = 'RAF: <span style="color:#00ccff;">' + (val || 'TANIMSIZ ADRES') + '</span>';
         };
 
@@ -343,6 +488,9 @@
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
             if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen bilgileri eksiksiz girin.");
 
+            const loc = getActiveLoc();
+            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+
             const parts = miatRaw.split('-');
             const miat = parts[2] + '.' + parts[1] + '.' + parts[0];
             const docId = activeShelfId + '_' + code;
@@ -350,8 +498,10 @@
             
             let lots = existing ? existing.lots : {};
             lots[miat] = (lots[miat] || 0) + qty;
-            await setDoc(doc(db, "kilitli_depo_stok", docId), { shelfId: activeShelfId, urunKodu: code, urunAdi: name, adres: addresses[activeShelfId] || "", lots: lots });
+            
+            await setDoc(doc(db, col, docId), { shelfId: activeShelfId, urunKodu: code, urunAdi: name, adres: addresses[activeShelfId] || "", lots: lots });
             await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
+            
             closeModal('add-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -370,14 +520,19 @@
             const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
             if(isNaN(qtyToRemove) || qtyToRemove <= 0) return;
 
+            const loc = getActiveLoc();
+            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+
             const docId = activeShelfId + '_' + code;
             let lots = roomStock[docId].lots;
             lots[miat] -= qtyToRemove;
             if(lots[miat] <= 0) delete lots[miat];
 
-            if(Object.keys(lots).length === 0) await deleteDoc(doc(db, "kilitli_depo_stok", docId));
-            else await setDoc(doc(db, "kilitli_depo_stok", docId), { ...roomStock[docId], lots: lots });
+            if(Object.keys(lots).length === 0) await deleteDoc(doc(db, col, docId));
+            else await setDoc(doc(db, col, docId), { ...roomStock[docId], lots: lots });
+            
             await logOperation("ÇIKARMA", code, document.getElementById('decrease-name').value, qtyToRemove, miat, activeShelfId);
+            
             closeModal('decrease-stock-modal');
             renderShelfContents(activeShelfId);
         };
@@ -398,6 +553,9 @@
             const targetShelfId = document.getElementById('move-target-shelf').value;
             if(!targetShelfId) return showCustomAlert("HATA", "Hedef raf seçiniz.");
 
+            const loc = getActiveLoc();
+            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+
             const sourceDocId = activeShelfId + '_' + code;
             const targetDocId = targetShelfId + '_' + code;
             let targetLots = roomStock[targetDocId] ? roomStock[targetDocId].lots : {};
@@ -406,28 +564,76 @@
                 targetLots[miat] = (targetLots[miat] || 0) + roomStock[sourceDocId].lots[miat];
                 totalQtyMoved += roomStock[sourceDocId].lots[miat];
             }
-            await deleteDoc(doc(db, "kilitli_depo_stok", sourceDocId));
-            await setDoc(doc(db, "kilitli_depo_stok", targetDocId), { shelfId: targetShelfId, urunKodu: code, urunAdi: document.getElementById('move-name').value, adres: addresses[targetShelfId] || "", lots: targetLots });
+            
+            await deleteDoc(doc(db, col, sourceDocId));
+            await setDoc(doc(db, col, targetDocId), { shelfId: targetShelfId, urunKodu: code, urunAdi: document.getElementById('move-name').value, adres: addresses[targetShelfId] || "", lots: targetLots });
             await logOperation("TAŞIMA", code, document.getElementById('move-name').value, totalQtyMoved, "-", addresses[activeShelfId] + ' -> ' + addresses[targetShelfId]);
+            
             closeModal('move-stock-modal');
             renderShelfContents(activeShelfId);
         };
 
-        initMap();
-        loadCatalogFromCache();
-        
-        onSnapshot(doc(db, "kilitli_depo", "adresler"), (docSnap) => {
-            if(docSnap.exists()) addresses = docSnap.data(); else addresses = {};
-            updateMapAddresses();
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            const dd = document.getElementById('search-dropdown');
+            document.getElementById('svg-overlay').innerHTML = '<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000"/></marker></defs>';
+            if(val.length < 3) { dd.style.display = 'none'; return; }
+            const terms = val.split(/\s+/);
+            const matches = Object.values(roomStock).filter(i => terms.every(t => i.urunAdi.toLowerCase().includes(t) || i.urunKodu.toLowerCase().includes(t)));
+            if(matches.length > 0) {
+                dd.innerHTML = matches.map(m => '<div class="autocomplete-item" onclick="locateProduct(\'' + m.shelfId + '\')"><div class="ac-name">' + m.urunAdi + '</div><div class="ac-code">ADRES: <span style="color:#ffbc00;">' + (m.adres || 'TANIMSIZ') + '</span> | KOD: ' + m.urunKodu + '</div></div>').join('');
+            } else {
+                dd.innerHTML = '<div style="padding:15px; color:#ff3333; font-size:12px; font-weight:bold; text-align:center;">İçeride eşleşen ürün bulunamadı.</div>';
+            }
+            dd.style.display = 'block';
         });
 
-        onSnapshot(collection(db, "kilitli_depo_stok"), (snap) => {
-            roomStock = {};
-            snap.forEach(d => roomStock[d.id] = d.data());
-            updateMapColors();
-            if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
-        });
+        window.locateProduct = (shelfId) => {
+            document.getElementById('search-dropdown').style.display = 'none'; document.getElementById('search-input').value = '';
+            document.getElementById('svg-overlay').innerHTML = '<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0 0, 6 3, 0 6" fill="#ff0000"/></marker></defs>';
+            const mapW = document.getElementById('room-map').getBoundingClientRect();
+            const door = document.getElementById('room-door').getBoundingClientRect();
+            const shelf = document.getElementById(shelfId);
+            if(!shelf) return;
+            const aisleR = shelf.parentElement.getBoundingClientRect();
+            const startX = (door.left - mapW.left) - 10, startY = (door.top + door.height/2 - mapW.top);
+            const targetX = (aisleR.left + aisleR.width/2 - mapW.left), bottomY = mapW.height - 15, targetY = (aisleR.bottom - mapW.top) + 2; 
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M ' + startX + ' ' + startY + ' L ' + startX + ' ' + bottomY + ' L ' + targetX + ' ' + bottomY + ' L ' + targetX + ' ' + targetY);
+            path.setAttribute('class', 'path-line'); path.setAttribute('marker-end', 'url(#arrowhead)');
+            document.getElementById('svg-overlay').appendChild(path);
+            shelf.style.animation = 'flash30 0.3s 6 alternate'; setTimeout(() => { shelf.style.animation = ''; updateMapColors(); }, 1800);
+        };
 
+        window.openReportModal = (type) => {
+            const tbody = document.getElementById('report-table-body'), thead = document.getElementById('report-thead'), titleEl = document.getElementById('report-title');
+            let rows = [];
+            if (type === 'critical' || type === 'all') {
+                titleEl.innerText = type === 'critical' ? 'KRİTİK MİAT RAPORU (< 180 GÜN)' : 'TÜM MİAT RAPORU';
+                titleEl.style.color = type === 'critical' ? '#ff3333' : '#fff';
+                thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr>';
+                for(let key in roomStock) {
+                    for(let miat in roomStock[key].lots) {
+                        const days = getDaysDiff(miat);
+                        if(type === 'all' || days <= 180) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
+                    }
+                }
+                rows.sort((a,b) => a.code === b.code ? a.days - b.days : a.code.localeCompare(b.code));
+                tbody.innerHTML = rows.map(r => {
+                    let c = r.days <= 30 ? '#ff0000' : (r.days <= 60 ? '#ff4500' : (r.days <= 90 ? '#ff8c00' : (r.days <= 180 ? '#ffbc00' : '#00ff00')));
+                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + r.miat + '</td><td style="font-weight:900; color:' + c + ';">' + r.days + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
+                }).join('');
+            }
+            document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
+        window.generateAisleQR = (aisleNum, e) => { e.stopPropagation(); generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); };
+        const generateQR = (val, label) => {
+            document.getElementById('qr-label').innerText = label;
+            new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
+            document.getElementById('qr-modal').style.display = 'flex';
+        };
     </script>
 </body>
 </html>
