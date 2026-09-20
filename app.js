@@ -82,7 +82,6 @@ window.openScanner = () => {
         },
         () => {}
     ).catch((err) => {
-        alert("Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin.");
         window.closeScanner();
     });
 };
@@ -96,7 +95,17 @@ window.closeScanner = () => {
     }
 };
 
+const loadingScreen = document.getElementById('loading-screen');
+const loginScreen = document.getElementById('login-screen');
+const appScreen = document.getElementById('app-screen');
 const loginForm = document.getElementById('login-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const operatorName = document.getElementById('operator-name');
+const searchInput = document.getElementById('main-search');
+const dropdown = document.getElementById('dropdown-results');
+const resultContainer = document.getElementById('result-container');
+
 if (loginForm) {
     const mobileHeader = document.createElement('div');
     mobileHeader.className = 'mobile-login-header';
@@ -167,32 +176,16 @@ document.addEventListener('click', async (e) => {
             localStorage.removeItem('terminux_catalog_time');
             await signOut(auth);
             window.location.reload();
-        } catch (err) { alert("Sistem Hatası: Oturum kapatılamadı."); }
+        } catch (err) {}
     }
 });
 
-const setScreen = (type) => {
-    const loadingScreen = document.getElementById('loading-screen');
-    const loginScreen = document.getElementById('login-screen');
-    const appScreen = document.getElementById('app-screen');
-
-    if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-        loadingScreen.style.display = 'none';
-    }
-    
-    if (type === 'login') {
-        if (appScreen) { appScreen.classList.add('hidden'); appScreen.style.display = 'none'; }
-        if (loginScreen) { loginScreen.classList.remove('hidden'); loginScreen.style.display = 'flex'; }
-    } else if (type === 'app') {
-        if (loginScreen) { loginScreen.classList.add('hidden'); loginScreen.style.display = 'none'; }
-        if (appScreen) { appScreen.classList.remove('hidden'); appScreen.style.display = 'flex'; }
-    }
-};
-
 let initFallback = setTimeout(() => {
-    setScreen('login');
-}, 2500);
+    if (loadingScreen) loadingScreen.classList.add('hidden');
+    if (appScreen && appScreen.classList.contains('hidden') && loginScreen) {
+        loginScreen.classList.remove('hidden');
+    }
+}, 1500);
 
 onSnapshot(doc(db, "system", "settings"), (docSnap) => {
     if(docSnap.exists()) {
@@ -202,12 +195,11 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             btnLens.style.display = data.publicLensEnabled ? 'block' : 'none';
         }
     }
-});
+}, (error) => {});
 
 onAuthStateChanged(auth, async (user) => {
     clearTimeout(initFallback);
     if (user) {
-        const operatorName = document.getElementById('operator-name');
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
         try {
@@ -218,7 +210,9 @@ onAuthStateChanged(auth, async (user) => {
             }
         } catch(e) {}
 
-        setScreen('app');
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+        if(loginScreen) loginScreen.classList.add('hidden');
+        if(appScreen) appScreen.classList.remove('hidden');
 
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
@@ -228,14 +222,15 @@ onAuthStateChanged(auth, async (user) => {
                     buildCatalog(true);
                 }
             }
-        });
+        }, (error) => {});
 
         buildCatalog().then(() => {
-            const searchInput = document.getElementById('main-search');
             if(searchInput) searchInput.focus();
         });
     } else {
-        setScreen('login');
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+        if(appScreen) appScreen.classList.add('hidden');
+        if(loginScreen) loginScreen.classList.remove('hidden');
     }
 });
 
@@ -246,12 +241,8 @@ if(loginForm) {
 
         const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
         if (!turnstileResponse || !turnstileResponse.value) {
-            alert("Güvenlik İhlali: Lütfen bot olmadığınızı doğrulamak için güvenlik kutucuğunu onaylayın.");
             return; 
         }
-
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
 
         if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`;
@@ -267,7 +258,6 @@ if(loginForm) {
             await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
         } 
         catch (error) { 
-            alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz."); 
             if (window.turnstile) window.turnstile.reset();
             if (loginBtn) {
                 loginBtn.textContent = "Giriş Yap";
@@ -330,10 +320,6 @@ async function buildCatalog(forceUpdate = false) {
 
     } catch (error) {}
 }
-
-const searchInput = document.getElementById('main-search');
-const dropdown = document.getElementById('dropdown-results');
-const resultContainer = document.getElementById('result-container');
 
 document.addEventListener('click', (e) => {
     if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
@@ -401,10 +387,12 @@ if(searchInput) {
 }
 
 window.openPrintModal = () => {
-    if (!window.currentRenderedProduct) return alert("Hata: Yazdırılacak ürün verisi bulunamadı.");
     document.getElementById('print-modal').style.display = 'flex';
 };
-window.closePrintModal = () => { document.getElementById('print-modal').style.display = 'none'; };
+
+window.closePrintModal = () => { 
+    document.getElementById('print-modal').style.display = 'none'; 
+};
 
 window.executePrint = () => {
     const data = window.currentRenderedProduct;
@@ -574,7 +562,7 @@ window.saveUpdate = async (id, type) => {
     const inputEl = document.getElementById(`man-${type}-${id}`);
     const newVal = inputEl ? inputEl.value.trim() : null;
 
-    if (!newVal) return alert("Hata: Veri alanı boş bırakılamaz.");
+    if (!newVal) return;
 
     const updateData = {};
     if (type === 'b') {
@@ -603,7 +591,7 @@ window.saveUpdate = async (id, type) => {
         }
         
         fetchAndDisplayProduct(id); 
-    } catch (err) { alert("Sistem Hatası: " + err.message); }
+    } catch (err) {}
 };
 
 function createEditUI(id, type, val, placeholder, colorClass) {
@@ -694,14 +682,16 @@ window.fetchAndDisplayProduct = async (code) => {
             }
 
         } else {
-            if(resultContainer) resultContainer.innerHTML = `
-                <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
-                    <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
-                    <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
-                </div>
-            `;
+            if(resultContainer) {
+                resultContainer.innerHTML = `
+                    <div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">
+                        <div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>
+                        <div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">${code}</span></div>
+                    </div>
+                `;
+            }
         }
-    } catch (err) { if(resultContainer) resultContainer.innerHTML = `<div style="color:#f33;">Sistem Hatası: ${err.message}</div>`; }
+    } catch (err) {}
 };
 
 function renderCard(data) {
