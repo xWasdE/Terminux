@@ -18,6 +18,8 @@
         .badge-title { background: rgba(153,51,255,0.1); color: #9933ff; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(153,51,255,0.3); }
         .btn-edit { background: #222; color: #fff; border: 1px solid #444; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s; letter-spacing: 1px; }
         .btn-edit:hover { background: #00ccff; color: #000; border-color: #00ccff; }
+        .btn-add-user { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid rgba(0,255,0,0.3); padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s; letter-spacing: 1px; }
+        .btn-add-user:hover { background: #00ff00; color: #000; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
     </style>
@@ -50,17 +52,20 @@
         <div class="topbar"><h2>KULLANICI YÖNETİMİ</h2></div>
         <div class="content-area" style="overflow-y: auto;">
             <div class="card" style="border-color: #00ccff;">
-                <div class="card-header" style="color: #00ccff;">SİSTEM KULLANICILARI VE YETKİLENDİRME</div>
+                <div class="card-header" style="color: #00ccff; display:flex; justify-content:space-between; align-items:center;">
+                    SİSTEM KULLANICILARI VE YETKİLENDİRME
+                    <button class="btn-add-user" onclick="openAddUserModal()">+ YENİ KULLANICI</button>
+                </div>
                 <div id="users-list"></div>
             </div>
         </div>
     </div>
 
-
+    <!-- Edit Modal -->
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
-                <div style="font-size:18px; font-weight:900; color:#fff;">KULLANICI DÜZENLE</div>
+                <div style="font-size:18px; font-weight:900; color:#fff;" id="modal-main-title">KULLANICI DÜZENLE</div>
                 <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="document.getElementById('edit-modal').style.display='none'">×</button>
             </div>
             
@@ -89,7 +94,7 @@
                 <p id="loc-warning" style="font-size:10px; color:#ff3333; margin-top:8px; display:none;">* Sadece kendi lokasyonunuzda yetkilendirme yapabilirsiniz.</p>
             </div>
 
-
+            <!-- MODÜL ERİŞİM YETKİLERİ -->
             <div class="form-group" style="text-align:left; margin-top:15px;" id="modules-section">
                 <label style="color:#00ff00;">MODÜL ERİŞİM YETKİLERİ (GÖRÜNTÜLEME)</label>
                 <div style="display:flex; flex-direction:column; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:6px; margin-top:5px;">
@@ -112,13 +117,38 @@
             </div>
 
             <input type="hidden" id="edit-uid">
-            <button class="btn-primary" style="background:#00ccff; color:#000; width:100%; margin-top:20px;" onclick="saveUser()">DEĞİŞİKLİKLERİ KAYDET</button>
+            <button class="btn-primary" id="btn-save-user" style="background:#00ccff; color:#000; width:100%; margin-top:20px;" onclick="saveUser()">DEĞİŞİKLİKLERİ KAYDET</button>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="add-modal" class="modal">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                <div style="font-size:18px; font-weight:900; color:#00ff00;">YENİ KULLANICI EKLE</div>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="document.getElementById('add-modal').style.display='none'">×</button>
+            </div>
+            
+            <div class="form-group" style="text-align:left;">
+                <label>E-POSTA ADRESİ</label>
+                <input type="email" id="add-email" placeholder="kullanici@terminux.com.tr">
+            </div>
+
+            <div class="form-group" style="text-align:left; margin-top:15px;">
+                <label>ŞİFRE (En az 6 karakter)</label>
+                <input type="password" id="add-password" placeholder="******">
+            </div>
+
+            <p style="font-size:11px; color:#aaa; margin-top:15px; line-height:1.5;">* Yeni kullanıcı oluşturulduktan sonra listeden "DÜZENLE" butonuna basarak ünvan, lokasyon ve modül yetkilerini atayabilirsiniz.</p>
+
+            <button class="btn-primary" id="btn-create-user" style="background:#00ff00; color:#000; width:100%; margin-top:20px;" onclick="createUser()">KULLANICIYI OLUŞTUR</button>
         </div>
     </div>
 
     <script type="module">
         import { db, auth } from './admin.js';
         import { doc, getDoc, collection, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         let currentUserData = null;
         let allUsers = [];
@@ -141,11 +171,9 @@
                     const role = currentUserData.role || 'personel';
                     const modules = currentUserData.modules || {};
                     
-
                     if(role !== 'superadmin' && role !== 'admin') {
                         showAccessDenied(); return;
                     }
-
 
                     if(role !== 'superadmin') {
                         if(role !== 'admin') document.getElementById('nav-users').style.display = 'none';
@@ -213,6 +241,34 @@
             }).join('');
         };
 
+        window.openAddUserModal = () => {
+            document.getElementById('add-email').value = '';
+            document.getElementById('add-password').value = '';
+            document.getElementById('add-modal').style.display = 'flex';
+        };
+
+        window.createUser = async () => {
+            const email = document.getElementById('add-email').value.trim();
+            const password = document.getElementById('add-password').value;
+            if(!email || password.length < 6) return alert("Geçerli bir e-posta ve en az 6 haneli şifre giriniz.");
+
+            const btn = document.getElementById('btn-create-user');
+            btn.disabled = true; btn.innerText = "OLUŞTURULUYOR...";
+
+            try {
+                // Not: Güvenlik politikaları gereği Firebase Auth üzerinden yeni kullanıcı açmak, 
+                // mevcut yönetici oturumunu kapatıp yeni kullanıcıya geçiş yaptırır. 
+                // Gerçek senaryolarda bu işlem Cloud Functions ile arka planda yapılmalıdır.
+                // Test ortamı için standart Auth fonksiyonu kullanılmıştır.
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert("Kullanıcı oluşturuldu. Oturumunuz yeni kullanıcıya geçtiği için sayfayı yenileyin.");
+                window.location.reload();
+            } catch (error) {
+                alert("Hata: " + error.message);
+                btn.disabled = false; btn.innerText = "KULLANICIYI OLUŞTUR";
+            }
+        };
+
         window.openEditModal = (uid) => {
             const user = allUsers.find(u => u.uid === uid);
             if(!user) return;
@@ -234,7 +290,6 @@
             
             roleSel.value = user.role || 'personel';
             locSel.value = user.location || 'merkez';
-
 
             const mods = user.modules || {};
             document.getElementById('mod-adres').checked = !!mods.adres;
