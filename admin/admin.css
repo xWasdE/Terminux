@@ -20,7 +20,7 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
 .main-content { flex: 1; background: #000; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 .topbar { padding: 20px 40px; border-bottom: 1px solid #1a1a1a; background: #020202; display: flex; justify-content: space-between; align-items: center; }
 .topbar h2 { font-size: 18px; font-weight: 800; color: #fff; }
-.content-area { flex: 1; padding: 40px; overflow-y: auto; }
+.content-area { flex: 1; padding: 40px; overflow-y: auto; padding-bottom: 80px; }
 .card { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 30px; margin-bottom: 20px; overflow-x: auto; }
 .card-header { font-size: 14px; font-weight: 800; color: #ffbc00; margin-bottom: 20px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; text-transform: uppercase; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -39,19 +39,14 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
 .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 30px; width: 100%; max-width: 450px; }
 .modal-box h3 { margin-top: 0; color: #fff; margin-bottom: 20px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
 
-.legal-footer {
-    flex-shrink: 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
-    width: 100vw !important; background-color: rgba(5, 5, 5, 0.95) !important; color: #888 !important; text-align: center !important;
-    padding: 6px 10px !important; font-size: 9px !important; z-index: 9999 !important; border-top: 1px solid #1a1a1a !important;
-    backdrop-filter: blur(8px) !important; line-height: 1.2 !important; box-sizing: border-box !important; overflow-wrap: break-word !important;
-}
+.legal-footer { flex-shrink: 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100vw !important; background-color: rgba(5, 5, 5, 0.95) !important; color: #888 !important; text-align: center !important; padding: 6px 10px !important; font-size: 9px !important; z-index: 9999 !important; border-top: 1px solid #1a1a1a !important; backdrop-filter: blur(8px) !important; line-height: 1.2 !important; box-sizing: border-box !important; overflow-wrap: break-word !important; }
 .legal-footer b { color: #aaa !important; font-weight: bold !important; }
 
 @media (max-width: 900px) {
     body { flex-direction: column; overflow: auto; height: 100dvh; }
     .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; display: block; }
     .sidebar-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-    .sidebar-title { font-size: 18px; }
+    .sidebar-title { font-size: 18px; margin: 0; }
     .sidebar-subtitle { display: none; }
     .menu { display: flex; flex-direction: row; overflow-x: auto; padding: 0; background: #000; border-top: 1px solid #1a1a1a; -webkit-overflow-scrolling: touch; }
     .menu-item { padding: 15px; font-size: 11px; white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; flex: 0 0 auto; justify-content: center; }
@@ -59,7 +54,6 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
     .user-info { flex-direction: row; flex-wrap: wrap; padding: 10px; gap: 5px; }
     .user-name { width: 100%; text-align: center; margin-bottom: 5px; font-size: 11px; }
     .btn-home, .btn-logout { flex: 1; padding: 12px; font-size: 10px; }
-    
     .main-content { overflow: visible; display: block; flex: none; min-height: 100vh; }
     .topbar { padding: 15px; justify-content: center; }
     .topbar h2 { font-size: 14px; text-align: center; }
@@ -67,9 +61,7 @@ body { background: #000; color: #fff; display: flex; height: 100vh; overflow: hi
     .card { padding: 15px; margin-bottom: 15px; }
     .card-header { font-size: 12px; text-align: center; }
     .form-grid { grid-template-columns: 1fr; gap: 10px; }
-    
     table { width: 100%; min-width: 600px; }
     .modal-box { padding: 20px; width: 95%; margin: 20px auto; }
-    
     .legal-footer { font-size: 7px !important; padding: 4px 6px !important; line-height: 1.1 !important; }
 }
