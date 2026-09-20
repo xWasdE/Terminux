@@ -5,17 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | Depo Yönetimi</title>
     <link rel="stylesheet" href="admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100%; margin: 0; padding: 0; }
-        
-        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; width: 100%; }
-        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; width: 100%; }
-        
         .map-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; margin: auto; min-width: 1000px; flex-shrink: 0; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
@@ -23,6 +18,7 @@
         .aisle { background: #0a0a0a; border: 2px solid #222; border-radius: 6px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 2px; padding: 4px; position: relative; }
         .shelf { background: #111; border: 1px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .shelf-address { color: #fff; font-family: monospace; font-size: clamp(8px, 1.2vw, 13px); font-weight: 900; background: #000; padding: 4px 8px; border-radius: 4px; pointer-events: none; z-index: 2; border: 1px solid #444; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 95%; }
+        
         .alert-30 { animation: flash30 0.8s infinite alternate; border-color: #fff !important; }
         .alert-60 { animation: flash60 1s infinite alternate; border-color: #fff !important; }
         .alert-90 { animation: flash90 1.2s infinite alternate; border-color: #fff !important; }
@@ -30,12 +26,13 @@
         .alert-180 { background: rgba(255, 255, 0, 0.2) !important; border-color: #ffff00 !important; }
         .alert-360 { border-color: #00ff00 !important; }
         .alert-30 .shelf-address, .alert-60 .shelf-address, .alert-90 .shelf-address { color: #fff !important; text-shadow: none; background: #000 !important; border: 1px solid #555 !important; }
+        
         @keyframes flash30 { from { background: rgba(255,0,0,0.2); box-shadow: 0 0 5px #ff0000; } to { background: rgba(255,0,0,1); box-shadow: 0 0 20px #ff0000; } }
         @keyframes flash60 { from { background: rgba(255,69,0,0.1); box-shadow: 0 0 5px #ff4500; } to { background: rgba(255,69,0,0.8); box-shadow: 0 0 15px #ff4500; } }
         @keyframes flash90 { from { background: rgba(255,140,0,0.1); box-shadow: 0 0 5px #ff8c00; } to { background: rgba(255,140,0,0.6); box-shadow: 0 0 10px #ff8c00; } }
         @keyframes flashBtn { from { background: rgba(255,51,51,0.2); color: #ff3333; border-color: #ff3333; } to { background: #ff0000; color: #ffffff; border-color: #ff0000; text-shadow: none; box-shadow: 0 0 10px #ff0000; } }
         
-        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; border-radius: 8px; margin-top: 15px; margin-bottom: 0; }
+        .legend-bar { flex-shrink: 0; display: flex; gap: 15px; padding: 15px; background: #020202; border-top: 1px solid #1a1a1a; flex-wrap: wrap; justify-content: center; width: 100%; border-radius: 8px; margin-top: 15px; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; font-weight: bold; letter-spacing: 1px; }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
         
@@ -72,24 +69,33 @@
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
 
-        .btn-download-excel { background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
-        .btn-download-excel:hover { background: #00ccff; color: #000; }
-        .btn-download-pdf { background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
-        .btn-download-pdf:hover { background: #ff3333; color: #fff; }
+        .btn-download-excel { background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; display:flex; align-items:center; }
+        .btn-download-excel:hover { background: #00ccff; color: #000; box-shadow: 0 0 10px rgba(0,204,255,0.5); }
+        .btn-download-pdf { background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; display:flex; align-items:center; }
+        .btn-download-pdf:hover { background: #ff3333; color: #fff; box-shadow: 0 0 10px rgba(255,51,51,0.5); }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
+        
+        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
     </style>
 </head>
 <body>
-    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div id="global-loader">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 15px; color:#00ccff;"></i>
+        SİSTEM YETKİLERİ KONTROL EDİLİYOR...
+    </div>
+
     <div class="sidebar">
         <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
         <div class="menu">
-            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
-            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
-            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
-            <a href="depoyonetimi.html" class="menu-item active"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
-            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
-            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+            <a href="index.html" class="menu-item" id="nav-index"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item" id="nav-users"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item" id="nav-adres"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item" id="nav-stok"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item active" id="nav-depo"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item" id="nav-lens"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item" id="nav-ayarlar"><span>SİSTEM AYARLARI</span></a>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
@@ -100,7 +106,7 @@
     
     <div class="main-content">
         <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
-        <div class="content-area">
+        <div class="content-area" style="overflow-y: auto; padding-right: 15px;">
 
             <div class="admin-toolbar">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -119,7 +125,7 @@
                 </div>
             </div>
 
-            <div style="flex:1; min-height:0; overflow:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:15px; display:flex; justify-content:center; align-items:center;">
+            <div style="flex:1; min-height:400px; overflow:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:15px; display:flex; justify-content:center; align-items:center;">
                 <div class="map-wrapper" id="room-map">
                     <div class="map-door" id="room-door"><span>KAPI</span></div>
                     <div class="aisle-container" id="aisle-container"></div>
@@ -137,6 +143,7 @@
                 <div class="legend-item"><div class="legend-color" style="background:rgba(255,255,0,0.2); border-color:#ffff00;"></div> < 180 GÜN</div>
                 <div class="legend-item"><div class="legend-color" style="background:transparent; border-color:#00ff00;"></div> +360 GÜN</div>
             </div>
+            
         </div>
     </div>
 
@@ -148,10 +155,10 @@
                 <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('shelf-modal')">×</button>
             </div>
             <div id="shelf-address-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
-                <div class="form-group" style="text-align:left;">
+                <div class="form-group" style="text-align:left; margin:0;">
                     <label>RAF ADRESİ TANIMLA</label>
                     <div style="display:flex; gap:10px;">
-                        <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01" style="flex:1; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+                        <input type="text" id="edit-shelf-address" placeholder="Örn: 12.01.01" style="flex:1; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px; font-family:monospace;">
                         <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="saveShelfAddress()">KAYDET</button>
                     </div>
                 </div>
@@ -187,7 +194,7 @@
                 <label>EKLENECEK MİKTAR</label>
                 <input type="number" id="add-qty" min="1" value="1" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
             </div>
-            <button class="btn-primary" style="margin-top:10px; width:100%; background:#00ff00;" onclick="executeAddStock()">STOĞA EKLE</button>
+            <button class="btn-primary" style="margin-top:10px; width:100%; background:#00ff00; color:#000;" onclick="executeAddStock()">STOĞA EKLE</button>
         </div>
     </div>
 
@@ -216,7 +223,7 @@
             <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="move-info"></div>
             <div class="form-group" style="text-align:left; margin-bottom: 15px;">
                 <label>HEDEF RAF</label>
-                <select id="move-target-shelf" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;"></select>
+                <select id="move-target-shelf" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px; font-family:monospace;"></select>
             </div>
             <input type="hidden" id="move-code"><input type="hidden" id="move-name">
             <button class="btn-primary" style="background:#9933ff; color:#fff; width:100%; margin-top:10px;" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
@@ -228,8 +235,8 @@
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
                 <div style="font-size:18px; font-weight:900;" id="report-title">RAPOR</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-download-excel" onclick="exportReportExcel()">EXCEL RAPORU</button>
-                    <button class="btn-download-pdf" onclick="exportReportPDF()">PDF RAPORU</button>
+                    <button class="btn-download-excel" onclick="exportReportExcel()"><i class="fa-solid fa-file-excel" style="margin-right:5px;"></i>EXCEL İNDİR</button>
+                    <button class="btn-download-pdf" onclick="exportReportPDF()"><i class="fa-solid fa-file-pdf" style="margin-right:5px;"></i>PDF İNDİR</button>
                     <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer; margin-left:10px;" onclick="closeModal('report-modal')">×</button>
                 </div>
             </div>
@@ -259,7 +266,6 @@
 
     <script type="module">
         import { db, auth } from './admin.js';
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { collection, onSnapshot, getDoc, getDocs, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
@@ -269,35 +275,56 @@
         let unsubAdres = null;
         let unsubStok = null;
 
+        window.showAccessDenied = () => {
+            const gl = document.getElementById('global-loader');
+            gl.innerHTML = '<div style="color:#ff3333; text-align:center;"><i class="fa-solid fa-triangle-exclamation" style="font-size:48px; margin-bottom:20px;"></i><div style="font-size:22px; font-weight:900; letter-spacing:1px;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu modülü görüntüleme yetkiniz bulunmamaktadır.<br>Ana sayfaya yönlendiriliyorsunuz...</div></div>';
+            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        };
+
         const getActiveLoc = () => {
             const el = document.getElementById('admin-loc-select');
             return el ? (el.value || 'merkez') : 'merkez';
         };
 
         setTimeout(async () => {
-            onAuthStateChanged(auth, async (user) => {
-                if(user) {
-                    const uDoc = await getDoc(doc(db, "users", user.uid));
-                    if(uDoc.exists()) {
-                        const r = uDoc.data().role;
-                        const uloc = uDoc.data().location || 'merkez';
-                        onSnapshot(doc(db, "system", "locations"), (docSnap) => {
-                            let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
-                            if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
-                            let html = '';
-                            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
-                            const sel = document.getElementById('admin-loc-select');
-                            sel.innerHTML = html;
-                            sel.onchange = () => {
-                                initMap();
-                                loadData();
-                            };
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role || 'personel';
+                    const uloc = uDoc.data().location || 'merkez';
+                    const modules = uDoc.data().modules || {};
+                    
+                    if(r !== 'superadmin' && !modules.depo) {
+                        showAccessDenied(); return;
+                    }
+
+                    if(r !== 'superadmin') {
+                        if(r !== 'admin') document.getElementById('nav-users').style.display = 'none';
+                        if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
+                        if(!modules.stok) document.getElementById('nav-stok').style.display = 'none';
+                        if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
+                        if(!modules.ayarlar) document.getElementById('nav-ayarlar').style.display = 'none';
+                    }
+
+                    document.getElementById('global-loader').style.display = 'none';
+
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        const sel = document.getElementById('admin-loc-select');
+                        sel.innerHTML = html;
+                        sel.onchange = () => {
                             initMap();
                             loadData();
-                        });
-                    }
-                }
-            });
+                        };
+                        initMap();
+                        loadData();
+                    });
+                } else { showAccessDenied(); }
+            } else { window.location.href = '../index.html'; }
         }, 1500);
 
         window.loadCatalogFromDB = async () => {
