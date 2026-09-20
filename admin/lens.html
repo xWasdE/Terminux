@@ -26,6 +26,7 @@
             <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
             <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
             <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
             <a href="lens.html" class="menu-item active"><span>LENS YÖNETİMİ</span></a>
             <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
         </div>
@@ -76,7 +77,6 @@
         </div>
     </div>
 
-
     <div id="custom-alert" class="modal">
         <div class="modal-box" style="text-align: center;">
             <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
@@ -103,7 +103,6 @@
             return "";
         };
 
-
         async function processLensExcel(inputId, brand) {
             const file = document.getElementById(inputId).files[0];
             if(!file) return sysLog("Dosya seçilmedi.");
@@ -124,14 +123,13 @@
                 }
                 sysLog(`Yükleme Bitti. (${brand} - ${count} Kayıt)`);
                 document.getElementById(inputId).value = '';
-                fetchLenses();
+                fetchLenses(); 
             };
             reader.readAsArrayBuffer(file);
         }
 
         document.getElementById('btn-alcon').addEventListener('click', () => processLensExcel('f-alcon', 'ALCON'));
         document.getElementById('btn-tecnis').addEventListener('click', () => processLensExcel('f-tecnis', 'TECNIS'));
-
 
         document.getElementById('btn-manuel-ekle').addEventListener('click', async () => {
             const brand = document.getElementById('m-brand').value;
@@ -151,7 +149,6 @@
             document.getElementById('m-mik').value = '1';
             fetchLenses();
         });
-
 
         async function fetchLenses() {
             lensData = [];
