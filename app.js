@@ -47,9 +47,7 @@ let html5QrCode = null;
 
 window.openScanner = () => {
     document.getElementById('scanner-modal').style.display = 'flex';
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-    }
+    if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
     html5QrCode.start({ facingMode: "environment" }, config,
         (decodedText) => {
@@ -57,42 +55,23 @@ window.openScanner = () => {
             if (searchInputEl) {
                 searchInputEl.value = decodedText;
                 window.closeScanner();
-                
                 const rawCode = decodedText.trim();
                 if(!rawCode) return;
-                
                 const dropdown = document.getElementById('dropdown-results');
                 if(dropdown) dropdown.style.display = 'none';
                 
                 const searchCode = trToLower(rawCode);
-                const directMatch = productCatalog.find(m => 
-                    (trToLower(m.docId) === searchCode) || 
-                    (trToLower(m.urunKodu) === searchCode) || 
-                    (trToLower(m.barkod) === searchCode) || 
-                    (trToLower(m.refNo) === searchCode)
-                );
-
-                if (directMatch) {
-                    const validId = directMatch.docId || directMatch.urunKodu;
-                    fetchAndDisplayProduct(String(validId));
-                } else {
-                    fetchAndDisplayProduct(rawCode); 
-                }
+                const directMatch = productCatalog.find(m => (trToLower(m.docId) === searchCode) || (trToLower(m.urunKodu) === searchCode) || (trToLower(m.barkod) === searchCode) || (trToLower(m.refNo) === searchCode));
+                if (directMatch) { fetchAndDisplayProduct(String(directMatch.docId || directMatch.urunKodu)); } 
+                else { fetchAndDisplayProduct(rawCode); }
             }
-        },
-        () => {}
-    ).catch((err) => {
-        window.closeScanner();
-    });
+        }, () => {}
+    ).catch((err) => { window.closeScanner(); });
 };
 
 window.closeScanner = () => {
     document.getElementById('scanner-modal').style.display = 'none';
-    if(html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-        }).catch(() => {});
-    }
+    if(html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(() => { html5QrCode.clear(); }).catch(() => {}); }
 };
 
 const setScreen = (type) => {
@@ -100,11 +79,7 @@ const setScreen = (type) => {
     const logSc = document.getElementById('login-screen');
     const appSc = document.getElementById('app-screen');
 
-    if (loadSc) {
-        loadSc.classList.add('hidden');
-        loadSc.style.display = 'none';
-    }
-
+    if (loadSc) { loadSc.classList.add('hidden'); loadSc.style.display = 'none'; }
     if (type === 'login') {
         if (appSc) { appSc.classList.add('hidden'); appSc.style.display = 'none'; }
         if (logSc) { logSc.classList.remove('hidden'); logSc.style.display = 'flex'; }
@@ -153,34 +128,19 @@ const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3
 
 async function loadTelegramImage(imgElement, fileId, index) {
     if (fileId.startsWith('data:image')) {
-        imgElement.src = fileId;
-        window.lightboxImages[index] = fileId;
-        imgElement.onclick = () => openLightbox(index);
-        return;
+        imgElement.src = fileId; window.lightboxImages[index] = fileId;
+        imgElement.onclick = () => openLightbox(index); return;
     }
-
     let fullUrl = MERKEZ_API_ADRESI + '/api/telegram-image?file_id=' + fileId + '&cb=' + new Date().getTime();
-
     try {
-        const response = await fetch(fullUrl, {
-            method: 'GET',
-            headers: {
-                "Bypass-Tunnel-Reminder": "true",
-                "ngrok-skip-browser-warning": "true"
-            }
-        });
-        
+        const response = await fetch(fullUrl, { headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" } });
         if (!response.ok) throw new Error("Ağ Hatası");
-        
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
-        imgElement.src = objectUrl;
-        window.lightboxImages[index] = objectUrl;
+        imgElement.src = objectUrl; window.lightboxImages[index] = objectUrl;
         imgElement.onclick = () => openLightbox(index);
-        
     } catch (error) {
-        imgElement.src = noImageSvg; 
-        window.lightboxImages[index] = noImageSvg;
+        imgElement.src = noImageSvg; window.lightboxImages[index] = noImageSvg;
         imgElement.onclick = () => openLightbox(index);
     }
 }
@@ -188,78 +148,109 @@ async function loadTelegramImage(imgElement, fileId, index) {
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'btn-logout' || e.target.closest('#btn-logout') || e.target.innerText?.trim().toUpperCase() === 'GÜVENLİ ÇIKIŞ')) {
         try {
-            localStorage.removeItem('terminux_catalog_cache_merkez');
-            localStorage.removeItem('terminux_catalog_cache_bodrum');
-            localStorage.removeItem('terminux_catalog_cache_eskisehir');
-            localStorage.removeItem('terminux_catalog_time_merkez');
-            localStorage.removeItem('terminux_catalog_time_bodrum');
-            localStorage.removeItem('terminux_catalog_time_eskisehir');
-            await signOut(auth);
-            window.location.reload();
+            Object.keys(localStorage).forEach(key => { if(key.startsWith('terminux_catalog_')) localStorage.removeItem(key); });
+            await signOut(auth); window.location.reload();
         } catch (err) {}
     }
 });
-
-let initFallback = setTimeout(() => { setScreen('login'); }, 2500);
 
 onSnapshot(doc(db, "system", "settings"), (docSnap) => {
     if(docSnap.exists()) {
         const data = docSnap.data();
         const btnLens = document.getElementById('btn-lens-redirect');
-        if (btnLens) {
-            btnLens.style.display = data.publicLensEnabled ? 'block' : 'none';
+        if (btnLens) btnLens.style.display = data.publicLensEnabled ? 'block' : 'none';
+        
+        const path = window.location.pathname.toLowerCase();
+        if (data.maintenanceMode === true && !sessionStorage.getItem('bypass_maintenance')) {
+            if (!path.includes('bakim.html') && !path.includes('admin')) window.location.replace('/bakim.html');
         }
     }
 }, (error) => {});
 
+const locSelector = document.getElementById('loc-selector');
+if(locSelector) {
+    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+        if(docSnap.exists()) {
+            const locs = docSnap.data().list || [];
+            let html = '';
+            if(locs.length === 0) html = '<option value="merkez">MERKEZ DEPO</option>';
+            else locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+            locSelector.innerHTML = html;
+            locSelector.value = localStorage.getItem('active_loc') || 'merkez';
+        }
+    });
+    locSelector.addEventListener('change', (e) => {
+        localStorage.setItem('active_loc', e.target.value);
+        buildCatalog(true);
+    });
+}
+
 onAuthStateChanged(auth, async (user) => {
-    clearTimeout(initFallback);
+    const path = window.location.pathname.toLowerCase();
+    
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
-        
         try {
             const uDoc = await getDoc(doc(db, "users", user.uid));
             if (uDoc.exists()) {
-                if (uDoc.data().role === 'admin') {
+                const ud = uDoc.data();
+                if(ud.status !== 'active') { await signOut(auth); return window.location.replace('/index.html'); }
+                
+                let reqMod = null;
+                if(path.includes('sayim.html')) reqMod = 'sayim';
+                else if(path.includes('sevkiyat.html')) reqMod = 'sevkiyat';
+                else if(path.includes('lens.html') && !path.includes('admin')) reqMod = 'lens';
+                else if(path.includes('adres.html') && !path.includes('admin')) reqMod = 'adres';
+                
+                if (ud.role !== 'admin' && ud.role !== 'superadmin' && reqMod) {
+                    if(!ud.modules || ud.modules[reqMod] !== true) return window.location.replace('/index.html');
+                }
+                
+                if (ud.role === 'admin' || ud.role === 'superadmin') {
                     const adminBtn = document.getElementById('btn-admin-panel');
                     if (adminBtn) adminBtn.style.display = 'inline-block';
                 }
+                
+                localStorage.setItem('user_role', ud.role || 'user');
+                localStorage.setItem('user_loc', ud.location || 'merkez');
+                
+                if (ud.role === 'superadmin' || ud.location === 'tumu') {
+                    if(locSelector) locSelector.style.display = 'inline-block';
+                } else {
+                    if(locSelector) locSelector.style.display = 'none';
+                    localStorage.setItem('active_loc', ud.location || 'merkez');
+                }
+            } else {
+                await signOut(auth); return window.location.replace('/index.html');
             }
         } catch(e) {}
-
-        const locSelector = document.getElementById('loc-selector');
-        const userLoc = localStorage.getItem('user_loc') || 'merkez';
-        if (userLoc === 'tumu') {
-            if (locSelector) {
-                locSelector.style.display = 'inline-block';
-                locSelector.value = localStorage.getItem('active_loc') || 'merkez';
-                locSelector.onchange = (e) => {
-                    localStorage.setItem('active_loc', e.target.value);
-                    buildCatalog(true);
-                };
-            }
-        } else {
-            if (locSelector) locSelector.style.display = 'none';
-            localStorage.setItem('active_loc', userLoc);
-        }
 
         setScreen('app');
 
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
                 const data = snapshot.data();
-                const activeLoc = localStorage.getItem('active_loc') || 'merkez';
-                const cacheTime = localStorage.getItem('terminux_catalog_time_' + activeLoc);
+                const al = localStorage.getItem('active_loc') || 'merkez';
+                const cacheTime = localStorage.getItem('terminux_catalog_time_' + al);
                 if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
                     buildCatalog(true);
                 }
             }
         }, (error) => {});
 
-        buildCatalog().then(() => {
-            if(searchInput) searchInput.focus();
-        });
+        buildCatalog().then(() => { if(searchInput) searchInput.focus(); });
     } else {
+        const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
+        if(!isRoot) {
+            let allowPublicLens = false;
+            if(path.includes('lens.html')) {
+                try {
+                    const settingsSnap = await getDoc(doc(db, "system", "settings"));
+                    if(settingsSnap.exists() && settingsSnap.data().publicLensEnabled === true) allowPublicLens = true;
+                } catch(e) {}
+            }
+            if(!allowPublicLens) return window.location.replace('/index.html');
+        }
         setScreen('login');
     }
 });
@@ -268,39 +259,25 @@ if(loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const loginBtn = loginForm.querySelector('button[type="submit"]');
-
         const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
-        if (!turnstileResponse || !turnstileResponse.value) {
-            return; 
-        }
+        if (!turnstileResponse || !turnstileResponse.value) return; 
 
         if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : usernameInput.value + '@terminux.com.tr';
-        const finalPass = passwordInput.value;
+        
+        if (loginBtn) { loginBtn.textContent = "GİRİŞ YAPILIYOR..."; loginBtn.classList.add('btn-loading'); loginBtn.disabled = true; }
 
-        if (loginBtn) {
-            loginBtn.textContent = "GİRİŞ YAPILIYOR...";
-            loginBtn.classList.add('btn-loading');
-            loginBtn.disabled = true;
-        }
-
-        try { 
-            await signInWithEmailAndPassword(auth, finalEmail, finalPass); 
-        } 
+        try { await signInWithEmailAndPassword(auth, finalEmail, passwordInput.value); } 
         catch (error) { 
             if (window.turnstile) window.turnstile.reset();
-            if (loginBtn) {
-                loginBtn.textContent = "Giriş Yap";
-                loginBtn.classList.remove('btn-loading');
-                loginBtn.disabled = false;
-            }
+            if (loginBtn) { loginBtn.textContent = "Giriş Yap"; loginBtn.classList.remove('btn-loading'); loginBtn.disabled = false; }
         }
     });
 }
 
 async function buildCatalog(forceUpdate = false) {
     let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-    if (activeLoc === 'tumu') activeLoc = 'merkez';
+    if(activeLoc === 'tumu') activeLoc = 'merkez';
 
     const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
     const CACHE_TIME_KEY = 'terminux_catalog_time_' + activeLoc;
@@ -347,7 +324,7 @@ async function buildCatalog(forceUpdate = false) {
         amSnap.forEach(processDoc);
         productCatalog = Array.from(tempMap.values());
 
-        if (productCatalog.length > 0) {
+        if(productCatalog.length > 0) {
             localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
             localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         }
@@ -355,11 +332,10 @@ async function buildCatalog(forceUpdate = false) {
         if (forceUpdate && document.getElementById('main-search')) {
             const toast = document.createElement('div');
             toast.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#00ff00; color:#000; padding:10px 20px; border-radius:20px; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 5px 15px rgba(0,255,0,0.3);";
-            toast.innerText = "Lokasyon Veritabanı Güncellendi";
+            toast.innerText = "Lokasyon Veritabanı Güncellendi (" + activeLoc.toUpperCase() + ")";
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
-
     } catch (error) {}
 }
 
@@ -387,138 +363,79 @@ if(searchInput) {
 
                 document.querySelectorAll('.search-item').forEach(item => {
                     item.addEventListener('click', () => {
-                        searchInput.value = '';
-                        dropdown.style.display = 'none';
+                        searchInput.value = ''; dropdown.style.display = 'none';
                         fetchAndDisplayProduct(item.getAttribute('data-id'));
                     });
                 });
-            } else {
-                dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Kayıt bulunamadı.</div>';
-            }
+            } else { dropdown.innerHTML = '<div style="padding: 20px; color: #f33; font-size: 16px;">Kayıt bulunamadı.</div>'; }
         }, 150);
     });
 
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            e.preventDefault();
-            clearTimeout(searchTimeout);
-            dropdown.style.display = 'none';
-            
-            const rawCode = searchInput.value.trim();
-            if (!rawCode) return;
-            searchInput.value = '';
-
+            e.preventDefault(); clearTimeout(searchTimeout); dropdown.style.display = 'none';
+            const rawCode = searchInput.value.trim(); if (!rawCode) return; searchInput.value = '';
             const searchCode = trToLower(rawCode);
-
-            const directMatch = productCatalog.find(m => 
-                (trToLower(m.docId) === searchCode) || 
-                (trToLower(m.urunKodu) === searchCode) || 
-                (trToLower(m.barkod) === searchCode) || 
-                (trToLower(m.refNo) === searchCode)
-            );
-
-            if (directMatch) fetchAndDisplayProduct(directMatch.docId);
-            else fetchAndDisplayProduct(rawCode); 
+            const directMatch = productCatalog.find(m => (trToLower(m.docId) === searchCode) || (trToLower(m.urunKodu) === searchCode) || (trToLower(m.barkod) === searchCode) || (trToLower(m.refNo) === searchCode));
+            if (directMatch) fetchAndDisplayProduct(directMatch.docId); else fetchAndDisplayProduct(rawCode); 
         }
     });
 }
 
-window.openPrintModal = () => {
-    if (!window.currentRenderedProduct) return;
-    document.getElementById('print-modal').style.display = 'flex';
-};
-
-window.closePrintModal = () => { 
-    document.getElementById('print-modal').style.display = 'none'; 
-};
+window.openPrintModal = () => { if(window.currentRenderedProduct) document.getElementById('print-modal').style.display = 'flex'; };
+window.closePrintModal = () => { document.getElementById('print-modal').style.display = 'none'; };
 
 window.executePrint = () => {
     const data = window.currentRenderedProduct;
-    let printQty = document.getElementById('print-qty-input').value;
-    printQty = parseInt(printQty);
-
+    let printQty = parseInt(document.getElementById('print-qty-input').value);
     if (!printQty || printQty <= 0) return;
 
     let targetBarcode = data.urunKodu; 
     let printContainer = document.getElementById('print-container');
-    if (!printContainer) {
-        printContainer = document.createElement('div');
-        printContainer.id = 'print-container';
-        document.body.appendChild(printContainer);
-    }
+    if (!printContainer) { printContainer = document.createElement('div'); printContainer.id = 'print-container'; document.body.appendChild(printContainer); }
     printContainer.innerHTML = ''; 
 
     for(let i=0; i < printQty; i++) {
-        const label = document.createElement('div');
-        label.className = 'mini-label';
+        const label = document.createElement('div'); label.className = 'mini-label';
         label.innerHTML = '<div class="p-name">' + data.urunAdi + '</div><svg id="print-bc-' + i + '"></svg><div class="p-code">' + data.urunKodu + '</div>';
         printContainer.appendChild(label);
     }
-
-    if(window.JsBarcode) {
-        for(let i=0; i < printQty; i++) {
-            JsBarcode('#print-bc-' + i, targetBarcode, {
-                format: "CODE128", width: 1.2, height: 30, displayValue: false, margin: 0
-            });
-        }
-    }
-
-    closePrintModal();
-    setTimeout(() => { window.print(); }, 300);
+    if(window.JsBarcode) { for(let i=0; i < printQty; i++) { JsBarcode('#print-bc-' + i, targetBarcode, { format: "CODE128", width: 1.2, height: 30, displayValue: false, margin: 0 }); } }
+    closePrintModal(); setTimeout(() => { window.print(); }, 300);
 };
 
 window.autoFetchCentral = async (data, barkod) => {
     const id = data.docId;
     const gorselContainer = document.getElementById('gorsel-container');
     let statusEl = document.getElementById('fetch-status-' + id);
-    
     if (gorselContainer) {
         gorselContainer.innerHTML = '';
-        statusEl = document.createElement('div');
-        statusEl.id = 'fetch-status-' + id;
+        statusEl = document.createElement('div'); statusEl.id = 'fetch-status-' + id;
         statusEl.style.cssText = "color:#00ccff; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;";
-        statusEl.innerHTML = "Sisteme bağlanılıyor...";
-        gorselContainer.appendChild(statusEl);
+        statusEl.innerHTML = "Sisteme bağlanılıyor..."; gorselContainer.appendChild(statusEl);
     }
     
     let dbUrls = []; 
-
     try {
         const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
-        const response = await fetch(MERKEZ_API_ADRESI + '/api/uts?' + urlParams.toString(), {
-            headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" }
-        });
-
+        const response = await fetch(MERKEZ_API_ADRESI + '/api/uts?' + urlParams.toString(), { headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" } });
         if (!response.body) throw new Error();
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let partialChunk = "";
+        const reader = response.body.getReader(); const decoder = new TextDecoder(); let partialChunk = "";
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
             partialChunk += decoder.decode(value, { stream: true });
-            const lines = partialChunk.split('\n\n');
-            partialChunk = lines.pop();
+            const lines = partialChunk.split('\n\n'); partialChunk = lines.pop();
 
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     const resData = JSON.parse(line.substring(6));
-                    
-                    if (resData.type === "INFO") {
-                        if (statusEl) statusEl.innerHTML = '<span style="color:#00ccff;">' + resData.msg + '</span>';
-                    } else if (resData.type === "COUNT") {
-                        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00;">' + resData.count + ' adet görsel bulundu. Aktarım başlatılıyor...</span>';
-                    } else if (resData.type === "PROGRESS") {
-                        if (statusEl) statusEl.innerHTML = '<span style="color:#00ff00;">' + resData.total + ' görsel bulundu. ' + resData.current + '. görsel yüklendi. (' + resData.current + '/' + resData.total + ')</span>';
-                    } else if (resData.type === "DONE") {
-                        dbUrls = resData.data;
-                        break;
-                    } else if (resData.type === "ERROR") {
-                        throw new Error(resData.msg);
-                    }
+                    if (resData.type === "INFO") { if (statusEl) statusEl.innerHTML = '<span style="color:#00ccff;">' + resData.msg + '</span>'; } 
+                    else if (resData.type === "COUNT") { if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00;">' + resData.count + ' adet görsel bulundu. Aktarım başlatılıyor...</span>'; } 
+                    else if (resData.type === "PROGRESS") { if (statusEl) statusEl.innerHTML = '<span style="color:#00ff00;">' + resData.total + ' görsel bulundu. ' + resData.current + '. görsel yüklendi. (' + resData.current + '/' + resData.total + ')</span>'; } 
+                    else if (resData.type === "DONE") { dbUrls = resData.data; break; } 
+                    else if (resData.type === "ERROR") { throw new Error(resData.msg); }
                 }
             }
         }
@@ -538,7 +455,6 @@ window.autoFetchCentral = async (data, barkod) => {
     }
 
     const updateData = { utsGorseller: dbUrls };
-    
     try {
         let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
         if (activeLoc === 'tumu') activeLoc = 'merkez';
@@ -564,7 +480,6 @@ window.autoFetchCentral = async (data, barkod) => {
         const imgWrapperDiv = document.createElement('div');
         imgWrapperDiv.style.cssText = "display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; width: 100%;";
         gorselContainer.appendChild(imgWrapperDiv);
-
         window.lightboxImages = []; 
 
         if (dbUrls[0] === noImageSvg) {
@@ -577,12 +492,9 @@ window.autoFetchCentral = async (data, barkod) => {
                 const loadingSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23555' text-anchor='middle'%3EY%C3%9CKLEN%C4%B0YOR...%3C/text%3E%3C/svg%3E";
                 imgWrapperDiv.insertAdjacentHTML('beforeend', '<img id="' + imgId + '" src="' + loadingSvg + '" onclick="openLightbox(' + idx + ')" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">');
             }
-
             for (let idx = 0; idx < dbUrls.length; idx++) {
                 const imgEl = document.getElementById('img-fetch-' + id + '-' + idx);
-                if(imgEl) {
-                    await loadTelegramImage(imgEl, dbUrls[idx], idx);
-                }
+                if(imgEl) { await loadTelegramImage(imgEl, dbUrls[idx], idx); }
             }
         }
     }
@@ -601,18 +513,12 @@ window.cancelEdit = (id, type) => {
 window.saveUpdate = async (id, type) => {
     const inputEl = document.getElementById('man-' + type + '-' + id);
     const newVal = inputEl ? inputEl.value.trim() : null;
-
     if (!newVal) return;
 
     const updateData = {};
-    if (type === 'b') {
-        updateData.barkod = newVal;
-        updateData.utsGorseller = []; 
-    } else if (type === 'r') {
-        updateData.refNo = newVal;
-    } else if (type === 'm') {
-        updateData.miatTarihi = newVal;
-    }
+    if (type === 'b') { updateData.barkod = newVal; updateData.utsGorseller = []; } 
+    else if (type === 'r') { updateData.refNo = newVal; } 
+    else if (type === 'm') { updateData.miatTarihi = newVal; }
 
     try {
         let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
@@ -635,7 +541,6 @@ window.saveUpdate = async (id, type) => {
             const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
             localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
         }
-        
         fetchAndDisplayProduct(id); 
     } catch (err) {}
 };
@@ -682,30 +587,15 @@ window.fetchAndDisplayProduct = async (code) => {
             const baseData = anaData || amData; 
 
             const mergedData = {
-                docId: code, 
-                urunKodu: code,
-                barkod: baseData.barkod || "",
-                urunAdi: baseData.urunAdi || "-",
-                refNo: baseData.refNo || "BULUNAMADI",
+                docId: code, urunKodu: code, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
-                surecTipi: baseData.surecTipi || "-",
-                miatTarihi: baseData.miatTarihi || "-",
-                utsGorseller: baseData.utsGorseller || [],
-                minAlert: baseData.minAlert || 0,
-                max: baseData.max || 0,
-                hasAna: anaDoc.exists(),
-                anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
-                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-",
-                anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
-                hasAm: amDoc.exists(),
-                amMiktar: amData ? parseInt(amData.miktar) : 0,
-                amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
-                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL",
-                amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
+                surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", utsGorseller: baseData.utsGorseller || [],
+                minAlert: baseData.minAlert || 0, max: baseData.max || 0, hasAna: anaDoc.exists(), anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
+                anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-", anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
+                hasAm: amDoc.exists(), amMiktar: amData ? parseInt(amData.miktar) : 0, amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
+                amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
-            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             let crossRefText = "";
             let exactName = trToLower(mergedData.urunAdi).trim();
             if (mergedData.surecTipi === "R") {
@@ -720,6 +610,7 @@ window.fetchAndDisplayProduct = async (code) => {
             renderCard(mergedData);
 
             let targetBarcode = mergedData.urunKodu;
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
@@ -730,10 +621,7 @@ window.fetchAndDisplayProduct = async (code) => {
 
         } else {
             if(resultContainer) {
-                resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;">' +
-                                            '<div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div>' +
-                                            '<div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">' + code + '</span></div>' +
-                                            '</div>';
+                resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div><div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">' + code + '</span></div></div>';
             }
         }
     } catch (err) {}
@@ -868,8 +756,6 @@ document.addEventListener('input', (e) => {
     if (e.target.id === 'scan-code' || e.target.id === 'main-search' || e.target.id === 'search-input') {
         let val = e.target.value;
         let cleaned = val.replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '').trimStart();
-        if (val !== cleaned) {
-            e.target.value = cleaned;
-        }
+        if (val !== cleaned) { e.target.value = cleaned; }
     }
 });
