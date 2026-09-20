@@ -64,18 +64,22 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             let allowPublicLens = false;
             if (path.includes('lens.html') && !path.includes('admin')) {
-                const settingsSnap = await getDoc(doc(db, "system", "settings"));
-                if (settingsSnap.exists() && settingsSnap.data().publicLensEnabled === true) {
-                    allowPublicLens = true;
-                }
+                try {
+                    const settingsSnap = await getDoc(doc(db, "system", "settings"));
+                    if (settingsSnap.exists() && settingsSnap.data().publicLensEnabled === true) {
+                        allowPublicLens = true;
+                    }
+                } catch(e) {}
             }
 
-            if (!allowPublicLens && path !== '/' && !path.includes('index.html') && !path.includes('bakim.html')) {
+            const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
+            if (!isRoot && !allowPublicLens) {
                 window.location.replace('/index.html');
             }
         }
     } catch (error) {
-        if (path !== '/' && !path.includes('index.html')) window.location.replace('/index.html');
+        const isRoot = path === '/' || path === '' || path.includes('index.html');
+        if (!isRoot) window.location.replace('/index.html');
     }
 });
 
