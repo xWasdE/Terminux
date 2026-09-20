@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | Kullanıcı Yönetimi</title>
     <link rel="stylesheet" href="admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
         .user-row { background: #111; border: 1px solid #222; border-radius: 6px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; transition: 0.2s; }
         .user-row:hover { border-color: #444; }
         .user-info-col { display: flex; flex-direction: column; gap: 6px; }
@@ -17,21 +19,25 @@
         .btn-edit { background: #222; color: #fff; border: 1px solid #444; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s; letter-spacing: 1px; }
         .btn-edit:hover { background: #00ccff; color: #000; border-color: #00ccff; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
     </style>
 </head>
 <body>
-    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div id="global-loader">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 15px; color:#00ccff;"></i>
+        SİSTEM YETKİLERİ KONTROL EDİLİYOR...
+    </div>
+    
     <div class="sidebar">
         <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
         <div class="menu">
-            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
-            <a href="users.html" class="menu-item active"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
-            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
-            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
-            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
-            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+            <a href="index.html" class="menu-item" id="nav-index"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item active" id="nav-users"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item" id="nav-adres"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item" id="nav-stok"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item" id="nav-depo"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item" id="nav-lens"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item" id="nav-ayarlar"><span>SİSTEM AYARLARI</span></a>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
@@ -43,12 +49,10 @@
     <div class="main-content">
         <div class="topbar"><h2>KULLANICI YÖNETİMİ</h2></div>
         <div class="content-area" style="overflow-y: auto;">
-            
             <div class="card" style="border-color: #00ccff;">
                 <div class="card-header" style="color: #00ccff;">SİSTEM KULLANICILARI VE YETKİLENDİRME</div>
                 <div id="users-list"></div>
             </div>
-
         </div>
     </div>
 
@@ -73,8 +77,8 @@
             <div class="form-group" style="text-align:left; margin-top:15px;">
                 <label>SİSTEM ROLÜ (YETKİ SEVİYESİ)</label>
                 <select id="edit-role">
-                    <option value="personel">Personel (Sadece Görüntüleme/Okuma)</option>
-                    <option value="admin">Yönetici (Admin)</option>
+                    <option value="personel">Personel (Sadece Seçili Modüller)</option>
+                    <option value="admin">Yönetici (Kendi Lokasyonunda Tam Yetki)</option>
                     <option value="superadmin">Süper Yönetici (Tüm Sistem Kontrolü)</option>
                 </select>
             </div>
@@ -83,6 +87,28 @@
                 <label>LOKASYON ERİŞİMİ</label>
                 <select id="edit-loc"></select>
                 <p id="loc-warning" style="font-size:10px; color:#ff3333; margin-top:8px; display:none;">* Sadece kendi lokasyonunuzda yetkilendirme yapabilirsiniz.</p>
+            </div>
+
+            <!-- MODÜL ERİŞİM YETKİLERİ -->
+            <div class="form-group" style="text-align:left; margin-top:15px;" id="modules-section">
+                <label style="color:#00ff00;">MODÜL ERİŞİM YETKİLERİ (GÖRÜNTÜLEME)</label>
+                <div style="display:flex; flex-direction:column; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:6px; margin-top:5px;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ccc; font-size:12px; font-weight:bold;">
+                        <input type="checkbox" id="mod-adres" style="width:16px; height:16px; accent-color:#00ff00;"> Adres Yönetimi
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ccc; font-size:12px; font-weight:bold;">
+                        <input type="checkbox" id="mod-stok" style="width:16px; height:16px; accent-color:#00ff00;"> Depo / Stok Yönetimi
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ccc; font-size:12px; font-weight:bold;">
+                        <input type="checkbox" id="mod-depo" style="width:16px; height:16px; accent-color:#00ff00;"> Görsel Depo Yönetimi
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ccc; font-size:12px; font-weight:bold;">
+                        <input type="checkbox" id="mod-lens" style="width:16px; height:16px; accent-color:#00ff00;"> Lens Yönetimi
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ccc; font-size:12px; font-weight:bold;">
+                        <input type="checkbox" id="mod-ayarlar" style="width:16px; height:16px; accent-color:#00ff00;"> Sistem Ayarları
+                    </label>
+                </div>
             </div>
 
             <input type="hidden" id="edit-uid">
@@ -98,6 +124,12 @@
         let allUsers = [];
         let systemLocations = [];
 
+        window.showAccessDenied = () => {
+            const gl = document.getElementById('global-loader');
+            gl.innerHTML = '<div style="color:#ff3333; text-align:center;"><i class="fa-solid fa-triangle-exclamation" style="font-size:48px; margin-bottom:20px;"></i><div style="font-size:22px; font-weight:900; letter-spacing:1px;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.<br>Ana sayfaya yönlendiriliyorsunuz...</div></div>';
+            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+        };
+
         setTimeout(async () => {
             const u = auth.currentUser;
             if(u) {
@@ -106,14 +138,33 @@
                     currentUserData = snap.data();
                     currentUserData.uid = u.uid;
                     currentUserData.email = u.email;
+                    const role = currentUserData.role || 'personel';
+                    const modules = currentUserData.modules || {};
+                    
+                    // Users page is ONLY for admins and superadmins
+                    if(role !== 'superadmin' && role !== 'admin') {
+                        showAccessDenied(); return;
+                    }
+
+                    // Hide unauthorized sidebar items
+                    if(role !== 'superadmin') {
+                        if(role !== 'admin') document.getElementById('nav-users').style.display = 'none';
+                        if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
+                        if(!modules.stok) document.getElementById('nav-stok').style.display = 'none';
+                        if(!modules.depo) document.getElementById('nav-depo').style.display = 'none';
+                        if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
+                        if(!modules.ayarlar) document.getElementById('nav-ayarlar').style.display = 'none';
+                    }
+
+                    document.getElementById('global-loader').style.display = 'none';
                     
                     onSnapshot(doc(db, "system", "locations"), (locSnap) => {
                         if(locSnap.exists()) systemLocations = locSnap.data().list || [];
                         else systemLocations = [{id:'merkez', name:'Merkez Depo'}];
                         loadUsers();
                     });
-                }
-            }
+                } else { showAccessDenied(); }
+            } else { window.location.href = '../index.html'; }
         }, 1500);
 
         const loadUsers = () => {
@@ -135,10 +186,7 @@
         const renderUsers = () => {
             const listEl = document.getElementById('users-list');
             let filtered = allUsers;
-            
-            if(!isSuper()) {
-                filtered = allUsers.filter(u => u.location === currentUserData.location);
-            }
+            if(!isSuper()) filtered = allUsers.filter(u => u.location === currentUserData.location);
             
             if(filtered.length === 0) {
                 listEl.innerHTML = '<div style="color:#aaa; font-size:13px; text-align:center; padding:20px;">Bu lokasyonda kayıtlı kullanıcı bulunmamaktadır.</div>';
@@ -148,7 +196,6 @@
             listEl.innerHTML = filtered.map(u => {
                 let locName = systemLocations.find(l => l.id === (u.location || 'merkez'))?.name || u.location || 'merkez';
                 if(u.location === 'tumu') locName = 'TÜM LOKASYONLAR';
-                
                 return `
                 <div class="user-row">
                     <div class="user-info-col">
@@ -188,17 +235,21 @@
             roleSel.value = user.role || 'personel';
             locSel.value = user.location || 'merkez';
 
+            // Checkbox durumlarını ayarla
+            const mods = user.modules || {};
+            document.getElementById('mod-adres').checked = !!mods.adres;
+            document.getElementById('mod-stok').checked = !!mods.stok;
+            document.getElementById('mod-depo').checked = !!mods.depo;
+            document.getElementById('mod-lens').checked = !!mods.lens;
+            document.getElementById('mod-ayarlar').checked = !!mods.ayarlar;
+
             if(!isSuper()) {
-                if(roleSel.querySelector('option[value="superadmin"]')) {
-                    roleSel.querySelector('option[value="superadmin"]').disabled = true;
-                }
+                if(roleSel.querySelector('option[value="superadmin"]')) roleSel.querySelector('option[value="superadmin"]').disabled = true;
                 locSel.value = currentUserData.location;
                 locSel.disabled = true; 
                 document.getElementById('loc-warning').style.display = 'block';
             } else {
-                if(roleSel.querySelector('option[value="superadmin"]')) {
-                    roleSel.querySelector('option[value="superadmin"]').disabled = false;
-                }
+                if(roleSel.querySelector('option[value="superadmin"]')) roleSel.querySelector('option[value="superadmin"]').disabled = false;
                 locSel.disabled = false;
                 document.getElementById('loc-warning').style.display = 'none';
             }
@@ -216,13 +267,20 @@
             const targetUser = allUsers.find(u => u.uid === uid);
             if(!targetUser) return;
 
-            let updateData = { title: newTitle, role: newRole, location: newLoc };
+            const selectedModules = {
+                adres: document.getElementById('mod-adres').checked,
+                stok: document.getElementById('mod-stok').checked,
+                depo: document.getElementById('mod-depo').checked,
+                lens: document.getElementById('mod-lens').checked,
+                ayarlar: document.getElementById('mod-ayarlar').checked
+            };
+
+            let updateData = { title: newTitle, role: newRole, location: newLoc, modules: selectedModules };
 
             if(!isSuper()) {
                 if(newRole === 'superadmin') return alert("Güvenlik Reddi: Süper yönetici yetkisi veremezsiniz.");
                 if(targetUser.role === 'superadmin') return alert("Güvenlik Reddi: Süper yönetici hesabı manipüle edilemez.");
                 if(newLoc !== currentUserData.location) return alert("Güvenlik Reddi: Lokasyon manipülasyonu tespit edildi.");
-                
                 updateData.location = currentUserData.location;
             }
 
