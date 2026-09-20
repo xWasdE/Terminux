@@ -10,10 +10,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; width: 100%; margin: 0; padding: 0; }
         
-        .map-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; margin: auto; }
+        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; width: 100%; }
+        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; width: 100%; }
+        
+        .map-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16/7; position: relative; background: #020202; border: 2px solid #1a1a1a; border-radius: 12px; margin: auto; min-width: 1000px; flex-shrink: 0; }
         .map-door { position: absolute; right: 0; left: auto; top: 40%; width: 5%; height: 20%; border-left: 4px dashed #ffbc00; border-top: 4px dashed #ffbc00; border-bottom: 4px dashed #ffbc00; border-right: none; background: rgba(255,188,0,0.05); display: flex; align-items: center; justify-content: center; border-radius: 8px 0 0 8px; z-index: 10; }
         .map-door span { color: #ffbc00; font-weight: 900; font-size: clamp(8px, 1vw, 12px); transform: rotate(90deg); letter-spacing: 2px; }
         .aisle-container { position: absolute; left: 3%; top: 8%; width: 84%; height: 74%; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2.5%; z-index: 5; }
@@ -61,13 +64,18 @@
         .path-line { stroke: #ff0000; stroke-width: 4; fill: none; stroke-dasharray: 10; animation: dash 0.5s linear infinite reverse; filter: drop-shadow(0 0 5px #ff0000); }
         @keyframes dash { to { stroke-dashoffset: 20; } }
 
-        .admin-toolbar { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 12px 20px; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 15px; gap: 15px; flex-wrap: wrap; flex-shrink: 0; }
+        .admin-toolbar { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 12px 20px; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 15px; gap: 15px; flex-wrap: wrap; flex-shrink: 0; width: 100%; }
         .search-wrapper { position: relative; flex: 1; min-width: 250px; max-width: 400px; }
         .search-input { width: 100%; background: #0a0a0a; border: 2px solid #333; color: #fff; padding: 10px 15px; font-size: 14px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; }
         .search-input:focus { border-color: #ff3333; }
         .action-group { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
         .btn-action { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-action:hover { border-color: #fff; }
+
+        .btn-download-excel { background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+        .btn-download-excel:hover { background: #00ccff; color: #000; }
+        .btn-download-pdf { background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 8px 15px; font-size: 11px; font-weight: 800; border-radius: 4px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+        .btn-download-pdf:hover { background: #ff3333; color: #fff; }
     </style>
 </head>
 <body>
@@ -111,7 +119,7 @@
                 </div>
             </div>
 
-            <div style="flex:1; min-height:0; overflow:hidden; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:15px; display:flex; justify-content:center; align-items:center;">
+            <div style="flex:1; min-height:0; overflow:auto; background:#050505; border:1px solid #1a1a1a; border-radius:8px; padding:15px; display:flex; justify-content:center; align-items:center;">
                 <div class="map-wrapper" id="room-map">
                     <div class="map-door" id="room-door"><span>KAPI</span></div>
                     <div class="aisle-container" id="aisle-container"></div>
@@ -220,8 +228,8 @@
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
                 <div style="font-size:18px; font-weight:900;" id="report-title">RAPOR</div>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-action" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 8px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'" onclick="exportReportExcel()">EXCEL İNDİR</button>
-                    <button class="btn-action" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 8px 12px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#ff3333'; this.style.color='#fff'" onmouseout="this.style.background='rgba(255, 51, 51, 0.1)'; this.style.color='#ff3333'" onclick="exportReportPDF()">PDF İNDİR</button>
+                    <button class="btn-download-excel" onclick="exportReportExcel()">EXCEL RAPORU</button>
+                    <button class="btn-download-pdf" onclick="exportReportPDF()">PDF RAPORU</button>
                     <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer; margin-left:10px;" onclick="closeModal('report-modal')">×</button>
                 </div>
             </div>
@@ -251,6 +259,7 @@
 
     <script type="module">
         import { db, auth } from './admin.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { collection, onSnapshot, getDoc, getDocs, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
@@ -266,28 +275,29 @@
         };
 
         setTimeout(async () => {
-            const u = auth.currentUser;
-            if(u) {
-                const uDoc = await getDoc(doc(db, "users", u.uid));
-                if(uDoc.exists()) {
-                    const r = uDoc.data().role;
-                    const uloc = uDoc.data().location || 'merkez';
-                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
-                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
-                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
-                        let html = '';
-                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
-                        const sel = document.getElementById('admin-loc-select');
-                        sel.innerHTML = html;
-                        sel.onchange = () => {
+            onAuthStateChanged(auth, async (user) => {
+                if(user) {
+                    const uDoc = await getDoc(doc(db, "users", user.uid));
+                    if(uDoc.exists()) {
+                        const r = uDoc.data().role;
+                        const uloc = uDoc.data().location || 'merkez';
+                        onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                            let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                            if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                            let html = '';
+                            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                            const sel = document.getElementById('admin-loc-select');
+                            sel.innerHTML = html;
+                            sel.onchange = () => {
+                                initMap();
+                                loadData();
+                            };
                             initMap();
                             loadData();
-                        };
-                        initMap();
-                        loadData();
-                    });
+                        });
+                    }
                 }
-            }
+            });
         }, 1500);
 
         window.loadCatalogFromDB = async () => {
@@ -318,6 +328,7 @@
             try {
                 const loc = getActiveLoc();
                 const logCol = loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+                
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
                 const timeStr = now.toLocaleTimeString('tr-TR');
