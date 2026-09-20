@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Görsel Yönetimi</title>
+    <title>Terminux | Depo Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
@@ -174,7 +174,7 @@
 
     <script type="module">
         import { db, auth, onAuthStateChanged } from './core-auth.js';
-        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
         let addresses = {};
@@ -183,7 +183,9 @@
 
         const loadCatalogFromCache = () => {
             try {
-                const cached = localStorage.getItem('terminux_catalog_cache');
+                let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
+                if(activeLoc === 'tumu') activeLoc = 'merkez';
+                const cached = localStorage.getItem('terminux_catalog_cache_' + activeLoc);
                 if (cached) {
                     JSON.parse(cached).forEach(c => catalog[c.urunKodu || c.docId] = { code: c.urunKodu || c.docId, name: c.urunAdi });
                 }
@@ -206,13 +208,18 @@
 
         const loadData = () => {
             loadCatalogFromCache();
+            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
+            if(activeLoc === 'tumu') activeLoc = 'merkez';
+            
+            const docAdresler = activeLoc === 'merkez' ? doc(db, "kilitli_depo", "adresler") : doc(db, "kilitli_depo_" + activeLoc, "adresler");
+            const colStok = activeLoc === 'merkez' ? collection(db, "kilitli_depo_stok") : collection(db, "kilitli_depo_stok_" + activeLoc);
 
-            onSnapshot(doc(db, "kilitli_depo", "adresler"), (docSnap) => {
+            onSnapshot(docAdresler, (docSnap) => {
                 if(docSnap.exists()) addresses = docSnap.data(); else addresses = {};
                 updateMapAddresses();
             });
 
-            onSnapshot(collection(db, "kilitli_depo_stok"), (snap) => {
+            onSnapshot(colStok, (snap) => {
                 roomStock = {};
                 snap.forEach(d => roomStock[d.id] = d.data());
                 updateMapColors();
