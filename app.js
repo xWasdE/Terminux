@@ -96,18 +96,13 @@ window.closeScanner = () => {
     }
 };
 
-const loadingScreen = document.getElementById('loading-screen');
-const loginScreen = document.getElementById('login-screen');
-const appScreen = document.getElementById('app-screen');
 const loginForm = document.getElementById('login-form');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const operatorName = document.getElementById('operator-name');
-const searchInput = document.getElementById('main-search');
-const dropdown = document.getElementById('dropdown-results');
-const resultContainer = document.getElementById('result-container');
-
 if (loginForm) {
+    const mobileHeader = document.createElement('div');
+    mobileHeader.className = 'mobile-login-header';
+    mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
+    loginForm.insertBefore(mobileHeader, loginForm.firstChild);
+
     if (!document.getElementById('cf-turnstile-widget')) {
         const cfWrapper = document.createElement('div');
         cfWrapper.id = 'cf-turnstile-widget';
@@ -176,12 +171,28 @@ document.addEventListener('click', async (e) => {
     }
 });
 
-let initFallback = setTimeout(() => {
-    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+const setScreen = (type) => {
+    const loadingScreen = document.getElementById('loading-screen');
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+
+    if (loadingScreen) {
         loadingScreen.classList.add('hidden');
-        if (loginScreen) loginScreen.classList.remove('hidden');
+        loadingScreen.style.display = 'none';
     }
-}, 3000);
+    
+    if (type === 'login') {
+        if (appScreen) { appScreen.classList.add('hidden'); appScreen.style.display = 'none'; }
+        if (loginScreen) { loginScreen.classList.remove('hidden'); loginScreen.style.display = 'flex'; }
+    } else if (type === 'app') {
+        if (loginScreen) { loginScreen.classList.add('hidden'); loginScreen.style.display = 'none'; }
+        if (appScreen) { appScreen.classList.remove('hidden'); appScreen.style.display = 'flex'; }
+    }
+};
+
+let initFallback = setTimeout(() => {
+    setScreen('login');
+}, 2500);
 
 onSnapshot(doc(db, "system", "settings"), (docSnap) => {
     if(docSnap.exists()) {
@@ -196,17 +207,18 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
 onAuthStateChanged(auth, async (user) => {
     clearTimeout(initFallback);
     if (user) {
+        const operatorName = document.getElementById('operator-name');
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         
-        const uDoc = await getDoc(doc(db, "users", user.uid));
-        if (uDoc.exists() && uDoc.data().role === 'admin') {
-            const adminBtn = document.getElementById('btn-admin-panel');
-            if (adminBtn) adminBtn.style.display = 'inline-block';
-        }
+        try {
+            const uDoc = await getDoc(doc(db, "users", user.uid));
+            if (uDoc.exists() && uDoc.data().role === 'admin') {
+                const adminBtn = document.getElementById('btn-admin-panel');
+                if (adminBtn) adminBtn.style.display = 'inline-block';
+            }
+        } catch(e) {}
 
-        if(loadingScreen) loadingScreen.classList.add('hidden');
-        if(loginScreen) loginScreen.classList.add('hidden');
-        if(appScreen) appScreen.classList.remove('hidden');
+        setScreen('app');
 
         onSnapshot(doc(db, "system", "version"), (snapshot) => {
             if(snapshot.exists()) {
@@ -219,12 +231,11 @@ onAuthStateChanged(auth, async (user) => {
         });
 
         buildCatalog().then(() => {
+            const searchInput = document.getElementById('main-search');
             if(searchInput) searchInput.focus();
         });
     } else {
-        if(loadingScreen) loadingScreen.classList.add('hidden');
-        if(appScreen) appScreen.classList.add('hidden');
-        if(loginScreen) loginScreen.classList.remove('hidden');
+        setScreen('login');
     }
 });
 
@@ -238,6 +249,9 @@ if(loginForm) {
             alert("Güvenlik İhlali: Lütfen bot olmadığınızı doğrulamak için güvenlik kutucuğunu onaylayın.");
             return; 
         }
+
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
 
         if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : `${usernameInput.value}@terminux.com.tr`;
@@ -316,6 +330,10 @@ async function buildCatalog(forceUpdate = false) {
 
     } catch (error) {}
 }
+
+const searchInput = document.getElementById('main-search');
+const dropdown = document.getElementById('dropdown-results');
+const resultContainer = document.getElementById('result-container');
 
 document.addEventListener('click', (e) => {
     if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target) && !e.target.closest('.search-item')) {
