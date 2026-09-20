@@ -9,14 +9,14 @@
 <body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#000;">
     <div style="background:#0c0c0c; border:1px solid #333; padding:40px; border-radius:12px; max-width:600px; text-align:center;">
         <h2 style="color:#00ff00; margin-bottom:20px;">VERİTABANI TAŞIMA ARACI</h2>
-        <p style="color:#aaa; font-size:14px; margin-bottom:30px;">Bu araç eski "merkez" koleksiyonlarındaki tüm verileri yeni "bodrum" koleksiyonlarına kopyalayacaktır. İşlem bitince bu dosyayı sunucudan silebilirsiniz.</p>
+        <p style="color:#aaa; font-size:14px; margin-bottom:30px;">Bu araç eski "merkez" koleksiyonlarındaki tüm verileri yeni "bodrum" koleksiyonlarına kopyalayacaktır. Ayrıca sistem lokasyon ayarını ve tüm kullanıcı yetkilerini otomatik olarak Bodrum'a taşıyacaktır. İşlem bitince bu dosyayı sunucudan silebilirsiniz.</p>
         <button id="btn-migrate" style="background:#00ccff; color:#000; border:none; padding:15px 30px; font-weight:bold; font-size:16px; border-radius:6px; cursor:pointer; width:100%;">MERKEZ -> BODRUM TAŞIMAYI BAŞLAT</button>
         <div id="log" style="margin-top:20px; color:#ffbc00; font-family:monospace; font-size:12px; text-align:left; background:#000; padding:15px; border-radius:6px; height:200px; overflow-y:auto;">Sistem hazır...</div>
     </div>
 
     <script type="module">
         import { db, auth } from './admin.js';
-        import { getDocs, collection, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getDocs, collection, setDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         document.getElementById('btn-migrate').addEventListener('click', async () => {
             if (!confirm("Taşıma işlemini başlatmak istediğinize emin misiniz?")) return;
@@ -60,7 +60,40 @@
                     appendLog(`<span style="color:#00ff00;">Adresler aktarıldı.</span>`);
                 }
 
-                appendLog(`<br><span style="color:#00ccff; font-size:14px;">✅ TÜM VERİLER BAŞARIYLA KOPYALANDI! Bu dosyayı silebilirsiniz.</span>`);
+                appendLog(`Sistem lokasyon ID'si güncelleniyor...`);
+                const locRef = doc(db, "system", "locations");
+                const locSnap = await getDoc(locRef);
+                if (locSnap.exists()) {
+                    let list = locSnap.data().list || [];
+                    const targetIndex = list.findIndex(l => l.id === 'merkez');
+                    if (targetIndex > -1) {
+                        list[targetIndex].id = 'bodrum';
+                        list[targetIndex].name = 'Bodrum Depo';
+                        await setDoc(locRef, { list });
+                        appendLog(`<span style="color:#00ff00;">Sistem lokasyon ID'si 'bodrum' olarak güncellendi.</span>`);
+                    } else if (!list.find(l => l.id === 'bodrum')) {
+                        list.push({ id: 'bodrum', name: 'Bodrum Depo' });
+                        await setDoc(locRef, { list });
+                        appendLog(`<span style="color:#00ff00;">Bodrum lokasyonu listeye eklendi.</span>`);
+                    }
+                } else {
+                    await setDoc(locRef, { list: [{id: 'bodrum', name: 'Bodrum Depo'}] });
+                    appendLog(`<span style="color:#00ff00;">Lokasyon listesi 'bodrum' olarak oluşturuldu.</span>`);
+                }
+
+                appendLog(`Kullanıcı yetkileri güncelleniyor...`);
+                const usersSnap = await getDocs(collection(db, "users"));
+                let userCount = 0;
+                for (let uSnap of usersSnap.docs) {
+                    const uData = uSnap.data();
+                    if (uData.location === 'merkez' || !uData.location) {
+                        await updateDoc(doc(db, "users", uSnap.id), { location: 'bodrum' });
+                        userCount++;
+                    }
+                }
+                appendLog(`<span style="color:#00ff00;">${userCount} personelin lokasyon yetkisi 'bodrum' olarak ayarlandı.</span>`);
+
+                appendLog(`<br><span style="color:#00ccff; font-size:14px;">✅ TÜM İŞLEMLER BAŞARIYLA TAMAMLANDI! Bu dosyayı silebilirsiniz.</span>`);
                 btn.innerText = "TAŞIMA İŞLEMİ TAMAMLANDI";
             } catch(e) {
                 appendLog(`<span style="color:#ff3333;">Hata oluştu: ${e.message}</span>`);
