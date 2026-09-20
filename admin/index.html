@@ -145,45 +145,34 @@
     
     <script type="module">
         import { db, auth } from './admin.js';
-        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         onAuthStateChanged(auth, async (user) => {
             if(user) {
-                const uEmail = user.email ? user.email.toLowerCase() : '';
                 let role = 'user';
                 let modules = {};
 
 
-                if(uEmail === 'admin@terminux.com.tr') {
-                    role = 'superadmin';
-                    modules = { sayim:true, sevkiyat:true, lens:true, adres:true, depo:true, stok:true, ayarlar:true };
-                    try {
-                        await setDoc(doc(db, "users", user.uid), {
-                            email: uEmail, role: 'superadmin', location: 'tumu', status: 'active', modules: modules
-                        }, { merge: true });
-                    } catch(e) {}
-                } else {
-                    try {
-                        const snap = await getDoc(doc(db, "users", user.uid));
-                        if(snap.exists()) {
-                            role = snap.data().role || 'user';
-                            modules = snap.data().modules || {};
-                        }
-                    } catch(err) {
-                        console.error("DB Erişim Hatası:", err);
+                try {
+                    const snap = await getDoc(doc(db, "users", user.uid));
+                    if(snap.exists()) {
+                        role = snap.data().role || 'user';
+                        modules = snap.data().modules || {};
                     }
+                } catch(err) {
+                    console.error("DB Erişim Hatası:", err);
                 }
 
 
-                if(role !== 'superadmin' && role !== 'admin') {
+                if(role !== 'owner' && role !== 'superadmin' && role !== 'admin') {
                     document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Yönetim paneline giriş yetkiniz bulunmuyor.</div></div>';
                     setTimeout(() => { window.location.href = '../index.html'; }, 2000);
                     return;
                 }
 
 
-                if(role !== 'superadmin') {
+                if(role !== 'superadmin' && role !== 'owner') {
                     document.getElementById('nav-users').style.display = 'none';
                     document.getElementById('feat-users').style.display = 'none';
                     
