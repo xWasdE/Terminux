@@ -52,7 +52,6 @@
                     <label>MODÜL ERİŞİM YETKİLERİ</label>
                     <div class="modules-grid">
                         <label class="module-check"><input type="checkbox" id="mod-sayim" checked> Sayım Terminali</label>
-                        <label class="module-check"><input type="checkbox" id="mod-etiket" checked> Etiket Terminali</label>
                         <label class="module-check"><input type="checkbox" id="mod-sevkiyat" checked> Sevkiyat Terminali</label>
                         <label class="module-check"><input type="checkbox" id="mod-lens" checked> Lens Terminali</label>
                         <label class="module-check"><input type="checkbox" id="mod-adres" checked> Adres Bulucu</label>
@@ -80,7 +79,6 @@
             <div class="form-group" style="text-align:left; margin-bottom:25px;">
                 <div class="modules-grid">
                     <label class="module-check"><input type="checkbox" id="edit-sayim"> Sayım Terminali</label>
-                    <label class="module-check"><input type="checkbox" id="edit-etiket"> Etiket Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-sevkiyat"> Sevkiyat Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-lens"> Lens Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-adres"> Adres Bulucu</label>
@@ -116,7 +114,7 @@
             const role = document.getElementById('u-role').value;
             if(!uname || pass.length < 6) return window.showAlert("HATA", "Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
             if(!uname.includes('@')) uname += "@terminux.com.tr";
-            const mods = { sayim: document.getElementById('mod-sayim').checked, etiket: document.getElementById('mod-etiket').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
+            const mods = { sayim: document.getElementById('mod-sayim').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
             const logEl = document.getElementById('user-log');
             logEl.innerText = "Kullanıcı oluşturuluyor..."; logEl.style.color = '#ffbc00';
 
@@ -137,7 +135,7 @@
                 const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif (Banlı)</span>';
                 let modsArr = [];
                 if(d.modules) {
-                    if(d.modules.sayim) modsArr.push('Sayım'); if(d.modules.etiket) modsArr.push('Etiket');
+                    if(d.modules.sayim) modsArr.push('Sayım');
                     if(d.modules.sevkiyat) modsArr.push('Sevkiyat'); if(d.modules.lens) modsArr.push('Lens'); if(d.modules.adres) modsArr.push('Adres');
                 }
                 const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
@@ -154,13 +152,13 @@
         window.openEdit = (uid, email, modStr) => {
             document.getElementById('edit-uid').value = uid; document.getElementById('edit-user-email').innerText = email;
             const mods = JSON.parse(decodeURIComponent(modStr));
-            ['sayim', 'etiket', 'sevkiyat', 'lens', 'adres'].forEach(m => document.getElementById(`edit-${m}`).checked = mods[m] || false);
+            ['sayim', 'sevkiyat', 'lens', 'adres'].forEach(m => document.getElementById(`edit-${m}`).checked = mods[m] || false);
             document.getElementById('edit-user-modal').style.display = 'flex';
         };
 
         window.saveUserEdit = async () => {
             const uid = document.getElementById('edit-uid').value;
-            const mods = { sayim: document.getElementById('edit-sayim').checked, etiket: document.getElementById('edit-etiket').checked, sevkiyat: document.getElementById('edit-sevkiyat').checked, lens: document.getElementById('edit-lens').checked, adres: document.getElementById('edit-adres').checked };
+            const mods = { sayim: document.getElementById('edit-sayim').checked, sevkiyat: document.getElementById('edit-sevkiyat').checked, lens: document.getElementById('edit-lens').checked, adres: document.getElementById('edit-adres').checked };
             await updateDoc(doc(db, "users", uid), { modules: mods });
             document.getElementById('edit-user-modal').style.display = 'none';
             window.showAlert("BAŞARILI", "Personel yetkileri güncellendi.");
