@@ -103,10 +103,6 @@
         </div>
     </div>
 
-    <div class="legal-footer">
-        <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
-    </div>
-
     <script type="module">
         import { db, auth } from './admin.js';
         import { doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -186,13 +182,10 @@
         window.saveLocationEdit = async () => {
             const id = document.getElementById('edit-loc-old-id').value;
             const newName = document.getElementById('edit-loc-name-input').value.trim();
-
             if(!newName) { alert("İsim boş olamaz."); return; }
-
             const ref = doc(db, "system", "locations");
             const snap = await getDoc(ref);
             let list = snap.exists() ? snap.data().list || [] : [];
-            
             const targetIndex = list.findIndex(l => l.id === id);
             if(targetIndex > -1) {
                 list[targetIndex].name = newName;
