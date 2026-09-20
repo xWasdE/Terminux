@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Acil Yetki Kurtarma</title>
+    <style>
+        body { background-color: #050505; color: #fff; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #111; padding: 30px; border-radius: 12px; border: 1px solid #333; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 10px 30px rgba(0,204,255,0.2); }
+        h2 { color: #00ccff; margin-top: 0; font-family: sans-serif; font-weight: 900; letter-spacing: 1px; }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; box-sizing: border-box; font-family: monospace; font-size: 14px; outline: none; }
+        input:focus, select:focus { border-color: #00ccff; }
+        button { width: 100%; padding: 15px; background: #00ff00; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 14px; font-family: sans-serif; letter-spacing: 1px; transition: 0.2s; }
+        button:hover { background: #00cc00; box-shadow: 0 0 15px rgba(0,255,0,0.4); }
+        #status { margin-top: 20px; font-size: 13px; font-weight: bold; padding: 10px; border-radius: 4px; }
+        .warning { font-size: 11px; color: #ff3333; margin-top: 20px; line-height: 1.5; font-family: sans-serif; border-top: 1px dashed #333; padding-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>ACİL YETKİ KURTARMA</h2>
+        <p style="font-size: 12px; color: #888; font-family: sans-serif; margin-bottom: 25px;">Bu araç, kilitlenen veya yetkisi bozulan hesabın veritabanı kayıtlarını doğrudan manipüle etmek için tasarlanmıştır.</p>
+        
+        <div style="text-align: left; font-size: 11px; color: #00ccff; font-weight: bold;">HEDEF E-POSTA ADRESİ</div>
+        <input type="email" id="target-email" placeholder="Örn: admin@terminux.com.tr">
+        
+        <div style="text-align: left; font-size: 11px; color: #00ccff; font-weight: bold; margin-top: 10px;">ATANACAK YENİ ROL</div>
+        <select id="target-role">
+            <option value="superadmin">Süper Yönetici (Tüm Yetkiler & Tümü Lokasyonu)</option>
+            <option value="admin">Lokasyon Yöneticisi</option>
+        </select>
+
+        <button id="btn-fix">YETKİYİ ZORLA GÜNCELLE</button>
+        
+        <div id="status" style="background: #222; color: #aaa;">Sistem hazır. Lütfen aktif bir hesapla giriş yapmış olduğunuzdan emin olun.</div>
+        
+        <div class="warning">
+            <b>DİKKAT:</b> İşleminiz bittikten sonra güvenlik sebebiyle <u>mutlaka bu dosyayı sunucudan silin!</u> Kötü niyetli kişilerin eline geçerse sistemdeki tüm hesapları ele geçirebilirler.
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './admin.js';
+        import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const statusEl = document.getElementById('status');
+        let currentUser = null;
+
+        // Geçerli bir oturum var mı kontrol et
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                statusEl.style.background = 'rgba(0, 204, 255, 0.1)';
+                statusEl.style.color = '#00ccff';
+                statusEl.style.border = '1px solid #00ccff';
+                statusEl.innerText = "Aktif Oturum: " + user.email;
+            } else {
+                statusEl.style.background = 'rgba(255, 51, 51, 0.1)';
+                statusEl.style.color = '#ff3333';
+                statusEl.style.border = '1px solid #ff3333';
+                statusEl.innerText = "HATA: Oturum açık değil. Lütfen önce sisteme giriş yapın.";
+            }
+        });
+
+        document.getElementById('btn-fix').addEventListener('click', async () => {
+            if (!currentUser) return alert("Sisteme giriş yapmamışsınız! Önce normal giriş ekranından bir hesapla giriş yapın.");
+            
+            const email = document.getElementById('target-email').value.trim().toLowerCase();
+            const role = document.getElementById('target-role').value;
+            
+            if (!email) return alert("Lütfen kurtarılacak e-posta adresini girin.");
+
+            statusEl.style.background = 'rgba(255, 188, 0, 0.1)';
+            statusEl.style.color = '#ffbc00';
+            statusEl.style.border = '1px solid #ffbc00';
+            statusEl.innerText = "Veritabanında kullanıcı aranıyor...";
+
+            try {
+                // Kullanıcının UID'sini bulmak için email üzerinden sorgu yapıyoruz
+                const q = query(collection(db, "users"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    statusEl.style.background = 'rgba(255, 51, 51, 0.1)';
+                    statusEl.style.color = '#ff3333';
+                    statusEl.style.border = '1px solid #ff3333';
+                    statusEl.innerText = "HATA: " + email + " adresine ait kayıt bulunamadı.";
+                    return;
+                }
+
+                let targetUid = null;
+                querySnapshot.forEach((document) => {
+                    targetUid = document.id;
+                });
+
+                if (targetUid) {
+                    statusEl.innerText = "Kayıt bulundu (" + targetUid + "). Yetkiler yazılıyor...";
+                    
+                    let updateData = {
+                        role: role,
+                        status: 'active'
+                    };
+
+                    // Süper yönetici seçildiyse tüm modül izinlerini true yap ve lokasyonu "tumu" yap
+                    if (role === 'superadmin') {
+                        updateData.location = 'tumu';
+                        updateData.modules = { sayim: true, sevkiyat: true, lens: true, adres: true, depo: true, stok: true, ayarlar: true };
+                    } 
+                    // Normal admin seçildiyse sadece modül izinlerini düzelt
+                    else if (role === 'admin') {
+                        updateData.modules = { sayim: true, sevkiyat: true, lens: true, adres: true, depo: true, stok: true, ayarlar: true };
+                    }
+
+                    // Firestore'u zorla güncelle
+                    await updateDoc(doc(db, "users", targetUid), updateData);
+
+                    statusEl.style.background = 'rgba(0, 255, 0, 0.1)';
+                    statusEl.style.color = '#00ff00';
+                    statusEl.style.border = '1px solid #00ff00';
+                    statusEl.innerText = "BAŞARILI: " + email + " hesabı " + role.toUpperCase() + " olarak kurtarıldı!";
+                }
+
+            } catch (error) {
+                console.error(error);
+                statusEl.style.background = 'rgba(255, 51, 51, 0.1)';
+                statusEl.style.color = '#ff3333';
+                statusEl.style.border = '1px solid #ff3333';
+                statusEl.innerText = "HATA: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
