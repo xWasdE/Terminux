@@ -16,13 +16,13 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const path = window.location.pathname.toLowerCase();
-let requiredModule = null;
+const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
 
+let requiredModule = null;
 if (path.includes('sayim.html')) requiredModule = 'sayim';
 else if (path.includes('sevkiyat.html')) requiredModule = 'sevkiyat';
 else if (path.includes('lens.html') && !path.includes('admin')) requiredModule = 'lens';
 else if (path.includes('adres.html') && !path.includes('admin')) requiredModule = 'adres';
-else if (path.includes('teyit.html')) requiredModule = 'adres';
 
 onAuthStateChanged(auth, async (user) => {
     try {
@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
                 
                 if (userData.status !== 'active') {
                     await signOut(auth);
-                    window.location.replace('/index.html');
+                    if (!isRoot) window.location.replace('/index.html');
                     return;
                 }
 
@@ -43,13 +43,13 @@ onAuthStateChanged(auth, async (user) => {
 
                 if (userData.role !== 'admin' && userData.role !== 'superadmin' && requiredModule) {
                     if (!userData.modules || userData.modules[requiredModule] !== true) {
-                        window.location.replace('/index.html');
+                        if (!isRoot) window.location.replace('/index.html');
                         return;
                     }
                 }
             } else {
                 await signOut(auth);
-                window.location.replace('/index.html');
+                if (!isRoot) window.location.replace('/index.html');
                 return;
             }
 
@@ -74,13 +74,11 @@ onAuthStateChanged(auth, async (user) => {
                 } catch(e) {}
             }
 
-            const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
             if (!isRoot && !allowPublicLens) {
                 window.location.replace('/index.html');
             }
         }
     } catch (error) {
-        const isRoot = path === '/' || path === '' || path.includes('index.html');
         if (!isRoot) window.location.replace('/index.html');
     }
 });
