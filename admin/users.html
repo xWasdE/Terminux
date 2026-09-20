@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
+
     <div id="edit-modal" class="modal">
         <div class="modal-box">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
@@ -89,7 +89,7 @@
                 <p id="loc-warning" style="font-size:10px; color:#ff3333; margin-top:8px; display:none;">* Sadece kendi lokasyonunuzda yetkilendirme yapabilirsiniz.</p>
             </div>
 
-            <!-- MODÜL ERİŞİM YETKİLERİ -->
+
             <div class="form-group" style="text-align:left; margin-top:15px;" id="modules-section">
                 <label style="color:#00ff00;">MODÜL ERİŞİM YETKİLERİ (GÖRÜNTÜLEME)</label>
                 <div style="display:flex; flex-direction:column; gap:10px; background:#080808; padding:15px; border:1px solid #222; border-radius:6px; margin-top:5px;">
@@ -141,12 +141,12 @@
                     const role = currentUserData.role || 'personel';
                     const modules = currentUserData.modules || {};
                     
-                    // Users page is ONLY for admins and superadmins
+
                     if(role !== 'superadmin' && role !== 'admin') {
                         showAccessDenied(); return;
                     }
 
-                    // Hide unauthorized sidebar items
+
                     if(role !== 'superadmin') {
                         if(role !== 'admin') document.getElementById('nav-users').style.display = 'none';
                         if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
@@ -235,7 +235,7 @@
             roleSel.value = user.role || 'personel';
             locSel.value = user.location || 'merkez';
 
-            // Checkbox durumlarını ayarla
+
             const mods = user.modules || {};
             document.getElementById('mod-adres').checked = !!mods.adres;
             document.getElementById('mod-stok').checked = !!mods.stok;
