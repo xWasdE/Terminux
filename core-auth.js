@@ -40,7 +40,6 @@ onAuthStateChanged(auth, async (user) => {
 
                 if (userData.role !== 'admin' && requiredModule) {
                     if (!userData.modules || userData.modules[requiredModule] !== true) {
-                        alert("YETKİSİZ ERİŞİM: Bu modüle giriş yetkiniz bulunmuyor.");
                         window.location.replace('/index.html');
                         return;
                     }
@@ -59,7 +58,7 @@ onAuthStateChanged(auth, async (user) => {
                         }
                     }
                 }
-            });
+            }, (error) => {});
 
         } else {
             let allowPublicLens = false;
