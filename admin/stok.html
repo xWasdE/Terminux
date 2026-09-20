@@ -32,11 +32,7 @@
             
             <div class="card" style="border-color: #00ccff; margin-bottom: 20px;">
                 <div class="card-header" style="color: #00ccff;">LOKASYON SEÇİMİ</div>
-                <select id="admin-loc-select" style="width: 100%; background: #111; color: #00ccff; border: 1px solid #333; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 6px;">
-                    <option value="merkez">MERKEZ DEPO</option>
-                    <option value="bodrum">BODRUM DEPO</option>
-                    <option value="eskisehir">ESKİŞEHİR DEPO</option>
-                </select>
+                <select id="admin-loc-select" style="width: 100%; background: #111; color: #00ccff; border: 1px solid #333; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 6px;"></select>
                 <p style="font-size:11px; color:#888; margin-top:10px;">Aşağıdaki tüm Excel yükleme ve silme işlemleri seçilen bu lokasyon üzerinden yapılacaktır.</p>
             </div>
 
@@ -65,17 +61,27 @@
         </div>
     </div>
     
-    <div id="custom-alert" class="modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
-            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
-            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
-        </div>
-    </div>
-
     <script type="module">
-        import { db } from './admin.js';
-        import { doc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from './admin.js';
+        import { doc, setDoc, collection, getDocs, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role;
+                    const uloc = uDoc.data().location || 'merkez';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        document.getElementById('admin-loc-select').innerHTML = html;
+                    });
+                }
+            }
+        }, 1500);
 
         const sysLog = (elId, msg) => {
             const div = document.getElementById(elId);
@@ -151,15 +157,14 @@
 
         window.promptMassDelete = async () => {
             const loc = document.getElementById('admin-loc-select').value;
-            const pw = prompt("DİKKAT: " + loc.toUpperCase() + " lokasyonundaki kilitli alanlar ve stoklar sıfırlanacaktır. Bu işlem geri alınamaz! Devam etmek için yetki şifresini girin:");
+            const pw = prompt("DİKKAT: " + loc.toUpperCase() + " lokasyonundaki kilitli alanlar ve stoklar sıfırlanacaktır. Bu işlem geri alınamaz! Devam etmek için 'admin99' yazın:");
             if(pw === "admin99") {
                 try {
-                    const snapshot = await getDocs(collection(db, "kilitli_depo_stok"));
-                    snapshot.forEach(async (d) => await deleteDoc(doc(db, "kilitli_depo_stok", d.id)));
-                    window.showAlert("BAŞARILI", loc.toUpperCase() + " lokasyonuna ait depo stoğu başarıyla silindi ve veritabanı sıfırlandı.");
-                } catch(e) { window.showAlert("HATA", "İşlem sırasında bir hata oluştu."); }
-            } else if(pw) {
-                window.showAlert("HATA", "Yetki şifresi yanlış.");
+                    const colName = loc === 'merkez' ? "kilitli_depo_stok" : "kilitli_depo_stok_" + loc;
+                    const snapshot = await getDocs(collection(db, colName));
+                    snapshot.forEach(async (d) => await deleteDoc(doc(db, colName, d.id)));
+                    alert(loc.toUpperCase() + " lokasyonuna ait depo stoğu başarıyla silindi ve veritabanı sıfırlandı.");
+                } catch(e) {}
             }
         };
     </script>
