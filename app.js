@@ -8,12 +8,6 @@ const scannerScript = document.createElement('script');
 scannerScript.src = "https://unpkg.com/html5-qrcode";
 document.head.appendChild(scannerScript);
 
-const cfScript = document.createElement('script');
-cfScript.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-cfScript.async = true;
-cfScript.defer = true;
-document.head.appendChild(cfScript);
-
 const jsbScript = document.createElement('script');
 jsbScript.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js";
 document.head.appendChild(jsbScript);
@@ -102,17 +96,6 @@ if (loginForm) {
     mobileHeader.className = 'mobile-login-header';
     mobileHeader.innerHTML = '<div style="color:#fff; font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:5px;">TERMINUX</div><div style="color:#0f0; font-size:12px; font-weight:bold; letter-spacing:3px; margin-bottom:30px;">WMS TERMINAL</div>';
     loginForm.insertBefore(mobileHeader, loginForm.firstChild);
-
-    if (!document.getElementById('cf-turnstile-widget')) {
-        const cfWrapper = document.createElement('div');
-        cfWrapper.id = 'cf-turnstile-widget';
-        cfWrapper.className = 'cf-turnstile';
-        cfWrapper.setAttribute('data-sitekey', '0x4AAAAAADYmA33uynV7f5VV'); 
-        cfWrapper.style.margin = '15px auto';
-        cfWrapper.style.display = 'flex';
-        cfWrapper.style.justifyContent = 'center';
-        loginForm.insertBefore(cfWrapper, loginForm.querySelector('button[type="submit"]'));
-    }
 }
 
 let productCatalog = [];
@@ -169,16 +152,6 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
 
 const locSelector = document.getElementById('loc-selector');
 if(locSelector) {
-    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
-        if(docSnap.exists()) {
-            const locs = docSnap.data().list || [];
-            let html = '';
-            if(locs.length === 0) html = '<option value="merkez">MERKEZ DEPO</option>';
-            else locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
-            locSelector.innerHTML = html;
-            locSelector.value = localStorage.getItem('active_loc') || 'merkez';
-        }
-    });
     locSelector.addEventListener('change', (e) => {
         localStorage.setItem('active_loc', e.target.value);
         buildCatalog(true);
@@ -212,33 +185,57 @@ onAuthStateChanged(auth, async (user) => {
                 }
                 
                 localStorage.setItem('user_role', ud.role || 'user');
-                localStorage.setItem('user_loc', ud.location || 'merkez');
+                localStorage.setItem('user_loc', ud.location || 'bodrum');
                 
+                const opLoc = document.getElementById('operator-loc');
+
                 if (ud.role === 'superadmin' || ud.location === 'tumu') {
-                    if(locSelector) locSelector.style.display = 'inline-block';
+                    if(locSelector) {
+                        locSelector.style.display = 'inline-block';
+                        getDoc(doc(db, "system", "locations")).then(docSnap => {
+                            let locs = docSnap.exists() ? docSnap.data().list || [{id:'bodrum', name:'Bodrum Depo'}] : [{id:'bodrum', name:'Bodrum Depo'}];
+                            let html = '';
+                            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                            locSelector.innerHTML = html;
+                            locSelector.value = localStorage.getItem('active_loc') || 'bodrum';
+                        });
+                    }
+                    if(opLoc) opLoc.style.display = 'none';
                 } else {
                     if(locSelector) locSelector.style.display = 'none';
-                    localStorage.setItem('active_loc', ud.location || 'merkez');
+                    localStorage.setItem('active_loc', ud.location || 'bodrum');
+                    if(opLoc) {
+                        getDoc(doc(db, "system", "locations")).then(snap => {
+                            let locName = (ud.location || 'BODRUM').toUpperCase();
+                            if(snap.exists()) {
+                                const list = snap.data().list || [];
+                                const found = list.find(l => l.id === (ud.location || 'bodrum'));
+                                if(found) locName = found.name.toUpperCase();
+                            }
+                            opLoc.innerText = locName;
+                            opLoc.style.display = 'inline-block';
+                        });
+                    }
                 }
-            } else {
-                await signOut(auth); return window.location.replace('/index.html');
+                
+                setScreen('app');
+
+                onSnapshot(doc(db, "system", "version"), (snapshot) => {
+                    if(snapshot.exists()) {
+                        const data = snapshot.data();
+                        const al = localStorage.getItem('active_loc') || 'bodrum';
+                        const cacheTime = localStorage.getItem('terminux_catalog_time_' + al);
+                        if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
+                            buildCatalog(true);
+                        }
+                    }
+                }, (error) => {});
+
+                buildCatalog().then(() => { if(searchInput) searchInput.focus(); });
+                return;
             }
         } catch(e) {}
-
-        setScreen('app');
-
-        onSnapshot(doc(db, "system", "version"), (snapshot) => {
-            if(snapshot.exists()) {
-                const data = snapshot.data();
-                const al = localStorage.getItem('active_loc') || 'merkez';
-                const cacheTime = localStorage.getItem('terminux_catalog_time_' + al);
-                if (!cacheTime || data.lastUpdate > parseInt(cacheTime)) {
-                    buildCatalog(true);
-                }
-            }
-        }, (error) => {});
-
-        buildCatalog().then(() => { if(searchInput) searchInput.focus(); });
+        await signOut(auth); window.location.replace('/index.html');
     } else {
         const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
         if(!isRoot) {
@@ -260,7 +257,12 @@ if(loginForm) {
         e.preventDefault();
         const loginBtn = loginForm.querySelector('button[type="submit"]');
         const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
-        if (!turnstileResponse || !turnstileResponse.value) return; 
+        
+        if (!turnstileResponse || !turnstileResponse.value) {
+            alert("Güvenlik İhlali: Lütfen bot olmadığınızı doğrulamak için güvenlik kutucuğunu onaylayın.");
+            if (loginBtn) { loginBtn.textContent = "Giriş Yap"; loginBtn.classList.remove('btn-loading'); loginBtn.disabled = false; }
+            return; 
+        }
 
         if (!usernameInput || !passwordInput) return;
         const finalEmail = usernameInput.value.indexOf('@') !== -1 ? usernameInput.value : usernameInput.value + '@terminux.com.tr';
@@ -269,6 +271,7 @@ if(loginForm) {
 
         try { await signInWithEmailAndPassword(auth, finalEmail, passwordInput.value); } 
         catch (error) { 
+            alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz.");
             if (window.turnstile) window.turnstile.reset();
             if (loginBtn) { loginBtn.textContent = "Giriş Yap"; loginBtn.classList.remove('btn-loading'); loginBtn.disabled = false; }
         }
@@ -276,8 +279,8 @@ if(loginForm) {
 }
 
 async function buildCatalog(forceUpdate = false) {
-    let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-    if(activeLoc === 'tumu') activeLoc = 'merkez';
+    let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+    if(activeLoc === 'tumu') activeLoc = 'bodrum';
 
     const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
     const CACHE_TIME_KEY = 'terminux_catalog_time_' + activeLoc;
@@ -456,8 +459,8 @@ window.autoFetchCentral = async (data, barkod) => {
 
     const updateData = { utsGorseller: dbUrls };
     try {
-        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-        if (activeLoc === 'tumu') activeLoc = 'merkez';
+        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+        if (activeLoc === 'tumu') activeLoc = 'bodrum';
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
@@ -521,8 +524,8 @@ window.saveUpdate = async (id, type) => {
     else if (type === 'm') { updateData.miatTarihi = newVal; }
 
     try {
-        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-        if (activeLoc === 'tumu') activeLoc = 'merkez';
+        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+        if (activeLoc === 'tumu') activeLoc = 'bodrum';
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
@@ -574,8 +577,8 @@ window.fetchAndDisplayProduct = async (code) => {
     }
 
     try {
-        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-        if (activeLoc === 'tumu') activeLoc = 'merkez';
+        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+        if (activeLoc === 'tumu') activeLoc = 'bodrum';
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
@@ -640,7 +643,7 @@ function renderCard(data) {
     const hasValidBarcode = data.barkod && invalidCodes.indexOf(data.barkod) === -1;
 
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc');
-    const barkodEkSVG = hasValidBarcode ? '<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>' : '';
+    const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
 
     const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref Numarası', '#fff');
     const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
