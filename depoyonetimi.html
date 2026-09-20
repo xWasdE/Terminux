@@ -139,7 +139,6 @@
         <b>YASAL BİLGİLENDİRME:</b> Bu sistem, tamamen operasyonel test ve iç yönetim amacıyla kapalı devre olarak çalışmaktadır. Sistem üzerinden hiçbir şekilde ticari bir faaliyet yürütülmemekte, marka veya ürün satışı yapılmamakta olup; bireysel veya kurumsal anlamda herhangi bir kazanç elde edilmemektedir.
     </div>
 
-    <!-- Modals -->
     <div id="shelf-modal" class="modal">
         <div class="modal-box" id="shelf-modal-box">
             <div class="modal-header">
@@ -183,8 +182,8 @@
 
         const loadCatalogFromCache = () => {
             try {
-                let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-                if(activeLoc === 'tumu') activeLoc = 'merkez';
+                let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+                if(activeLoc === 'tumu') activeLoc = 'bodrum';
                 const cached = localStorage.getItem('terminux_catalog_cache_' + activeLoc);
                 if (cached) {
                     JSON.parse(cached).forEach(c => catalog[c.urunKodu || c.docId] = { code: c.urunKodu || c.docId, name: c.urunAdi });
@@ -208,8 +207,8 @@
 
         const loadData = () => {
             loadCatalogFromCache();
-            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'merkez';
-            if(activeLoc === 'tumu') activeLoc = 'merkez';
+            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+            if(activeLoc === 'tumu') activeLoc = 'bodrum';
             
             const docAdresler = activeLoc === 'merkez' ? doc(db, "kilitli_depo", "adresler") : doc(db, "kilitli_depo_" + activeLoc, "adresler");
             const colStok = activeLoc === 'merkez' ? collection(db, "kilitli_depo_stok") : collection(db, "kilitli_depo_stok_" + activeLoc);
