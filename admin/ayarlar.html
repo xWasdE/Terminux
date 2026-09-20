@@ -12,6 +12,8 @@
         .switch-desc { font-size: 11px; color: #888; }
         .switch-btn { background: #ff3333; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; cursor: pointer; transition: 0.2s; }
         .switch-btn.active { background: #00ff00; color: #000; }
+        .loc-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; background: #111; }
+        .loc-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -37,6 +39,16 @@
         <div class="topbar"><h2>SİSTEM AYARLARI</h2></div>
         <div class="content-area">
             
+            <div class="card" id="card-locations" style="display:none; border-color: #9933ff;">
+                <div class="card-header" style="color: #9933ff;">SİSTEM LOKASYONLARI YÖNETİMİ</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>LOKASYON ID (örn: izmir)</label><input type="text" id="new-loc-id" placeholder="Tümü küçük ve boşluksuz"></div>
+                    <div class="form-group"><label>LOKASYON ADI (örn: İzmir Depo)</label><input type="text" id="new-loc-name" placeholder="Ekranda görünecek isim"></div>
+                    <div class="form-group"><label>&nbsp;</label><button class="btn-primary" style="background:#9933ff;" onclick="window.addLocation()">YENİ LOKASYON EKLE</button></div>
+                </div>
+                <div id="loc-list" style="margin-top:20px; border:1px solid #222; border-radius:6px; overflow:hidden;"></div>
+            </div>
+
             <div class="card" style="border-color: #ffbc00;">
                 <div class="card-header" style="color: #ffbc00;">SİSTEM BAKIM MODU (MAINTENANCE)</div>
                 <div class="switch-container">
@@ -61,7 +73,6 @@
 
             <div class="card" style="border-color: #ff3333;">
                 <div class="card-header" style="color: #ff3333;">GLOBAL SİSTEM SENKRONİZASYONU</div>
-                <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Tüm cihazlardaki önbelleği temizlemek ve yeni verileri anında çekmeye zorlamak için butona tıklayın.</p>
                 <button class="btn-primary" style="background: #ff3333; color: #fff; width:100%; padding:20px; font-size:16px;" id="btn-sync-global">SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET</button>
                 <div id="sync-log" style="color:#00ff00; font-size:12px; margin-top:15px; font-weight:bold;"></div>
             </div>
@@ -69,8 +80,8 @@
         </div>
     </div>
     <script type="module">
-        import { db } from './admin.js';
-        import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from './admin.js';
+        import { doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             const btnMaint = document.getElementById('btn-toggle-maintenance');
@@ -78,17 +89,11 @@
             
             if(docSnap.exists()) {
                 const data = docSnap.data();
-                if(data.maintenanceMode === true) {
-                    btnMaint.innerText = "AÇIK (AKTİF)"; btnMaint.classList.add("active");
-                } else {
-                    btnMaint.innerText = "KAPALI"; btnMaint.classList.remove("active");
-                }
+                if(data.maintenanceMode === true) { btnMaint.innerText = "AÇIK (AKTİF)"; btnMaint.classList.add("active"); } 
+                else { btnMaint.innerText = "KAPALI"; btnMaint.classList.remove("active"); }
                 
-                if(data.publicLensEnabled === true) {
-                    btnLens.innerText = "GÖRÜNÜR (AKTİF)"; btnLens.classList.add("active");
-                } else {
-                    btnLens.innerText = "GİZLİ"; btnLens.classList.remove("active");
-                }
+                if(data.publicLensEnabled === true) { btnLens.innerText = "GÖRÜNÜR (AKTİF)"; btnLens.classList.add("active"); } 
+                else { btnLens.innerText = "GİZLİ"; btnLens.classList.remove("active"); }
             }
         });
 
@@ -105,12 +110,40 @@
         document.getElementById('btn-sync-global').addEventListener('click', async () => {
             const btn = document.getElementById('btn-sync-global');
             btn.innerText = "SİNYAL GÖNDERİLİYOR...";
-            try {
-                await setDoc(doc(db, "system", "version"), { lastUpdate: Date.now() });
-                document.getElementById('sync-log').innerText = "✅ SİSTEM GÜNCELLENDİ!";
-            } catch(e) {}
+            try { await setDoc(doc(db, "system", "version"), { lastUpdate: Date.now() }); document.getElementById('sync-log').innerText = "✅ SİSTEM GÜNCELLENDİ!"; } catch(e) {}
             btn.innerText = "SİSTEMİ KÜRESEL OLARAK SENKRONİZE ET";
         });
+
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists() && uDoc.data().role === 'superadmin') {
+                    document.getElementById('card-locations').style.display = 'block';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        let html = '';
+                        locs.forEach(l => {
+                            html += '<div class="loc-row"><div><strong style="color:#fff;">' + l.name + '</strong><div style="font-family:monospace; color:#00ccff; font-size:11px; margin-top:4px;">ID: ' + l.id + '</div></div></div>';
+                        });
+                        document.getElementById('loc-list').innerHTML = html;
+                    });
+                }
+            }
+        }, 1500);
+
+        window.addLocation = async () => {
+            const id = document.getElementById('new-loc-id').value.trim().toLowerCase();
+            const name = document.getElementById('new-loc-name').value.trim();
+            if(!id || !name) return;
+            const ref = doc(db, "system", "locations");
+            const snap = await getDoc(ref);
+            let list = snap.exists() ? snap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+            if(list.find(l => l.id === id)) return alert("Bu ID zaten var.");
+            list.push({ id, name });
+            await setDoc(ref, { list });
+            document.getElementById('new-loc-id').value = ''; document.getElementById('new-loc-name').value = '';
+        };
     </script>
 </body>
 </html>
