@@ -46,8 +46,8 @@
             <div class="card" id="card-locations" style="display:none; border-color: #9933ff;">
                 <div class="card-header" style="color: #9933ff;">SİSTEM LOKASYONLARI YÖNETİMİ</div>
                 <div class="form-grid">
-                    <div class="form-group"><label>LOKASYON ID (örn: izmir)</label><input type="text" id="new-loc-id" placeholder="Tümü küçük ve boşluksuz"></div>
-                    <div class="form-group"><label>LOKASYON ADI (örn: İzmir Depo)</label><input type="text" id="new-loc-name" placeholder="Ekranda görünecek isim"></div>
+                    <div class="form-group"><label>LOKASYON ID (Koleksiyon Adı İçin - Örn: izmir)</label><input type="text" id="new-loc-id" placeholder="Tümü küçük ve boşluksuz"></div>
+                    <div class="form-group"><label>LOKASYON ADI (Ekranda Görünecek - Örn: İzmir Depo)</label><input type="text" id="new-loc-name" placeholder="Ekranda görünecek isim"></div>
                     <div class="form-group"><label>&nbsp;</label><button class="btn-primary" style="background:#9933ff;" onclick="window.addLocation()">YENİ LOKASYON EKLE</button></div>
                 </div>
                 <div id="loc-list" style="margin-top:20px; border:1px solid #222; border-radius:6px; overflow:hidden;"></div>
@@ -91,15 +91,14 @@
                 <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="document.getElementById('edit-loc-modal').style.display='none'">×</button>
             </div>
             <div class="form-group" style="margin-bottom:15px; text-align:left;">
-                <label>YENİ LOKASYON ID</label>
-                <input type="text" id="edit-loc-id-input" placeholder="Küçük harf, boşluksuz">
+                <label>LOKASYON ID (DEĞİŞTİRİLEMEZ)</label>
+                <input type="text" id="edit-loc-id-input" disabled style="background:#111; color:#666; cursor:not-allowed; border-color:#222;">
             </div>
             <div class="form-group" style="margin-bottom:25px; text-align:left;">
                 <label>YENİ LOKASYON ADI</label>
                 <input type="text" id="edit-loc-name-input" placeholder="Görünecek İsim">
             </div>
             <input type="hidden" id="edit-loc-old-id">
-            <p style="font-size:10px; color:#ff3333; margin-bottom:15px; text-align:left; font-weight:bold;">DİKKAT: ID değiştirilirse, eski veritabanı koleksiyonları taşınmaz. Yeni ID ile sıfır veritabanı oluşur. Kullanıcı yetkilerinin de güncellenmesi gerekebilir.</p>
             <button class="btn-primary" style="background:#9933ff; width:100%; color:#fff;" onclick="window.saveLocationEdit()">KAYDET</button>
         </div>
     </div>
@@ -155,7 +154,7 @@
                         locs.forEach(l => {
                             html += '<div class="loc-row"><div><strong style="color:#fff;">' + l.name + '</strong><div style="font-family:monospace; color:#00ccff; font-size:11px; margin-top:4px;">ID: ' + l.id + '</div></div><div style="display:flex; gap:5px;">';
                             html += '<button class="btn-loc-action" onclick="window.editLocation(\'' + l.id + '\', \'' + l.name + '\')">DÜZENLE</button>';
-                            html += '<button class="btn-loc-del" onclick="window.deleteLocation(\'' + l.id + '\')">SİL</button>';
+                            if(l.id !== 'merkez') html += '<button class="btn-loc-del" onclick="window.deleteLocation(\'' + l.id + '\')">SİL</button>';
                             html += '</div></div>';
                         });
                         document.getElementById('loc-list').innerHTML = html;
@@ -185,21 +184,17 @@
         };
 
         window.saveLocationEdit = async () => {
-            const oldId = document.getElementById('edit-loc-old-id').value;
-            const newId = document.getElementById('edit-loc-id-input').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            const id = document.getElementById('edit-loc-old-id').value;
             const newName = document.getElementById('edit-loc-name-input').value.trim();
 
-            if(!newId || !newName) { alert("ID ve İsim boş olamaz."); return; }
+            if(!newName) { alert("İsim boş olamaz."); return; }
 
             const ref = doc(db, "system", "locations");
             const snap = await getDoc(ref);
             let list = snap.exists() ? snap.data().list || [] : [];
             
-            if(oldId !== newId && list.find(l => l.id === newId)) { alert("Bu ID zaten kullanımda."); return; }
-
-            const targetIndex = list.findIndex(l => l.id === oldId);
+            const targetIndex = list.findIndex(l => l.id === id);
             if(targetIndex > -1) {
-                list[targetIndex].id = newId;
                 list[targetIndex].name = newName;
                 await setDoc(ref, { list });
                 document.getElementById('edit-loc-modal').style.display = 'none';
@@ -207,6 +202,7 @@
         };
 
         window.deleteLocation = async (id) => {
+            if(id === 'merkez') return;
             const pw = prompt(id.toUpperCase() + " lokasyonunu kalıcı olarak silmek için yönetici şifresini (admin99) girin:");
             if(pw === "admin99") {
                 const ref = doc(db, "system", "locations");
