@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminux | Kullanıcı Yönetimi</title>
     <link rel="stylesheet" href="admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
         .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #000; padding: 15px; border: 1px solid #222; border-radius: 6px; }
         .module-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #aaa; cursor: pointer; }
         .module-check input { width: 16px; height: 16px; accent-color: #00ccff; cursor: pointer; }
@@ -20,20 +22,25 @@
         .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-sm { padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; text-transform: uppercase; }
         .btn-sm:hover { opacity: 0.8; }
+        .btn-sm:disabled { cursor: not-allowed; opacity: 0.5; }
     </style>
 </head>
 <body>
-    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div id="global-loader">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 15px; color:#00ccff;"></i>
+        SİSTEM YETKİLERİ KONTROL EDİLİYOR...
+    </div>
+    
     <div class="sidebar">
         <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
         <div class="menu">
-            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
-            <a href="users.html" class="menu-item active"><span>KULLANICI YÖNETİMİ</span></a>
-            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
-            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
-            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
-            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
-            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+            <a href="index.html" class="menu-item" id="nav-index"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item active" id="nav-users"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item" id="nav-adres"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item" id="nav-stok"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item" id="nav-depo"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item" id="nav-lens"><span>LENS YÖNETİMİ</span></a>
+            <a href="ayarlar.html" class="menu-item" id="nav-ayarlar"><span>SİSTEM AYARLARI</span></a>
         </div>
         <div class="user-info">
             <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
@@ -59,6 +66,7 @@
                         <label class="module-check"><input type="checkbox" id="mod-sevkiyat" checked> Sevkiyat Terminali</label>
                         <label class="module-check"><input type="checkbox" id="mod-lens" checked> Lens Terminali</label>
                         <label class="module-check"><input type="checkbox" id="mod-adres" checked> Adres Bulucu</label>
+                        <label class="module-check"><input type="checkbox" id="mod-depo" checked> Görsel Depo Yönetimi</label>
                     </div>
                 </div>
                 <button class="btn-primary" id="btn-create-user">KULLANICIYI SİSTEME EKLE</button>
@@ -74,9 +82,9 @@
         </div>
     </div>
     
-    <div id="edit-user-modal" class="modal">
-        <div class="modal-box">
-            <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
+    <div id="edit-user-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
+        <div class="modal-box" style="background:#0c0c0c; padding:25px; border-radius:12px; border:1px solid #333; width:100%; max-width:450px;">
+            <h3 style="color:#00ccff; border-bottom:1px solid #222; padding-bottom:15px; margin-top:0;">PERSONEL YETKİLERİNİ DÜZENLE</h3>
             <p id="edit-user-email" style="color:#888; font-size:13px; margin-bottom:20px; font-family:monospace;"></p>
             <input type="hidden" id="edit-uid">
             
@@ -91,30 +99,82 @@
                     <label class="module-check"><input type="checkbox" id="edit-sevkiyat"> Sevkiyat Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-lens"> Lens Terminali</label>
                     <label class="module-check"><input type="checkbox" id="edit-adres"> Adres Bulucu</label>
+                    <label class="module-check"><input type="checkbox" id="edit-depo"> Görsel Depo Yönetimi</label>
                 </div>
             </div>
             <div style="display:flex; gap:10px;">
-                <button class="btn-primary" style="background:#222; color:#fff;" onclick="document.getElementById('edit-user-modal').style.display='none'">İPTAL</button>
-                <button class="btn-primary" onclick="saveUserEdit()">YETKİLERİ GÜNCELLE</button>
+                <button class="btn-primary" style="flex:1; background:#222; color:#fff;" onclick="document.getElementById('edit-user-modal').style.display='none'">İPTAL</button>
+                <button class="btn-primary" style="flex:1; background:#00ccff; color:#000;" onclick="saveUserEdit()">YETKİLERİ GÜNCELLE</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { db, auth } from './admin.js';
-        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
         const secondaryApp = initializeApp(auth.app.options, "SecondaryApp");
         const secondaryAuth = getAuth(secondaryApp);
 
-        onSnapshot(doc(db, "system", "locations"), (docSnap) => {
-            let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
-            let html = '<option value="tumu">Tüm Lokasyonlar (Sadece Superadmin)</option>';
-            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name + '</option>');
-            document.getElementById('u-loc').innerHTML = html;
-            document.getElementById('edit-loc').innerHTML = html;
+        let currentUserRole = 'user';
+        let currentUserLoc = 'merkez';
+        let currentUserEmail = '';
+
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                currentUserEmail = user.email;
+                const uDoc = await getDoc(doc(db, "users", user.uid));
+                if(uDoc.exists()) {
+                    const d = uDoc.data();
+                    currentUserRole = d.role || 'user';
+                    currentUserLoc = d.location || 'merkez';
+                    if(currentUserEmail === 'admin@terminux.com.tr') currentUserRole = 'superadmin';
+
+                    if(currentUserRole !== 'superadmin' && currentUserRole !== 'admin') {
+                        document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</div></div>';
+                        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                        return;
+                    }
+
+
+                    const modules = d.modules || {};
+                    if(currentUserRole !== 'superadmin') {
+                        if(!modules.adres) document.querySelector('[href="adres.html"]').style.display = 'none';
+                        if(!modules.stok) document.querySelector('[href="stok.html"]').style.display = 'none';
+                        if(!modules.depo) document.querySelector('[href="depoyonetimi.html"]').style.display = 'none';
+                        if(!modules.lens) document.querySelector('[href="lens.html"]').style.display = 'none';
+                        if(!modules.ayarlar) document.querySelector('[href="ayarlar.html"]').style.display = 'none';
+                        
+                        document.getElementById('u-role').querySelector('option[value="superadmin"]').disabled = true;
+                    }
+
+                    document.getElementById('global-loader').style.display = 'none';
+
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        let html = '';
+                        if(currentUserRole === 'superadmin') {
+                            html += '<option value="tumu">Tüm Lokasyonlar (Sadece Superadmin)</option>';
+                            locs.forEach(l => html += '<option value="' + l.id + '">' + l.name + '</option>');
+                        } else {
+                            let myLoc = locs.find(l => l.id === currentUserLoc);
+                            if(myLoc) html += '<option value="' + myLoc.id + '">' + myLoc.name + '</option>';
+                            else html += '<option value="' + currentUserLoc + '">' + (currentUserLoc).toUpperCase() + '</option>';
+                        }
+                        document.getElementById('u-loc').innerHTML = html;
+                        document.getElementById('edit-loc').innerHTML = html;
+                    });
+
+                    loadUsers();
+                } else {
+                    document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">KULLANICI BULUNAMADI</div></div>';
+                    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                }
+            } else {
+                window.location.href = '../index.html';
+            }
         });
 
         document.getElementById('btn-create-user').addEventListener('click', async () => {
@@ -126,7 +186,13 @@
             if(!uname || pass.length < 6) return alert("Geçerli bir kullanıcı adı ve en az 6 haneli şifre girin.");
             if(!uname.includes('@')) uname += "@terminux.com.tr";
             
-            const mods = { sayim: document.getElementById('mod-sayim').checked, sevkiyat: document.getElementById('mod-sevkiyat').checked, lens: document.getElementById('mod-lens').checked, adres: document.getElementById('mod-adres').checked };
+            const mods = { 
+                sayim: document.getElementById('mod-sayim').checked, 
+                sevkiyat: document.getElementById('mod-sevkiyat').checked, 
+                lens: document.getElementById('mod-lens').checked, 
+                adres: document.getElementById('mod-adres').checked,
+                depo: document.getElementById('mod-depo').checked 
+            };
             const logEl = document.getElementById('user-log');
             logEl.innerText = "Kullanıcı oluşturuluyor..."; logEl.style.color = '#ffbc00';
 
@@ -139,33 +205,52 @@
             } catch(e) { logEl.style.color = '#ff3333'; logEl.innerText = "Hata: " + e.message; }
         });
 
-        onSnapshot(collection(db, "users"), (snap) => {
-            let html = "";
-            snap.forEach(docSnap => {
-                const d = docSnap.data();
-                let badgeRole = '<span class="badge user">PERSONEL</span>';
-                if(d.role === 'admin') badgeRole = '<span class="badge admin">YÖNETİCİ</span>';
-                else if(d.role === 'superadmin') badgeRole = '<span class="badge super">SİSTEM YÖNETİCİSİ</span>';
-                
-                const badgeLoc = '<span class="badge loc">' + (d.location || 'merkez').toUpperCase() + '</span>';
-                const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif (Banlı)</span>';
-                
-                let modsArr = [];
-                if(d.modules) {
-                    if(d.modules.sayim) modsArr.push('Sayım');
-                    if(d.modules.sevkiyat) modsArr.push('Sevkiyat'); if(d.modules.lens) modsArr.push('Lens'); if(d.modules.adres) modsArr.push('Adres');
-                }
-                const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
-                const s = d.status === 'active' ? 'BANLA' : 'KALDIR';
-                const sColor = d.status === 'active' ? '#ff3333' : '#00ff00';
-                const sBg = d.status === 'active' ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,0,0.1)';
-                const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
-                const userLoc = d.location || 'merkez';
+        const loadUsers = () => {
+            onSnapshot(collection(db, "users"), (snap) => {
+                let html = "";
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    
+                    if(currentUserRole !== 'superadmin' && d.location !== currentUserLoc && currentUserEmail !== 'admin@terminux.com.tr') {
+                        if(d.email !== 'admin@terminux.com.tr') return;
+                    }
 
-                html += '<tr><td><strong style="color:#fff;">' + d.email + '</strong><br><span style="font-size:10px; color:#555;">ID: ' + docSnap.id + '</span></td><td>' + badgeRole + '<br>' + badgeLoc + '</td><td style="font-size:11px; color:#aaa;">' + (d.role==='admin'||d.role==='superadmin' ? 'Tüm Sistem' : modStr) + '</td><td><strong>' + statusText + '</strong></td><td style="text-align: right;"><div class="action-btns"><button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit(\'' + docSnap.id + '\', \'' + d.email + '\', \'' + sMod + '\', \'' + userLoc + '\')">DÜZENLE</button><button class="btn-sm" style="background:' + sBg + '; color:' + sColor + '; border: 1px solid ' + sColor + ';" onclick="window.toggleBan(\'' + docSnap.id + '\', \'' + d.status + '\')">' + s + '</button><button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser(\'' + docSnap.id + '\')">SİL</button></div></td></tr>';
+                    let badgeRole = '<span class="badge user">PERSONEL</span>';
+                    if(d.role === 'admin') badgeRole = '<span class="badge admin">YÖNETİCİ</span>';
+                    else if(d.role === 'superadmin' || d.email === 'admin@terminux.com.tr') badgeRole = '<span class="badge super">SİSTEM YÖNETİCİSİ</span>';
+                    
+                    const badgeLoc = '<span class="badge loc">' + (d.location || 'merkez').toUpperCase() + '</span>';
+                    const statusText = d.status === 'active' ? '<span style="color:#00ff00;">Aktif</span>' : '<span style="color:#ff3333;">Pasif (Banlı)</span>';
+                    
+                    let modsArr = [];
+                    if(d.modules) {
+                        if(d.modules.sayim) modsArr.push('Sayım');
+                        if(d.modules.sevkiyat) modsArr.push('Sevkiyat'); 
+                        if(d.modules.lens) modsArr.push('Lens'); 
+                        if(d.modules.adres) modsArr.push('Adres');
+                        if(d.modules.depo) modsArr.push('Depo');
+                    }
+                    const modStr = modsArr.length > 0 ? modsArr.join(', ') : 'Yetki Yok';
+                    const s = d.status === 'active' ? 'BANLA' : 'KALDIR';
+                    const sColor = d.status === 'active' ? '#ff3333' : '#00ff00';
+                    const sBg = d.status === 'active' ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,0,0.1)';
+                    const sMod = encodeURIComponent(JSON.stringify(d.modules || {}));
+                    const userLoc = d.location || 'merkez';
+
+                    let actions = '';
+                    if(currentUserRole !== 'superadmin' && (d.role === 'superadmin' || d.email === 'admin@terminux.com.tr')) {
+                        actions = '<button class="btn-sm" style="background:#111; color:#444; border: 1px solid #222;" disabled>YETKİ YOK</button>';
+                    } else {
+                        actions = `<button class="btn-sm" style="background:#222; color:#fff;" onclick="window.openEdit('${docSnap.id}', '${d.email}', '${sMod}', '${userLoc}')">DÜZENLE</button>
+                                   <button class="btn-sm" style="background:${sBg}; color:${sColor}; border: 1px solid ${sColor};" onclick="window.toggleBan('${docSnap.id}', '${d.status}')">${s}</button>
+                                   <button class="btn-sm" style="background:#ff3333; color:#fff;" onclick="window.deleteSystemUser('${docSnap.id}')">SİL</button>`;
+                    }
+
+                    html += '<tr><td><strong style="color:#fff;">' + d.email + '</strong><br><span style="font-size:10px; color:#555;">ID: ' + docSnap.id + '</span></td><td>' + badgeRole + '<br>' + badgeLoc + '</td><td style="font-size:11px; color:#aaa;">' + (d.role==='admin'||d.role==='superadmin'||d.email==='admin@terminux.com.tr' ? 'Tüm Sistem' : modStr) + '</td><td><strong>' + statusText + '</strong></td><td style="text-align: right;"><div class="action-btns">' + actions + '</div></td></tr>';
+                });
+                document.getElementById('user-table-body').innerHTML = html;
             });
-            document.getElementById('user-table-body').innerHTML = html;
-        });
+        };
 
         window.openEdit = (uid, email, modStr, userLoc) => {
             document.getElementById('edit-uid').value = uid; 
@@ -173,7 +258,7 @@
             document.getElementById('edit-loc').value = userLoc;
             
             const mods = JSON.parse(decodeURIComponent(modStr));
-            ['sayim', 'sevkiyat', 'lens', 'adres'].forEach(m => document.getElementById('edit-' + m).checked = mods[m] || false);
+            ['sayim', 'sevkiyat', 'lens', 'adres', 'depo'].forEach(m => document.getElementById('edit-' + m).checked = mods[m] || false);
             
             document.getElementById('edit-user-modal').style.display = 'flex';
         };
@@ -181,7 +266,13 @@
         window.saveUserEdit = async () => {
             const uid = document.getElementById('edit-uid').value;
             const newLoc = document.getElementById('edit-loc').value;
-            const mods = { sayim: document.getElementById('edit-sayim').checked, sevkiyat: document.getElementById('edit-sevkiyat').checked, lens: document.getElementById('edit-lens').checked, adres: document.getElementById('edit-adres').checked };
+            const mods = { 
+                sayim: document.getElementById('edit-sayim').checked, 
+                sevkiyat: document.getElementById('edit-sevkiyat').checked, 
+                lens: document.getElementById('edit-lens').checked, 
+                adres: document.getElementById('edit-adres').checked,
+                depo: document.getElementById('edit-depo').checked
+            };
             await updateDoc(doc(db, "users", uid), { modules: mods, location: newLoc });
             document.getElementById('edit-user-modal').style.display = 'none';
         };
