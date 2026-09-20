@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Super Admin Panel</title>
+    <title>Terminux | Yönetici Paneli</title>
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
     <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
     <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-title">TERMINUX</div>
-            <div class="sidebar-subtitle">SUPER ADMIN PANEL</div>
-        </div>
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
         <div class="menu">
             <a href="index.html" class="menu-item active"><span>ANA SAYFA</span></a>
             <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
             <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
             <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
             <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
             <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
         </div>
@@ -28,24 +26,24 @@
         </div>
     </div>
     <div class="main-content">
-        <div class="topbar"><h2>YÖNETİM PANELİ ANA SAYFA</h2></div>
+        <div class="topbar"><h2>YÖNETİCİ PANELİ</h2></div>
         <div class="content-area">
             <div class="card">
                 <div class="card-header">SİSTEME HOŞ GELDİNİZ</div>
-                <p style="font-size: 14px; color: #aaa; line-height: 1.6;">
-                    Terminux WMS sisteminin tüm denetimleri sol menüde kategorize edilmiştir.<br><br>
-                    Güvenlik politikaları gereği burada yaptığınız her işlem canlı veritabanını anında etkiler. Lütfen tehlikeli stok işlemlerinde (Depo sıfırlama vb.) dikkatli olunuz.
+                <p style="font-size: 13px; color: #aaa; line-height: 1.6; margin-bottom: 20px;">
+                    Terminux WMS sisteminin tüm denetimleri sol menüde kategorize edilmiştir. Kullanıcı Yönetimi üzerinden personel yetkilendirmeleri yapabilir, Adres Yönetimi ve Görsel Depo Yönetimi ile fiziki depo düzenini sağlayabilirsiniz. Depo / Stok Yönetimi ve Lens Yönetimi modülleri, veritabanına toplu Excel aktarımları ve manuel stok müdahaleleri için tasarlanmıştır. Sistem Ayarları üzerinden genel yapılandırmaları ve lokasyon tanımlamalarını kontrol edebilirsiniz.
                 </p>
+                <div style="border-top: 1px solid #1a1a1a; padding-top: 15px; margin-top: 15px;">
+                    <div style="font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">TEŞEKKÜRLER</div>
+                    <p style="font-size: 12px; color: #888; line-height: 1.5;">
+                        Terminux WMS projesinin geliştirilme ve test süreçlerinde büyük emekleri geçen test ekibimize teşekkür ederiz. Özellikle başından sonuna kadar vizyonuyla destek olan Osman Güney BORA'ya ve test süreçlerinde sahada her türlü desteği sağlayan Murat ALTÜRK'e sonsuz teşekkürlerimizi sunarız.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
-    <div id="custom-alert" class="modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
-            <p id="alert-desc" style="font-size:13px; color:#aaa; margin-bottom:20px;">-</p>
-            <button class="btn-primary" onclick="document.getElementById('custom-alert').style.display='none'">ANLADIM</button>
-        </div>
-    </div>
-    <script type="module" src="admin.js"></script>
+    <script type="module">
+        import { auth } from './admin.js';
+    </script>
 </body>
 </html>
