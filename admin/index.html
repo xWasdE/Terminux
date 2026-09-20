@@ -150,52 +150,55 @@
 
         onAuthStateChanged(auth, async (user) => {
             if(user) {
+                let role = 'personel';
+                let modules = {};
+                const uEmail = user.email ? user.email.toLowerCase() : '';
+
+                if(uEmail === 'admin@terminux.com.tr') {
+                    role = 'superadmin';
+                    modules = { adres: true, stok: true, depo: true, lens: true, ayarlar: true };
+                }
+
                 try {
-                    let role = 'personel';
-                    let modules = {};
-                    
                     const snap = await getDoc(doc(db, "users", user.uid));
-                    if(snap.exists()) {
+                    if(snap.exists() && uEmail !== 'admin@terminux.com.tr') {
                         role = snap.data().role || 'personel';
                         modules = snap.data().modules || {};
                     }
-
-
-                    if(user.email === 'admin@terminux.com.tr') {
-                        role = 'superadmin';
-                        modules = { adres: true, stok: true, depo: true, lens: true, ayarlar: true };
-                    }
-                    
-                    if(role !== 'superadmin') {
-                        if(role !== 'admin') {
-                            document.getElementById('nav-users').style.display = 'none';
-                            document.getElementById('feat-users').style.display = 'none';
-                        }
-                        if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
-                        if(!modules.stok) {
-                            document.getElementById('nav-stok').style.display = 'none';
-                            document.getElementById('feat-stok').style.display = 'none';
-                        }
-                        if(!modules.depo) document.getElementById('nav-depo').style.display = 'none';
-                        if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
-                        if(!modules.ayarlar) {
-                            document.getElementById('nav-ayarlar').style.display = 'none';
-                            document.getElementById('feat-ayarlar').style.display = 'none';
-                        }
-                        if(!modules.adres && !modules.depo) document.getElementById('feat-adres').style.display = 'none';
-                        
-
-                        if(role !== 'admin' && !modules.adres && !modules.stok && !modules.depo && !modules.lens && !modules.ayarlar) {
-                            window.location.href = '../index.html';
-                            return;
-                        }
-                    }
-                    
-                    document.getElementById('global-loader').style.display = 'none';
                 } catch(err) {
-                    console.error("Yetki kontrol hatası:", err);
-                    window.location.href = '../index.html';
+                    console.error("DB Erişim Hatası:", err);
+                    if(role !== 'superadmin') {
+                        window.location.href = '../index.html';
+                        return;
+                    }
                 }
+
+                if(role !== 'superadmin') {
+                    if(role !== 'admin') {
+                        document.getElementById('nav-users').style.display = 'none';
+                        document.getElementById('feat-users').style.display = 'none';
+                    }
+                    if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
+                    if(!modules.stok) {
+                        document.getElementById('nav-stok').style.display = 'none';
+                        document.getElementById('feat-stok').style.display = 'none';
+                    }
+                    if(!modules.depo) document.getElementById('nav-depo').style.display = 'none';
+                    if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
+                    if(!modules.ayarlar) {
+                        document.getElementById('nav-ayarlar').style.display = 'none';
+                        document.getElementById('feat-ayarlar').style.display = 'none';
+                    }
+                    if(!modules.adres && !modules.depo) document.getElementById('feat-adres').style.display = 'none';
+                    
+
+                    if(role !== 'admin' && !modules.adres && !modules.stok && !modules.depo && !modules.lens && !modules.ayarlar) {
+                        window.location.href = '../index.html';
+                        return;
+                    }
+                }
+                
+                document.getElementById('global-loader').style.display = 'none';
             } else {
                 window.location.href = '../index.html';
             }
