@@ -150,20 +150,24 @@
 
         onAuthStateChanged(auth, async (user) => {
             if(user) {
+                const uEmail = user.email ? user.email.toLowerCase() : '';
                 let role = 'user';
                 let modules = {};
 
-
-                try {
-                    const snap = await getDoc(doc(db, "users", user.uid));
-                    if(snap.exists()) {
-                        role = snap.data().role || 'user';
-                        modules = snap.data().modules || {};
+                if(uEmail === 'admin@terminux.com.tr' || uEmail.startsWith('admin@')) {
+                    role = 'owner';
+                    modules = { sayim:true, sevkiyat:true, lens:true, adres:true, depo:true, stok:true, ayarlar:true };
+                } else {
+                    try {
+                        const snap = await getDoc(doc(db, "users", user.uid));
+                        if(snap.exists()) {
+                            role = snap.data().role || 'user';
+                            modules = snap.data().modules || {};
+                        }
+                    } catch(err) {
+                        console.error("DB Erişim Hatası:", err);
                     }
-                } catch(err) {
-                    console.error("DB Erişim Hatası:", err);
                 }
-
 
                 if(role !== 'owner' && role !== 'superadmin' && role !== 'admin') {
                     document.getElementById('global-loader').innerHTML = '<div style="color:#ff3333; text-align:center;"><div style="font-size:22px; font-weight:900;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Yönetim paneline giriş yetkiniz bulunmuyor.</div></div>';
@@ -171,8 +175,7 @@
                     return;
                 }
 
-
-                if(role !== 'superadmin' && role !== 'owner') {
+                if(role !== 'owner' && role !== 'superadmin') {
                     document.getElementById('nav-users').style.display = 'none';
                     document.getElementById('feat-users').style.display = 'none';
                     
