@@ -282,12 +282,11 @@
                     const isTargetSuper = (targetRole === 'superadmin' || isTargetOwner);
                     const isTargetAdmin = (targetRole === 'admin');
 
-                    // OWNER Değilse Filtreleme Uygula (Owner Herkesi Görür)
+
                     if(currentUserRole !== 'owner') {
-                        // Superadmin ise sadece bulunduğu lokasyon veya diğer Superadminleri görebilir.
-                        // Admin ise sadece kendi lokasyonunu görebilir.
+
                         if (currentUserRole === 'superadmin') {
-                            // Superadmin herkesi görebilir
+
                         } else if (currentUserRole === 'admin') {
                             if(d.location !== currentUserLoc && !isTargetSuper && !isTargetAdmin) return;
                         }
