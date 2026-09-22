@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminux | Sevkiyat Terminali</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        window.addEventListener('pageshow', function (event) { if (event.persisted) { window.location.reload(); } });
+        window.playBeep = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if (type === 'success') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(1000, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(300, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.4); osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        };
+    </script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body, html { background: #000; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        header { padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-shrink: 0; }
+        .header-title { font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff; }
+        .header-subtitle { color: #00ccff; font-size: 14px; font-weight: 600; letter-spacing: 2px; }
+        main { flex: 1; padding: 40px 50px 80px 50px; overflow-y: auto; background: #000; position: relative; scroll-behavior: smooth; }
+        .setup-container { max-width: 700px; margin: 0 auto 50px auto; background: #080808; border: 1px solid #1a1a1a; padding: 40px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .setup-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .input-group label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group input, .input-group select { background: #0a0a0a; border: 1px solid #333; color: #00ccff; padding: 15px; font-family: monospace; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; width: 100%; }
+        .input-group input:focus, .input-group select:focus { border-color: #00ccff; }
+        .btn-primary { background: #00ccff; color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-secondary { background: #111; color: #fff; border: 1px solid #333; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: center; display: inline-block; text-decoration: none; }
+        .btn-secondary:hover { background: #222; border-color: #555; }
+        .btn-danger { background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-danger:hover { background: #ff3333; color: #000; }
+        .btn-success { background: #00ff00; color: #000; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-success:hover { opacity: 0.8; }
+        .filter-select { background: #111; border: 1px solid #333; color: #00ccff; padding: 0 20px; font-size: 14px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; outline: none; letter-spacing: 1px; height: 52px; font-family: 'Inter', sans-serif; }
+        .filter-select:focus { border-color: #00ccff; }
+        .history-container { max-width: 1000px; margin: 0 auto; }
+        .history-title { font-size: 16px; font-weight: bold; color: #666; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; border: 1px solid #1a1a1a; padding: 20px; border-radius: 8px; transition: 0.2s; }
+        .history-card:hover { border-color: #333; }
+        .history-info { display: flex; flex-direction: column; gap: 5px; }
+        .history-name { font-size: 18px; font-weight: 800; color: #00ccff; }
+        .history-detail { font-size: 12px; color: #888; font-family: monospace; }
+        .history-actions { display: flex; gap: 10px; }
+        .active-count-header { display: flex; justify-content: space-between; align-items: center; background: #080808; padding: 20px; border: 1px solid #1a1a1a; border-radius: 8px; margin-bottom: 30px; }
+        .session-info { display: flex; flex-direction: column; gap: 5px; }
+        .session-name { font-size: 20px; font-weight: 800; color: #00ccff; }
+        .session-details { font-size: 12px; color: #888; font-family: monospace; }
+        .header-actions { display: flex; gap: 12px; align-items: center; justify-content: flex-end; }
+        .header-actions button { width: auto !important; height: 42px; padding: 0 25px; display: inline-flex; align-items: center; justify-content: center; margin: 0; white-space: nowrap; font-size: 12px; }
+        .scan-area { display: flex; gap: 15px; margin-bottom: 30px; align-items: flex-end; background: #050505; padding: 20px; border-radius: 8px; border: 1px solid #111; flex-wrap: wrap; }
+        .scan-input { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; margin: 0; position: relative; }
+        .qty-input { flex: 1; max-width: 150px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+        .scan-area label { font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
+        .scan-wrapper { display: flex; gap: 10px; width: 100%; position: relative; }
+        .scan-area input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 15px; font-size: 16px; border-radius: 6px; outline: none; transition: 0.2s; font-family: monospace; width: 100%; flex: 1; }
+        .scan-area input:focus { border-color: #00ccff; }
+        .btn-scan { background: #222; border: 1px solid #444; color: #fff; padding: 0 25px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; letter-spacing: 1px; }
+        .btn-scan:hover { border-color: #00ccff; color: #00ccff; }
+        .btn-add { background: #00ccff; color: #000; border: none; padding: 0 30px; height: 52px; font-size: 16px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { opacity: 0.8; }
+        .scan-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #0a0a0a; border: 1px solid #333; z-index: 1000; max-height: 250px; overflow-y: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 5px; }
+        .scan-dropdown-item { padding: 15px; border-bottom: 1px solid #1a1a1a; cursor: pointer; transition: 0.2s; }
+        .scan-dropdown-item:hover { background: #111; border-color: #00ccff; }
+        .scan-dropdown-item-title { color: #fff; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .scan-dropdown-item-sub { color: #888; font-size: 11px; font-family: monospace; }
+        .list-container { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; }
+        .list-header { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; background: #111; padding: 15px 20px; font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px; border-bottom: 1px solid #222; gap: 15px; }
+        .list-item { display: grid; grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr 1fr; padding: 15px 20px; border-bottom: 1px solid #1a1a1a; align-items: center; transition: 0.2s; gap: 15px; border-left: 12px solid transparent; }
+        .list-item:hover { background: #0c0c0c; }
+        .status-pinned { border-left-color: #00ccff; background: linear-gradient(90deg, rgba(0,204,255,0.08) 0%, transparent 100%); }
+        .status-pending { border-left-color: #444; }
+        .status-missing { border-left-color: #ff3333; background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); }
+        .status-complete { border-left-color: #00ff00; background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); }
+        .status-over { border-left-color: #ffbc00; background: linear-gradient(90deg, rgba(255,188,0,0.08) 0%, transparent 100%); }
+        .item-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #fff; }
+        .item-name { font-size: 13px; color: #ccc; line-height: 1.4; display: flex; align-items: center; flex-wrap: wrap; gap: 5px;}
+        .bmc-badge { background: #ff3333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .bmc-qty { background: #ffbc00; color: #000; margin-left: 2px; }
+        .dis-badge { background: #2196F3; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .dis-qty { background: #00bcd4; color: #000; margin-left: 2px; }
+        .address-badge { background: #222; color: #00ccff; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #333; margin-left: 5px; white-space: nowrap; }
+        .dummy-badge { background: #9c27b0; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; margin-left: 5px; }
+        .qty-grid { display: contents; }
+        .item-val { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
+        .diff-pos { color: #00ff00; }
+        .diff-neg { color: #ff3333; }
+        .diff-zero { color: #555; }
+        .val-expected { color: #888; }
+        .val-missing { color: #ff3333; }
+        .val-complete { color: #00ff00; }
+        .val-over { color: #ffbc00; }
+        .val-label { color: #00ccff; }
+        .inline-input-wrapper { display: flex; align-items: center; justify-content: center; }
+        .inline-input { width: 100%; max-width: 80px; background: #000; border: 1px solid #444; color: #00ff00; padding: 10px 5px; font-size: 16px; font-family: monospace; text-align: center; border-radius: 6px; outline: none; transition: 0.2s; }
+        .inline-input:focus { border-color: #00ccff; }
+        .inline-input.lbl { color: #00ccff; }
+        .item-action { display: flex; gap: 5px; justify-content: flex-end; align-items: center; }
+        .btn-edit { background: #111; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-edit:hover { border-color: #00ccff; color: #00ccff; }
+        .btn-check { background: #00ff00; color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-check:hover { opacity: 0.8; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
+        .custom-modal { display:none; position:fixed; z-index:25000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); padding: 20px; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; padding: 40px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); text-align: center; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
+        .modal-desc { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 30px; }
+        .modal-actions { display: flex; flex-direction: row; gap: 15px; justify-content: center; align-items: center; width: 100%; }
+        .modal-actions button { flex: 1; padding: 15px 20px; }
+        #scanner-modal { display:none; position:fixed; z-index:20000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #333; }
+        .btn-scroll-top { display: none; position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 25px; background: #00ccff; color: #000; border: none; font-size: 24px; font-weight: 900; cursor: pointer; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.3s; }
+        .btn-scroll-top:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,204,255,0.4); }
+        @media (max-width: 900px) {
+            header { flex-direction: column; padding: 20px 15px; gap: 15px; text-align: center; }
+            main { padding: 15px; display: block; }
+            .setup-container { margin: 10px auto 30px auto; padding: 25px 20px; }
+            .active-count-header { flex-direction: column; gap: 15px; text-align: center; align-items: stretch; }
+            .header-actions { flex-direction: column; width: 100%; }
+            .header-actions button, .header-actions a, .header-actions select { width: 100% !important; margin: 0; max-width: 100%; height: 48px; }
+            .history-card { flex-direction: column; align-items: stretch; text-align: center; gap: 15px; }
+            #active-screen { display: block; }
+            .scan-area { flex-direction: column; align-items: stretch; gap: 15px; margin-bottom: 30px; }
+            .scan-wrapper { flex-direction: column; width: 100%; gap: 10px; }
+            .scan-wrapper input { width: 100%; flex: 1; }
+            .scan-wrapper button { width: 100%; height: 50px; }
+            .scan-area .input-group { min-width: 100%; margin: 0; }
+            .btn-add { width: 100%; height: 50px; }
+            .filter-select { width: 100%; height: 50px; }
+            .scan-dropdown { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 5px; }
+            .list-container { overflow: visible; }
+            .list-header { display: none; }
+            .list-item { grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px 15px; border-left-width: 8px; background: #0c0c0c; border-radius: 8px; margin-bottom: 10px; border-bottom: none; }
+            .item-code { grid-column: 1 / -1; font-size: 16px; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; }
+            .item-name { grid-column: 1 / -1; margin-bottom: 10px; color: #ccc; }
+            .item-action { grid-column: 1 / -1; margin-top: 10px; display: flex; justify-content: space-between; gap: 10px; width: 100%; }
+            .item-action button { flex: 1; padding: 12px; font-size: 12px; }
+            .qty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 8px; }
+            .item-val, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
+            .item-val::before, .item-diff::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
+            .inline-input-wrapper { display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 100%; }
+            .inline-input-wrapper::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; }
+            .inline-input { max-width: 100%; text-align: center; padding: 12px; }
+            .modal-actions { flex-direction: column; }
+            .modal-actions button { width: 100%; max-width: 100%; }
+            .btn-scroll-top { bottom: 20px; right: 20px; width: 45px; height: 45px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">TERMINUX <span class="header-subtitle">SEVKİYAT KONTROL</span></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="index.html" class="btn-secondary" style="margin:0; border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div id="home-screen">
+            <div class="setup-container">
+                <div class="setup-title">YENİ SEVKİYAT LİSTESİ YÜKLE</div>
+                <div class="input-group">
+                    <label>SEVKİYAT İSMİ / TARİHİ</label>
+                    <input type="text" id="setup-name" placeholder="Örn: 12 Ağustos Medikal Sevkiyat" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>SEVKİYAT KATEGORİSİ</label>
+                    <select id="setup-type">
+                        <option value="ANA DEPO">ANA DEPO</option>
+                        <option value="AMELİYATHANE">AMELİYATHANE</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>ANA SEVKİYAT EXCEL DOSYASI</label>
+                    <input type="file" id="setup-file" accept=".xlsx, .xls">
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>BMC LİSTESİ (İsteğe Bağlı - Excel)</label>
+                    <input type="file" id="setup-bmc" accept=".xlsx, .xls">
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>DİŞ LİSTESİ (İsteğe Bağlı - Excel)</label>
+                    <input type="file" id="setup-dis" accept=".xlsx, .xls">
+                </div>
+                <button class="btn-primary" style="margin-top: 10px;" onclick="createShipment()">LİSTEYİ YÜKLE VE BAŞLAT</button>
+            </div>
+
+            <div class="history-container" id="history-container" style="display:none;">
+                <div class="history-title">MEVCUT VE GEÇMİŞ SEVKİYATLAR</div>
+                <div class="history-list" id="history-list"></div>
+            </div>
+        </div>
+
+        <div id="active-screen" style="display: none;">
+            <div class="active-count-header">
+                <div class="session-info">
+                    <div class="session-name" id="ui-session-name">-</div>
+                    <div class="session-details" id="ui-session-details">-</div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="closeActiveScreen()">ANA EKRANA DÖN</button>
+                    <button class="btn-primary" style="background:#ffbc00; color:#000;" onclick="exportLabels()">ETİKET LİSTESİ (EXCEL)</button>
+                    <button class="btn-success" onclick="promptFinishShipment()">SEVKİYATI KAPAT</button>
+                </div>
+            </div>
+
+            <div class="scan-area">
+                <div class="scan-input">
+                    <label>ÜRÜN KODU, BARKOD VEYA REF NO</label>
+                    <div class="scan-wrapper">
+                        <input type="text" id="scan-code" placeholder="Tam kodu okutun veya yazın..." autocomplete="off">
+                        <button class="btn-scan" onclick="openScanner()">BARKOD TARA</button>
+                    </div>
+                    <div id="scan-dropdown" class="scan-dropdown"></div>
+                </div>
+                <div class="qty-input">
+                    <label>EKLENECEK MİKTAR</label>
+                    <input type="number" id="scan-qty" value="1" min="1">
+                </div>
+                <button class="btn-add" onclick="processScan()">EKLE / İŞLE</button>
+                <select id="filter-bmc" class="filter-select" onchange="window.renderShipmentList()" style="display:none;">
+                    <option value="ALL">TÜMÜ</option>
+                    <option value="BMC">BMC</option>
+                    <option value="DIS">DİŞ</option>
+                </select>
+            </div>
+
+            <div class="list-container">
+                <div class="list-header">
+                    <div>ÜRÜN KODU</div>
+                    <div>ÜRÜN İSMİ</div>
+                    <div style="text-align:center;">BEKLENEN</div>
+                    <div style="text-align:center;">TESLİM ALINAN</div>
+                    <div style="text-align:center;">FARK</div>
+                    <div style="text-align:center;">ETİKET ADETİ</div>
+                    <div style="text-align:right;">KONTROL</div>
+                </div>
+                <div id="shipment-list"></div>
+            </div>
+        </div>
+    </main>
+
+    <button id="scroll-to-top" class="btn-scroll-top" onclick="document.getElementById('main-content').scrollTo({top: 0, behavior: 'smooth'})">⬆</button>
+
+    <div id="custom-alert" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="alert-title">UYARI</div>
+            <div class="modal-desc" id="alert-desc" style="font-size: 16px; font-weight: bold; color: #fff;">-</div>
+            <div class="modal-actions" style="flex-direction:row;">
+                <button class="btn-primary" onclick="closeCustomAlert()">TAMAM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-confirm" class="custom-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="confirm-title">ONAY GEREKİYOR</div>
+            <div class="modal-desc" id="confirm-desc">-</div>
+            <div class="modal-actions" style="flex-direction:row;">
+                <button class="btn-secondary" onclick="closeCustomConfirm()">VAZGEÇ</button>
+                <button class="btn-primary" id="confirm-yes-btn">ONAYLIYORUM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="finish-modal" class="custom-modal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-title" style="color:#00ccff;">SEVKİYAT İŞLEMİNİ BİTİR</div>
+            <div class="modal-desc">Sevkiyata ait dökümü hangi formatta indirmek istersiniz? Çıktı alındıktan sonra sevkiyat kapatılacaktır.</div>
+            <div class="modal-actions">
+                <button class="btn-primary" style="background:#fff; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
+                <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
+                <button class="btn-secondary" style="margin-top:10px; width: 100%;" onclick="closeFinishModal()">İPTAL ET VE SEVKİYATA DÖN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanner-modal">
+        <div style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px;">KOD TARA</div>
+        <div id="reader"></div>
+        <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './core-auth.js';
+        import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let catalogDb = {};
+        let allShipments = [];
+        let currentShipmentId = null;
+        let confirmActionCallback = null;
+        let html5QrCode = null;
+        let searchTimeout = null;
+        let autoConfirmTimers = {};
+        
+        window.pinnedItemCode = null;
+        window.editingItemCode = null;
+        window.touchedInputs = new Set();
+
+        document.getElementById('main-content').addEventListener('scroll', function() {
+            const btn = document.getElementById('scroll-to-top');
+            if (this.scrollTop > 300) btn.style.display = 'block';
+            else btn.style.display = 'none';
+        });
+
+        window.cleanBarcode = (code) => {
+            if(!code) return '';
+            let cleaned = code.toString().replace(/^\][a-zA-Z0-9]{2}/, '').replace(/^JD/i, '');
+            return cleaned.trimStart();
+        };
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+        window.closeCustomAlert = () => document.getElementById('custom-alert').style.display = 'none';
+
+        window.showCustomConfirm = (title, desc, confirmBtnText, confirmBtnClass, callback) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = desc;
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            yesBtn.innerText = confirmBtnText;
+            yesBtn.className = "btn-primary " + confirmBtnClass;
+            confirmActionCallback = callback;
+            document.getElementById('custom-confirm').style.display = 'flex';
+        };
+        window.closeCustomConfirm = () => {
+            document.getElementById('custom-confirm').style.display = 'none';
+            confirmActionCallback = null;
+        };
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if(confirmActionCallback) confirmActionCallback();
+            closeCustomConfirm();
+        });
+
+        document.addEventListener('mousedown', (e) => {
+            const isScanArea = e.target.closest('.scan-area') || e.target.closest('.scan-dropdown');
+            if (isScanArea) return;
+            const activeCode = window.pinnedItemCode || window.editingItemCode;
+            if (activeCode && currentShipmentId) {
+                const safeId = activeCode.replace(/[^a-zA-Z0-9]/g, '_');
+                const rowEl = document.getElementById(`item-row-${safeId}`);
+                if (rowEl && !rowEl.contains(e.target)) {
+                    if (e.target.closest('.btn-edit')) return;
+                    window.confirmItem(activeCode);
+                }
+            }
+        });
+
+        auth.onAuthStateChanged((user) => { if (user) loadCatalog(); });
+
+        const loadCatalog = async () => {
+            try {
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, "ana_depo")).catch(() => ({ forEach: () => {} })),
+                    getDocs(collection(db, "ameliyathane")).catch(() => ({ forEach: () => {} }))
+                ]);
+                
+                const processSnap = (snap, locKey) => {
+                    if (!snap || typeof snap.forEach !== 'function') return;
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const key = String(d.urunKodu || doc.id || "");
+                        const checkDummy = String(d.dummy || "").trim().toUpperCase() === "DUMMY" || d.isDummy === true || d.DUMMY === true || String(d.urunAdi || d.isim || '').toUpperCase().includes('DUMMY');
+
+                        if (!catalogDb[key]) {
+                            catalogDb[key] = { urunKodu: key, urunAdi: String(d.urunAdi || "İsimsiz Ürün"), barkod: String(d.barkod || ""), refNo: String(d.refNo || "") };
+                        }
+                        catalogDb[key]['isDummy_' + locKey] = checkDummy;
+                        catalogDb[key][locKey + '_adres'] = String(d.stokAdresi || d.adres || d.lokasyon || d.raf || "-");
+                    });
+                };
+                processSnap(anaSnap, 'ana'); processSnap(amSnap, 'am');
+            } catch (err) {} 
+            finally { setupRealtimeShipments(); }
+        };
+
+        const setupRealtimeShipments = () => {
+            onSnapshot(collection(db, "sevkiyat_sessions"), (snapshot) => {
+                allShipments = [];
+                snapshot.forEach(doc => allShipments.push(doc.data()));
+                renderHomeList();
+                if (currentShipmentId) window.renderShipmentList();
+            });
+        };
+
+        const saveShipmentToDb = async (shipment) => { try { await setDoc(doc(db, "sevkiyat_sessions", shipment.id), shipment); } catch(e) {} };
+
+        const renderHomeList = () => {
+            const container = document.getElementById('history-container');
+            const list = document.getElementById('history-list');
+            if (allShipments.length === 0) { container.style.display = 'none'; return; }
+            
+            container.style.display = 'block';
+            list.innerHTML = allShipments.map(s => {
+                const statusColor = s.status === 'active' ? '#00ccff' : '#00ff00';
+                const statusText = s.status === 'active' ? 'BEKLEMEDE / KONTROL EDİLİYOR' : 'TAMAMLANDI';
+                return `<div class="history-card"><div class="history-info"><div class="history-name" style="color:${statusColor}">${s.name}</div><div class="history-detail">${s.type} | ${s.date} | ${Object.keys(s.items || {}).length} Kalem Ürün | Durum: ${statusText}</div></div><div class="history-actions"><button class="btn-danger" onclick="deleteShipment('${s.id}')">SİL</button><button class="btn-secondary" style="margin:0;" onclick="resumeShipment('${s.id}')">KONTROL ET</button></div></div>`;
+            }).reverse().join('');
+        };
+
+        const normalizeStr = (str) => { if (!str) return ""; return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const getCol = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+            }
+            return "";
+        };
+
+        const trToLower = (text) => { if (text === null || text === undefined) return ""; return String(text).replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR'); };
+
+        window.createShipment = async () => {
+            const name = document.getElementById('setup-name').value.trim();
+            const type = document.getElementById('setup-type').value;
+            const fileInput = document.getElementById('setup-file');
+            const bmcInput = document.getElementById('setup-bmc');
+            const disInput = document.getElementById('setup-dis');
+            
+            if (!name) return showCustomAlert("EKSİK BİLGİ", "Lütfen sevkiyat için bir isim belirleyin.");
+            if (!fileInput.files[0]) return showCustomAlert("EKSİK BİLGİ", "Lütfen ana sevkiyat listesini içeren Excel dosyasını seçin.");
+            
+            const readExcel = (file) => {
+                return new Promise((resolve, reject) => {
+                    if(!file) return resolve([]);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        resolve(XLSX.utils.sheet_to_json(firstSheet, { defval: "" }));
+                    };
+                    reader.onerror = reject; reader.readAsArrayBuffer(file);
+                });
+            };
+
+            try {
+                const mainRows = await readExcel(fileInput.files[0]);
+                const bmcRows = await readExcel(bmcInput.files[0]);
+                const disRows = await readExcel(disInput.files[0]);
+                let bmcMap = {};
+                let disMap = {};
+
+                bmcRows.forEach(r => {
+                    const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                    const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                    if (rawCode) {
+                        let searchCode = trToLower(String(rawCode).trim());
+                        let finalCode = String(rawCode).trim();
+                        for (const key in catalogDb) {
+                            if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
+                                finalCode = key; break;
+                            }
+                        }
+                        bmcMap[finalCode] = rawQty !== "" ? (parseInt(rawQty) || 1) : 1;
+                    }
+                });
+
+                disRows.forEach(r => {
+                    const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                    const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                    if (rawCode) {
+                        let searchCode = trToLower(String(rawCode).trim());
+                        let finalCode = String(rawCode).trim();
+                        for (const key in catalogDb) {
+                            if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
+                                finalCode = key; break;
+                            }
+                        }
+                        disMap[finalCode] = rawQty !== "" ? (parseInt(rawQty) || 1) : 1;
+                    }
+                });
+
+                const dateStr = `${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}`;
+                const newId = 'SVK-' + Date.now();
+                const shipmentItems = {};
+                let addedCount = 0;
+
+                mainRows.forEach(r => {
+                    const rawCode = getCol(r, ["ürünkodu", "urunkodu", "kod", "asgkod", "refno", "malzemekodu", "barkod", "kodu"]);
+                    const rawQty = getCol(r, ["beklenen", "miktar", "adet", "stokmiktarı", "stok", "toplam", "sevk", "sevkmiktarı", "qty", "quantity"]);
+                    let rawName = getCol(r, ["ürünismi", "ürünadı", "urunadi", "isim", "açıklama", "malzemeadı", "malzeme", "tanım", "adı", "adi"]);
+                    
+                    if(rawCode) {
+                        let excelCode = String(rawCode).trim();
+                        let expectedQty = rawQty !== "" ? (parseInt(rawQty) || 0) : 1;
+                        let excelName = rawName ? String(rawName).trim() : "İsimsiz Excel Ürünü";
+                        let finalCode = excelCode, finalName = excelName;
+                        const searchCode = trToLower(excelCode);
+                        
+                        if (catalogDb[excelCode]) {
+                            finalName = catalogDb[excelCode].urunAdi;
+                        } else {
+                            for (const key in catalogDb) {
+                                if (trToLower(key) === searchCode || trToLower(catalogDb[key].barkod) === searchCode || trToLower(catalogDb[key].refNo) === searchCode) {
+                                    finalCode = key; finalName = catalogDb[key].urunAdi; break;
+                                }
+                            }
+                        }
+                        
+                        let finalAddress = "-", isDummy = false;
+                        if (catalogDb[finalCode]) {
+                            if (type === 'ANA DEPO') { finalAddress = catalogDb[finalCode].ana_adres || "-"; isDummy = catalogDb[finalCode].isDummy_ana || false; } 
+                            else { finalAddress = catalogDb[finalCode].am_adres || "-"; isDummy = catalogDb[finalCode].isDummy_am || false; }
+                        } else {
+                            isDummy = String(finalName).toUpperCase().includes('DUMMY');
+                        }
+
+                        if (shipmentItems[finalCode]) { shipmentItems[finalCode].expectedQty += expectedQty; } 
+                        else {
+                            shipmentItems[finalCode] = { code: finalCode, name: finalName, expectedQty: expectedQty, receivedQty: 0, labelQty: 0, confirmed: false, confirmTime: 0, address: finalAddress, isDummy: isDummy };
+                        }
+                        addedCount++;
+                    }
+                });
+
+                if (addedCount === 0) return showCustomAlert("UYUMSUZ DOSYA", "Yüklenen ana Excel dosyasında ürün kodu bulunamadı. Sütun isimlerini kontrol edin.");
+
+                const newShipment = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: shipmentItems, bmc: bmcMap, dis: disMap };
+                await saveShipmentToDb(newShipment);
+                
+                document.getElementById('setup-name').value = ''; fileInput.value = ''; 
+                if(bmcInput) bmcInput.value = '';
+                if(disInput) disInput.value = '';
+                resumeShipment(newId);
+            } catch(err) { showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu."); }
+        };
+
+        window.deleteShipment = (id) => {
+            showCustomConfirm("SEVKİYATI SİL", "Geçmiş sevkiyat listesi tamamen silinecektir. Onaylıyor musunuz?", "KALICI OLARAK SİL", "btn-danger", async () => {
+                try { await deleteDoc(doc(db, "sevkiyat_sessions", id)); } catch(e) {}
+            });
+        };
+
+        window.resumeShipment = (id) => {
+            currentShipmentId = id; window.pinnedItemCode = null; window.editingItemCode = null;
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('active-screen').style.display = 'block';
+            
+            const shipment = allShipments.find(s => s.id === id);
+            const filterEl = document.getElementById('filter-bmc');
+            if (filterEl) { filterEl.value = 'ALL'; filterEl.style.display = (shipment && shipment.type === 'ANA DEPO') ? 'block' : 'none'; }
+
+            if(shipment) {
+                document.getElementById('ui-session-name').innerText = shipment.name;
+                document.getElementById('ui-session-details').innerText = `${shipment.type} | YÜKLENME: ${shipment.date}`;
+                document.getElementById('scan-code').value = ''; document.getElementById('scan-code').focus();
+                window.renderShipmentList();
+            }
+        };
+
+        window.closeActiveScreen = () => {
+            document.getElementById('home-screen').style.display = 'block';
+            document.getElementById('active-screen').style.display = 'none';
+            currentShipmentId = null; window.pinnedItemCode = null; window.editingItemCode = null;
+            renderHomeList();
+        };
+
+        document.getElementById('scan-code').addEventListener('input', (e) => {
+            e.target.value = window.cleanBarcode(e.target.value);
+            const val = trToLower(e.target.value.trim());
+            const dropdown = document.getElementById('scan-dropdown');
+            clearTimeout(searchTimeout);
+            
+            if (val.length < 2) { dropdown.style.display = 'none'; return; }
+
+            searchTimeout = setTimeout(() => {
+                const shipment = allShipments.find(s => s.id === currentShipmentId);
+                if (!shipment) return;
+
+                const terms = val.split(/\s+/);
+                let matches = Object.values(shipment.items || {}).filter(item => {
+                    const catItem = catalogDb[item.code] || Object.values(catalogDb).find(c => c.urunKodu === item.code || c.barkod === item.code);
+                    const refNo = catItem ? catItem.refNo : ""; const barkod = catItem ? catItem.barkod : "";
+                    return terms.every(t => trToLower(`${item.name} ${item.code} ${refNo} ${barkod}`).includes(t));
+                }).slice(0, 15);
+
+                if (matches.length > 0) {
+                    dropdown.innerHTML = matches.map(m => {
+                        const catItem = catalogDb[m.code] || Object.values(catalogDb).find(c => c.urunKodu === m.code || c.barkod === m.code);
+                        return `<div class="scan-dropdown-item" onclick="selectFromDropdown(event, '${m.code}')"><div class="scan-dropdown-item-title">${m.name}</div><div class="scan-dropdown-item-sub">KOD: <span style="color:#00ff00;">${m.code}</span> | REF: ${catItem ? catItem.refNo : "-"}</div></div>`;
+                    }).join('');
+                    dropdown.style.display = 'block';
+                } else {
+                    dropdown.innerHTML = '<div style="padding: 15px; color: #ff3333; font-size: 12px; font-weight: bold; text-align: center;">Yüklü listede eşleşen ürün bulunamadı.</div>';
+                    dropdown.style.display = 'block';
+                }
+            }, 150);
+        });
+
+        window.selectFromDropdown = async (e, code) => {
+            if (e) e.stopPropagation();
+            document.getElementById('scan-code').value = code; document.getElementById('scan-dropdown').style.display = 'none';
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) await window.confirmItem(window.editingItemCode);
+            window.pinnedItemCode = code; window.editingItemCode = code;
+            
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if (shipment && shipment.items[code]) {
+                shipment.items[code].confirmed = false;
+                window.renderShipmentList(); await saveShipmentToDb(shipment);
+                setTimeout(() => { const recInput = document.getElementById(`rec-${code}`); if (recInput) { recInput.focus(); recInput.select(); } }, 150);
+            }
+        };
+
+        window.processScan = async () => {
+            const inputEl = document.getElementById('scan-code');
+            const qtyInput = document.getElementById('scan-qty');
+            const searchCode = window.cleanBarcode(inputEl.value);
+            const addQty = parseInt(qtyInput.value) || 1;
+            
+            if(!searchCode) return;
+
+            let matchedKey = null, matchedName = "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)", finalAddress = "-", isDummy = false;
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
+            if (catalogDb[searchCode]) {
+                matchedKey = searchCode; matchedName = catalogDb[searchCode].urunAdi;
+                finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[searchCode].ana_adres || "-") : (catalogDb[searchCode].am_adres || "-");
+                isDummy = shipment.type === 'ANA DEPO' ? (catalogDb[searchCode].isDummy_ana || false) : (catalogDb[searchCode].isDummy_am || false);
+            } else {
+                const searchCodeLower = trToLower(searchCode);
+                for (const key in catalogDb) {
+                    if (trToLower(key) === searchCodeLower || trToLower(catalogDb[key].barkod) === searchCodeLower || trToLower(catalogDb[key].refNo) === searchCodeLower) {
+                        matchedKey = key; matchedName = catalogDb[key].urunAdi;
+                        finalAddress = shipment.type === 'ANA DEPO' ? (catalogDb[key].ana_adres || "-") : (catalogDb[key].am_adres || "-");
+                        isDummy = shipment.type === 'ANA DEPO' ? (catalogDb[key].isDummy_ana || false) : (catalogDb[key].isDummy_am || false);
+                        break;
+                    }
+                }
+            }
+
+            const finalKey = matchedKey || searchCode;
+            if (matchedName === "TANIMSIZ ÜRÜN (SİSTEMDE BULUNAMADI)") window.playBeep('error'); else window.playBeep('success');
+
+            if (window.pinnedItemCode && window.pinnedItemCode !== finalKey) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== finalKey) await window.confirmItem(window.editingItemCode);
+
+            if(!shipment.items) shipment.items = {};
+            if (!shipment.items[finalKey]) {
+                shipment.items[finalKey] = { code: finalKey, name: matchedName, expectedQty: 0, receivedQty: addQty, labelQty: 0, confirmed: true, confirmTime: Date.now(), address: finalAddress, isDummy: isDummy || String(matchedName).toUpperCase().includes('DUMMY') };
+            } else {
+                shipment.items[finalKey].receivedQty += addQty;
+                if (shipment.items[finalKey].receivedQty === 0) { shipment.items[finalKey].confirmed = false; shipment.items[finalKey].confirmTime = 0; } 
+                else { shipment.items[finalKey].confirmed = true; shipment.items[finalKey].confirmTime = Date.now(); }
+            }
+            
+            if (window.pinnedItemCode === finalKey) window.pinnedItemCode = null; 
+            if (window.editingItemCode === finalKey) window.editingItemCode = null;
+            
+            window.renderShipmentList(); await saveShipmentToDb(shipment);
+            inputEl.value = ''; qtyInput.value = '1'; inputEl.focus();
+        };
+
+        document.getElementById('scan-code').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('scan-dropdown').style.display = 'none'; document.getElementById('scan-qty').focus(); } });
+        document.getElementById('scan-qty').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); window.processScan(); } });
+        window.handleInlineKey = (e, code) => { if (e.key === 'Enter') { e.preventDefault(); window.confirmItem(code); } };
+
+        window.handleBlur = async (e, code) => {
+            setTimeout(() => {
+                const recEl = document.getElementById(`rec-${code}`), lblEl = document.getElementById(`lbl-${code}`);
+                const activeEl = document.activeElement;
+                const isScanArea = activeEl && (activeEl.closest('.scan-area') || activeEl.closest('.scan-dropdown'));
+                if (activeEl !== recEl && activeEl !== lblEl && !isScanArea) {
+                    if (window.touchedInputs && window.touchedInputs.has(code)) window.confirmItem(code);
+                    else if (code === window.pinnedItemCode || code === window.editingItemCode) window.confirmItem(code);
+                }
+            }, 150);
+        };
+
+        window.updateLiveDiff = (code, val) => {
+            if (!window.touchedInputs) window.touchedInputs = new Set();
+            window.touchedInputs.add(code);
+            const el = document.getElementById(`rec-${code}`);
+            const expected = parseInt(el.getAttribute('data-expected')) || 0;
+            let parsedVal = parseInt(val) || 0;
+            const diffEl = document.getElementById(`diff-${code}`);
+            
+            if(diffEl) {
+                let diff = parsedVal - expected;
+                diffEl.innerText = diff > 0 ? `+${diff}` : diff;
+                diffEl.className = `item-diff ${diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero')}`;
+            }
+
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(shipment && shipment.items[code]) shipment.items[code].receivedQty = parsedVal;
+
+            clearTimeout(autoConfirmTimers[code]);
+            if (val !== "" && parsedVal === expected && expected > 0) window.confirmItem(code);
+        };
+
+        const getScore = (item) => {
+            if (item.code === window.pinnedItemCode || item.code === window.editingItemCode) return 0;
+            if (item.receivedQty === item.expectedQty && item.expectedQty > 0 && item.confirmed) return 4;
+            if (!item.confirmed && item.receivedQty > 0) return 1;
+            if ((item.receivedQty < item.expectedQty) && (item.confirmed || item.receivedQty > 0)) return 1;
+            if ((item.receivedQty > item.expectedQty) && (item.confirmed || item.receivedQty > 0)) return 2;
+            if (item.receivedQty === 0 && !item.confirmed) return 3;
+            return 4;
+        };
+
+        const getSortedItems = (items) => {
+            return [...items].sort((a, b) => {
+                const scoreA = getScore(a); const scoreB = getScore(b);
+                if (scoreA !== scoreB) return scoreA - scoreB;
+                if (scoreA === 1 || scoreA === 2) {
+                    const diffA = Math.abs((a.receivedQty || 0) - (a.expectedQty || 0));
+                    const diffB = Math.abs((b.receivedQty || 0) - (b.expectedQty || 0));
+                    if (diffA !== diffB) return diffB - diffA;
+                }
+                if (scoreA === 4) return (a.confirmTime || 0) - (b.confirmTime || 0);
+                return a.code.localeCompare(b.code);
+            });
+        };
+
+        window.renderShipmentList = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
+            const container = document.getElementById('shipment-list');
+            let items = Object.values(shipment.items || {});
+            
+            const filterType = document.getElementById('filter-bmc') ? document.getElementById('filter-bmc').value : 'ALL';
+            if (shipment.type === 'ANA DEPO') {
+                if (filterType === 'BMC') items = items.filter(item => shipment.bmc && shipment.bmc[item.code]);
+                else if (filterType === 'DIS') items = items.filter(item => shipment.dis && shipment.dis[item.code]);
+            }
+            
+            const sortedItems = getSortedItems(items);
+            
+            container.innerHTML = sortedItems.map(item => {
+                let statusClass = 'status-pending', valClass = 'val-expected';
+                const isPinned = (item.code === window.pinnedItemCode || item.code === window.editingItemCode);
+                const showInputs = isPinned || (!item.confirmed && item.receivedQty > 0);
+
+                if (isPinned || (!item.confirmed && item.receivedQty > 0)) statusClass = 'status-pinned'; 
+                else if (!item.confirmed && item.receivedQty === 0) statusClass = 'status-pending'; 
+                else {
+                    if (item.receivedQty === item.expectedQty && item.expectedQty > 0) { statusClass = 'status-complete'; valClass = 'val-complete'; }
+                    else if (item.receivedQty === 0 || item.receivedQty < item.expectedQty) { statusClass = 'status-missing'; valClass = 'val-missing'; }
+                    else if (item.receivedQty > item.expectedQty) { statusClass = 'status-over'; valClass = 'val-over'; }
+                }
+
+                let diff = (item.receivedQty || 0) - (item.expectedQty || 0);
+                let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
+                let diffText = diff > 0 ? `+${diff}` : diff.toString();
+                if (item.receivedQty === 0 && !showInputs) diffClass = 'diff-zero';
+
+                let itemAddress = item.address;
+                if (!itemAddress || itemAddress === "-") {
+                    const catItem = catalogDb[item.code];
+                    if (catItem) itemAddress = shipment.type === 'ANA DEPO' ? (catItem.ana_adres || "-") : (catItem.am_adres || "-");
+                }
+
+                const isBmc = shipment.bmc && shipment.bmc[item.code];
+                const bmcBadge = isBmc ? `<span class="bmc-badge">BMC</span><span class="bmc-badge bmc-qty">${shipment.bmc[item.code]} ADET</span>` : '';
+                
+                const isDis = shipment.dis && shipment.dis[item.code];
+                const disBadge = isDis ? `<span class="dis-badge">DİŞ</span><span class="dis-badge dis-qty">${shipment.dis[item.code]} ADET</span>` : '';
+                
+                const addressBadge = itemAddress && itemAddress !== "-" && itemAddress !== "" ? `<span class="address-badge">📍 ${itemAddress}</span>` : '';
+                
+                let checkDummy = item.isDummy === true;
+                if (!checkDummy && catalogDb[item.code]) checkDummy = (shipment.type === 'ANA DEPO' ? catalogDb[item.code].isDummy_ana : catalogDb[item.code].isDummy_am) === true;
+                if (!checkDummy) checkDummy = String(item.name || '').toUpperCase().includes('DUMMY');
+                const dummyBadge = checkDummy ? `<span class="dummy-badge">DUMMY</span>` : '';
+
+                const safeId = item.code.replace(/[^a-zA-Z0-9]/g, '_');
+
+                let dynamicCols = '';
+                if (showInputs) {
+                    dynamicCols = `<div class="qty-grid"><div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div><div class="inline-input-wrapper" data-label="TESLİM ALINAN"><input type="number" id="rec-${item.code}" class="inline-input" value="${item.receivedQty || 0}" min="0" data-expected="${item.expectedQty}" oninput="window.updateLiveDiff('${item.code}', this.value)" onblur="window.handleBlur(event, '${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')"></div><div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div><div class="inline-input-wrapper" data-label="ETİKET ADETİ"><input type="number" id="lbl-${item.code}" class="inline-input lbl" value="${item.labelQty || 0}" min="0" onblur="window.handleBlur(event, '${item.code}')" onkeypress="window.handleInlineKey(event, '${item.code}')"></div></div><div class="item-action"><button class="btn-check" onclick="window.confirmItem('${item.code}')">KONTROLÜ BİTİR</button></div>`;
+                } else {
+                    dynamicCols = `<div class="qty-grid"><div class="item-val val-expected" data-label="BEKLENEN">${item.expectedQty}</div><div class="item-val ${valClass}" data-label="TESLİM ALINAN">${item.receivedQty}</div><div class="item-diff ${diffClass}" id="diff-${item.code}" data-label="FARK">${diffText}</div><div class="item-val val-label" data-label="ETİKET ADETİ">${item.labelQty}</div></div><div class="item-action"><button class="btn-edit" data-code="${item.code}" onclick="window.editItem('${item.code}')">DÜZENLE</button></div>`;
+                }
+
+                return `<div class="list-item ${statusClass}" id="item-row-${safeId}"><div class="item-code" style="color: ${statusClass === 'status-pending' || statusClass === 'status-pinned' ? '#888' : '#fff'};">${item.code}</div><div class="item-name">${item.name} ${addressBadge} ${bmcBadge} ${disBadge} ${dummyBadge}</div>${dynamicCols}</div>`;
+            }).join('');
+            
+            if (window.pinnedItemCode) {
+                setTimeout(() => {
+                    const safeId = window.pinnedItemCode.replace(/[^a-zA-Z0-9]/g, '_');
+                    const targetEl = document.getElementById(`item-row-${safeId}`);
+                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        };
+
+        window.confirmItem = async (code, overrideVal = null) => {
+            clearTimeout(autoConfirmTimers[code]);
+            if (window.touchedInputs && window.touchedInputs.has(code)) window.touchedInputs.delete(code);
+            
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+
+            let rVal = overrideVal;
+            if (rVal === null) { const recEl = document.getElementById(`rec-${code}`); rVal = recEl ? parseInt(recEl.value) : (shipment.items[code].receivedQty || 0); }
+            if (isNaN(rVal)) rVal = 0;
+            
+            const lblEl = document.getElementById(`lbl-${code}`);
+            let lVal = lblEl ? parseInt(lblEl.value) : (shipment.items[code].labelQty || 0);
+            if (isNaN(lVal)) lVal = 0;
+            
+            if(shipment.items[code]) {
+                shipment.items[code].receivedQty = rVal;
+                shipment.items[code].labelQty = lVal;
+                
+                if (rVal === 0) { shipment.items[code].confirmed = false; shipment.items[code].confirmTime = 0; } 
+                else { shipment.items[code].confirmed = true; if (!shipment.items[code].confirmTime) shipment.items[code].confirmTime = Date.now(); }
+                
+                if (window.pinnedItemCode === code) window.pinnedItemCode = null; 
+                if (window.editingItemCode === code) window.editingItemCode = null; 
+
+                window.renderShipmentList(); await saveShipmentToDb(shipment);
+            }
+        };
+
+        window.editItem = async (code) => {
+            if (window.pinnedItemCode && window.pinnedItemCode !== code) await window.confirmItem(window.pinnedItemCode);
+            if (window.editingItemCode && window.editingItemCode !== code) await window.confirmItem(window.editingItemCode);
+            
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(shipment && shipment.items[code]) {
+                window.editingItemCode = code; window.pinnedItemCode = code;
+                shipment.items[code].confirmed = false;
+                window.renderShipmentList(); await saveShipmentToDb(shipment);
+                setTimeout(() => { const recInput = document.getElementById(`rec-${code}`); if (recInput) { recInput.focus(); recInput.select(); } }, 150);
+            }
+        };
+
+        window.promptFinishShipment = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+            document.getElementById('finish-modal').style.display = 'flex';
+        };
+        window.closeFinishModal = () => document.getElementById('finish-modal').style.display = 'none';
+
+        window.executeFinish = async (format) => {
+            closeFinishModal();
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+            const items = Object.values(shipment.items || {});
+            const sortedItems = getSortedItems(items);
+            
+            const hasBmc = shipment.bmc && Object.keys(shipment.bmc).length > 0;
+            const bmcItems = [];
+            if (hasBmc) {
+                Object.keys(shipment.bmc).forEach(code => {
+                    const itemInfo = items.find(i => String(i.code) === String(code)) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0, expectedQty: 0 };
+                    let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0;
+                    let ayrilan = (itemInfo.confirmed || isComplete) ? Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.bmc[code]) || 0) : 0;
+                    bmcItems.push({ "Ürün Kodu": code, "ÜRÜN İSMİ": itemInfo.name, "BMC İÇİN AYRILACAK": Number(shipment.bmc[code]) || 0, "AYRILAN MİKTAR": ayrilan });
+                });
+            }
+            
+            const hasDis = shipment.dis && Object.keys(shipment.dis).length > 0;
+            const disItems = [];
+            if (hasDis) {
+                Object.keys(shipment.dis).forEach(code => {
+                    const itemInfo = items.find(i => String(i.code) === String(code)) || { name: 'Bilinmeyen Ürün', confirmed: false, receivedQty: 0, expectedQty: 0 };
+                    let isComplete = itemInfo.receivedQty === itemInfo.expectedQty && itemInfo.expectedQty > 0;
+                    let ayrilan = (itemInfo.confirmed || isComplete) ? Math.min(Number(itemInfo.receivedQty) || 0, Number(shipment.dis[code]) || 0) : 0;
+                    disItems.push({ "Ürün Kodu": code, "ÜRÜN İSMİ": itemInfo.name, "DİŞ İÇİN AYRILACAK": Number(shipment.dis[code]) || 0, "AYRILAN MİKTAR": ayrilan });
+                });
+            }
+            
+            const safeName = shipment.name.replace(/[^a-z0-9]/gi, '_');
+
+            if (format === 'excel') {
+                const exportData = sortedItems.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "BEKLENEN": i.expectedQty, "TESLİM ALINAN": i.receivedQty, "FARK": (i.receivedQty || 0) - (i.expectedQty || 0) }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "SEVKIYAT ANA RAPOR");
+                if (bmcItems.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(bmcItems), "BMC AYIRMA");
+                if (disItems.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(disItems), "DİŞ AYIRMA");
+                XLSX.writeFile(wb, `Terminux_Sevkiyat_${safeName}.xlsx`);
+            } else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf; const doc = new jsPDF();
+                doc.setFontSize(16); doc.text(`TERMINUX SEVKIYAT RAPORU`, 14, 15); doc.setFontSize(10); doc.text(`Sevkiyat: ${shipment.name} | Tarih: ${shipment.date}`, 14, 22);
+                let body = sortedItems.map(i => {
+                    let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
+                    let diff = (i.receivedQty || 0) - (i.expectedQty || 0);
+                    return [i.code, cleanName, i.expectedQty, i.receivedQty, diff > 0 ? `+${diff}` : diff.toString()];
+                });
+                doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'BEKLENEN', 'TESLIM ALINAN', 'FARK']], body: body, theme: 'grid', styles: { fontSize: 8 } });
+                
+                if (bmcItems.length > 0) {
+                    doc.addPage(); doc.setFontSize(16); doc.text(`TERMINUX BMC AYIRMA RAPORU`, 14, 15); doc.setFontSize(10); doc.text(`Sevkiyat: ${shipment.name} | Tarih: ${shipment.date}`, 14, 22);
+                    let bmcBody = bmcItems.map(i => [i["Ürün Kodu"], String(i["ÜRÜN İSMİ"]).replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""), i["BMC İÇİN AYRILACAK"], i["AYRILAN MİKTAR"]]);
+                    doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'BMC ICIN AYRILACAK', 'AYRILAN MIKTAR']], body: bmcBody, theme: 'grid', styles: { fontSize: 8 } });
+                }
+
+                if (disItems.length > 0) {
+                    doc.addPage(); doc.setFontSize(16); doc.text(`TERMINUX DIS AYIRMA RAPORU`, 14, 15); doc.setFontSize(10); doc.text(`Sevkiyat: ${shipment.name} | Tarih: ${shipment.date}`, 14, 22);
+                    let disBody = disItems.map(i => [i["Ürün Kodu"], String(i["ÜRÜN İSMİ"]).replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""), i["DİŞ İÇİN AYRILACAK"], i["AYRILAN MİKTAR"]]);
+                    doc.autoTable({ startY: 30, head: [['Ürün Kodu', 'URUN ISMI', 'DIS ICIN AYRILACAK', 'AYRILAN MIKTAR']], body: disBody, theme: 'grid', styles: { fontSize: 8 } });
+                }
+                
+                doc.save(`Terminux_Sevkiyat_${safeName}.pdf`);
+            }
+
+            const unconfirmed = items.filter(i => !i.confirmed && i.receivedQty === 0);
+            const partial = items.filter(i => i.confirmed && i.receivedQty < i.expectedQty);
+            let msg = unconfirmed.length > 0 || partial.length > 0 ? `DİKKAT: Hiç girilmemiş ${unconfirmed.length} ve eksik/0 girilmiş ${partial.length} ürün var. Yine de sevkiyatı kapatmak istiyor musunuz?` : "Bu sevkiyatı kapatmak ve tamamlandı olarak işaretlemek istiyor musunuz?";
+
+            showCustomConfirm("SEVKİYATI KAPAT", msg, "SİSTEMİ KAPAT VE ONAYLA", "btn-success", async () => {
+                shipment.status = 'finished'; await saveShipmentToDb(shipment); closeActiveScreen();
+            });
+        };
+
+        window.exportLabels = () => {
+            const shipment = allShipments.find(s => s.id === currentShipmentId);
+            if(!shipment) return;
+            const itemsToPrint = Object.values(shipment.items || {}).filter(i => i.labelQty > 0);
+            if (itemsToPrint.length === 0) return showCustomAlert("ETİKET YOK", "Listede etiket adeti 0'dan büyük olan hiçbir ürün bulunmuyor.");
+
+            itemsToPrint.sort((a, b) => b.labelQty - a.labelQty);
+            const exportData = itemsToPrint.map(i => ({ "Ürün Kodu": i.code, "ÜRÜN İSMİ": i.name, "ETİKET ADETİ": i.labelQty }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ETIKETLER");
+            XLSX.writeFile(wb, `Terminux_Etiket_${shipment.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.xlsx`);
+        };
+
+        window.openScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'flex';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => { document.getElementById('scan-code').value = window.cleanBarcode(decodedText); closeScanner(); document.getElementById('scan-qty').focus(); },
+                (errorMessage) => {}).catch((err) => { showCustomAlert("KAMERA HATASI", "Kamera başlatılamadı. Lütfen tarayıcı izinlerini kontrol edin."); closeScanner(); });
+        };
+
+        window.closeScanner = () => {
+            document.getElementById('scanner-modal').style.display = 'none';
+            if(html5QrCode && html5QrCode.isScanning) html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+        };
+    </script>
+</body>
+</html>
