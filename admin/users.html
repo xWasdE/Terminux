@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
         .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #000; padding: 15px; border: 1px solid #222; border-radius: 6px; }
         .module-check { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #aaa; cursor: pointer; }
         .module-check input { width: 16px; height: 16px; accent-color: #00ccff; cursor: pointer; }
@@ -27,6 +26,8 @@
         .btn-add-user:hover { background: #00ff00; color: #000; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
         .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        
+        #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -54,7 +55,7 @@
     </div>
     <div class="main-content">
         <div class="topbar"><h2>KULLANICI YÖNETİMİ</h2></div>
-        <div class="content-area">
+        <div class="content-area" style="overflow-y: auto;">
             <div class="card">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="color:#00ccff;">YENİ KULLANICI OLUŞTUR</span>
@@ -91,7 +92,6 @@
                     <option value="user">Standart Personel</option>
                     <option value="admin">Lokasyon Yöneticisi</option>
                     <option value="superadmin">Sistem Yöneticisi (Tümü)</option>
-                    <option value="owner" style="color:#ffbc00; font-weight:bold;">Sistem Kurucusu (OWNER)</option>
                 </select>
             </div>
             <div class="form-group" style="text-align:left; margin-top:15px;">
@@ -106,7 +106,7 @@
                     <label class="module-check"><input type="checkbox" id="mod-lens" checked> Lens Terminali</label>
                     <label class="module-check"><input type="checkbox" id="mod-adres" checked> Adres Bulucu</label>
                     <label class="module-check"><input type="checkbox" id="mod-depo" checked> Görsel Depo Yönetimi</label>
-                    <label class="module-check"><input type="checkbox" id="mod-stok" checked> Depo / Stok Yönetimi</label>
+                    <label class="module-check"><input type="checkbox" id="mod-stok" checked> Depo / Stok (Excel)</label>
                     <label class="module-check"><input type="checkbox" id="mod-ayarlar" checked> Sistem Ayarları</label>
                 </div>
             </div>
@@ -128,7 +128,6 @@
                     <option value="user">Standart Personel</option>
                     <option value="admin">Lokasyon Yöneticisi</option>
                     <option value="superadmin">Sistem Yöneticisi (Tümü)</option>
-                    <option value="owner" style="color:#ffbc00; font-weight:bold;">Sistem Kurucusu (OWNER)</option>
                 </select>
             </div>
             <div class="form-group" style="text-align:left; margin-bottom:15px;">
@@ -188,7 +187,8 @@
                     }
                 } catch(e) {}
 
-                if(currentUserEmail === 'admin@terminux.com.tr') {
+                // OWNER GÜVENLİK İSTİSNASI (Her Zaman Tam Yetkili)
+                if(currentUserEmail === 'admin@terminux.com.tr' || currentUserEmail.startsWith('admin@')) {
                     currentUserRole = 'owner';
                     currentUserLoc = 'tumu';
                     modules = { sayim:true, sevkiyat:true, lens:true, adres:true, depo:true, stok:true, ayarlar:true };
@@ -208,8 +208,6 @@
                     if(!modules.depo) document.getElementById('nav-depo').style.display = 'none';
                     if(!modules.lens) document.getElementById('nav-lens').style.display = 'none';
                     if(!modules.ayarlar) document.getElementById('nav-ayarlar').style.display = 'none';
-                } else if(currentUserRole === 'superadmin') {
-                    document.getElementById('u-role').innerHTML = '<option value="user">Standart Personel</option><option value="admin">Lokasyon Yöneticisi</option><option value="superadmin">Sistem Yöneticisi (Tümü)</option>';
                 }
 
                 document.getElementById('global-loader').style.display = 'none';
@@ -280,12 +278,19 @@
                     const targetRole = d.role || 'user';
                     const targetEmail = d.email ? d.email.toLowerCase() : '';
                     
-                    const isTargetOwner = (targetRole === 'owner' || targetEmail === 'admin@terminux.com.tr');
+                    const isTargetOwner = (targetRole === 'owner' || targetEmail === 'admin@terminux.com.tr' || targetEmail.startsWith('admin@'));
                     const isTargetSuper = (targetRole === 'superadmin' || isTargetOwner);
                     const isTargetAdmin = (targetRole === 'admin');
 
-                    if(currentUserRole !== 'owner' && currentUserRole !== 'superadmin') {
-                        if(d.location !== currentUserLoc && !isTargetSuper && !isTargetAdmin) return;
+                    // OWNER Değilse Filtreleme Uygula (Owner Herkesi Görür)
+                    if(currentUserRole !== 'owner') {
+                        // Superadmin ise sadece bulunduğu lokasyon veya diğer Superadminleri görebilir.
+                        // Admin ise sadece kendi lokasyonunu görebilir.
+                        if (currentUserRole === 'superadmin') {
+                            // Superadmin herkesi görebilir
+                        } else if (currentUserRole === 'admin') {
+                            if(d.location !== currentUserLoc && !isTargetSuper && !isTargetAdmin) return;
+                        }
                     }
 
                     let badgeRole = '<span class="badge user">PERSONEL</span>';
@@ -347,7 +352,7 @@
             document.getElementById('edit-loc').value = userLoc;
             
             if(currentUserRole === 'owner') {
-                document.getElementById('edit-role').innerHTML = '<option value="user">Standart Personel</option><option value="admin">Lokasyon Yöneticisi</option><option value="superadmin">Sistem Yöneticisi (Tümü)</option><option value="owner" style="color:#ffbc00; font-weight:bold;">Sistem Kurucusu (OWNER)</option>';
+                document.getElementById('edit-role').innerHTML = '<option value="user">Standart Personel</option><option value="admin">Lokasyon Yöneticisi</option><option value="superadmin">Sistem Yöneticisi (Tümü)</option>';
                 document.getElementById('edit-role').value = role;
             } else if(currentUserRole === 'superadmin') {
                 document.getElementById('edit-role').innerHTML = '<option value="user">Standart Personel</option><option value="admin">Lokasyon Yöneticisi</option><option value="superadmin">Sistem Yöneticisi (Tümü)</option>';
