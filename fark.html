@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Fark Raporu Modülü</title>
+    <title>Terminux | Rapor Modülü</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -68,20 +68,14 @@
         .list-item:hover { background: #0c0c0c; }
         
         .row-match { background: linear-gradient(90deg, rgba(0,255,0,0.08) 0%, transparent 100%); border-left-color: #00ff00; }
-        .row-diff { background: linear-gradient(90deg, rgba(255,51,51,0.08) 0%, transparent 100%); border-left-color: #ff3333; }
 
-        .grid-cols-reconcile { grid-template-columns: 2fr 3fr 1fr 1fr 1fr 1fr; gap: 15px; }
+        .grid-cols-reconcile { grid-template-columns: 2fr 4fr 2fr 1fr; gap: 15px; }
 
         .item-code { font-family: monospace; color: #00ccff; font-size: 14px; font-weight: bold; }
         .item-name { font-size: 13px; color: #ccc; line-height: 1.4; }
         
         .qty-grid { display: contents; }
-        .item-qty { font-size: 20px; font-weight: 900; color: #fff; text-align: center; }
-        .item-sys { font-size: 18px; font-weight: 700; color: #666; text-align: center; font-family: monospace; }
-        .item-diff { font-size: 18px; font-weight: 900; text-align: center; font-family: monospace; }
-        .diff-pos { color: #00ff00; }
-        .diff-neg { color: #ff3333; }
-        .diff-zero { color: #555; }
+        .item-qty { font-size: 20px; font-weight: 900; color: #00ff00; text-align: center; }
         
         .item-action { display: flex; gap: 5px; justify-content: flex-end; }
         .btn-action-sm { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
@@ -117,9 +111,9 @@
             .item-name { grid-column: 1 / -1; margin-bottom: 10px; }
             .item-action { grid-column: 1 / -1; margin-top: 10px; }
             
-            .qty-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #000; padding: 15px; border-radius: 8px; grid-column: 1 / -1; }
-            .item-qty, .item-sys, .item-diff { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
-            .item-qty::before, .item-sys::before, .item-diff::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
+            .qty-grid { display: flex; justify-content: center; background: #000; padding: 15px; border-radius: 8px; grid-column: 1 / -1; }
+            .item-qty { display: flex; flex-direction: column; text-align: center !important; font-size: 18px !important; }
+            .item-qty::before { content: attr(data-label); font-size: 9px; color: #888; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px; }
             
             .item-action { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 10px; }
             .item-action button { flex: 1; padding: 12px; font-size: 12px; }
@@ -133,7 +127,7 @@
 <body>
 
     <header>
-        <div class="header-title">TERMINUX <span class="header-subtitle">FARK RAPORU MODÜLÜ</span></div>
+        <div class="header-title">TERMINUX <span class="header-subtitle">RAPOR MODÜLÜ</span></div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <a href="index.html" class="btn-secondary" style="margin:0; border-color: rgba(255,255,255,0.3);">WMS GEÇİŞ</a>
         </div>
@@ -142,10 +136,10 @@
     <main id="main-content">
         <div id="home-screen">
             <div class="setup-container">
-                <div class="setup-title">YENİ FARK RAPORU OLUŞTUR</div>
+                <div class="setup-title">YENİ RAPOR OLUŞTUR</div>
                 <div class="input-group">
                     <label>RAPOR İSMİ</label>
-                    <input type="text" id="setup-name" placeholder="Örn: EKİM AYI FARK RAPORU" autocomplete="off">
+                    <input type="text" id="setup-name" placeholder="Örn: EKİM AYI RAPORU" autocomplete="off">
                 </div>
                 <div class="input-group">
                     <label>KATEGORİ</label>
@@ -178,14 +172,14 @@
 
             <div class="upload-area">
                 <div class="upload-box" style="border-color: #00ff00;">
-                    <label for="phy-upload" class="upload-label" style="color: #00ff00;">1. FİZİKİ SAYIM YÜKLE</label>
-                    <div class="upload-desc">Sayım terminalinden alınan veya manuel hazırlanan Excel (.xlsx)</div>
-                    <input type="file" id="phy-upload" style="display:none;" accept=".xlsx, .xls" onchange="processExcelUpload(event, 'physical')">
+                    <label for="phy-upload" class="upload-label" style="color: #00ff00;">1. DOSYA YÜKLE (ŞABLON)</label>
+                    <div class="upload-desc">İçerisinde ürün kodu, ürün ismi ve ekstra sütunlar barındıran liste (.xlsx)</div>
+                    <input type="file" id="phy-upload" style="display:none;" accept=".xlsx, .xls" onchange="processExcelUpload(event, 'file1')">
                 </div>
-                <div class="upload-box" style="border-color: #666;">
-                    <label for="sys-upload" class="upload-label" style="color: #ccc;">2. SİSTEM STOĞU YÜKLE</label>
-                    <div class="upload-desc">Sistemden alınan mevcut stok durumunu gösteren Excel (.xlsx)</div>
-                    <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processExcelUpload(event, 'system')">
+                <div class="upload-box" style="border-color: #00ccff;">
+                    <label for="sys-upload" class="upload-label" style="color: #00ccff;">2. DOSYA YÜKLE (VERİ)</label>
+                    <div class="upload-desc">İçerisinde ürün kodu ve dolu miktar verisi barındıran liste (.xlsx)</div>
+                    <input type="file" id="sys-upload" style="display:none;" accept=".xlsx, .xls" onchange="processExcelUpload(event, 'file2')">
                 </div>
             </div>
 
@@ -193,9 +187,7 @@
                 <div class="list-header grid-cols-reconcile" id="list-header-ui" style="display:none;">
                     <div>ÜRÜN KODU</div>
                     <div>ÜRÜN İSMİ</div>
-                    <div style="text-align:center; color:#00ff00;">FİZİKİ STOK</div>
-                    <div style="text-align:center; color:#aaa;">SİSTEM STOK</div>
-                    <div style="text-align:center; color:#fff;">FARK</div>
+                    <div style="text-align:center; color:#00ff00;">MİKTAR</div>
                     <div style="text-align:right;">İŞLEM</div>
                 </div>
                 <div id="counted-list"></div>
@@ -226,17 +218,13 @@
 
     <div id="qty-modal" class="custom-modal">
         <div class="modal-box">
-            <div class="modal-title">DEĞERLERİ DÜZENLE</div>
+            <div class="modal-title">MİKTARI DÜZENLE</div>
             <div class="modal-desc" id="qty-item-name" style="color:#00ccff; font-family:monospace; margin-bottom:15px;">-</div>
             
-            <div style="display:flex; gap:15px; margin-bottom:20px;">
-                <div class="input-group" style="flex:1; text-align:left;">
-                    <label style="color:#00ff00;">FİZİKİ STOK</label>
-                    <input type="number" id="edit-phy-input" style="text-align:center; font-size:20px; color:#00ff00;">
-                </div>
-                <div class="input-group" style="flex:1; text-align:left;">
-                    <label style="color:#aaa;">SİSTEM STOK</label>
-                    <input type="number" id="edit-sys-input" style="text-align:center; font-size:20px; color:#aaa; border-color:#333;">
+            <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
+                <div class="input-group" style="width:100%; text-align:center;">
+                    <label style="color:#00ff00;">MİKTAR</label>
+                    <input type="number" id="edit-qty-input" style="text-align:center; font-size:24px; color:#00ff00;">
                 </div>
             </div>
 
@@ -250,7 +238,7 @@
     <div id="finish-modal" class="custom-modal">
         <div class="modal-box">
             <div class="modal-title" style="color:#ffbc00;">RAPORU İNDİR VE BİTİR</div>
-            <div class="modal-desc">Oluşturulan fark raporunu hangi formatta indirmek istersiniz? Çıktı alındıktan sonra rapor kapatılacaktır.</div>
+            <div class="modal-desc">Oluşturulan raporu hangi formatta indirmek istersiniz? Çıktı alındıktan sonra rapor kapatılacaktır.</div>
             <div class="modal-actions">
                 <button class="btn-primary" style="background:#fff; color:#000;" onclick="executeFinish('pdf')">PDF FORMATINDA İNDİR</button>
                 <button class="btn-primary" style="background:#217346; color:#fff;" onclick="executeFinish('excel')">EXCEL FORMATINDA İNDİR</button>
@@ -349,7 +337,7 @@
                     <div class="history-card">
                         <div class="history-info">
                             <div class="history-name" style="color:${statusColor}">${s.name}</div>
-                            <div class="history-detail">${s.type} | ${s.date} | ${itemCount} Kayıtlı Ürün | Durum: ${statusText}</div>
+                            <div class="history-detail">${s.type} | ${s.date} | ${itemCount} Eşleşen Kayıt | Durum: ${statusText}</div>
                         </div>
                         <div class="history-actions">
                             <button class="btn-danger" onclick="deleteSession('${s.id}')">SİL</button>
@@ -373,9 +361,18 @@
 
             const now = new Date();
             const dateStr = `${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR')}`;
-            const newId = 'FRK-' + Date.now();
+            const newId = 'RPR-' + Date.now();
 
-            const newSession = { id: newId, name: name, type: type, date: dateStr, status: 'active', items: {} };
+            const newSession = { 
+                id: newId, 
+                name: name, 
+                type: type, 
+                date: dateStr, 
+                status: 'active', 
+                file1Items: {},
+                file2Items: {},
+                items: {} 
+            };
             await saveSessionToDb(newSession);
             resumeSession(newId);
         };
@@ -441,38 +438,42 @@
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 const session = allSessions.find(s => s.id === currentSessionId);
                 if(!session) return;
+
+                if(!session.file1Items) session.file1Items = {};
+                if(!session.file2Items) session.file2Items = {};
                 if(!session.items) session.items = {};
-                
-                let processedCount = 0;
 
                 rows.forEach(r => {
-                    const code = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod"]);
+                    const code = getCol(r, ["ürün kodu", "urun kodu", "kod", "asg kod", "malzeme kodu"]);
                     const qtyStr = getCol(r, ["miktar", "stok", "adet", "stok miktarı", "fiziki stok", "sistem stok", "fiziki"]);
                     const qty = parseInt(qtyStr) || 0;
-                    let name = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim", "malzeme adı"]) || "Tanımsız Ürün";
-                    
-                    if(code) {
-                        if(!session.items[code]) {
-                            session.items[code] = { code: code, name: name, qty: 0, sysQty: 0 };
-                        } else {
-                            if(name !== "Tanımsız Ürün" && session.items[code].name === "Tanımsız Ürün") {
-                                session.items[code].name = name;
-                            }
-                        }
+                    const name = getCol(r, ["ürün ismi", "ürün adı", "urun adi", "isim", "malzeme adı"]) || "Tanımsız Ürün";
 
-                        if (type === 'physical') {
-                            session.items[code].qty += qty;
-                        } else {
-                            session.items[code].sysQty = qty;
+                    if(code) {
+                        if (type === 'file1') {
+                            session.file1Items[code] = { code: code, name: name, raw: JSON.parse(JSON.stringify(r)) };
+                        } else if (type === 'file2') {
+                            session.file2Items[code] = { code: code, qty: qty };
                         }
-                        processedCount++;
                     }
                 });
 
+                session.items = {};
+                for (const code in session.file1Items) {
+                    if (session.file2Items[code]) {
+                        session.items[code] = {
+                            code: code,
+                            name: session.file1Items[code].name,
+                            qty: session.file2Items[code].qty,
+                            raw: session.file1Items[code].raw
+                        };
+                    }
+                }
+
                 await saveSessionToDb(session);
                 
-                const typeText = type === 'physical' ? 'Fiziki sayım' : 'Sistem stoğu';
-                showCustomAlert("BAŞARILI", `${typeText} Excel'inden ${processedCount} satır işlendi ve rapora yansıtıldı.`);
+                const matchedCount = Object.keys(session.items).length;
+                showCustomAlert("BAŞARILI", `Dosya sisteme aktarıldı. Şu an güncel eşleşen kayıt sayısı: ${matchedCount}`);
                 event.target.value = '';
             };
             reader.readAsArrayBuffer(file);
@@ -495,8 +496,7 @@
             const item = session.items[key];
             
             document.getElementById('qty-item-name').innerText = item.name;
-            document.getElementById('edit-phy-input').value = item.qty || 0;
-            document.getElementById('edit-sys-input').value = item.sysQty || 0;
+            document.getElementById('edit-qty-input').value = item.qty || 0;
             
             document.getElementById('qty-modal').style.display = 'flex';
         };
@@ -507,14 +507,17 @@
         };
         
         document.getElementById('qty-save-btn').addEventListener('click', async () => {
-            const newPhy = parseInt(document.getElementById('edit-phy-input').value) || 0;
-            const newSys = parseInt(document.getElementById('edit-sys-input').value) || 0;
+            const newQty = parseInt(document.getElementById('edit-qty-input').value) || 0;
             
             if (editItemKey) {
                 const session = allSessions.find(s => s.id === currentSessionId);
                 if(session && session.items[editItemKey]) {
-                    session.items[editItemKey].qty = newPhy;
-                    session.items[editItemKey].sysQty = newSys;
+                    session.items[editItemKey].qty = newQty;
+                    
+                    if (session.file2Items && session.file2Items[editItemKey]) {
+                        session.file2Items[editItemKey].qty = newQty;
+                    }
+
                     await saveSessionToDb(session);
                 }
             }
@@ -531,36 +534,19 @@
 
             if (items.length === 0) {
                 headerUI.style.display = 'none';
-                container.innerHTML = `<div style="padding:40px; text-align:center; color:#555; font-size:16px; font-weight:bold;">Karşılaştırma için henüz veri yüklenmedi. Lütfen yukarıdan Excel dosyalarınızı yükleyin.</div>`;
+                container.innerHTML = `<div style="padding:40px; text-align:center; color:#555; font-size:16px; font-weight:bold;">Eşleşen kayıt bulunamadı. Lütfen her iki dosyayı da yüklediğinizden emin olun. Sadece kodları eşleşen ürünler listelenir.</div>`;
                 return;
             }
 
             headerUI.style.display = 'grid';
 
-            let itemsToRender = [...items];
-            
-            itemsToRender.sort((a, b) => {
-                const diffA = Math.abs((a.qty || 0) - (a.sysQty || 0));
-                const diffB = Math.abs((b.qty || 0) - (b.sysQty || 0));
-                const isDiffA = diffA !== 0 ? 1 : 0;
-                const isDiffB = diffB !== 0 ? 1 : 0;
-                return isDiffB - isDiffA; 
-            });
-
-            container.innerHTML = itemsToRender.map(item => {
-                const diff = (item.qty || 0) - (item.sysQty || 0);
-                let diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-zero');
-                let diffText = diff > 0 ? `+${diff}` : diff;
-                let rowClass = diff === 0 ? 'row-match' : 'row-diff';
-
+            container.innerHTML = items.map(item => {
                 return `
-                    <div class="list-item grid-cols-reconcile ${rowClass}">
+                    <div class="list-item grid-cols-reconcile row-match">
                         <div class="item-code">${item.code}</div>
                         <div class="item-name">${item.name}</div>
                         <div class="qty-grid">
-                            <div class="item-qty" data-label="FİZİKİ STOK">${item.qty || 0}</div>
-                            <div class="item-sys" data-label="SİSTEM STOK">${item.sysQty || 0}</div>
-                            <div class="item-diff ${diffClass}" data-label="FARK">${diffText}</div>
+                            <div class="item-qty" data-label="MİKTAR">${item.qty || 0}</div>
                         </div>
                         <div class="item-action">
                             <button class="btn-action-sm" onclick="openEditQty('${item.code}')">DÜZENLE</button>
@@ -588,37 +574,44 @@
             const items = Object.values(session.items || {});
             
             if (format === 'excel') {
-                let exportData = items.map(i => ({ 
-                    "Ürün Kodu": i.code, 
-                    "ÜRÜN İSMİ": i.name, 
-                    "FİZİKİ STOK": i.qty || 0, 
-                    "SİSTEM STOK": i.sysQty || 0, 
-                    "FARK": (i.qty || 0) - (i.sysQty || 0) 
-                }));
+                let exportData = items.map(i => {
+                    let row = { ...i.raw };
+                    let qtyKey = Object.keys(row).find(k => {
+                        let nk = normalizeStr(k);
+                        return nk === "miktar" || nk === "stok" || nk === "adet" || nk === "stokmiktarı" || nk === "fizikistok" || nk === "sistemstok";
+                    });
+                    
+                    if (qtyKey) {
+                        row[qtyKey] = i.qty;
+                    } else {
+                        row["Miktar"] = i.qty;
+                    }
+                    return row;
+                });
                 
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "FARK_RAPORU");
-                XLSX.writeFile(wb, `Terminux_Fark_Raporu_${safeName}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "RAPOR");
+                XLSX.writeFile(wb, `Terminux_Rapor_${safeName}.xlsx`);
             } 
             else if (format === 'pdf') {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
                 doc.setFontSize(16);
-                doc.text(`TERMINUX FARK RAPORU`, 14, 15);
+                doc.text(`TERMINUX RAPOR`, 14, 15);
                 doc.setFontSize(10);
                 doc.setTextColor(100);
                 doc.text(`Rapor Adi: ${session.name} | Kategori: ${session.type} | Tarih: ${session.date}`, 14, 22);
                 
-                let head = [['Ürün Kodu', 'URUN ISMI', 'FIZIKI STOK', 'SISTEM STOK', 'FARK']];
+                let head = [['Urun Kodu', 'URUN ISMI', 'MIKTAR']];
                 let body = items.map(i => {
                     let cleanName = i.name.replace(/[^\x00-\x7FğüşıöçĞÜŞİÖÇ]/g, ""); 
-                    return [i.code, cleanName, i.qty || 0, i.sysQty || 0, (i.qty || 0) - (i.sysQty || 0)];
+                    return [i.code, cleanName, i.qty || 0];
                 });
 
                 doc.autoTable({ startY: 30, head: head, body: body, theme: 'grid', styles: { fontSize: 8 }, headStyles: { fillColor: [40, 40, 40] } });
-                doc.save(`Terminux_Fark_Raporu_${safeName}.pdf`);
+                doc.save(`Terminux_Rapor_${safeName}.pdf`);
             }
 
             showCustomConfirm("RAPOR KAPATILSIN MI?", "Çıktı alma işlemi tamamlandı. Bu oturumu kapatıp durumunu 'TAMAMLANDI' olarak işaretlemek istiyor musunuz?", "RAPORU KAPAT", "btn-success", async () => {
