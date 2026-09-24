@@ -259,7 +259,19 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    let startRow = 0;
+                    for(let i=0; i < Math.min(rawData.length, 15); i++){
+                        const rowStr = (rawData[i] || []).map(cell => String(cell).replace(/\s+/g, '').toLowerCase()).join('');
+                        if(rowStr.includes('kalemkodu') || rowStr.includes('urunkodu') || rowStr.includes('gtin') || rowStr.includes('barkod')){
+                            startRow = i;
+                            break;
+                        }
+                    }
+
+                    const rows = XLSX.utils.sheet_to_json(sheet, { range: startRow, defval: "" });
                     
                     let matchCount = 0;
                     let queueAddCount = 0;
@@ -476,7 +488,6 @@
                         dbUrls.push("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E");
                     }
 
-                    // Merkezi veritabanına sadece bir kez yazıyoruz
                     const globalData = { 
                         urunKodu: item.urunKodu,
                         urunAdi: item.urunAdi,
