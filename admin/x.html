@@ -236,12 +236,21 @@
             }
         };
 
-        const normalizeStr = (str) => { if (!str) return ""; return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const normalizeStr = (str) => { 
+            if (!str) return ""; 
+            return String(str)
+                .replace(/[\s\uFEFF\xA0_.-]+/g, '')
+                .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+                .toLowerCase(); 
+        };
+
         const getCol = (row, keys) => {
             const rowKeys = Object.keys(row);
             for (let k of rowKeys) {
                 const normK = normalizeStr(k);
-                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
+                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+                }
             }
             return "";
         };
@@ -269,8 +278,8 @@
                     const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     let startRow = 0;
                     for(let i=0; i < Math.min(rawData.length, 15); i++){
-                        const rowStr = (rawData[i] || []).map(cell => String(cell).replace(/\s+/g, '').toLowerCase()).join('');
-                        if(rowStr.includes('kalemkodu') || rowStr.includes('urunkodu') || rowStr.includes('gtin') || rowStr.includes('barkod')){
+                        const rowStr = (rawData[i] || []).map(cell => normalizeStr(cell)).join('');
+                        if(rowStr.includes('kalemkodu') || rowStr.includes('urunkodu') || rowStr.includes('ürünkodu') || rowStr.includes('gtin') || rowStr.includes('barkod')){
                             startRow = i;
                             break;
                         }
@@ -281,6 +290,7 @@
                     let matchCount = 0;
                     let queueAddCount = 0;
                     let barcodeUpdateCount = 0;
+                    let missedLog = "";
                     const noImageSvgMarker = "GÖRSEL BULUNAMADI";
                     
                     const loc = document.getElementById('admin-loc-select').value || 'merkez';
@@ -288,13 +298,44 @@
                     const colAmName = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
 
                     for (const r of rows) {
-                        let kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "kod"]);
+                        let kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
                         let gtinRaw = getCol(r, ["gtin", "barkod"]);
                         
-                        if (kalemKodu && gtinRaw) {
+                        if (kalemKodu) {
                             kalemKodu = String(kalemKodu).trim();
+
+                            if (!gtinRaw) {
+                                if (!missedLog) missedLog = `[UYARI] ${kalemKodu} ürünü bulundu ancak GTIN (Barkod) sütunu boş veya sütun başlığı hatalı.`;
+                                continue;
+                            }
+
                             let matchedItem = dbCatalog[kalemKodu];
                             
+                            if (!matchedItem) {
+                                const cleanCode1 = kalemKodu.replace(/^[a-zA-Z]\s+/i, '').trim();
+                                matchedItem = dbCatalog[cleanCode1];
+                            }
+                            
+                            if (!matchedItem) {
+                                const cleanCode2 = kalemKodu.replace(/[^0-9]/g, '');
+                                if (cleanCode2 && dbCatalog[cleanCode2]) {
+                                    matchedItem = dbCatalog[cleanCode2];
+                                }
+                            }
+                            
+                            if (!matchedItem) {
+                                const cleanCode3 = kalemKodu.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+                                if(cleanCode3.length >= 4) {
+                                    for (let key in dbCatalog) {
+                                        const dbClean = key.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+                                        if (dbClean === cleanCode3 || dbClean.includes(cleanCode3) || cleanCode3.includes(dbClean)) {
+                                            matchedItem = dbCatalog[key];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
                             if (matchedItem) {
                                 matchCount++;
                                 let gtin = String(gtinRaw).replace(/[^0-9]/g, '');
@@ -323,6 +364,8 @@
                                         queueAddCount++;
                                     }
                                 }
+                            } else {
+                                if (!missedLog) missedLog = `[DİKKAT] Eşleşme yok! Örnek: Excel'deki "${kalemKodu}" koda ait veritabanında ürün bulunamadı.`;
                             }
                         }
                     }
@@ -332,6 +375,12 @@
                     writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
                     writeLog(`Sistemde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
                     writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
+
+                    if (matchCount === 0 && missedLog) {
+                        writeLog(missedLog, "log-err");
+                    } else if (missedLog) {
+                        writeLog(`Bazı satırlar atlandı. ${missedLog}`, "log-warn");
+                    }
                     
                     document.getElementById('excel-upload').value = '';
 
