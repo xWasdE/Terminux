@@ -1,185 +1,499 @@
-const express = require('express');
-const cors = require('cors');
-const puppeteer = require('puppeteer');
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Görsel Senkronizasyon</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .progress-wrapper { background: #111; border: 1px solid #333; border-radius: 8px; height: 30px; width: 100%; position: relative; overflow: hidden; margin-top: 15px; }
+        .progress-fill { background: linear-gradient(90deg, #00ccff, #00ff00); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .progress-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #fff; text-shadow: 1px 1px 2px #000; z-index: 2; mix-blend-mode: difference; }
+        .sync-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: #050505; border: 1px solid #1a1a1a; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-title { font-size: 10px; color: #666; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 24px; font-weight: 900; color: #fff; font-family: monospace; }
+        .stat-value.active { color: #00ff00; }
+        .stat-value.pending { color: #ffbc00; }
+        .terminal-log { background: #000; border: 1px solid #222; border-radius: 6px; padding: 15px; height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px; line-height: 1.5; color: #00ff00; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+        .log-info { color: #00ccff; }
+        .log-warn { color: #ffbc00; }
+        .log-err { color: #ff3333; }
+        .log-success { color: #00ff00; }
+        .btn-play { background: #00ff00; color: #000; }
+        .btn-pause { background: #ffbc00; color: #000; }
+        .btn-stop { background: #ff3333; color: #fff; }
+        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 900; letter-spacing: 1px; }
+        .status-waiting { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid #ffbc00; }
+        .status-running { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; animation: pulseBorder 1.5s infinite alternate; }
+        @keyframes pulseBorder { from { box-shadow: 0 0 5px rgba(0,255,0,0.2); } to { box-shadow: 0 0 15px rgba(0,255,0,0.6); } }
+        #current-item-card { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div id="global-loader">SİSTEM YETKİLERİ KONTROL EDİLİYOR...</div>
+    <div class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-title">TERMINUX</div><div class="sidebar-subtitle">SUPER ADMIN PANEL</div></div>
+        <div class="menu">
+            <a href="index.html" class="menu-item"><span>ANA SAYFA</span></a>
+            <a href="users.html" class="menu-item"><span>KULLANICI YÖNETİMİ</span></a>
+            <a href="adres.html" class="menu-item"><span>ADRES YÖNETİMİ</span></a>
+            <a href="stok.html" class="menu-item"><span>DEPO / STOK YÖNETİMİ</span></a>
+            <a href="depoyonetimi.html" class="menu-item"><span>GÖRSEL DEPO YÖNETİMİ</span></a>
+            <a href="lens.html" class="menu-item"><span>LENS YÖNETİMİ</span></a>
+            <a href="bot.html" class="menu-item active"><span>GÖRSEL SENKRONİZASYON</span></a>
+            <a href="ayarlar.html" class="menu-item"><span>SİSTEM AYARLARI</span></a>
+        </div>
+        <div class="user-info">
+            <div class="user-name" id="display-user">Giriş Bekleniyor...</div>
+            <a href="../index.html" class="btn-home">WMS ANA SAYFA</a>
+            <button class="btn-logout" id="btn-logout">SİSTEMDEN ÇIKIŞ YAP</button>
+        </div>
+    </div>
 
-const app = express();
+    <div class="main-content">
+        <div class="topbar"><h2>OTOMATİK GÖRSEL SENKRONİZASYONU</h2></div>
+        <div class="content-area">
 
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'ngrok-skip-browser-warning', 'Bypass-Tunnel-Reminder']
-}));
+            <div class="card" style="border-color: #9933ff;">
+                <div class="card-header" style="color: #9933ff;">SİSTEM BAĞLANTISI VE VERİTABANI</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>LOKASYON SEÇİMİ</label>
+                        <select id="admin-loc-select" style="background: #111; color: #fff;"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>SENKRONİZASYON SUNUCUSU API ADRESİ</label>
+                        <input type="text" id="sync-api-url" value="http://localhost:3001" placeholder="http://localhost:3001">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn-primary" style="background: #9933ff; color: #fff; height: 42px;" onclick="loadDatabaseCatalog()">VERİTABANINI SENKRONİZE ET</button>
+                    </div>
+                </div>
+            </div>
 
-const TELEGRAM_BOT_TOKEN = "8914027975:AAGukmVOKTUXY_Df_2nxJGCV2WXoS1NG9TU";
-const TELEGRAM_CHAT_ID = "-1003892464643"; 
+            <div class="card" style="border-color: #00ccff;">
+                <div class="card-header" style="color: #00ccff;">TOPLU LİSTE (EXCEL) VE KUYRUK OLUŞTURMA</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>EXCEL DOSYASI (Sütunlar: Kalem Kodu, GTIN)</label>
+                        <input type="file" id="excel-upload" accept=".xlsx, .xls">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px;" id="btn-generate-queue">EKSİKLERİ BUL VE KUYRUĞA EKLE</button>
+                    </div>
+                </div>
+            </div>
 
-app.get('/api/telegram-image', async (req, res) => {
-    const file_id = req.query.file_id;
-    if (!file_id) return res.status(400).send("Dosya ID bulunamadı.");
+            <div class="card" style="border-color: #ffbc00;">
+                <div class="card-header" style="color: #ffbc00;">TEKİL ÜRÜN İŞLEMİ (HIZLI EKLEME)</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>ÜRÜN KODU (Kalem Kodu)</label><input type="text" id="single-code" placeholder="Örn: 61547407"></div>
+                    <div class="form-group"><label>BARKOD (GTIN)</label><input type="text" id="single-gtin" placeholder="Örn: 05713315010041"></div>
+                    <div class="form-group" style="justify-content: flex-end;"><button class="btn-primary" style="background: #ffbc00; color: #000; height: 42px;" onclick="addSingleToQueue()">KUYRUĞUN EN BAŞINA EKLE</button></div>
+                </div>
+            </div>
 
-    try {
-        const pathResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${file_id}`);
-        const pathData = await pathResponse.json();
-        
-        if (!pathData.ok) throw new Error("API hatası");
+            <div class="card" style="border-color: #00ff00;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 0;">
+                    <span style="color: #00ff00;">SENKRONİZASYON KONTROL PANELİ</span>
+                    <span id="sync-status-badge" class="status-badge status-waiting">BEKLİYOR</span>
+                </div>
+                
+                <div class="sync-stats">
+                    <div class="stat-box">
+                        <div class="stat-title">TOPLAM KUYRUK</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">BEKLEYEN</div>
+                        <div class="stat-value pending" id="stat-pending">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">TAMAMLANAN</div>
+                        <div class="stat-value active" id="stat-success">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-title">HATALI</div>
+                        <div class="stat-value" style="color:#ff3333;" id="stat-error">0</div>
+                    </div>
+                </div>
 
-        const filePath = pathData.result.file_path;
-        const imgResponse = await fetch(`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`);
-        
-        const buffer = await imgResponse.arrayBuffer();
-        
-        res.setHeader('Content-Type', 'image/jpeg');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        res.send(Buffer.from(buffer));
-    } catch (err) {
-        res.status(500).send("Görsel çekilemedi.");
-    }
-});
+                <div id="current-item-card">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <span style="color: #888; font-size: 10px; font-weight: bold; letter-spacing: 1px;">ŞU AN İŞLENEN ÜRÜN</span>
+                        <span style="color: #fff; font-size: 16px; font-weight: 800;" id="curr-name">-</span>
+                        <span style="color: #00ccff; font-family: monospace; font-size: 12px;" id="curr-code">-</span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-primary btn-play" id="btn-start-sync" onclick="toggleSync(true)"><i class="fa-solid fa-play"></i> BAŞLAT</button>
+                        <button class="btn-primary btn-pause" id="btn-pause-sync" onclick="toggleSync(false)" style="display:none;"><i class="fa-solid fa-pause"></i> DURAKLAT</button>
+                        <button class="btn-primary btn-stop" onclick="clearQueue()"><i class="fa-solid fa-trash"></i> KUYRUĞU SİL</button>
+                    </div>
+                </div>
 
-app.get('/api/uts', async (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+                <div class="progress-wrapper">
+                    <div class="progress-fill" id="progress-bar"></div>
+                    <div class="progress-text" id="progress-text">%0</div>
+                </div>
+            </div>
 
-    const sendEvent = (data) => {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-    };
+            <div class="card">
+                <div class="card-header">TERMİNAL EKRANI</div>
+                <div id="terminal" class="terminal-log">Sistem hazır... Veritabanı senkronizasyonu bekleniyor.</div>
+            </div>
 
-    const barkod = req.query.barkod;
-    const urunKodu = req.query.urunKodu || "Belirtilmedi";
-    const urunAdi = req.query.urunAdi || "İsimsiz Ürün";
-    const refNo = req.query.refNo || "Belirtilmedi";
+        </div>
+    </div>
 
-    if (!barkod) {
-        sendEvent({ type: "DONE", data: [] });
-        return res.end();
-    }
+    <script type="module">
+        import { db, auth } from './admin.js';
+        import { collection, getDocs, doc, updateDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    console.log(`[SİSTEM] Senkronizasyon İşlemi | Barkod: ${barkod}`);
-    let browser = null;
+        let dbCatalog = {};
+        let syncQueue = [];
+        let isSyncRunning = false;
+        let totalInQueue = 0;
+        let successCount = 0;
+        let errorCount = 0;
 
-    try {
-        sendEvent({ type: "INFO", msg: "Merkezi Sisteme Bağlanılıyor..." });
+        const terminal = document.getElementById('terminal');
+        const writeLog = (msg, type = 'log-info') => {
+            const time = new Date().toLocaleTimeString('tr-TR');
+            terminal.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
+            terminal.scrollTop = terminal.scrollHeight;
+        };
 
-        browser = await puppeteer.launch({
-            headless: "new",
-            defaultViewport: null, 
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage',
-                '--disable-web-security',
-                '--window-size=1280,800'
-            ]
-        });
+        setTimeout(async () => {
+            const u = auth.currentUser;
+            if(u) {
+                const uDoc = await getDoc(doc(db, "users", u.uid));
+                if(uDoc.exists()) {
+                    const r = uDoc.data().role;
+                    const uloc = uDoc.data().location || 'merkez';
+                    onSnapshot(doc(db, "system", "locations"), (docSnap) => {
+                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
+                        let html = '';
+                        locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
+                        document.getElementById('admin-loc-select').innerHTML = html;
+                        document.getElementById('global-loader').style.display = 'none';
+                        loadDatabaseCatalog();
+                    });
+                }
+            }
+        }, 1500);
 
-        const pages = await browser.pages();
-        const page = pages.length > 0 ? pages[0] : await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        window.loadDatabaseCatalog = async () => {
+            writeLog("Veritabanı senkronizasyonu başlatılıyor...", "log-warn");
+            dbCatalog = {};
+            const loc = document.getElementById('admin-loc-select').value || 'merkez';
+            const colAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+            const colAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
 
-        let telegramFileIds = [];
+            try {
+                const [anaSnap, amSnap] = await Promise.all([
+                    getDocs(collection(db, colAna)),
+                    getDocs(collection(db, colAm))
+                ]);
 
-        await page.goto('https://utsuygulama.saglik.gov.tr/UTS/vatandas#/vatTibbiCihazListele', { waitUntil: 'domcontentloaded', timeout: 30000 });
-        
-        sendEvent({ type: "INFO", msg: "Kayıtlar taranıyor..." });
-        
-        await page.waitForSelector('#birincilUrunNumarasiIn', { timeout: 15000 });
-        await page.type('#birincilUrunNumarasiIn', barkod, { delay: 10 }); 
-        await page.click('#sorgulaBtn');
+                const processDoc = (d, isAna) => {
+                    const data = d.data();
+                    const code = d.id;
+                    if (!dbCatalog[code]) {
+                        dbCatalog[code] = {
+                            docId: code,
+                            urunKodu: data.urunKodu || code,
+                            urunAdi: data.urunAdi || "İsimsiz",
+                            refNo: data.refNo || "-",
+                            utsGorseller: data.utsGorseller || [],
+                            inAna: isAna,
+                            inAm: !isAna
+                        };
+                    } else {
+                        if (isAna) dbCatalog[code].inAna = true;
+                        if (!isAna) dbCatalog[code].inAm = true;
+                    }
+                };
 
-        try {
-            await page.waitForSelector('#birincilUrunNumarasi_link', { timeout: 8000 });
-            await page.click('#birincilUrunNumarasi_link');
-        } catch (timeoutError) {
-            sendEvent({ type: "DONE", data: [] });
-            await browser.close();
-            return res.end();
-        }
+                anaSnap.forEach(d => processDoc(d, true));
+                amSnap.forEach(d => processDoc(d, false));
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+                writeLog(`Veritabanı senkronize edildi. Toplam eşsiz ürün: ${Object.keys(dbCatalog).length}`, "log-success");
+            } catch (error) {
+                writeLog("Veritabanı çekilirken hata oluştu: " + error.message, "log-err");
+            }
+        };
 
-        try {
-            const imgCount = await page.evaluate(() => {
-                return Array.from(document.querySelectorAll('a')).filter(a => (a.textContent || '').toLowerCase().includes('.jpg') || (a.textContent || '').toLowerCase().includes('.png')).length;
-            });
+        const normalizeStr = (str) => { if (!str) return ""; return String(str).replace(/\s+/g, '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase(); };
+        const getCol = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+            }
+            return "";
+        };
 
-            if (imgCount === 0) {
-                sendEvent({ type: "DONE", data: [] });
-                await browser.close();
-                return res.end();
+        document.getElementById('btn-generate-queue').addEventListener('click', () => {
+            const fileInput = document.getElementById('excel-upload');
+            if (!fileInput.files[0]) {
+                writeLog("Lütfen bir Excel dosyası seçin.", "log-err");
+                return;
             }
 
-            sendEvent({ type: "COUNT", count: imgCount });
+            if (Object.keys(dbCatalog).length === 0) {
+                writeLog("Önce veritabanını senkronize edin.", "log-err");
+                return;
+            }
 
-            for (let i = 0; i < imgCount; i++) {
-                const pagesBeforeClick = await browser.pages();
-
-                await page.evaluate((index) => {
-                    const targetLinks = Array.from(document.querySelectorAll('a')).filter(a => (a.textContent || '').toLowerCase().includes('.jpg') || (a.textContent || '').toLowerCase().includes('.png'));
-                    if (targetLinks[index]) {
-                        targetLinks[index].scrollIntoView({ behavior: "center" });
-                        targetLinks[index].click();
-                    }
-                }, i);
-
-                let newPopup = null;
-                for(let retries = 0; retries < 15; retries++) {
-                    const pagesAfterClick = await browser.pages();
-                    if (pagesAfterClick.length > pagesBeforeClick.length) {
-                        newPopup = pagesAfterClick[pagesAfterClick.length - 1]; 
-                        break;
-                    }
-                    await new Promise(r => setTimeout(r, 500));
-                }
-
-                if (newPopup) {
-                    await newPopup.bringToFront(); 
-                    await new Promise(r => setTimeout(r, 2000)); 
-
-                    const buffer = await newPopup.screenshot({ type: 'jpeg', quality: 85 });
+            writeLog("Excel dosyası okunuyor...", "log-warn");
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                     
-                    const formData = new FormData();
-                    const blob = new Blob([buffer], { type: 'image/jpeg' });
-                    formData.append('photo', blob, `barkod_${barkod}_${i+1}.jpg`);
-                    formData.append('chat_id', TELEGRAM_CHAT_ID);
-                    
-                    const captionText = `📦 *ÜRÜN BİLGİSİ*\n\n📌 *İsim:* ${urunAdi}\n🏷️ *Ürün Kodu:* ${urunKodu}\n🔖 *Barkod:* ${barkod}\n🔗 *Ref No:* ${refNo}\n📸 *Görsel:* ${i+1} / ${imgCount}`;
-                    formData.append('caption', captionText);
-                    formData.append('parse_mode', 'Markdown'); 
+                    let matchCount = 0;
+                    let queueAddCount = 0;
+                    const noImageSvgMarker = "GÖRSEL BULUNAMADI";
 
-                    const tgResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
-                        method: 'POST',
-                        body: formData
+                    rows.forEach(r => {
+                        const kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "kod"]);
+                        const gtinRaw = getCol(r, ["gtin", "barkod"]);
+                        
+                        if (kalemKodu && gtinRaw && dbCatalog[kalemKodu]) {
+                            matchCount++;
+                            const item = dbCatalog[kalemKodu];
+                            let gtin = gtinRaw.replace(/[^0-9]/g, '');
+
+                            const needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                            
+                            if (needsImage) {
+                                if (!syncQueue.some(q => q.urunKodu === kalemKodu)) {
+                                    syncQueue.push({
+                                        docId: item.docId,
+                                        urunKodu: item.urunKodu,
+                                        urunAdi: item.urunAdi,
+                                        refNo: item.refNo,
+                                        gtin: gtin,
+                                        inAna: item.inAna,
+                                        inAm: item.inAm
+                                    });
+                                    queueAddCount++;
+                                }
+                            }
+                        }
                     });
 
-                    const tgData = await tgResponse.json();
+                    totalInQueue = syncQueue.length;
+                    updateUIStats();
+                    writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
+                    writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
+                    document.getElementById('excel-upload').value = '';
+
+                } catch (err) {
+                    writeLog("Excel işlenirken hata: " + err.message, "log-err");
+                }
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+
+        window.addSingleToQueue = () => {
+            const code = document.getElementById('single-code').value.trim();
+            let gtinRaw = document.getElementById('single-gtin').value.trim();
+
+            if (!code || !gtinRaw) {
+                writeLog("Lütfen ürün kodu ve barkod alanlarını doldurun.", "log-err");
+                return;
+            }
+
+            if (!dbCatalog[code]) {
+                writeLog("Bu ürün kodu veritabanında bulunamadı. Önce sisteme tanıtın.", "log-err");
+                return;
+            }
+
+            let gtin = gtinRaw.replace(/[^0-9]/g, '');
+            const item = dbCatalog[code];
+
+            syncQueue.unshift({
+                docId: item.docId,
+                urunKodu: item.urunKodu,
+                urunAdi: item.urunAdi,
+                refNo: item.refNo,
+                gtin: gtin,
+                inAna: item.inAna,
+                inAm: item.inAm
+            });
+
+            if (totalInQueue < syncQueue.length) totalInQueue = syncQueue.length;
+            updateUIStats();
+            writeLog(`[MANUEL] ${code} kuyruğun en başına eklendi.`, "log-success");
+
+            document.getElementById('single-code').value = '';
+            document.getElementById('single-gtin').value = '';
+        };
+
+        window.clearQueue = () => {
+            syncQueue = [];
+            totalInQueue = 0;
+            successCount = 0;
+            errorCount = 0;
+            isSyncRunning = false;
+            updateUIStats();
+            document.getElementById('btn-start-sync').style.display = 'inline-block';
+            document.getElementById('btn-pause-sync').style.display = 'none';
+            document.getElementById('sync-status-badge').className = 'status-badge status-waiting';
+            document.getElementById('sync-status-badge').innerText = 'BEKLİYOR';
+            document.getElementById('curr-name').innerText = '-';
+            document.getElementById('curr-code').innerText = '-';
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('progress-text').innerText = '%0';
+            writeLog("Kuyruk temizlendi.", "log-warn");
+        };
+
+        window.toggleSync = (state) => {
+            if (state && syncQueue.length === 0) {
+                writeLog("Kuyrukta işlenecek ürün yok.", "log-warn");
+                return;
+            }
+
+            isSyncRunning = state;
+            if (isSyncRunning) {
+                document.getElementById('btn-start-sync').style.display = 'none';
+                document.getElementById('btn-pause-sync').style.display = 'inline-block';
+                document.getElementById('sync-status-badge').className = 'status-badge status-running';
+                document.getElementById('sync-status-badge').innerText = 'ÇALIŞIYOR';
+                writeLog("Senkronizasyon başlatıldı.", "log-success");
+                processQueue();
+            } else {
+                document.getElementById('btn-start-sync').style.display = 'inline-block';
+                document.getElementById('btn-pause-sync').style.display = 'none';
+                document.getElementById('sync-status-badge').className = 'status-badge status-waiting';
+                document.getElementById('sync-status-badge').innerText = 'DURAKLATILDI';
+                writeLog("Senkronizasyon duraklatıldı.", "log-warn");
+            }
+        };
+
+        const updateUIStats = () => {
+            document.getElementById('stat-total').innerText = totalInQueue;
+            document.getElementById('stat-pending').innerText = syncQueue.length;
+            document.getElementById('stat-success').innerText = successCount;
+            document.getElementById('stat-error').innerText = errorCount;
+
+            if (totalInQueue > 0) {
+                const completed = successCount + errorCount;
+                const perc = Math.round((completed / totalInQueue) * 100);
+                document.getElementById('progress-bar').style.width = `${perc}%`;
+                document.getElementById('progress-text').innerText = `%${perc}`;
+            }
+        };
+
+        async function processQueue() {
+            if (!isSyncRunning || syncQueue.length === 0) {
+                if (syncQueue.length === 0 && isSyncRunning) {
+                    writeLog("Kuyruk tamamlandı. Sistem duruyor.", "log-success");
+                }
+                isSyncRunning = false;
+                toggleSync(false);
+                return;
+            }
+
+            const currentItem = syncQueue[0];
+            document.getElementById('curr-name').innerText = currentItem.urunAdi;
+            document.getElementById('curr-code').innerText = `KOD: ${currentItem.urunKodu} | GTIN: ${currentItem.gtin}`;
+
+            try {
+                await fetchAndSaveImage(currentItem);
+                successCount++;
+                writeLog(`[TAMAMLANDI] ${currentItem.urunKodu} başarıyla çekildi.`, "log-success");
+            } catch (error) {
+                errorCount++;
+                writeLog(`[HATA] ${currentItem.urunKodu}: ${error.message}`, "log-err");
+            }
+
+            syncQueue.shift();
+            updateUIStats();
+
+            setTimeout(() => {
+                if (isSyncRunning) processQueue();
+            }, 1000);
+        }
+
+        function fetchAndSaveImage(item) {
+            return new Promise(async (resolve, reject) => {
+                let dbUrls = [];
+                let isDone = false;
+                
+                try {
+                    const apiUrl = document.getElementById('sync-api-url').value.trim();
+                    const urlParams = new URLSearchParams({ 
+                        barkod: item.gtin, 
+                        urunKodu: item.urunKodu, 
+                        urunAdi: item.urunAdi, 
+                        refNo: item.refNo 
+                    });
                     
-                    if (tgData.ok) {
-                        const photos = tgData.result.photo;
-                        const bestQuality = photos[photos.length - 1];
-                        telegramFileIds.push(bestQuality.file_id);
-                        
-                        sendEvent({ type: "PROGRESS", current: i + 1, total: imgCount });
+                    const response = await fetch(apiUrl + '/api/uts?' + urlParams.toString(), { 
+                        headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" } 
+                    });
+                    
+                    if (!response.body) return reject(new Error("API yanıt vermedi."));
+                    
+                    const reader = response.body.getReader(); 
+                    const decoder = new TextDecoder(); 
+                    let partialChunk = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        partialChunk += decoder.decode(value, { stream: true });
+                        const lines = partialChunk.split('\n\n'); 
+                        partialChunk = lines.pop();
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const resData = JSON.parse(line.substring(6));
+                                if (resData.type === "INFO") writeLog(`[BİLGİ] ${resData.msg}`, "log-info");
+                                else if (resData.type === "COUNT") writeLog(`[SİSTEM] ${resData.count} adet görsel bulundu, indiriliyor...`, "log-warn");
+                                else if (resData.type === "PROGRESS") writeLog(`[İNDİRME] ${resData.current} / ${resData.total} yüklendi.`, "log-info");
+                                else if (resData.type === "DONE") { 
+                                    dbUrls = resData.data; 
+                                    isDone = true;
+                                }
+                                else if (resData.type === "ERROR") { 
+                                    return reject(new Error(resData.msg)); 
+                                }
+                            }
+                        }
+                        if (isDone) break;
+                    }
+                    
+                    if (dbUrls.length === 0) {
+                        dbUrls.push("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E");
                     }
 
-                    await newPopup.close().catch(() => {});
-                    await page.bringToFront();
-                    await new Promise(r => setTimeout(r, 500)); 
+                    const updateData = { utsGorseller: dbUrls, barkod: item.gtin };
+                    const loc = document.getElementById('admin-loc-select').value || 'merkez';
+                    const colAnaName = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+                    const colAmName = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
+
+                    const anaRef = doc(db, colAnaName, item.docId);
+                    const amRef = doc(db, colAmName, item.docId);
+                    
+                    if(item.inAna) await updateDoc(anaRef, updateData).catch(() => {});
+                    if(item.inAm) await updateDoc(amRef, updateData).catch(() => {});
+
+                    resolve();
+
+                } catch(e) {
+                    reject(e);
                 }
-            }
-        } catch (e) {
+            });
         }
-        
-        sendEvent({ type: "DONE", data: telegramFileIds });
-        await browser.close(); 
-        res.end();
-
-    } catch (err) {
-        sendEvent({ type: "ERROR", msg: "Sunucu hatası." });
-        if (browser) await browser.close().catch(() => {});
-        res.end();
-    }
-});
-
-const PORT = 3001;
-app.listen(PORT, () => console.log(`[SİSTEM AKTİF] Local Sunucu Çalışıyor. Port: ${PORT}`));
+    </script>
+</body>
+</html>
