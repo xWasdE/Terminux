@@ -150,7 +150,7 @@
 
     <script type="module">
         import { db, auth } from './admin.js';
-        import { collection, getDocs, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, getDocs, doc, setDoc, updateDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let dbCatalog = {};
         let syncQueue = [];
@@ -205,7 +205,7 @@
                     globalDataMap[d.id] = d.data();
                 });
 
-                const processDoc = (d) => {
+                const processDoc = (d, inAna, inAm) => {
                     const data = d.data();
                     const code = d.id;
                     const gData = globalDataMap[code] || {};
@@ -217,13 +217,18 @@
                             urunAdi: data.urunAdi || gData.urunAdi || "İsimsiz",
                             refNo: data.refNo || gData.refNo || "-",
                             utsGorseller: gData.utsGorseller || data.utsGorseller || [],
-                            barkod: gData.barkod || data.barkod || ""
+                            barkod: gData.barkod || data.barkod || "",
+                            inAna: inAna,
+                            inAm: inAm
                         };
+                    } else {
+                        if (inAna) dbCatalog[code].inAna = true;
+                        if (inAm) dbCatalog[code].inAm = true;
                     }
                 };
 
-                anaSnap.forEach(processDoc);
-                amSnap.forEach(processDoc);
+                anaSnap.forEach(d => processDoc(d, true, false));
+                amSnap.forEach(d => processDoc(d, false, true));
 
                 writeLog(`Senkronizasyon tamamlandı. Toplam eşsiz ürün: ${Object.keys(dbCatalog).length}`, "log-success");
             } catch (error) {
@@ -253,9 +258,9 @@
                 return;
             }
 
-            writeLog("Excel dosyası okunuyor...", "log-warn");
+            writeLog("Excel dosyası okunuyor ve BARKOD verileri güncelleniyor...", "log-warn");
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
@@ -275,38 +280,59 @@
                     
                     let matchCount = 0;
                     let queueAddCount = 0;
+                    let barcodeUpdateCount = 0;
                     const noImageSvgMarker = "GÖRSEL BULUNAMADI";
+                    
+                    const loc = document.getElementById('admin-loc-select').value || 'merkez';
+                    const colAnaName = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+                    const colAmName = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
 
-                    rows.forEach(r => {
-                        const kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "kod"]);
-                        const gtinRaw = getCol(r, ["gtin", "barkod"]);
+                    for (const r of rows) {
+                        let kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "kod"]);
+                        let gtinRaw = getCol(r, ["gtin", "barkod"]);
                         
-                        if (kalemKodu && gtinRaw && dbCatalog[kalemKodu]) {
-                            matchCount++;
-                            const item = dbCatalog[kalemKodu];
-                            let gtin = gtinRaw.replace(/[^0-9]/g, '');
-
-                            const needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                        if (kalemKodu && gtinRaw) {
+                            kalemKodu = String(kalemKodu).trim();
+                            let matchedItem = dbCatalog[kalemKodu];
                             
-                            if (needsImage) {
-                                if (!syncQueue.some(q => q.urunKodu === kalemKodu)) {
-                                    syncQueue.push({
-                                        docId: item.docId,
-                                        urunKodu: item.urunKodu,
-                                        urunAdi: item.urunAdi,
-                                        refNo: item.refNo,
-                                        gtin: gtin
-                                    });
-                                    queueAddCount++;
+                            if (matchedItem) {
+                                matchCount++;
+                                let gtin = String(gtinRaw).replace(/[^0-9]/g, '');
+
+                                if (gtin && matchedItem.barkod !== gtin) {
+                                    matchedItem.barkod = gtin;
+                                    barcodeUpdateCount++;
+                                    const updateData = { barkod: gtin };
+                                    
+                                    if (matchedItem.inAna) updateDoc(doc(db, colAnaName, matchedItem.docId), updateData).catch(()=>{});
+                                    if (matchedItem.inAm) updateDoc(doc(db, colAmName, matchedItem.docId), updateData).catch(()=>{});
+                                    setDoc(doc(db, "global_katalog", matchedItem.docId), updateData, { merge: true }).catch(()=>{});
+                                }
+
+                                const needsImage = !matchedItem.utsGorseller || matchedItem.utsGorseller.length === 0 || matchedItem.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                                
+                                if (needsImage) {
+                                    if (!syncQueue.some(q => q.urunKodu === matchedItem.urunKodu)) {
+                                        syncQueue.push({
+                                            docId: matchedItem.docId,
+                                            urunKodu: matchedItem.urunKodu,
+                                            urunAdi: matchedItem.urunAdi,
+                                            refNo: matchedItem.refNo,
+                                            gtin: gtin
+                                        });
+                                        queueAddCount++;
+                                    }
                                 }
                             }
                         }
-                    });
+                    }
 
                     totalInQueue = syncQueue.length;
                     updateUIStats();
                     writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
+                    writeLog(`Sistemde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
                     writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
+                    
                     document.getElementById('excel-upload').value = '';
 
                 } catch (err) {
