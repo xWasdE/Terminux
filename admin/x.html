@@ -61,7 +61,7 @@
                 <div class="card-header" style="color: #9933ff;">GLOBAL KATALOG VE SUNUCU BAĞLANTISI</div>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>LOKASYON SEÇİMİ</label>
+                        <label>LOKASYON SEÇİMİ (Liste Bazı İçin)</label>
                         <select id="admin-loc-select" style="background: #111; color: #fff;"></select>
                     </div>
                     <div class="form-group">
@@ -154,6 +154,7 @@
 
         let dbCatalog = {};
         let syncQueue = [];
+        let systemLocations = ['merkez'];
         let isSyncRunning = false;
         let totalInQueue = 0;
         let successCount = 0;
@@ -175,6 +176,10 @@
                     const uloc = uDoc.data().location || 'merkez';
                     onSnapshot(doc(db, "system", "locations"), (docSnap) => {
                         let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        
+                        systemLocations = locs.map(l => l.id);
+                        if(!systemLocations.includes('merkez')) systemLocations.push('merkez');
+
                         if(r !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
                         let html = '';
                         locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
@@ -187,7 +192,7 @@
         }, 1500);
 
         window.loadDatabaseCatalog = async () => {
-            writeLog("Depo lokasyonları ve global katalog senkronize ediliyor...", "log-warn");
+            writeLog("Seçili depo kayıtları ve global katalog senkronize ediliyor...", "log-warn");
             dbCatalog = {};
             const loc = document.getElementById('admin-loc-select').value || 'merkez';
             const colAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
@@ -205,7 +210,7 @@
                     globalDataMap[d.id] = d.data();
                 });
 
-                const processDoc = (d, inAna, inAm) => {
+                const processDoc = (d) => {
                     const data = d.data();
                     const code = d.id;
                     const gData = globalDataMap[code] || {};
@@ -217,18 +222,13 @@
                             urunAdi: data.urunAdi || gData.urunAdi || "İsimsiz",
                             refNo: data.refNo || gData.refNo || "-",
                             utsGorseller: gData.utsGorseller || data.utsGorseller || [],
-                            barkod: gData.barkod || data.barkod || "",
-                            inAna: inAna,
-                            inAm: inAm
+                            barkod: data.barkod || gData.barkod || ""
                         };
-                    } else {
-                        if (inAna) dbCatalog[code].inAna = true;
-                        if (inAm) dbCatalog[code].inAm = true;
                     }
                 };
 
-                anaSnap.forEach(d => processDoc(d, true, false));
-                amSnap.forEach(d => processDoc(d, false, true));
+                anaSnap.forEach(processDoc);
+                amSnap.forEach(processDoc);
 
                 writeLog(`Senkronizasyon tamamlandı. Toplam eşsiz ürün: ${Object.keys(dbCatalog).length}`, "log-success");
             } catch (error) {
@@ -267,7 +267,7 @@
                 return;
             }
 
-            writeLog("Excel dosyası okunuyor ve BARKOD verileri güncelleniyor...", "log-warn");
+            writeLog("Excel okunuyor... Tüm lokasyonlara GTIN güncellemeleri dağıtılıyor...", "log-warn");
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -292,10 +292,6 @@
                     let barcodeUpdateCount = 0;
                     let missedLog = "";
                     const noImageSvgMarker = "GÖRSEL BULUNAMADI";
-                    
-                    const loc = document.getElementById('admin-loc-select').value || 'merkez';
-                    const colAnaName = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
-                    const colAmName = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
 
                     for (const r of rows) {
                         let kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
@@ -343,11 +339,20 @@
                                 if (gtin && matchedItem.barkod !== gtin) {
                                     matchedItem.barkod = gtin;
                                     barcodeUpdateCount++;
-                                    const updateData = { barkod: gtin };
                                     
-                                    if (matchedItem.inAna) updateDoc(doc(db, colAnaName, matchedItem.docId), updateData).catch(()=>{});
-                                    if (matchedItem.inAm) updateDoc(doc(db, colAmName, matchedItem.docId), updateData).catch(()=>{});
-                                    setDoc(doc(db, "global_katalog", matchedItem.docId), updateData, { merge: true }).catch(()=>{});
+                                    systemLocations.forEach(locId => {
+                                        const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
+                                        const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
+                                        updateDoc(doc(db, cAna, matchedItem.docId), { barkod: gtin }).catch(()=>{});
+                                        updateDoc(doc(db, cAm, matchedItem.docId), { barkod: gtin }).catch(()=>{});
+                                    });
+
+                                    setDoc(doc(db, "global_katalog", matchedItem.docId), { 
+                                        barkod: gtin, 
+                                        urunKodu: matchedItem.urunKodu, 
+                                        urunAdi: matchedItem.urunAdi, 
+                                        refNo: matchedItem.refNo 
+                                    }, { merge: true }).catch(()=>{});
                                 }
 
                                 const needsImage = !matchedItem.utsGorseller || matchedItem.utsGorseller.length === 0 || matchedItem.utsGorseller.some(url => url.includes(noImageSvgMarker));
@@ -373,7 +378,7 @@
                     totalInQueue = syncQueue.length;
                     updateUIStats();
                     writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
-                    writeLog(`Sistemde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
+                    writeLog(`Sistem genelinde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
                     writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
 
                     if (matchCount === 0 && missedLog) {
@@ -516,7 +521,14 @@
                 let isDone = false;
                 
                 try {
-                    const apiUrl = document.getElementById('sync-api-url').value.trim();
+                    let apiUrl = document.getElementById('sync-api-url').value.trim();
+                    if(apiUrl.includes('](')) {
+                        apiUrl = apiUrl.split('](')[0].replace('[', '');
+                    }
+                    if(apiUrl.endsWith('/')) {
+                        apiUrl = apiUrl.slice(0, -1);
+                    }
+
                     const urlParams = new URLSearchParams({ 
                         barkod: item.gtin, 
                         urunKodu: item.urunKodu, 
