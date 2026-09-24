@@ -1,0 +1,185 @@
+const express = require('express');
+const cors = require('cors');
+const puppeteer = require('puppeteer');
+
+const app = express();
+
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'ngrok-skip-browser-warning', 'Bypass-Tunnel-Reminder']
+}));
+
+const TELEGRAM_BOT_TOKEN = "8914027975:AAGukmVOKTUXY_Df_2nxJGCV2WXoS1NG9TU";
+const TELEGRAM_CHAT_ID = "-1003892464643"; 
+
+app.get('/api/telegram-image', async (req, res) => {
+    const file_id = req.query.file_id;
+    if (!file_id) return res.status(400).send("Dosya ID bulunamadı.");
+
+    try {
+        const pathResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${file_id}`);
+        const pathData = await pathResponse.json();
+        
+        if (!pathData.ok) throw new Error("API hatası");
+
+        const filePath = pathData.result.file_path;
+        const imgResponse = await fetch(`https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`);
+        
+        const buffer = await imgResponse.arrayBuffer();
+        
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.send(Buffer.from(buffer));
+    } catch (err) {
+        res.status(500).send("Görsel çekilemedi.");
+    }
+});
+
+app.get('/api/uts', async (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const sendEvent = (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    const barkod = req.query.barkod;
+    const urunKodu = req.query.urunKodu || "Belirtilmedi";
+    const urunAdi = req.query.urunAdi || "İsimsiz Ürün";
+    const refNo = req.query.refNo || "Belirtilmedi";
+
+    if (!barkod) {
+        sendEvent({ type: "DONE", data: [] });
+        return res.end();
+    }
+
+    console.log(`[SİSTEM] Senkronizasyon İşlemi | Barkod: ${barkod}`);
+    let browser = null;
+
+    try {
+        sendEvent({ type: "INFO", msg: "Merkezi Sisteme Bağlanılıyor..." });
+
+        browser = await puppeteer.launch({
+            headless: "new",
+            defaultViewport: null, 
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage',
+                '--disable-web-security',
+                '--window-size=1280,800'
+            ]
+        });
+
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+        let telegramFileIds = [];
+
+        await page.goto('https://utsuygulama.saglik.gov.tr/UTS/vatandas#/vatTibbiCihazListele', { waitUntil: 'domcontentloaded', timeout: 30000 });
+        
+        sendEvent({ type: "INFO", msg: "Kayıtlar taranıyor..." });
+        
+        await page.waitForSelector('#birincilUrunNumarasiIn', { timeout: 15000 });
+        await page.type('#birincilUrunNumarasiIn', barkod, { delay: 10 }); 
+        await page.click('#sorgulaBtn');
+
+        try {
+            await page.waitForSelector('#birincilUrunNumarasi_link', { timeout: 8000 });
+            await page.click('#birincilUrunNumarasi_link');
+        } catch (timeoutError) {
+            sendEvent({ type: "DONE", data: [] });
+            await browser.close();
+            return res.end();
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        try {
+            const imgCount = await page.evaluate(() => {
+                return Array.from(document.querySelectorAll('a')).filter(a => (a.textContent || '').toLowerCase().includes('.jpg') || (a.textContent || '').toLowerCase().includes('.png')).length;
+            });
+
+            if (imgCount === 0) {
+                sendEvent({ type: "DONE", data: [] });
+                await browser.close();
+                return res.end();
+            }
+
+            sendEvent({ type: "COUNT", count: imgCount });
+
+            for (let i = 0; i < imgCount; i++) {
+                const pagesBeforeClick = await browser.pages();
+
+                await page.evaluate((index) => {
+                    const targetLinks = Array.from(document.querySelectorAll('a')).filter(a => (a.textContent || '').toLowerCase().includes('.jpg') || (a.textContent || '').toLowerCase().includes('.png'));
+                    if (targetLinks[index]) {
+                        targetLinks[index].scrollIntoView({ behavior: "center" });
+                        targetLinks[index].click();
+                    }
+                }, i);
+
+                let newPopup = null;
+                for(let retries = 0; retries < 15; retries++) {
+                    const pagesAfterClick = await browser.pages();
+                    if (pagesAfterClick.length > pagesBeforeClick.length) {
+                        newPopup = pagesAfterClick[pagesAfterClick.length - 1]; 
+                        break;
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+                }
+
+                if (newPopup) {
+                    await newPopup.bringToFront(); 
+                    await new Promise(r => setTimeout(r, 2000)); 
+
+                    const buffer = await newPopup.screenshot({ type: 'jpeg', quality: 85 });
+                    
+                    const formData = new FormData();
+                    const blob = new Blob([buffer], { type: 'image/jpeg' });
+                    formData.append('photo', blob, `barkod_${barkod}_${i+1}.jpg`);
+                    formData.append('chat_id', TELEGRAM_CHAT_ID);
+                    
+                    const captionText = `📦 *ÜRÜN BİLGİSİ*\n\n📌 *İsim:* ${urunAdi}\n🏷️ *Ürün Kodu:* ${urunKodu}\n🔖 *Barkod:* ${barkod}\n🔗 *Ref No:* ${refNo}\n📸 *Görsel:* ${i+1} / ${imgCount}`;
+                    formData.append('caption', captionText);
+                    formData.append('parse_mode', 'Markdown'); 
+
+                    const tgResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const tgData = await tgResponse.json();
+                    
+                    if (tgData.ok) {
+                        const photos = tgData.result.photo;
+                        const bestQuality = photos[photos.length - 1];
+                        telegramFileIds.push(bestQuality.file_id);
+                        
+                        sendEvent({ type: "PROGRESS", current: i + 1, total: imgCount });
+                    }
+
+                    await newPopup.close().catch(() => {});
+                    await page.bringToFront();
+                    await new Promise(r => setTimeout(r, 500)); 
+                }
+            }
+        } catch (e) {
+        }
+        
+        sendEvent({ type: "DONE", data: telegramFileIds });
+        await browser.close(); 
+        res.end();
+
+    } catch (err) {
+        sendEvent({ type: "ERROR", msg: "Sunucu hatası." });
+        if (browser) await browser.close().catch(() => {});
+        res.end();
+    }
+});
+
+const PORT = 3001;
+app.listen(PORT, () => console.log(`[SİSTEM AKTİF] Local Sunucu Çalışıyor. Port: ${PORT}`));
