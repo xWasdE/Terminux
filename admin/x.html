@@ -58,7 +58,7 @@
         <div class="content-area">
 
             <div class="card" style="border-color: #9933ff;">
-                <div class="card-header" style="color: #9933ff;">SİSTEM BAĞLANTISI VE VERİTABANI</div>
+                <div class="card-header" style="color: #9933ff;">GLOBAL KATALOG VE SUNUCU BAĞLANTISI</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>LOKASYON SEÇİMİ</label>
@@ -69,7 +69,7 @@
                         <input type="text" id="sync-api-url" value="http://localhost:3001" placeholder="http://localhost:3001">
                     </div>
                     <div class="form-group" style="justify-content: flex-end;">
-                        <button class="btn-primary" style="background: #9933ff; color: #fff; height: 42px;" onclick="loadDatabaseCatalog()">VERİTABANINI SENKRONİZE ET</button>
+                        <button class="btn-primary" style="background: #9933ff; color: #fff; height: 42px;" onclick="loadDatabaseCatalog()">GLOBAL KATALOĞU SENKRONİZE ET</button>
                     </div>
                 </div>
             </div>
@@ -150,7 +150,7 @@
 
     <script type="module">
         import { db, auth } from './admin.js';
-        import { collection, getDocs, doc, updateDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, getDocs, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let dbCatalog = {};
         let syncQueue = [];
@@ -187,41 +187,45 @@
         }, 1500);
 
         window.loadDatabaseCatalog = async () => {
-            writeLog("Veritabanı senkronizasyonu başlatılıyor...", "log-warn");
+            writeLog("Depo lokasyonları ve global katalog senkronize ediliyor...", "log-warn");
             dbCatalog = {};
             const loc = document.getElementById('admin-loc-select').value || 'merkez';
             const colAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
             const colAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
 
             try {
-                const [anaSnap, amSnap] = await Promise.all([
+                const [anaSnap, amSnap, globalSnap] = await Promise.all([
                     getDocs(collection(db, colAna)),
-                    getDocs(collection(db, colAm))
+                    getDocs(collection(db, colAm)),
+                    getDocs(collection(db, "global_katalog"))
                 ]);
 
-                const processDoc = (d, isAna) => {
+                let globalDataMap = {};
+                globalSnap.forEach(d => {
+                    globalDataMap[d.id] = d.data();
+                });
+
+                const processDoc = (d) => {
                     const data = d.data();
                     const code = d.id;
+                    const gData = globalDataMap[code] || {};
+                    
                     if (!dbCatalog[code]) {
                         dbCatalog[code] = {
                             docId: code,
                             urunKodu: data.urunKodu || code,
-                            urunAdi: data.urunAdi || "İsimsiz",
-                            refNo: data.refNo || "-",
-                            utsGorseller: data.utsGorseller || [],
-                            inAna: isAna,
-                            inAm: !isAna
+                            urunAdi: data.urunAdi || gData.urunAdi || "İsimsiz",
+                            refNo: data.refNo || gData.refNo || "-",
+                            utsGorseller: gData.utsGorseller || data.utsGorseller || [],
+                            barkod: gData.barkod || data.barkod || ""
                         };
-                    } else {
-                        if (isAna) dbCatalog[code].inAna = true;
-                        if (!isAna) dbCatalog[code].inAm = true;
                     }
                 };
 
-                anaSnap.forEach(d => processDoc(d, true));
-                amSnap.forEach(d => processDoc(d, false));
+                anaSnap.forEach(processDoc);
+                amSnap.forEach(processDoc);
 
-                writeLog(`Veritabanı senkronize edildi. Toplam eşsiz ürün: ${Object.keys(dbCatalog).length}`, "log-success");
+                writeLog(`Senkronizasyon tamamlandı. Toplam eşsiz ürün: ${Object.keys(dbCatalog).length}`, "log-success");
             } catch (error) {
                 writeLog("Veritabanı çekilirken hata oluştu: " + error.message, "log-err");
             }
@@ -279,9 +283,7 @@
                                         urunKodu: item.urunKodu,
                                         urunAdi: item.urunAdi,
                                         refNo: item.refNo,
-                                        gtin: gtin,
-                                        inAna: item.inAna,
-                                        inAm: item.inAm
+                                        gtin: gtin
                                     });
                                     queueAddCount++;
                                 }
@@ -324,9 +326,7 @@
                 urunKodu: item.urunKodu,
                 urunAdi: item.urunAdi,
                 refNo: item.refNo,
-                gtin: gtin,
-                inAna: item.inAna,
-                inAm: item.inAm
+                gtin: gtin
             });
 
             if (totalInQueue < syncQueue.length) totalInQueue = syncQueue.length;
@@ -409,7 +409,7 @@
             try {
                 await fetchAndSaveImage(currentItem);
                 successCount++;
-                writeLog(`[TAMAMLANDI] ${currentItem.urunKodu} başarıyla çekildi.`, "log-success");
+                writeLog(`[TAMAMLANDI] ${currentItem.urunKodu} başarıyla çekilip Global Kataloğa yazıldı.`, "log-success");
             } catch (error) {
                 errorCount++;
                 writeLog(`[HATA] ${currentItem.urunKodu}: ${error.message}`, "log-err");
@@ -476,16 +476,17 @@
                         dbUrls.push("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E");
                     }
 
-                    const updateData = { utsGorseller: dbUrls, barkod: item.gtin };
-                    const loc = document.getElementById('admin-loc-select').value || 'merkez';
-                    const colAnaName = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
-                    const colAmName = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
+                    // Merkezi veritabanına sadece bir kez yazıyoruz
+                    const globalData = { 
+                        urunKodu: item.urunKodu,
+                        urunAdi: item.urunAdi,
+                        refNo: item.refNo,
+                        utsGorseller: dbUrls, 
+                        barkod: item.gtin,
+                        guncellenmeTarihi: Date.now()
+                    };
 
-                    const anaRef = doc(db, colAnaName, item.docId);
-                    const amRef = doc(db, colAmName, item.docId);
-                    
-                    if(item.inAna) await updateDoc(anaRef, updateData).catch(() => {});
-                    if(item.inAm) await updateDoc(amRef, updateData).catch(() => {});
+                    await setDoc(doc(db, "global_katalog", item.urunKodu), globalData, { merge: true });
 
                     resolve();
 
