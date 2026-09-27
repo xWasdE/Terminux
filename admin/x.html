@@ -98,7 +98,7 @@
                 <div id="pre-queue-stats" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; background: #111; padding: 15px; border-radius: 6px; border: 1px solid #333; text-align: center;">
                     <div><div style="font-size:10px; color:#888; letter-spacing:1px; font-weight:bold;">SİSTEMDEKİ TOPLAM ÜRÜN</div><div style="font-size:24px; color:#00ccff; font-weight:900;" id="pq-total">0</div></div>
                     <div><div style="font-size:10px; color:#888; letter-spacing:1px; font-weight:bold;">BARKODU (GTIN) OLAN</div><div style="font-size:24px; color:#00ff00; font-weight:900;" id="pq-gtin">0</div></div>
-                    <div><div style="font-size:10px; color:#888; letter-spacing:1px; font-weight:bold;">GÖRSELSİZ / EKSİK OLAN</div><div style="font-size:24px; color:#ff3333; font-weight:900;" id="pq-miss">0</div></div>
+                    <div><div style="font-size:10px; color:#888; letter-spacing:1px; font-weight:bold;">KUYRUĞA ALINACAK (EKSİK)</div><div style="font-size:24px; color:#ff3333; font-weight:900;" id="pq-miss">0</div></div>
                 </div>
 
                 <div class="form-grid">
@@ -441,7 +441,7 @@
             updateUIStats();
             
             if (tMiss > 0) {
-                writeLog(`Analiz tamamlandı. Eksik görsel tespit edilen ürün sayısı: ${tMiss}`, "log-success");
+                writeLog(`Analiz tamamlandı. Kuyruğa eklenen ürün sayısı: ${tMiss}`, "log-success");
                 document.getElementById('btn-download-report').style.display = 'none';
                 reportData = { success: [], failed: [] };
             } else {
