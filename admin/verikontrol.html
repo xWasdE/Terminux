@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminux | Veri Kontrol Merkezi</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: #111; border: 1px solid #333; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-title { font-size: 11px; color: #888; font-weight: bold; margin-bottom: 10px; }
+        .stat-val { font-size: 32px; font-weight: 900; color: #fff; }
+        .val-green { color: #00ff00; }
+        .val-blue { color: #00ccff; }
+        .val-red { color: #ff3333; }
+        .val-yellow { color: #ffbc00; }
+        #log-area { background: #000; border: 1px solid #222; height: 350px; overflow-y: auto; padding: 15px; font-family: monospace; font-size: 12px; color: #00ff00; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body style="background: #050505; color: #fff;">
+    <div class="main-content" style="margin-left: 0; padding: 20px; width: 100%; max-width: 1200px; margin: 0 auto;">
+        <div class="topbar"><h2>VERİTABANI VE EXCEL KONTROL MERKEZİ</h2></div>
+        
+        <div class="card" style="border-color: #9933ff;">
+            <div class="card-header" style="color: #9933ff;">1. VERİTABANI ANALİZİ</div>
+            <div class="form-grid">
+                <div class="form-group" style="justify-content: flex-start;">
+                    <button class="btn-primary" style="background: #9933ff; color: #fff; height: 42px; width: 100%;" onclick="analyzeDatabase()">TÜM LOKASYONLARI TARA VE ANALİZ ET</button>
+                </div>
+            </div>
+            <div class="stat-grid" style="margin-top: 15px;">
+                <div class="stat-box"><div class="stat-title">TOPLAM EŞSİZ ÜRÜN</div><div class="stat-val val-blue" id="s-total">0</div></div>
+                <div class="stat-box"><div class="stat-title">BARKODU (GTIN) OLANLAR</div><div class="stat-val val-green" id="s-has">0</div></div>
+                <div class="stat-box"><div class="stat-title">BARKODU EKSİK OLANLAR</div><div class="stat-val val-red" id="s-miss">0</div></div>
+            </div>
+        </div>
+
+        <div class="card" style="border-color: #00ccff;">
+            <div class="card-header" style="color: #00ccff;">2. EXCEL ÇAPRAZ KONTROLÜ</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #111; color: #fff; border: 1px solid #333; border-radius: 6px;">
+                </div>
+                <div class="form-group">
+                    <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px; width: 100%;" id="btn-check-excel">EXCEL İLE KARŞILAŞTIR</button>
+                </div>
+            </div>
+            <div class="stat-grid" style="margin-top: 15px;">
+                <div class="stat-box"><div class="stat-title">EXCEL'DEKİ GEÇERLİ BARKOD</div><div class="stat-val val-blue" id="e-total">0</div></div>
+                <div class="stat-box"><div class="stat-title">VERİTABANI İLE EŞLEŞEN</div><div class="stat-val val-green" id="e-match">0</div></div>
+                <div class="stat-box"><div class="stat-title">VERİTABANINDA BULUNAMAYAN</div><div class="stat-val val-red" id="e-miss">0</div></div>
+                <div class="stat-box"><div class="stat-title">MEVCUT BARKODU FARKLI OLAN</div><div class="stat-val val-yellow" id="e-diff">0</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">SİSTEM KAYITLARI VE HATA TESPİTİ</div>
+            <div id="log-area">Sistem hazır... Önce veritabanı analizini başlatın.</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './admin.js';
+        import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let dbProducts = {};
+        const logArea = document.getElementById('log-area');
+        
+        const writeLog = (msg, color = '#00ff00') => {
+            const time = new Date().toLocaleTimeString('tr-TR');
+            logArea.innerHTML += `<div style="color:${color}; margin-bottom:4px; font-family: monospace; font-size: 13px;">[${time}] ${msg}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+        };
+
+        const normalizeStr = (str) => { 
+            if (!str) return ""; 
+            return String(str)
+                .replace(/[\s\uFEFF\xA0_.-]+/g, '')
+                .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+                .toLowerCase(); 
+        };
+
+        const getCol = (row, keys) => {
+            const rowKeys = Object.keys(row);
+            for (let k of rowKeys) {
+                const normK = normalizeStr(k);
+                if (keys.some(searchKey => normalizeStr(searchKey) === normK)) {
+                    return (row[k] !== null && row[k] !== undefined) ? String(row[k]).trim() : "";
+                }
+            }
+            return "";
+        };
+
+        window.analyzeDatabase = async () => {
+            writeLog("Tüm lokasyonlar (ana depo ve ameliyathaneler) taranıyor...", "#00ccff");
+            dbProducts = {};
+            document.getElementById('s-total').innerText = "0";
+            document.getElementById('s-has').innerText = "0";
+            document.getElementById('s-miss').innerText = "0";
+
+            try {
+                const locSnap = await getDoc(doc(db, "system", "locations"));
+                let locs = locSnap.exists() ? (locSnap.data().list || [{id:'merkez'}]) : [{id:'merkez'}];
+                let locIds = locs.map(l => l.id);
+                if(!locIds.includes('merkez')) locIds.push('merkez');
+
+                let promises = [];
+                locIds.forEach(loc => {
+                    const cAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+                    const cAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
+                    promises.push(getDocs(collection(db, cAna)));
+                    promises.push(getDocs(collection(db, cAm)));
+                });
+
+                const snaps = await Promise.all(promises);
+                
+                snaps.forEach(snap => {
+                    snap.forEach(d => {
+                        const data = d.data();
+                        const code = d.id;
+                        
+                        if(!dbProducts[code]) {
+                            dbProducts[code] = {
+                                urunKodu: data.urunKodu || code,
+                                barkod: data.barkod || "",
+                                urunAdi: data.urunAdi || "İsimsiz"
+                            };
+                        } else {
+                            if(!dbProducts[code].barkod && data.barkod) {
+                                dbProducts[code].barkod = data.barkod;
+                            }
+                        }
+                    });
+                });
+
+                let total = 0;
+                let hasBarcode = 0;
+                let missBarcode = 0;
+
+                for(let k in dbProducts) {
+                    total++;
+                    const b = dbProducts[k].barkod;
+                    if(b && b.trim() !== "" && b !== "-" && b !== "TANIMSIZ") hasBarcode++;
+                    else missBarcode++;
+                }
+
+                document.getElementById('s-total').innerText = total;
+                document.getElementById('s-has').innerText = hasBarcode;
+                document.getElementById('s-miss').innerText = missBarcode;
+
+                writeLog(`Veritabanı taraması bitti. Toplam eşsiz ürün: ${total}`, "#00ff00");
+                writeLog(`Sistemde barkodu olan ürün: ${hasBarcode}`, "#00ff00");
+                writeLog(`Sistemde barkodu eksik olan ürün: ${missBarcode}`, "#ff3333");
+            } catch(e) {
+                writeLog("Veritabanı okunurken hata oluştu: " + e.message, "#ff3333");
+            }
+        };
+
+        document.getElementById('btn-check-excel').addEventListener('click', () => {
+            const fileInput = document.getElementById('excel-upload');
+            if (!fileInput.files[0]) {
+                writeLog("Lütfen karşılaştırılacak Excel dosyasını seçin.", "#ff3333");
+                return;
+            }
+            if (Object.keys(dbProducts).length === 0) {
+                writeLog("Önce veritabanı analizini tamamlayın.", "#ff3333");
+                return;
+            }
+
+            writeLog("Excel verileri okunuyor ve çapraz eşleştirme yapılıyor...", "#ffbc00");
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    let startRow = 0;
+                    for(let i=0; i < Math.min(rawData.length, 15); i++){
+                        const rowStr = (rawData[i] || []).map(cell => normalizeStr(cell)).join('');
+                        if(rowStr.includes('kalemkodu') || rowStr.includes('urunkodu') || rowStr.includes('ürünkodu') || rowStr.includes('gtin') || rowStr.includes('barkod')){
+                            startRow = i;
+                            break;
+                        }
+                    }
+
+                    const rows = XLSX.utils.sheet_to_json(sheet, { range: startRow, defval: "" });
+                    
+                    let excelTotal = 0;
+                    let excelMatch = 0;
+                    let excelMiss = 0;
+                    let diffBarcode = 0;
+
+                    const excelMap = {};
+                    rows.forEach(r => {
+                        let k = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
+                        let g = getCol(r, ["gtin", "barkod"]);
+                        if (k && g) {
+                            let parts = String(g).trim().split(/[\s,;\n\/]+/);
+                            excelMap[normalizeStr(k)] = parts[0].replace(/[^0-9]/g, '');
+                            excelTotal++;
+                        }
+                    });
+
+                    document.getElementById('e-total').innerText = excelTotal;
+
+                    for(let code in dbProducts) {
+                        const item = dbProducts[code];
+                        const searchKeys = [
+                            normalizeStr(item.urunKodu),
+                            normalizeStr(item.urunKodu.replace(/^[a-zA-Z]\s+/i, '')),
+                            normalizeStr(item.urunKodu.replace(/[^0-9]/g, ''))
+                        ];
+
+                        let matchedGtin = null;
+                        for (const sk of searchKeys) {
+                            if (sk && excelMap[sk]) {
+                                matchedGtin = excelMap[sk];
+                                break;
+                            }
+                        }
+
+                        if(matchedGtin) {
+                            excelMatch++;
+                            const currentDbGtin = item.barkod ? item.barkod.replace(/[^0-9]/g, '') : "";
+                            
+                            if (currentDbGtin && currentDbGtin !== matchedGtin && currentDbGtin !== "TANIMSIZ" && currentDbGtin !== "-") {
+                                diffBarcode++;
+                                writeLog(`[UYUŞMAZLIK] KOD: ${item.urunKodu} | DB BARKOD: ${currentDbGtin} | EXCEL BARKOD: ${matchedGtin}`, "#ffbc00");
+                            }
+                        }
+                    }
+
+                    excelMiss = excelTotal - excelMatch;
+                    
+                    document.getElementById('e-match').innerText = excelMatch;
+                    document.getElementById('e-miss').innerText = excelMiss;
+                    document.getElementById('e-diff').innerText = diffBarcode;
+
+                    writeLog(`Karşılaştırma tamamlandı. Excel'deki ${excelMatch} kayıt Terminux veritabanı ile eşleşti.`, "#00ff00");
+                    if (excelMiss > 0) writeLog(`Excel'deki ${excelMiss} ürün kodu Terminux veritabanında bulunamadı.`, "#ff3333");
+                    if (diffBarcode > 0) writeLog(`${diffBarcode} ürünün DB'deki mevcut barkodu, Excel'deki barkod ile uyuşmuyor. Üzerine yazma işleminde bu barkodlar Excel'deki verilere göre ezilecektir.`, "#ffbc00");
+                    
+                    document.getElementById('excel-upload').value = '';
+                } catch(err) {
+                    writeLog("Excel okuma hatası: " + err.message, "#ff3333");
+                }
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+    </script>
+</body>
+</html>
