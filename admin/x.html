@@ -80,6 +80,10 @@
                     <div class="form-group">
                         <label>EXCEL DOSYASI (Sütunlar: Kalem Kodu, GTIN)</label>
                         <input type="file" id="excel-upload" accept=".xlsx, .xls">
+                        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-top: 15px; border: 1px solid #333; padding: 10px; border-radius: 6px; background: #0a0a0a;">
+                            <input type="checkbox" id="force-overwrite-barcode" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #00ccff;">
+                            <label for="force-overwrite-barcode" style="color: #fff; cursor: pointer; font-size: 12px; margin: 0; text-transform: none;">Mevcut barkodların üzerine yaz (Zorunlu Güncelleme)</label>
+                        </div>
                     </div>
                     <div class="form-group" style="justify-content: flex-end;">
                         <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px;" id="btn-generate-queue">EKSİKLERİ BUL VE KUYRUĞA EKLE</button>
@@ -300,6 +304,7 @@
                     let queueAddCount = 0;
                     let barcodeUpdateCount = 0;
                     const noImageSvgMarker = "GÖRSEL BULUNAMADI";
+                    const forceOverwrite = document.getElementById('force-overwrite-barcode').checked;
 
                     for (const code in dbCatalog) {
                         const item = dbCatalog[code];
@@ -319,24 +324,27 @@
 
                         if (matchedGtin) {
                             matchCount++;
+                            const isBarcodeEmpty = !item.barkod || item.barkod.trim() === "" || item.barkod === "-" || item.barkod === "TANIMSIZ";
                             
-                            if (item.barkod !== matchedGtin) {
-                                item.barkod = matchedGtin;
-                                barcodeUpdateCount++;
-                                
-                                systemLocations.forEach(locId => {
-                                    const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
-                                    const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
-                                    updateDoc(doc(db, cAna, item.docId), { barkod: matchedGtin }).catch(()=>{});
-                                    updateDoc(doc(db, cAm, item.docId), { barkod: matchedGtin }).catch(()=>{});
-                                });
+                            if (forceOverwrite || isBarcodeEmpty) {
+                                if (item.barkod !== matchedGtin) {
+                                    item.barkod = matchedGtin;
+                                    barcodeUpdateCount++;
+                                    
+                                    systemLocations.forEach(locId => {
+                                        const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
+                                        const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
+                                        updateDoc(doc(db, cAna, item.docId), { barkod: matchedGtin }).catch(()=>{});
+                                        updateDoc(doc(db, cAm, item.docId), { barkod: matchedGtin }).catch(()=>{});
+                                    });
 
-                                setDoc(doc(db, "global_katalog", item.docId), { 
-                                    barkod: matchedGtin, 
-                                    urunKodu: item.urunKodu, 
-                                    urunAdi: item.urunAdi, 
-                                    refNo: item.refNo 
-                                }, { merge: true }).catch(()=>{});
+                                    setDoc(doc(db, "global_katalog", item.docId), { 
+                                        barkod: matchedGtin, 
+                                        urunKodu: item.urunKodu, 
+                                        urunAdi: item.urunAdi, 
+                                        refNo: item.refNo 
+                                    }, { merge: true }).catch(()=>{});
+                                }
                             }
 
                             const needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
