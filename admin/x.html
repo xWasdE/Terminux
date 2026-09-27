@@ -192,7 +192,7 @@
         }, 1500);
 
         window.loadDatabaseCatalog = async () => {
-            writeLog("Seçili depo kayıtları ve global katalog senkronize ediliyor...", "log-warn");
+            writeLog("Depo lokasyonları ve global katalog senkronize ediliyor...", "log-warn");
             dbCatalog = {};
             const loc = document.getElementById('admin-loc-select').value || 'merkez';
             const colAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
@@ -267,7 +267,7 @@
                 return;
             }
 
-            writeLog("Excel okunuyor... Tüm lokasyonlara GTIN güncellemeleri dağıtılıyor...", "log-warn");
+            writeLog("Excel verileri haritalanıyor ve Terminux ürünleriyle eşleştiriliyor...", "log-warn");
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
@@ -286,107 +286,82 @@
                     }
 
                     const rows = XLSX.utils.sheet_to_json(sheet, { range: startRow, defval: "" });
-                    
+                    const excelMap = {};
+
+                    rows.forEach(r => {
+                        let k = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
+                        let g = getCol(r, ["gtin", "barkod"]);
+                        if (k && g) {
+                            excelMap[normalizeStr(k)] = String(g).replace(/[^0-9]/g, '');
+                        }
+                    });
+
                     let matchCount = 0;
                     let queueAddCount = 0;
                     let barcodeUpdateCount = 0;
-                    let missedLog = "";
                     const noImageSvgMarker = "GÖRSEL BULUNAMADI";
 
-                    for (const r of rows) {
-                        let kalemKodu = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
-                        let gtinRaw = getCol(r, ["gtin", "barkod"]);
-                        
-                        if (kalemKodu) {
-                            kalemKodu = String(kalemKodu).trim();
+                    for (const code in dbCatalog) {
+                        const item = dbCatalog[code];
+                        const searchKeys = [
+                            normalizeStr(item.urunKodu),
+                            normalizeStr(item.urunKodu.replace(/^[a-zA-Z]\s+/i, '')),
+                            normalizeStr(item.urunKodu.replace(/[^0-9]/g, ''))
+                        ];
 
-                            if (!gtinRaw) {
-                                if (!missedLog) missedLog = `[UYARI] ${kalemKodu} ürünü bulundu ancak GTIN (Barkod) sütunu boş veya sütun başlığı hatalı.`;
-                                continue;
+                        let matchedGtin = null;
+                        for (const sk of searchKeys) {
+                            if (sk && excelMap[sk]) {
+                                matchedGtin = excelMap[sk];
+                                break;
                             }
+                        }
 
-                            let matchedItem = dbCatalog[kalemKodu];
+                        if (matchedGtin) {
+                            matchCount++;
                             
-                            if (!matchedItem) {
-                                const cleanCode1 = kalemKodu.replace(/^[a-zA-Z]\s+/i, '').trim();
-                                matchedItem = dbCatalog[cleanCode1];
-                            }
-                            
-                            if (!matchedItem) {
-                                const cleanCode2 = kalemKodu.replace(/[^0-9]/g, '');
-                                if (cleanCode2 && dbCatalog[cleanCode2]) {
-                                    matchedItem = dbCatalog[cleanCode2];
-                                }
-                            }
-                            
-                            if (!matchedItem) {
-                                const cleanCode3 = kalemKodu.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
-                                if(cleanCode3.length >= 4) {
-                                    for (let key in dbCatalog) {
-                                        const dbClean = key.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
-                                        if (dbClean === cleanCode3 || dbClean.includes(cleanCode3) || cleanCode3.includes(dbClean)) {
-                                            matchedItem = dbCatalog[key];
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (matchedItem) {
-                                matchCount++;
-                                let gtin = String(gtinRaw).replace(/[^0-9]/g, '');
-
-                                if (gtin && matchedItem.barkod !== gtin) {
-                                    matchedItem.barkod = gtin;
-                                    barcodeUpdateCount++;
-                                    
-                                    systemLocations.forEach(locId => {
-                                        const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
-                                        const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
-                                        updateDoc(doc(db, cAna, matchedItem.docId), { barkod: gtin }).catch(()=>{});
-                                        updateDoc(doc(db, cAm, matchedItem.docId), { barkod: gtin }).catch(()=>{});
-                                    });
-
-                                    setDoc(doc(db, "global_katalog", matchedItem.docId), { 
-                                        barkod: gtin, 
-                                        urunKodu: matchedItem.urunKodu, 
-                                        urunAdi: matchedItem.urunAdi, 
-                                        refNo: matchedItem.refNo 
-                                    }, { merge: true }).catch(()=>{});
-                                }
-
-                                const needsImage = !matchedItem.utsGorseller || matchedItem.utsGorseller.length === 0 || matchedItem.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                            if (item.barkod !== matchedGtin) {
+                                item.barkod = matchedGtin;
+                                barcodeUpdateCount++;
                                 
-                                if (needsImage) {
-                                    if (!syncQueue.some(q => q.urunKodu === matchedItem.urunKodu)) {
-                                        syncQueue.push({
-                                            docId: matchedItem.docId,
-                                            urunKodu: matchedItem.urunKodu,
-                                            urunAdi: matchedItem.urunAdi,
-                                            refNo: matchedItem.refNo,
-                                            gtin: gtin
-                                        });
-                                        queueAddCount++;
-                                    }
+                                systemLocations.forEach(locId => {
+                                    const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
+                                    const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
+                                    updateDoc(doc(db, cAna, item.docId), { barkod: matchedGtin }).catch(()=>{});
+                                    updateDoc(doc(db, cAm, item.docId), { barkod: matchedGtin }).catch(()=>{});
+                                });
+
+                                setDoc(doc(db, "global_katalog", item.docId), { 
+                                    barkod: matchedGtin, 
+                                    urunKodu: item.urunKodu, 
+                                    urunAdi: item.urunAdi, 
+                                    refNo: item.refNo 
+                                }, { merge: true }).catch(()=>{});
+                            }
+
+                            const needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                            
+                            if (needsImage) {
+                                if (!syncQueue.some(q => q.urunKodu === item.urunKodu)) {
+                                    syncQueue.push({
+                                        docId: item.docId,
+                                        urunKodu: item.urunKodu,
+                                        urunAdi: item.urunAdi,
+                                        refNo: item.refNo,
+                                        gtin: matchedGtin
+                                    });
+                                    queueAddCount++;
                                 }
-                            } else {
-                                if (!missedLog) missedLog = `[DİKKAT] Eşleşme yok! Örnek: Excel'deki "${kalemKodu}" koda ait veritabanında ürün bulunamadı.`;
                             }
                         }
                     }
 
                     totalInQueue = syncQueue.length;
                     updateUIStats();
-                    writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
+                    writeLog(`Terminux ürünleri Excel üzerinden doğrulandı. Eşleşen kayıt: ${matchCount}`, "log-info");
                     writeLog(`Sistem genelinde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
                     writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
 
-                    if (matchCount === 0 && missedLog) {
-                        writeLog(missedLog, "log-err");
-                    } else if (missedLog) {
-                        writeLog(`Bazı satırlar atlandı. ${missedLog}`, "log-warn");
-                    }
-                    
                     document.getElementById('excel-upload').value = '';
 
                 } catch (err) {
@@ -413,6 +388,20 @@
             let gtin = gtinRaw.replace(/[^0-9]/g, '');
             const item = dbCatalog[code];
 
+            systemLocations.forEach(locId => {
+                const cAna = locId === 'merkez' ? 'ana_depo' : 'ana_depo_' + locId;
+                const cAm = locId === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + locId;
+                updateDoc(doc(db, cAna, item.docId), { barkod: gtin }).catch(()=>{});
+                updateDoc(doc(db, cAm, item.docId), { barkod: gtin }).catch(()=>{});
+            });
+
+            setDoc(doc(db, "global_katalog", item.docId), { 
+                barkod: gtin, 
+                urunKodu: item.urunKodu, 
+                urunAdi: item.urunAdi, 
+                refNo: item.refNo 
+            }, { merge: true }).catch(()=>{});
+
             syncQueue.unshift({
                 docId: item.docId,
                 urunKodu: item.urunKodu,
@@ -423,7 +412,7 @@
 
             if (totalInQueue < syncQueue.length) totalInQueue = syncQueue.length;
             updateUIStats();
-            writeLog(`[MANUEL] ${code} kuyruğun en başına eklendi.`, "log-success");
+            writeLog(`[MANUEL] ${code} ürününün barkodu güncellendi ve kuyruğa eklendi.`, "log-success");
 
             document.getElementById('single-code').value = '';
             document.getElementById('single-gtin').value = '';
