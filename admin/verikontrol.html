@@ -37,13 +37,14 @@
         </div>
 
         <div class="card" style="border-color: #00ccff;">
-            <div class="card-header" style="color: #00ccff;">2. EXCEL ÇAPRAZ KONTROLÜ</div>
+            <div class="card-header" style="color: #00ccff;">2. EXCEL ÇAPRAZ KONTROLÜ VE DÜZELTME</div>
             <div class="form-grid">
                 <div class="form-group">
                     <input type="file" id="excel-upload" accept=".xlsx, .xls" style="width: 100%; padding: 10px; background: #111; color: #fff; border: 1px solid #333; border-radius: 6px;">
                 </div>
-                <div class="form-group">
-                    <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px; width: 100%;" id="btn-check-excel">EXCEL İLE KARŞILAŞTIR</button>
+                <div class="form-group" style="display: flex; gap: 10px; flex-direction: row;">
+                    <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px; width: 50%;" id="btn-check-excel">EXCEL İLE KARŞILAŞTIR</button>
+                    <button class="btn-primary" style="background: #ffbc00; color: #000; height: 42px; width: 50%;" id="btn-fix-mismatches">HATALARI OTOMATİK DÜZELT</button>
                 </div>
             </div>
             <div class="stat-grid" style="margin-top: 15px;">
@@ -62,9 +63,12 @@
 
     <script type="module">
         import { db } from './admin.js';
-        import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let dbProducts = {};
+        let mismatchesToFix = [];
+        let systemLocations = ['merkez'];
+        
         const logArea = document.getElementById('log-area');
         
         const writeLog = (msg, color = '#00ff00') => {
@@ -95,6 +99,7 @@
         window.analyzeDatabase = async () => {
             writeLog("Tüm lokasyonlar (ana depo ve ameliyathaneler) taranıyor...", "#00ccff");
             dbProducts = {};
+            mismatchesToFix = [];
             document.getElementById('s-total').innerText = "0";
             document.getElementById('s-has').innerText = "0";
             document.getElementById('s-miss').innerText = "0";
@@ -102,11 +107,11 @@
             try {
                 const locSnap = await getDoc(doc(db, "system", "locations"));
                 let locs = locSnap.exists() ? (locSnap.data().list || [{id:'merkez'}]) : [{id:'merkez'}];
-                let locIds = locs.map(l => l.id);
-                if(!locIds.includes('merkez')) locIds.push('merkez');
+                systemLocations = locs.map(l => l.id);
+                if(!systemLocations.includes('merkez')) systemLocations.push('merkez');
 
                 let promises = [];
-                locIds.forEach(loc => {
+                systemLocations.forEach(loc => {
                     const cAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
                     const cAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
                     promises.push(getDocs(collection(db, cAna)));
@@ -122,6 +127,7 @@
                         
                         if(!dbProducts[code]) {
                             dbProducts[code] = {
+                                docId: code,
                                 urunKodu: data.urunKodu || code,
                                 barkod: data.barkod || "",
                                 urunAdi: data.urunAdi || "İsimsiz"
@@ -169,6 +175,7 @@
             }
 
             writeLog("Excel verileri okunuyor ve çapraz eşleştirme yapılıyor...", "#ffbc00");
+            mismatchesToFix = [];
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
@@ -228,6 +235,7 @@
                             
                             if (currentDbGtin && currentDbGtin !== matchedGtin && currentDbGtin !== "TANIMSIZ" && currentDbGtin !== "-") {
                                 diffBarcode++;
+                                mismatchesToFix.push({ docId: item.docId, correctGtin: matchedGtin });
                                 writeLog(`[UYUŞMAZLIK] KOD: ${item.urunKodu} | DB BARKOD: ${currentDbGtin} | EXCEL BARKOD: ${matchedGtin}`, "#ffbc00");
                             }
                         }
@@ -241,7 +249,7 @@
 
                     writeLog(`Karşılaştırma tamamlandı. Excel'deki ${excelMatch} kayıt Terminux veritabanı ile eşleşti.`, "#00ff00");
                     if (excelMiss > 0) writeLog(`Excel'deki ${excelMiss} ürün kodu Terminux veritabanında bulunamadı.`, "#ff3333");
-                    if (diffBarcode > 0) writeLog(`${diffBarcode} ürünün DB'deki mevcut barkodu, Excel'deki barkod ile uyuşmuyor. Üzerine yazma işleminde bu barkodlar Excel'deki verilere göre ezilecektir.`, "#ffbc00");
+                    if (diffBarcode > 0) writeLog(`${diffBarcode} ürünün DB'deki mevcut barkodu, Excel'deki ile uyuşmuyor. 'HATALARI OTOMATİK DÜZELT' butonunu kullanarak bunları tek tuşla temizleyebilirsiniz.`, "#ffbc00");
                     
                     document.getElementById('excel-upload').value = '';
                 } catch(err) {
@@ -249,6 +257,33 @@
                 }
             };
             reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+
+        document.getElementById('btn-fix-mismatches').addEventListener('click', async () => {
+            if (mismatchesToFix.length === 0) {
+                writeLog("Düzeltilecek kayıt bulunamadı. Önce Excel karşılaştırması yapın.", "#ff3333");
+                return;
+            }
+            
+            writeLog(`[SİSTEM BAŞLADI] ${mismatchesToFix.length} hatalı barkod veritabanında doğru GTIN ile eziliyor... Lütfen bekleyin.`, "#ffbc00");
+            
+            let fixed = 0;
+            for (const mismatch of mismatchesToFix) {
+                systemLocations.forEach(loc => {
+                    const cAna = loc === 'merkez' ? 'ana_depo' : 'ana_depo_' + loc;
+                    const cAm = loc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + loc;
+                    updateDoc(doc(db, cAna, mismatch.docId), { barkod: mismatch.correctGtin }).catch(()=>{});
+                    updateDoc(doc(db, cAm, mismatch.docId), { barkod: mismatch.correctGtin }).catch(()=>{});
+                });
+                
+                setDoc(doc(db, "global_katalog", mismatch.docId), { barkod: mismatch.correctGtin }, { merge: true }).catch(()=>{});
+                fixed++;
+            }
+            
+            writeLog(`[BAŞARILI] ${fixed} ürünün çift yazılmış/hatalı barkodu kalıcı olarak temizlendi!`, "#00ff00");
+            writeLog(`[BİLGİ] Veritabanının güncellenmiş ve temiz halini görmek için 1. adımdaki "TÜM LOKASYONLARI TARA" butonuna tekrar basın.`, "#00ccff");
+            
+            mismatchesToFix = []; 
         });
     </script>
 </body>
