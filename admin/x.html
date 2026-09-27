@@ -25,6 +25,7 @@
         .btn-play { background: #00ff00; color: #000; }
         .btn-pause { background: #ffbc00; color: #000; }
         .btn-stop { background: #ff3333; color: #fff; }
+        .btn-report { background: #9933ff; color: #fff; display: none; }
         .status-badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 900; letter-spacing: 1px; }
         .status-waiting { background: rgba(255,188,0,0.1); color: #ffbc00; border: 1px solid #ffbc00; }
         .status-running { background: rgba(0,255,0,0.1); color: #00ff00; border: 1px solid #00ff00; animation: pulseBorder 1.5s infinite alternate; }
@@ -75,18 +76,34 @@
             </div>
 
             <div class="card" style="border-color: #00ccff;">
-                <div class="card-header" style="color: #00ccff;">TOPLU LİSTE (EXCEL) VE KUYRUK OLUŞTURMA</div>
+                <div class="card-header" style="color: #00ccff;">1. AŞAMA: BARKOD (GTIN) GÜNCELLEME</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>EXCEL DOSYASI (Sütunlar: Kalem Kodu, GTIN)</label>
                         <input type="file" id="excel-upload" accept=".xlsx, .xls">
                         <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-top: 15px; border: 1px solid #333; padding: 10px; border-radius: 6px; background: #0a0a0a;">
-                            <input type="checkbox" id="force-overwrite-barcode" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: #00ccff;">
+                            <input type="checkbox" id="force-overwrite-barcode" style="width: 18px; height: 18px; cursor: pointer; accent-color: #00ccff;">
                             <label for="force-overwrite-barcode" style="color: #fff; cursor: pointer; font-size: 12px; margin: 0; text-transform: none;">Mevcut barkodların üzerine yaz (Zorunlu Güncelleme)</label>
                         </div>
                     </div>
                     <div class="form-group" style="justify-content: flex-end;">
-                        <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px;" id="btn-generate-queue">EKSİKLERİ BUL VE KUYRUĞA EKLE</button>
+                        <button class="btn-primary" style="background: #00ccff; color: #000; height: 42px;" id="btn-update-barcodes">SADECE BARKODLARI GÜNCELLE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-color: #ff3333;">
+                <div class="card-header" style="color: #ff3333;">2. AŞAMA: EKSİK GÖRSELLERİ KUYRUĞA AL</div>
+                <div class="form-grid">
+                    <div class="form-group" style="justify-content: center;">
+                        <div style="flex-direction: row; align-items: center; gap: 10px; border: 1px solid #333; padding: 10px; border-radius: 6px; background: #0a0a0a; margin-bottom: 10px; display: flex;">
+                            <input type="checkbox" id="force-refetch-images" style="width: 18px; height: 18px; cursor: pointer; accent-color: #ff3333;">
+                            <label for="force-refetch-images" style="color: #ff3333; cursor: pointer; font-size: 12px; margin: 0; text-transform: none; font-weight: bold;">Mevcut görselleri yok say ve tümünü baştan indir (Telegram temizlendiyse seçin)</label>
+                        </div>
+                        <span style="color:#aaa; font-size:12px; line-height: 1.5;">Kutucuk işaretlenmezse, sadece görseli olmayan veya hata almış ürünler kaldığı yerden kuyruğa eklenir.</span>
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn-primary" style="background: #ff3333; color: #fff; height: 42px;" id="btn-queue-missing">EKSİKLERİ BUL VE KUYRUĞA EKLE</button>
                     </div>
                 </div>
             </div>
@@ -135,6 +152,7 @@
                         <button class="btn-primary btn-play" id="btn-start-sync" onclick="toggleSync(true)"><i class="fa-solid fa-play"></i> BAŞLAT</button>
                         <button class="btn-primary btn-pause" id="btn-pause-sync" onclick="toggleSync(false)" style="display:none;"><i class="fa-solid fa-pause"></i> DURAKLAT</button>
                         <button class="btn-primary btn-stop" onclick="clearQueue()"><i class="fa-solid fa-trash"></i> KUYRUĞU SİL</button>
+                        <button class="btn-primary btn-report" id="btn-download-report" onclick="downloadReport()"><i class="fa-solid fa-file-lines"></i> RAPORU İNDİR</button>
                     </div>
                 </div>
 
@@ -163,6 +181,8 @@
         let totalInQueue = 0;
         let successCount = 0;
         let errorCount = 0;
+        
+        let reportData = { success: [], failed: [] };
 
         const terminal = document.getElementById('terminal');
         const writeLog = (msg, type = 'log-info') => {
@@ -259,7 +279,7 @@
             return "";
         };
 
-        document.getElementById('btn-generate-queue').addEventListener('click', () => {
+        document.getElementById('btn-update-barcodes').addEventListener('click', () => {
             const fileInput = document.getElementById('excel-upload');
             if (!fileInput.files[0]) {
                 writeLog("Lütfen bir Excel dosyası seçin.", "log-err");
@@ -296,14 +316,14 @@
                         let k = getCol(r, ["kalemkodu", "urunkodu", "ürünkodu", "kod"]);
                         let g = getCol(r, ["gtin", "barkod"]);
                         if (k && g) {
-                            excelMap[normalizeStr(k)] = String(g).replace(/[^0-9]/g, '');
+                            let gRaw = String(g).trim();
+                            let parts = gRaw.split(/[\s,;\n\/]+/);
+                            excelMap[normalizeStr(k)] = parts[0].replace(/[^0-9]/g, '');
                         }
                     });
 
                     let matchCount = 0;
-                    let queueAddCount = 0;
                     let barcodeUpdateCount = 0;
-                    const noImageSvgMarker = "GÖRSEL BULUNAMADI";
                     const forceOverwrite = document.getElementById('force-overwrite-barcode').checked;
 
                     for (const code in dbCatalog) {
@@ -346,30 +366,11 @@
                                     }, { merge: true }).catch(()=>{});
                                 }
                             }
-
-                            const needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
-                            
-                            if (needsImage) {
-                                if (!syncQueue.some(q => q.urunKodu === item.urunKodu)) {
-                                    syncQueue.push({
-                                        docId: item.docId,
-                                        urunKodu: item.urunKodu,
-                                        urunAdi: item.urunAdi,
-                                        refNo: item.refNo,
-                                        gtin: matchedGtin
-                                    });
-                                    queueAddCount++;
-                                }
-                            }
                         }
                     }
 
-                    totalInQueue = syncQueue.length;
-                    updateUIStats();
-                    writeLog(`Terminux ürünleri Excel üzerinden doğrulandı. Eşleşen kayıt: ${matchCount}`, "log-info");
+                    writeLog(`Excel taraması bitti. Veritabanı ile eşleşen kayıt: ${matchCount}`, "log-info");
                     writeLog(`Sistem genelinde GTIN barkodu güncellenen ürün: ${barcodeUpdateCount}`, "log-success");
-                    writeLog(`Görseli eksik olup kuyruğa eklenen ürün: ${queueAddCount}`, "log-success");
-
                     document.getElementById('excel-upload').value = '';
 
                 } catch (err) {
@@ -377,6 +378,55 @@
                 }
             };
             reader.readAsArrayBuffer(fileInput.files[0]);
+        });
+
+        document.getElementById('btn-queue-missing').addEventListener('click', () => {
+            if (Object.keys(dbCatalog).length === 0) {
+                writeLog("Önce veritabanını senkronize edin.", "log-err");
+                return;
+            }
+
+            writeLog("Veritabanı taranıyor... Kuyruk oluşturuluyor...", "log-warn");
+            let queueAddCount = 0;
+            const noImageSvgMarker = "GÖRSEL BULUNAMADI";
+            const forceRefetch = document.getElementById('force-refetch-images').checked;
+
+            for (const code in dbCatalog) {
+                const item = dbCatalog[code];
+                
+                const hasBarcode = item.barkod && item.barkod.trim() !== "" && item.barkod !== "-" && item.barkod !== "TANIMSIZ";
+                
+                let needsImage = false;
+                if (forceRefetch) {
+                    needsImage = true;
+                } else {
+                    needsImage = !item.utsGorseller || item.utsGorseller.length === 0 || item.utsGorseller.some(url => url.includes(noImageSvgMarker));
+                }
+
+                if (hasBarcode && needsImage) {
+                    if (!syncQueue.some(q => q.urunKodu === item.urunKodu)) {
+                        syncQueue.push({
+                            docId: item.docId,
+                            urunKodu: item.urunKodu,
+                            urunAdi: item.urunAdi,
+                            refNo: item.refNo,
+                            gtin: item.barkod
+                        });
+                        queueAddCount++;
+                    }
+                }
+            }
+
+            totalInQueue = syncQueue.length;
+            updateUIStats();
+            
+            if (queueAddCount > 0) {
+                writeLog(`Kuyruğa eklenen ürün sayısı: ${queueAddCount}`, "log-success");
+                document.getElementById('btn-download-report').style.display = 'none';
+                reportData = { success: [], failed: [] };
+            } else {
+                writeLog("Kuyruğa eklenecek ürün bulunamadı. Tüm ürünler güncel.", "log-info");
+            }
         });
 
         window.addSingleToQueue = () => {
@@ -393,7 +443,8 @@
                 return;
             }
 
-            let gtin = gtinRaw.replace(/[^0-9]/g, '');
+            let parts = gtinRaw.split(/[\s,;\n\/]+/);
+            let gtin = parts[0].replace(/[^0-9]/g, '');
             const item = dbCatalog[code];
 
             systemLocations.forEach(locId => {
@@ -435,6 +486,7 @@
             updateUIStats();
             document.getElementById('btn-start-sync').style.display = 'inline-block';
             document.getElementById('btn-pause-sync').style.display = 'none';
+            document.getElementById('btn-download-report').style.display = 'none';
             document.getElementById('sync-status-badge').className = 'status-badge status-waiting';
             document.getElementById('sync-status-badge').innerText = 'BEKLİYOR';
             document.getElementById('curr-name').innerText = '-';
@@ -454,6 +506,7 @@
             if (isSyncRunning) {
                 document.getElementById('btn-start-sync').style.display = 'none';
                 document.getElementById('btn-pause-sync').style.display = 'inline-block';
+                document.getElementById('btn-download-report').style.display = 'none';
                 document.getElementById('sync-status-badge').className = 'status-badge status-running';
                 document.getElementById('sync-status-badge').innerText = 'ÇALIŞIYOR';
                 writeLog("Senkronizasyon başlatıldı.", "log-success");
@@ -461,9 +514,10 @@
             } else {
                 document.getElementById('btn-start-sync').style.display = 'inline-block';
                 document.getElementById('btn-pause-sync').style.display = 'none';
+                document.getElementById('btn-download-report').style.display = 'inline-block';
                 document.getElementById('sync-status-badge').className = 'status-badge status-waiting';
                 document.getElementById('sync-status-badge').innerText = 'DURAKLATILDI';
-                writeLog("Senkronizasyon duraklatıldı.", "log-warn");
+                writeLog("Senkronizasyon duraklatıldı. Raporu indirebilirsiniz.", "log-warn");
             }
         };
 
@@ -481,10 +535,35 @@
             }
         };
 
+        window.downloadReport = () => {
+            let content = "TERMINUX GÖRSEL İNDİRME RAPORU\n";
+            content += "Oluşturulma: " + new Date().toLocaleString('tr-TR') + "\n";
+            content += "=========================================\n\n";
+            
+            content += "BAŞARILI AKTARIMLAR (" + reportData.success.length + ")\n";
+            content += "-----------------------------------------\n";
+            reportData.success.forEach(item => { content += `KOD: ${item.urunKodu} | BARKOD: ${item.gtin}\n`; });
+            
+            content += "\n\nGÖRSEL BULUNAMAYAN / HATALI (" + reportData.failed.length + ")\n";
+            content += "-----------------------------------------\n";
+            reportData.failed.forEach(item => { content += `KOD: ${item.urunKodu} | BARKOD: ${item.gtin}\n`; });
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Terminux_Gorsel_Raporu_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
         async function processQueue() {
             if (!isSyncRunning || syncQueue.length === 0) {
                 if (syncQueue.length === 0 && isSyncRunning) {
-                    writeLog("Kuyruk tamamlandı. Sistem duruyor.", "log-success");
+                    writeLog("Kuyruk tamamlandı. Sistem duruyor. Raporu indirebilirsiniz.", "log-success");
+                    document.getElementById('btn-download-report').style.display = 'inline-block';
                 }
                 isSyncRunning = false;
                 toggleSync(false);
@@ -496,11 +575,18 @@
             document.getElementById('curr-code').innerText = `KOD: ${currentItem.urunKodu} | GTIN: ${currentItem.gtin}`;
 
             try {
-                await fetchAndSaveImage(currentItem);
+                const fetchResult = await fetchAndSaveImage(currentItem);
                 successCount++;
-                writeLog(`[TAMAMLANDI] ${currentItem.urunKodu} başarıyla çekilip Global Kataloğa yazıldı.`, "log-success");
+                if (fetchResult === "found") {
+                    reportData.success.push(currentItem);
+                    writeLog(`[TAMAMLANDI] ${currentItem.urunKodu} başarıyla çekilip Global Kataloğa yazıldı.`, "log-success");
+                } else {
+                    reportData.failed.push(currentItem);
+                    writeLog(`[UYARI] ${currentItem.urunKodu} ÜTS'de tarandı ancak görsel bulunamadı.`, "log-warn");
+                }
             } catch (error) {
                 errorCount++;
+                reportData.failed.push(currentItem);
                 writeLog(`[HATA] ${currentItem.urunKodu}: ${error.message}`, "log-err");
             }
 
@@ -568,7 +654,9 @@
                         if (isDone) break;
                     }
                     
+                    let resultType = "found";
                     if (dbUrls.length === 0) {
+                        resultType = "notfound";
                         dbUrls.push("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E");
                     }
 
@@ -583,7 +671,7 @@
 
                     await setDoc(doc(db, "global_katalog", item.urunKodu), globalData, { merge: true });
 
-                    resolve();
+                    resolve(resultType);
 
                 } catch(e) {
                     reject(e);
