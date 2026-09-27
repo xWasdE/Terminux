@@ -582,17 +582,28 @@ window.fetchAndDisplayProduct = async (code) => {
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
-        const [anaDoc, amDoc] = await Promise.all([getDoc(doc(db, colAnaName, code)), getDoc(doc(db, colAmName, code))]);
+        const [anaDoc, amDoc, globalDoc] = await Promise.all([
+            getDoc(doc(db, colAnaName, code)), 
+            getDoc(doc(db, colAmName, code)),
+            getDoc(doc(db, "global_katalog", code))
+        ]);
 
-        if (anaDoc.exists() || amDoc.exists()) {
+        if (anaDoc.exists() || amDoc.exists() || globalDoc.exists()) {
             const anaData = anaDoc.exists() ? anaDoc.data() : null;
             const amData = amDoc.exists() ? amDoc.data() : null;
-            const baseData = anaData || amData; 
+            const globalData = globalDoc.exists() ? globalDoc.data() : null;
+            
+            const baseData = anaData || amData || globalData; 
+
+            const finalImages = (globalData && globalData.utsGorseller && globalData.utsGorseller.length > 0) 
+                                ? globalData.utsGorseller 
+                                : (baseData.utsGorseller || []);
 
             const mergedData = {
                 docId: code, urunKodu: code, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
-                surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", utsGorseller: baseData.utsGorseller || [],
+                surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", 
+                utsGorseller: finalImages,
                 minAlert: baseData.minAlert || 0, max: baseData.max || 0, hasAna: anaDoc.exists(), anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
                 anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-", anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
                 hasAm: amDoc.exists(), amMiktar: amData ? parseInt(amData.miktar) : 0, amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
@@ -627,7 +638,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div><div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">' + code + '</span></div></div>';
             }
         }
-    } catch (err) {}
+    } catch (err) { console.error(err); }
 };
 
 function renderCard(data) {
