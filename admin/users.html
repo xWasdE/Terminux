@@ -110,7 +110,7 @@
                     <label class="module-check"><input type="checkbox" id="mod-ayarlar" checked> Sistem Ayarları</label>
                 </div>
             </div>
-            <button class="btn-primary" id="btn-create-user" style="background:#00ff00; color:#000; width:100%; margin-top:20px;" onclick="createUser()">KULLANICIYI OLUŞTUR</button>
+            <button class="btn-primary" id="btn-create-user" style="background:#00ff00; color:#000; width:100%; margin-top:20px;">KULLANICIYI OLUŞTUR</button>
         </div>
     </div>
     
@@ -166,6 +166,10 @@
         let currentUserLoc = 'merkez';
         let currentUserEmail = '';
 
+        window.openAddUserModal = () => {
+            document.getElementById('add-modal').style.display = 'flex';
+        };
+
         window.showAccessDenied = () => {
             const gl = document.getElementById('global-loader');
             gl.innerHTML = '<div style="color:#ff3333; text-align:center;"><i class="fa-solid fa-triangle-exclamation" style="font-size:48px; margin-bottom:20px;"></i><div style="font-size:22px; font-weight:900; letter-spacing:1px;">ERİŞİM REDDEDİLDİ</div><div style="font-size:13px; color:#aaa; margin-top:10px;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.<br>Ana sayfaya yönlendiriliyorsunuz...</div></div>';
@@ -187,7 +191,6 @@
                     }
                 } catch(e) {}
 
-                // OWNER GÜVENLİK İSTİSNASI (Her Zaman Tam Yetkili)
                 if(currentUserEmail === 'admin@terminux.com.tr' || currentUserEmail.startsWith('admin@')) {
                     currentUserRole = 'owner';
                     currentUserLoc = 'tumu';
