@@ -304,7 +304,6 @@
                         modules = snap.data().modules || {};
                     }
 
-                    // TERMİNUX OWNER OVERRIDE - Asla dışarı atılmaz
                     if(user.email === 'admin@terminux.com.tr') {
                         role = 'superadmin';
                         uloc = 'tumu';
@@ -327,8 +326,9 @@
 
                     document.getElementById('global-loader').style.display = 'none';
 
+                    // HATANIN DÜZELTİLDİĞİ YER: docSnap yerine locSnap olarak çağırıldı
                     onSnapshot(doc(db, "system", "locations"), (locSnap) => {
-                        let locs = docSnap.exists() ? docSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
+                        let locs = locSnap.exists() ? locSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
                         if(role !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
                         let html = '';
                         locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
