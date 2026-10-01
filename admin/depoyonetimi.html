@@ -121,6 +121,10 @@
                     <div id="search-dropdown" class="autocomplete-dropdown"></div>
                 </div>
                 <div class="action-group">
+                    <input type="file" id="bulk-excel-file" accept=".xlsx, .xls" style="display:none;" onchange="handleBulkExcel(event)">
+                    <button class="btn-action" style="background:#ffbc00; color:#000;" onclick="document.getElementById('bulk-excel-file').click()"><i class="fa-solid fa-file-excel" style="margin-right:5px;"></i> EXCEL İLE STOK YÜKLE</button>
+                    <button class="btn-action" style="background:#333; color:#fff;" onclick="openLogsModal()"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i> İŞLEM GEÇMİŞİ</button>
+                    
                     <button id="btn-critical-report" class="btn-action" style="background: rgba(255,51,51,0.1); color: #ff3333; border: 1px solid rgba(255,51,51,0.3);" onclick="openReportModal('critical')">YAKLAŞAN MİAT</button>
                     <button class="btn-action" style="background:#444;" onclick="openReportModal('all')">TÜM MİAT RAPORU</button>
                     <button class="btn-action" style="background:#00ff00; color:#000;" onclick="openReportModal('stock')">TÜM STOK RAPORU</button>
@@ -151,6 +155,22 @@
     </div>
 
     <!-- Modals -->
+    <div id="logs-modal" class="modal">
+        <div class="modal-box" style="max-width: 800px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                <div style="font-size:18px; font-weight:900; color:#fff;">GÜNLÜK İŞLEM LOGLARI</div>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('logs-modal')">×</button>
+            </div>
+            <div style="margin-bottom:15px; display:flex; gap:10px; align-items:center;">
+                <input type="date" id="log-date" class="search-input" style="width:auto;">
+                <button class="btn-primary" style="padding:10px 20px;" onclick="fetchLogs()">GETİR</button>
+            </div>
+            <div style="max-height:400px; overflow-y:auto; background:#050505; border:1px solid #222; border-radius:6px; padding:10px;" id="logs-container">
+                <!-- Logs will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <div id="shelf-modal" class="modal">
         <div class="modal-box" id="shelf-modal-box">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
@@ -326,7 +346,6 @@
 
                     document.getElementById('global-loader').style.display = 'none';
 
-                    // HATANIN DÜZELTİLDİĞİ YER: docSnap yerine locSnap olarak çağırıldı
                     onSnapshot(doc(db, "system", "locations"), (locSnap) => {
                         let locs = locSnap.exists() ? locSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
                         if(role !== 'superadmin' && uloc !== 'tumu') locs = locs.filter(l => l.id === uloc);
@@ -391,6 +410,123 @@
                     })
                 }, { merge: true });
             } catch (e) { console.error("Log hatası:", e); }
+        };
+
+        // EXCEL İLE TOPLU YÜKLEME FONKSİYONU
+        window.handleBulkExcel = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('global-loader').style.display = 'flex';
+            document.getElementById('global-loader').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; margin-bottom: 15px; color:#ffbc00;"></i><div style="font-weight:bold;">EXCEL VERİLERİ İŞLENİYOR...</div>';
+            
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    const loc = getActiveLoc();
+                    const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+                    
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for(let row of rows) {
+                        let rawAdres = String(row['Adres'] || row['adres'] || row['ADRES'] || '').trim();
+                        // Akıllı Adres Düzeltme (Baştaki Harfleri Siler: Örn: BDA12.01.01 -> 12.01.01)
+                        let parsedAdres = rawAdres.replace(/^[a-zA-Z]+/g, '').trim(); 
+                        
+                        let code = String(row['Ürün Kodu'] || row['ürün kodu'] || row['urun kodu'] || row['Kod'] || '').trim();
+                        let name = String(row['Ürün İsmi'] || row['ürün ismi'] || row['Ürün Adı'] || row['urun adi'] || '').trim();
+                        let qty = parseInt(row['Stok'] || row['stok'] || row['Miktar'] || row['miktar']) || 0;
+                        let miat = String(row['Miat'] || row['miat'] || row['MİAT'] || '31.12.2099').trim(); // Miat yoksa varsayılan
+                        
+                        if(!code || qty <= 0 || !parsedAdres) {
+                            errorCount++;
+                            continue;
+                        }
+                        
+                        // Sisteme kayıtlı raf id'sini adresten bul (Örn: "12.01.01" -> "shelf-1-1")
+                        let targetShelfId = Object.keys(addresses).find(k => addresses[k] === parsedAdres);
+                        if(!targetShelfId) {
+                            targetShelfId = "UNKNOWN_" + parsedAdres; 
+                        }
+                        
+                        const docId = targetShelfId + '_' + code;
+                        const existing = roomStock[docId];
+                        let lots = existing ? { ...existing.lots } : {};
+                        lots[miat] = (lots[miat] || 0) + qty;
+                        
+                        await setDoc(doc(db, col, docId), {
+                            shelfId: targetShelfId,
+                            urunKodu: code,
+                            urunAdi: name || "İsimsiz Ürün",
+                            adres: parsedAdres,
+                            lots: lots
+                        }, { merge: true });
+                        
+                        await logOperation("TOPLU EXCEL EKLEME", code, name, qty, miat, targetShelfId);
+                        successCount++;
+                    }
+                    
+                    showCustomAlert("İŞLEM TAMAMLANDI", `${successCount} adet ürün başarıyla eklendi/güncellendi. ${errorCount} adet hatalı veya eksik satır atlandı.`);
+                    
+                } catch (err) {
+                    console.error(err);
+                    showCustomAlert("HATA", "Excel dosyası okunurken bir hata oluştu.");
+                }
+                
+                document.getElementById('bulk-excel-file').value = '';
+                document.getElementById('global-loader').style.display = 'none';
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        // GÜNLÜK İŞLEM LOGLARI FONKSİYONU
+        window.openLogsModal = () => {
+            document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('logs-modal').style.display = 'flex';
+            fetchLogs();
+        };
+
+        window.fetchLogs = async () => {
+            const dateStr = document.getElementById('log-date').value;
+            if(!dateStr) return;
+            const loc = getActiveLoc();
+            const logCol = loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Yükleniyor...</div>';
+            
+            try {
+                const snap = await getDoc(doc(db, logCol, dateStr));
+                if(snap.exists() && snap.data().kayitlar) {
+                    const logs = snap.data().kayitlar.reverse();
+                    if(logs.length === 0) {
+                        container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Bu tarihte işlem kaydı bulunmuyor.</div>';
+                        return;
+                    }
+                    container.innerHTML = logs.map(l => `
+                        <div style="background:#111; border:1px solid #222; padding:10px; border-radius:6px; margin-bottom:8px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:4px;">
+                                <span style="color:#00ccff; font-weight:bold;">${l.tip}</span>
+                                <span style="color:#888;">${l.saat} | ${l.user}</span>
+                            </div>
+                            <div style="color:#fff;"><strong style="color:#ffbc00;">${l.urunKodu}</strong> - ${l.urunAdi}</div>
+                            <div style="display:flex; gap:10px; color:#aaa; flex-wrap:wrap;">
+                                <span>Miktar: <strong style="color:#00ff00;">${l.miktar}</strong></span>
+                                <span>Miat: <strong style="color:#fff;">${l.miat}</strong></span>
+                                <span>Raf Adresi: <strong style="color:#ff3333;">${l.raf}</strong></span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Bu tarihte işlem kaydı bulunmuyor.</div>';
+                }
+            } catch(e) {
+                container.innerHTML = '<div style="color:#ff3333; text-align:center; padding:20px;">Loglar çekilirken hata oluştu.</div>';
+            }
         };
 
         const initMap = () => {
