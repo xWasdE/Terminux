@@ -582,19 +582,24 @@ window.fetchAndDisplayProduct = async (code) => {
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
-        const [anaDoc, amDoc, globalDoc] = await Promise.all([
+        const [anaDoc, amDoc] = await Promise.all([
             getDoc(doc(db, colAnaName, code)), 
-            getDoc(doc(db, colAmName, code)),
-            getDoc(doc(db, "global_katalog", code))
+            getDoc(doc(db, colAmName, code))
         ]);
 
-        if (anaDoc.exists() || amDoc.exists() || globalDoc.exists()) {
-            const anaData = anaDoc.exists() ? anaDoc.data() : null;
-            const amData = amDoc.exists() ? amDoc.data() : null;
-            const globalData = globalDoc.exists() ? globalDoc.data() : null;
-            
-            const baseData = anaData || amData || globalData; 
+        const anaData = anaDoc.exists() ? anaDoc.data() : null;
+        const amData = amDoc.exists() ? amDoc.data() : null;
+        const baseData = anaData || amData; 
 
+        if (baseData) {
+            let targetCode = baseData.urunKodu || code;
+            let globalDoc = await getDoc(doc(db, "global_katalog", targetCode));
+            
+            if (!globalDoc.exists() && targetCode !== code) {
+                globalDoc = await getDoc(doc(db, "global_katalog", code));
+            }
+            
+            const globalData = globalDoc.exists() ? globalDoc.data() : null;
             let finalImages = [];
             
             if (globalData && globalData.utsGorseller && globalData.utsGorseller.length > 0) {
@@ -608,7 +613,7 @@ window.fetchAndDisplayProduct = async (code) => {
             }
 
             const mergedData = {
-                docId: code, urunKodu: code, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
+                docId: code, urunKodu: targetCode, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
                 surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", 
                 utsGorseller: finalImages, 
