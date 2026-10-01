@@ -595,15 +595,23 @@ window.fetchAndDisplayProduct = async (code) => {
             
             const baseData = anaData || amData || globalData; 
 
-            const finalImages = (globalData && globalData.utsGorseller && globalData.utsGorseller.length > 0) 
-                                ? globalData.utsGorseller 
-                                : (baseData.utsGorseller || []);
+            let finalImages = [];
+            
+            if (globalData && globalData.utsGorseller && globalData.utsGorseller.length > 0) {
+                const isValid = !globalData.utsGorseller.some(url => url.includes("GÖRSEL BULUNAMADI") || url.includes("no-image") || url.includes("svg+xml"));
+                if (isValid) finalImages = globalData.utsGorseller;
+            }
+            
+            if (finalImages.length === 0 && baseData.utsGorseller && baseData.utsGorseller.length > 0) {
+                const isValid = !baseData.utsGorseller.some(url => url.includes("GÖRSEL BULUNAMADI") || url.includes("no-image") || url.includes("svg+xml"));
+                if (isValid) finalImages = baseData.utsGorseller;
+            }
 
             const mergedData = {
                 docId: code, urunKodu: code, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
                 surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", 
-                utsGorseller: finalImages,
+                utsGorseller: finalImages, 
                 minAlert: baseData.minAlert || 0, max: baseData.max || 0, hasAna: anaDoc.exists(), anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
                 anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-", anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
                 hasAm: amDoc.exists(), amMiktar: amData ? parseInt(amData.miktar) : 0, amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
@@ -628,7 +636,7 @@ window.fetchAndDisplayProduct = async (code) => {
             if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-                if (!mergedData.utsGorseller || mergedData.utsGorseller.length === 0 || mergedData.utsGorseller.indexOf(noImageSvg) !== -1) {
+                if (finalImages.length === 0) {
                     window.autoFetchCentral(mergedData, targetBarcode);
                 }
             }
