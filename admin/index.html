@@ -176,8 +176,6 @@
                 }
 
                 if(role !== 'owner' && role !== 'superadmin') {
-                    document.getElementById('nav-users').style.display = 'none';
-                    document.getElementById('feat-users').style.display = 'none';
                     
                     if(!modules.adres) document.getElementById('nav-adres').style.display = 'none';
                     if(!modules.stok) {
