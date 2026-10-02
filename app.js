@@ -194,20 +194,22 @@ onAuthStateChanged(auth, async (user) => {
                 if (ud.role === 'superadmin' || ud.location === 'tumu') {
                     if(locSelector) {
                         locSelector.style.display = 'inline-block';
-                        getDoc(doc(db, "system", "locations")).then(docSnap => {
+                        try {
+                            const docSnap = await getDoc(doc(db, "system", "locations"));
                             let locs = docSnap.exists() ? docSnap.data().list || [{id:'bodrum', name:'Bodrum Depo'}] : [{id:'bodrum', name:'Bodrum Depo'}];
                             let html = '';
                             locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
                             locSelector.innerHTML = html;
                             locSelector.value = localStorage.getItem('active_loc') || 'bodrum';
-                        });
+                        } catch(err) { console.error(err); }
                     }
                     if(opLoc) opLoc.style.display = 'none';
                 } else {
                     if(locSelector) locSelector.style.display = 'none';
                     localStorage.setItem('active_loc', ud.location || 'bodrum');
                     if(opLoc) {
-                        getDoc(doc(db, "system", "locations")).then(snap => {
+                        try {
+                            const snap = await getDoc(doc(db, "system", "locations"));
                             let locName = (ud.location || 'BODRUM').toUpperCase();
                             if(snap.exists()) {
                                 const list = snap.data().list || [];
@@ -216,7 +218,7 @@ onAuthStateChanged(auth, async (user) => {
                             }
                             opLoc.innerText = locName;
                             opLoc.style.display = 'inline-block';
-                        });
+                        } catch(err) {}
                     }
                 }
                 
@@ -233,7 +235,7 @@ onAuthStateChanged(auth, async (user) => {
                     }
                 }, (error) => {});
 
-                buildCatalog().then(() => { if(searchInput) searchInput.focus(); });
+                buildCatalog(true).then(() => { if(searchInput) searchInput.focus(); });
                 return;
             }
         } catch(e) {}
@@ -445,13 +447,13 @@ window.autoFetchCentral = async (data, barkod) => {
             }
         }
     } catch(e) {
-        if (statusEl) statusEl.innerHTML = '<span style="color:#ff3333;">Sistem Hatası: Arka plan servisine ulaşılamadı.</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00; font-size:13px; font-weight:bold;">Görsel isteğiniz yöneticiye bildirildi, en kısa sürede eklenecektir. (Sunucu Kapalı)</span>';
         return;
     }
 
     if (dbUrls.length === 0) {
         dbUrls.push(noImageSvg);
-        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00;">Sistemde kayıtlı görsel bulunamadı.</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00; font-size:13px; font-weight:bold;">Görsel bulunamadı, isteğiniz yöneticiye bildirildi.</span>';
     } else {
         if (statusEl) {
             statusEl.innerHTML = '<span style="color:#00ff00;">✅ Görseller başarıyla hazırlandı! Ekrana yansıtılıyor...</span>';
@@ -667,6 +669,7 @@ function renderCard(data) {
 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     const hasValidBarcode = data.barkod && invalidCodes.indexOf(data.barkod) === -1;
+    const isKurumaOzel = hasValidBarcode && (data.barkod === data.urunKodu);
 
     const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc');
     const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
@@ -693,10 +696,12 @@ function renderCard(data) {
                 if(imgEl) loadTelegramImage(imgEl, url, index);
             });
         }, 100);
+    } else if (isKurumaOzel) {
+        gorselHTML = '<div style="color:#ffbc00; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;">BU ÜRÜN KURUMA ÖZELDİR, GÖRSEL BULUNMAMAKTADIR.</div>';
     } else if (hasValidBarcode) {
         gorselHTML = '<div style="color:#00ccff; font-size:12px; font-weight:bold; padding: 10px 0; width:100%;">Senkronizasyon Bekleniyor...</div>';
     } else {
-        gorselHTML = '<div style="width: 100px; height: 100px; background: #111; border: 1px dashed #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; font-weight: bold; text-align: center; line-height:1.4;">BARKOD<br>GEREKLİ</div>';
+        gorselHTML = '<div style="display:flex; flex-direction:column; gap:10px;"><div style="width: 100px; height: 100px; background: #111; border: 1px dashed #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 11px; font-weight: bold; text-align: center; line-height:1.4;">BARKOD<br>YOK</div><div style="color:#ff3333; font-size:12px; font-weight:bold;">GÖRSEL EŞLEŞMESİ İÇİN LÜTFEN BARKOD GİRİNİZ.</div></div>';
     }
 
     let sAnaHTML = '';
