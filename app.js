@@ -114,9 +114,11 @@ async function loadTelegramImage(imgElement, fileId, index) {
         imgElement.src = fileId; window.lightboxImages[index] = fileId;
         imgElement.onclick = () => openLightbox(index); return;
     }
-    let fullUrl = MERKEZ_API_ADRESI + '/api/telegram-image?file_id=' + fileId + '&cb=' + new Date().getTime();
+    
+    let fullUrl = 'https://terminux-cdn.u-keserbi.workers.dev/?file_id=' + fileId;
+    
     try {
-        const response = await fetch(fullUrl, { headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" } });
+        const response = await fetch(fullUrl);
         if (!response.ok) throw new Error("Ağ Hatası");
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
