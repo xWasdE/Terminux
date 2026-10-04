@@ -16,7 +16,7 @@
         .btn-upload:hover { background: #fff; box-shadow: 0 0 15px rgba(0,255,0,0.5); }
         .btn-upload:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; }
         #log-area { margin-top: 20px; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #222; font-family: monospace; font-size: 12px; height: 150px; overflow-y: auto; color: #aaa; }
-        .success { color: #00ff00; } .error { color: #ff3333; } .info { color: #00ccff; }
+        .success { color: #00ff00; } .error { color: #ff3333; } .info { color: #00ccff; } .warning { color: #ffbc00; }
     </style>
 </head>
 <body>
@@ -45,7 +45,6 @@
     </div>
 
     <script type="module">
-        // Admin klasöründe olduğumuz için core-auth.js yerine admin.js çağrılıyor.
         import { db } from './admin.js';
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -58,7 +57,7 @@
         const readExcel = (fileId) => {
             return new Promise((resolve, reject) => {
                 const file = document.getElementById(fileId).files[0];
-                if (!file) { resolve([]); return; } // Opsiyonel dosya seçilmediyse boş dizi döner, sistemi kitlemez.
+                if (!file) { resolve([]); return; }
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -80,7 +79,6 @@
             return foundKey ? row[foundKey] : null;
         };
 
-        // Tuş dinleyicisi modül içine entegre edildi
         document.getElementById('btn-process').addEventListener('click', async () => {
             const btn = document.getElementById('btn-process');
             btn.disabled = true;
@@ -102,6 +100,7 @@
                 log(`Okunan Satırlar -> Adres: ${adresRows.length}, Sayım: ${sayimRows.length}, Miat: ${miatRows.length}`);
 
                 const mergedData = {};
+                let eksikAdresSayisi = 0;
 
                 // ADRES DOSYASINI İŞLE
                 adresRows.forEach(row => {
@@ -109,17 +108,18 @@
                     let rawAdres = getNormalizedKey(row, ['stok adresi', 'adres']);
                     let rawName = getNormalizedKey(row, ['ürün adı', 'ürün ismi', 'urun adi']);
 
-                    if (rawCode && rawAdres) {
+                    if (rawCode) {
                         let code = String(rawCode).trim();
-                        let adres = String(rawAdres).replace(/^BDA/i, '').trim(); 
-                        
-                        mergedData[code] = {
-                            urunKodu: code,
-                            urunAdi: rawName ? String(rawName).trim() : "İsimsiz Ürün",
-                            adres: adres,
-                            qty: 0,
-                            miat: '31.12.2099'
-                        };
+                        if (rawAdres && String(rawAdres).trim() !== "") {
+                            let adres = String(rawAdres).replace(/^BDA/i, '').trim(); 
+                            mergedData[code] = {
+                                urunKodu: code,
+                                urunAdi: rawName ? String(rawName).trim() : "İsimsiz Ürün",
+                                adres: adres,
+                                qty: 0,
+                                miat: '31.12.2099'
+                            };
+                        }
                     }
                 });
 
@@ -128,15 +128,19 @@
                     let rawCode = getNormalizedKey(row, ['ürün kodu', 'urun kodu', 'kod']);
                     let rawQty = getNormalizedKey(row, ['sayım', 'sayim', 'stok', 'miktar']);
 
-                    if (rawCode) {
+                    if (rawCode && rawQty) {
                         let code = String(rawCode).trim();
                         if (mergedData[code]) {
                             mergedData[code].qty += parseInt(rawQty) || 0;
                         } else {
-                            log(`Uyarı: Sayım dosyasındaki ${code} kodu adres dosyasında bulunamadı. Atlandı.`, "error");
+                            eksikAdresSayisi++;
                         }
                     }
                 });
+
+                if (eksikAdresSayisi > 0) {
+                    log(`BİLGİ: Sayım dosyasındaki ${eksikAdresSayisi} adet ürün, Adres dosyasında adresi boş (veya hiç olmadığı) için bilinçli olarak atlandı.`, "warning");
+                }
 
                 // MİAT DOSYASINI İŞLE (VARSA)
                 miatRows.forEach(row => {
