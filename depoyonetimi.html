@@ -114,13 +114,6 @@
     </header>
 
     <div class="toolbar">
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-right: 15px;">
-            <span style="color:#00ff00; font-size:11px; font-weight:900;">DEPO:</span>
-            <select id="user-depo-tipi" style="background:#111; color:#00ff00; border:1px solid #333; padding:10px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:140px;">
-                <option value="ana">ANA DEPO</option>
-                <option value="am">AMELİYATHANE</option>
-            </select>
-        </div>
         <div class="search-wrapper">
             <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
             <div id="search-dropdown" class="autocomplete-dropdown"></div>
@@ -195,14 +188,6 @@
         </div>
     </div>
 
-    <div id="custom-alert" class="modal" style="z-index:30000;">
-        <div class="modal-box" style="max-width:400px; text-align:center;">
-            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
-            <p id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</p>
-            <button class="btn-primary" style="background:#fff; color:#000; width:100%;" onclick="closeModal('custom-alert')">TAMAM</button>
-        </div>
-    </div>
-
     <script type="module">
         import { db, auth, onAuthStateChanged } from './core-auth.js';
         import { collection, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -228,12 +213,8 @@
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
             
-            const tip = document.getElementById('user-depo-tipi') ? document.getElementById('user-depo-tipi').value : 'ana';
-            if (tip === 'am') {
-                return activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
-            } else {
-                return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
-            }
+            // Kullanıcı paneli her zaman sadece Ameliyathane veritabanına bakar
+            return activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
         };
 
         const initMap = () => {
@@ -272,10 +253,6 @@
             });
         };
 
-        document.getElementById('user-depo-tipi').addEventListener('change', () => {
-            loadData();
-        });
-
         const updateMapAddresses = () => {
             for(let i=1; i<=8; i++) {
                 for(let j=1; j<=5; j++) {
@@ -289,7 +266,7 @@
         };
 
         const getDaysDiff = (dateStr) => {
-            if(!dateStr) return 9999;
+            if(!dateStr || dateStr === '31.12.2099') return 9999;
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
@@ -307,8 +284,10 @@
                 if(!sId) continue;
                 let worstDays = 9999;
                 for(let miat in roomStock[key].lots) {
-                    const days = getDaysDiff(miat);
-                    if(days < worstDays) worstDays = days;
+                    if (miat !== '31.12.2099') {
+                        const days = getDaysDiff(miat);
+                        if(days < worstDays) worstDays = days;
+                    }
                 }
                 if(!shelfWorstMiat[sId] || worstDays < shelfWorstMiat[sId]) shelfWorstMiat[sId] = worstDays;
             }
@@ -328,7 +307,11 @@
 
         const checkCriticalMiats = () => {
             let criticalCount = 0;
-            for(let key in roomStock) { for(let miat in roomStock[key].lots) { if(getDaysDiff(miat) <= 180) criticalCount++; } }
+            for(let key in roomStock) { 
+                for(let miat in roomStock[key].lots) { 
+                    if(miat !== '31.12.2099' && getDaysDiff(miat) <= 180) criticalCount++; 
+                } 
+            }
             const btn = document.getElementById('btn-critical-report');
             if(criticalCount > 0) { btn.style.animation = 'flashBtn 0.8s infinite alternate'; btn.innerText = 'YAKLAŞAN MİAT (' + criticalCount + ')'; }
             else { btn.style.animation = 'none'; btn.innerText = 'YAKLAŞAN MİAT'; }
@@ -357,8 +340,11 @@
                 let sortedMiats = Object.keys(item.lots).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
                 sortedMiats.forEach(m => {
                     const days = getDaysDiff(m);
-                    let color = days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00');
-                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + m + ' <span style="font-size:9px; color:#aaa;">(' + days + ' gün)</span></div><div class="lot-qty">' + item.lots[m] + ' ADET</div></div>';
+                    let color = m === '31.12.2099' ? '#00ff00' : (days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00'));
+                    let displayMiat = m === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : m;
+                    let displayDays = m === '31.12.2099' ? 'Süresiz' : days + ' gün';
+                    
+                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + displayMiat + ' <span style="font-size:9px; color:#aaa;">(' + displayDays + ')</span></div><div class="lot-qty">' + item.lots[m] + ' ADET</div></div>';
                 });
                 html += '<div class="stock-item"><div class="stock-header"><div><div class="stock-name">' + item.urunAdi + '</div><div class="stock-code">' + item.urunKodu + '</div></div></div>' + lotsHtml + '</div>';
             });
@@ -411,13 +397,16 @@
                 for(let key in roomStock) {
                     for(let miat in roomStock[key].lots) {
                         const days = getDaysDiff(miat);
-                        if(type === 'all' || days <= 180) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
+                        if(type === 'all' || (miat !== '31.12.2099' && days <= 180)) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
                     }
                 }
                 rows.sort((a,b) => a.code === b.code ? a.days - b.days : a.code.localeCompare(b.code));
                 tbody.innerHTML = rows.map(r => {
                     let c = r.days <= 30 ? '#ff0000' : (r.days <= 60 ? '#ff4500' : (r.days <= 90 ? '#ff8c00' : (r.days <= 180 ? '#ffbc00' : '#00ff00')));
-                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + r.miat + '</td><td style="font-weight:900; color:' + c + ';">' + r.days + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
+                    let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
+                    if(r.miat === '31.12.2099') c = '#00ff00';
+                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + dMiat + '</td><td style="font-weight:900; color:' + c + ';">' + dDays + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
                 }).join('');
             } else if (type === 'stock') {
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>TOPLAM MİKTAR</th></tr>';
@@ -440,7 +429,9 @@
                 if(window.currentReportType === 'stock') {
                     return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "TOPLAM MİKTAR": r.qty };
                 } else {
-                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "MİAT": r.miat, "KALAN GÜN": r.days, "MİKTAR": r.qty };
+                    let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
+                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "MİAT": dMiat, "KALAN GÜN": dDays, "MİKTAR": r.qty };
                 }
             });
             const ws = XLSX.utils.json_to_sheet(mappedData);
@@ -465,7 +456,9 @@
                 if(window.currentReportType === 'stock') {
                     return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.qty)];
                 } else {
-                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.miat), replaceTR(r.days), replaceTR(r.qty)];
+                    let dMiat = r.miat === '31.12.2099' ? 'BELIRTILMEDI' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Suresiz' : r.days;
+                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(dMiat), replaceTR(dDays), replaceTR(r.qty)];
                 }
             });
 
