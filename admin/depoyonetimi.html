@@ -78,7 +78,7 @@
         .btn-download-pdf:hover { background: #ff3333; color: #fff; box-shadow: 0 0 10px rgba(255,51,51,0.5); }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
         
         #global-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #00ccff; font-weight: 900; font-size: 16px; }
     </style>
@@ -193,7 +193,7 @@
     </div>
 
     <div id="add-stock-modal" class="modal">
-        <div class="modal-box" id="add-stock-modal-box" style="overflow:visible;">
+        <div class="modal-box" id="add-stock-modal-box" style="max-width:600px; overflow:visible;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
                 <div style="font-size:18px; font-weight:900; color:#fff;">STOK EKLE</div>
                 <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('add-stock-modal')">×</button>
@@ -301,6 +301,7 @@
         let activeShelfId = null;
         let unsubAdres = null;
         let unsubStok = null;
+        let urlProcessed = false;
 
         window.showAccessDenied = () => {
             const gl = document.getElementById('global-loader');
@@ -315,12 +316,12 @@
 
         const getActiveCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
+            return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
         };
 
         const getActiveLogCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
+            return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -578,6 +579,19 @@
                 updateMapColors();
                 checkCriticalMiats();
                 if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
+                
+                // URL Parametre Kontrolü (QR Okutulduğunda Otomatik Açılış İçin)
+                if(!urlProcessed) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const qrParam = urlParams.get('qr');
+                    if (qrParam === 'master') {
+                        setTimeout(() => openReportModal('stock'), 500);
+                    } else if (qrParam && qrParam.startsWith('aisle_')) {
+                        const aisleNum = qrParam.split('_')[1];
+                        setTimeout(() => window.openReportModal('aisle', aisleNum), 500);
+                    }
+                    urlProcessed = true;
+                }
             });
         };
 
@@ -595,7 +609,6 @@
 
         const getDaysDiff = (dateStr) => {
             if(!dateStr || dateStr === '31.12.2099') return 9999;
-            
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
@@ -604,7 +617,6 @@
                     if(parts.length !== 3) return 9999;
                 }
             }
-            
             let formattedDateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
             return Math.ceil((new Date(formattedDateStr) - new Date()) / (1000 * 60 * 60 * 24));
         };
@@ -854,18 +866,18 @@
             shelf.style.animation = 'flash30 0.3s 6 alternate'; setTimeout(() => { shelf.style.animation = ''; updateMapColors(); }, 1800);
         };
 
-        window.openReportModal = (type) => {
+        window.openReportModal = (type, param = null) => {
             const thead = document.getElementById('report-thead');
             const titleEl = document.getElementById('report-title');
             let rows = [];
             window.currentReportType = type;
             
-            if(type === 'critical') { titleEl.innerText = 'YAKLAŞAN MİAT RAPORU (< 180 GÜN)'; titleEl.style.color = '#ff3333'; }
-            else if (type === 'all') { titleEl.innerText = 'TÜM MİAT RAPORU'; titleEl.style.color = '#fff'; }
-            else if (type === 'stock') { titleEl.innerText = 'TÜM STOK RAPORU'; titleEl.style.color = '#00ff00'; }
+            if(type === 'critical') { titleEl.innerText = 'YAKLAŞAN MİAT RAPORU (< 180 GÜN)'; titleEl.style.color = '#ff3333'; document.getElementById('sort-btn-container').style.display = 'none'; }
+            else if (type === 'all') { titleEl.innerText = 'TÜM MİAT RAPORU'; titleEl.style.color = '#fff'; document.getElementById('sort-btn-container').style.display = 'none'; }
+            else if (type === 'stock') { titleEl.innerText = 'TÜM STOK RAPORU'; titleEl.style.color = '#00ff00'; document.getElementById('sort-btn-container').style.display = 'flex'; }
+            else if (type === 'aisle') { titleEl.innerText = 'REYON ' + param + ' STOK RAPORU'; titleEl.style.color = '#00ccff'; document.getElementById('sort-btn-container').style.display = 'flex'; }
 
             if (type === 'critical' || type === 'all') {
-                document.getElementById('sort-btn-container').style.display = 'none';
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr>';
                 for(let key in roomStock) {
                     for(let miat in roomStock[key].lots) {
@@ -878,10 +890,11 @@
                     if (b.miat === '31.12.2099') return -1;
                     return a.days - b.days;
                 });
-            } else if (type === 'stock') {
-                document.getElementById('sort-btn-container').style.display = 'flex';
+            } else if (type === 'stock' || type === 'aisle') {
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>EN YAKIN MİAT</th><th>TOPLAM MİKTAR</th></tr>';
                 for(let key in roomStock) {
+                    if (type === 'aisle' && !(roomStock[key].shelfId && roomStock[key].shelfId.startsWith('shelf-' + param + '-'))) continue;
+                    
                     let totalQty = 0;
                     let minDays = 99999;
                     let minMiat = '31.12.2099';
@@ -940,7 +953,7 @@
         window.exportReportExcel = () => {
             if(!window.currentReportData || window.currentReportData.length === 0) return;
             const mappedData = window.currentReportData.map(r => {
-                if(window.currentReportType === 'stock') {
+                if(window.currentReportType === 'stock' || window.currentReportType === 'aisle') {
                     let dMiat = r.closestMiat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.closestMiat;
                     return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "EN YAKIN MİAT": dMiat, "TOPLAM MİKTAR": r.qty };
                 } else {
@@ -963,12 +976,12 @@
             const trMap = { 'ç':'c', 'ğ':'g', 'ı':'i', 'i':'i', 'ö':'o', 'ş':'s', 'ü':'u', 'Ç':'C', 'Ğ':'G', 'İ':'I', 'I':'I', 'Ö':'O', 'Ş':'S', 'Ü':'U' };
             const replaceTR = (text) => text ? String(text).replace(/[çğıiöşüÇĞİIÖŞÜ]/g, m => trMap[m]) : '';
 
-            let head = window.currentReportType === 'stock' 
+            let head = (window.currentReportType === 'stock' || window.currentReportType === 'aisle')
                 ? [['URUN KODU', 'URUN ISMI', 'ADRES', 'EN YAKIN MIAT', 'TOPLAM MIKTAR']] 
                 : [['URUN KODU', 'URUN ISMI', 'ADRES', 'MIAT', 'KALAN GUN', 'MIKTAR']];
 
             let body = window.currentReportData.map(r => {
-                if(window.currentReportType === 'stock') {
+                if(window.currentReportType === 'stock' || window.currentReportType === 'aisle') {
                     let dMiat = r.closestMiat === '31.12.2099' ? 'BELIRTILMEDI' : r.closestMiat;
                     return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(dMiat), replaceTR(r.qty)];
                 } else {
@@ -983,11 +996,11 @@
             doc.save("terminux_rapor.pdf");
         };
 
-        window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
+        window.openMasterQR = () => { generateQR("https://terminux.com.tr/admin/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
         
         window.generateAisleQR = (aisleNum, e) => { 
             e.stopPropagation(); 
-            generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
+            generateQR("https://terminux.com.tr/admin/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
         };
         
         const generateQR = (val, label) => {
