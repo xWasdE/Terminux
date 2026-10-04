@@ -315,12 +315,12 @@
 
         const getActiveCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
         };
 
         const getActiveLogCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+            return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -873,7 +873,11 @@
                         if(type === 'all' || (miat !== '31.12.2099' && days <= 180)) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
                     }
                 }
-                rows.sort((a,b) => a.days - b.days);
+                rows.sort((a,b) => {
+                    if (a.miat === '31.12.2099') return 1;
+                    if (b.miat === '31.12.2099') return -1;
+                    return a.days - b.days;
+                });
             } else if (type === 'stock') {
                 document.getElementById('sort-btn-container').style.display = 'flex';
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>EN YAKIN MİAT</th><th>TOPLAM MİKTAR</th></tr>';
@@ -884,7 +888,7 @@
                     for(let miat in roomStock[key].lots) {
                         totalQty += roomStock[key].lots[miat];
                         const d = getDaysDiff(miat);
-                        if (d < minDays) {
+                        if (miat !== '31.12.2099' && d < minDays) {
                             minDays = d;
                             minMiat = miat;
                         }
@@ -904,7 +908,11 @@
             if (sortType === 'qty') {
                 window.currentReportData.sort((a,b) => b.qty - a.qty);
             } else if (sortType === 'miat') {
-                window.currentReportData.sort((a,b) => a.closestDays - b.closestDays);
+                window.currentReportData.sort((a,b) => {
+                    if(a.closestMiat === '31.12.2099') return 1;
+                    if(b.closestMiat === '31.12.2099') return -1;
+                    return a.closestDays - b.closestDays;
+                });
             }
             renderReportTableBody();
         };
