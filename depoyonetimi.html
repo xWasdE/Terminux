@@ -114,6 +114,13 @@
     </header>
 
     <div class="toolbar">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-right: 15px;">
+            <span style="color:#00ff00; font-size:11px; font-weight:900;">DEPO:</span>
+            <select id="user-depo-tipi" style="background:#111; color:#00ff00; border:1px solid #333; padding:10px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:140px;">
+                <option value="ana">ANA DEPO</option>
+                <option value="am">AMELİYATHANE</option>
+            </select>
+        </div>
         <div class="search-wrapper">
             <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
             <div id="search-dropdown" class="autocomplete-dropdown"></div>
@@ -204,6 +211,7 @@
         let addresses = {};
         let roomStock = {};
         let activeShelfId = null;
+        let unsubStok = null;
 
         const loadCatalogFromCache = () => {
             try {
@@ -214,6 +222,18 @@
                     JSON.parse(cached).forEach(c => catalog[c.urunKodu || c.docId] = { code: c.urunKodu || c.docId, name: c.urunAdi });
                 }
             } catch(e){}
+        };
+
+        const getActiveCollection = () => {
+            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+            if(activeLoc === 'tumu') activeLoc = 'bodrum';
+            
+            const tip = document.getElementById('user-depo-tipi') ? document.getElementById('user-depo-tipi').value : 'ana';
+            if (tip === 'am') {
+                return activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
+            } else {
+                return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
+            }
         };
 
         const initMap = () => {
@@ -236,20 +256,25 @@
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
             
             const docAdresler = activeLoc === 'merkez' ? doc(db, "kilitli_depo", "adresler") : doc(db, "kilitli_depo_" + activeLoc, "adresler");
-            const colStok = activeLoc === 'merkez' ? collection(db, "kilitli_depo_stok") : collection(db, "kilitli_depo_stok_" + activeLoc);
 
             onSnapshot(docAdresler, (docSnap) => {
                 if(docSnap.exists()) addresses = docSnap.data(); else addresses = {};
                 updateMapAddresses();
             });
 
-            onSnapshot(colStok, (snap) => {
+            if(unsubStok) unsubStok();
+            unsubStok = onSnapshot(collection(db, getActiveCollection()), (snap) => {
                 roomStock = {};
                 snap.forEach(d => roomStock[d.id] = d.data());
                 updateMapColors();
+                checkCriticalMiats();
                 if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
             });
         };
+
+        document.getElementById('user-depo-tipi').addEventListener('change', () => {
+            loadData();
+        });
 
         const updateMapAddresses = () => {
             for(let i=1; i<=8; i++) {
