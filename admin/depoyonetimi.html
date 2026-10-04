@@ -254,9 +254,13 @@
 
     <div id="report-modal" class="modal">
         <div class="modal-box" style="max-width: 900px; width: 95%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
                 <div style="font-size:18px; font-weight:900;" id="report-title">RAPOR</div>
-                <div style="display:flex; gap:10px; align-items:center;">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div id="sort-btn-container" style="display:none; gap:5px; margin-right:15px; border-right:1px solid #333; padding-right:15px;">
+                        <button class="btn-action" style="background:#111; color:#00ff00;" onclick="applySort('qty')">MİKTAR <i class="fa-solid fa-arrow-down-9-1"></i></button>
+                        <button class="btn-action" style="background:#111; color:#ffbc00;" onclick="applySort('miat')">MİAT <i class="fa-solid fa-arrow-down-1-9"></i></button>
+                    </div>
                     <button class="btn-download-excel" onclick="exportReportExcel()"><i class="fa-solid fa-file-excel" style="margin-right:5px;"></i>EXCEL İNDİR</button>
                     <button class="btn-download-pdf" onclick="exportReportPDF()"><i class="fa-solid fa-file-pdf" style="margin-right:5px;"></i>PDF İNDİR</button>
                     <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer; margin-left:10px;" onclick="closeModal('report-modal')">×</button>
@@ -645,17 +649,9 @@
             document.getElementById('shelf-modal').style.display = 'flex';
         };
 
-        window.saveShelfAddress = async () => {
-            if(!activeShelfId) return;
-            const loc = getActiveLoc();
-            const col = loc === 'merkez' ? 'kilitli_depo' : 'kilitli_depo_' + loc;
-            
-            const val = document.getElementById('edit-shelf-address').value.trim();
-            const newAddresses = { ...addresses };
-            if(val) newAddresses[activeShelfId] = val; else delete newAddresses[activeShelfId];
-            
-            await setDoc(doc(db, col, "adresler"), newAddresses);
-            document.getElementById('shelf-modal-title').innerHTML = 'RAF: <span style="color:#00ccff;">' + (val || 'TANIMSIZ ADRES') + '</span>';
+        window.closeModal = (id) => {
+            document.getElementById(id).style.display = 'none';
+            if(id === 'shelf-modal') activeShelfId = null;
         };
 
         const renderShelfContents = (shelfId) => {
@@ -676,7 +672,7 @@
                     let dateB = new Date(db[2] + '-' + db[1] + '-' + db[0]);
                     return dateA - dateB;
                 });
-                
+
                 sortedMiats.forEach(m => {
                     const days = getDaysDiff(m);
                     let color = m === '31.12.2099' ? '#00ff00' : (days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00'));
@@ -842,7 +838,8 @@
         };
 
         window.openReportModal = (type) => {
-            const tbody = document.getElementById('report-table-body'), thead = document.getElementById('report-thead'), titleEl = document.getElementById('report-title');
+            const thead = document.getElementById('report-thead');
+            const titleEl = document.getElementById('report-title');
             let rows = [];
             window.currentReportType = type;
             
@@ -851,6 +848,7 @@
             else if (type === 'stock') { titleEl.innerText = 'TÜM STOK RAPORU'; titleEl.style.color = '#00ff00'; }
 
             if (type === 'critical' || type === 'all') {
+                document.getElementById('sort-btn-container').style.display = 'none';
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>MİAT</th><th>KALAN GÜN</th><th>MİKTAR</th></tr>';
                 for(let key in roomStock) {
                     for(let miat in roomStock[key].lots) {
@@ -858,34 +856,68 @@
                         if(type === 'all' || (miat !== '31.12.2099' && days <= 180)) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
                     }
                 }
-                rows.sort((a,b) => a.code === b.code ? a.days - b.days : a.code.localeCompare(b.code));
-                tbody.innerHTML = rows.map(r => {
+                rows.sort((a,b) => a.days - b.days);
+            } else if (type === 'stock') {
+                document.getElementById('sort-btn-container').style.display = 'flex';
+                thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>EN YAKIN MİAT</th><th>TOPLAM MİKTAR</th></tr>';
+                for(let key in roomStock) {
+                    let totalQty = 0;
+                    let minDays = 99999;
+                    let minMiat = '31.12.2099';
+                    for(let miat in roomStock[key].lots) {
+                        totalQty += roomStock[key].lots[miat];
+                        const d = getDaysDiff(miat);
+                        if (d < minDays) {
+                            minDays = d;
+                            minMiat = miat;
+                        }
+                    }
+                    rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, qty: totalQty, closestMiat: minMiat, closestDays: minDays });
+                }
+                rows.sort((a,b) => b.qty - a.qty);
+            }
+            
+            window.currentReportData = rows;
+            renderReportTableBody();
+            document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.applySort = (sortType) => {
+            if (!window.currentReportData) return;
+            if (sortType === 'qty') {
+                window.currentReportData.sort((a,b) => b.qty - a.qty);
+            } else if (sortType === 'miat') {
+                window.currentReportData.sort((a,b) => a.closestDays - b.closestDays);
+            }
+            renderReportTableBody();
+        };
+
+        const renderReportTableBody = () => {
+            const tbody = document.getElementById('report-table-body');
+            if (window.currentReportType === 'critical' || window.currentReportType === 'all') {
+                tbody.innerHTML = window.currentReportData.map(r => {
                     let c = r.days <= 30 ? '#ff0000' : (r.days <= 60 ? '#ff4500' : (r.days <= 90 ? '#ff8c00' : (r.days <= 180 ? '#ffbc00' : '#00ff00')));
                     let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
                     let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
                     if(r.miat === '31.12.2099') c = '#00ff00';
                     return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + dMiat + '</td><td style="font-weight:900; color:' + c + ';">' + dDays + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
                 }).join('');
-            } else if (type === 'stock') {
-                thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>TOPLAM MİKTAR</th></tr>';
-                for(let key in roomStock) {
-                    let totalQty = 0;
-                    for(let miat in roomStock[key].lots) totalQty += roomStock[key].lots[miat];
-                    rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, qty: totalQty });
-                }
-                rows.sort((a,b) => a.code.localeCompare(b.code));
-                tbody.innerHTML = rows.map(r => '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + ' ADET</td></tr>').join('');
+            } else {
+                tbody.innerHTML = window.currentReportData.map(r => {
+                    let c = r.closestDays <= 30 ? '#ff0000' : (r.closestDays <= 60 ? '#ff4500' : (r.closestDays <= 90 ? '#ff8c00' : (r.closestDays <= 180 ? '#ffbc00' : '#00ff00')));
+                    let dMiat = r.closestMiat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.closestMiat;
+                    if(r.closestMiat === '31.12.2099') c = '#00ff00';
+                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + dMiat + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + ' ADET</td></tr>';
+                }).join('');
             }
-            
-            window.currentReportData = rows;
-            document.getElementById('report-modal').style.display = 'flex';
         };
 
         window.exportReportExcel = () => {
             if(!window.currentReportData || window.currentReportData.length === 0) return;
             const mappedData = window.currentReportData.map(r => {
                 if(window.currentReportType === 'stock') {
-                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "TOPLAM MİKTAR": r.qty };
+                    let dMiat = r.closestMiat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.closestMiat;
+                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "EN YAKIN MİAT": dMiat, "TOPLAM MİKTAR": r.qty };
                 } else {
                     let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
                     let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
@@ -907,12 +939,13 @@
             const replaceTR = (text) => text ? String(text).replace(/[çğıiöşüÇĞİIÖŞÜ]/g, m => trMap[m]) : '';
 
             let head = window.currentReportType === 'stock' 
-                ? [['URUN KODU', 'URUN ISMI', 'ADRES', 'TOPLAM MIKTAR']] 
+                ? [['URUN KODU', 'URUN ISMI', 'ADRES', 'EN YAKIN MIAT', 'TOPLAM MIKTAR']] 
                 : [['URUN KODU', 'URUN ISMI', 'ADRES', 'MIAT', 'KALAN GUN', 'MIKTAR']];
 
             let body = window.currentReportData.map(r => {
                 if(window.currentReportType === 'stock') {
-                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.qty)];
+                    let dMiat = r.closestMiat === '31.12.2099' ? 'BELIRTILMEDI' : r.closestMiat;
+                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(dMiat), replaceTR(r.qty)];
                 } else {
                     let dMiat = r.miat === '31.12.2099' ? 'BELIRTILMEDI' : r.miat;
                     let dDays = r.miat === '31.12.2099' ? 'Suresiz' : r.days;
@@ -937,6 +970,13 @@
             new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
             document.getElementById('qr-modal').style.display = 'flex';
         };
+
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                initMap();
+                loadData();
+            }
+        });
     </script>
 </body>
 </html>
