@@ -39,13 +39,14 @@
             <input type="file" id="file-miat" accept=".xlsx, .xls">
         </div>
 
-        <button class="btn-upload" id="btn-process" onclick="processAndUpload()">DOSYALARI BİRLEŞTİR VE AKTAR</button>
+        <button class="btn-upload" id="btn-process">DOSYALARI BİRLEŞTİR VE AKTAR</button>
 
         <div id="log-area">Sistem hazır. Lütfen dosyaları seçin ve aktarımı başlatın...</div>
     </div>
 
     <script type="module">
-        import { db } from './core-auth.js';
+        // Admin klasöründe olduğumuz için core-auth.js yerine admin.js çağrılıyor.
+        import { db } from './admin.js';
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const log = (msg, type = 'info') => {
@@ -57,7 +58,7 @@
         const readExcel = (fileId) => {
             return new Promise((resolve, reject) => {
                 const file = document.getElementById(fileId).files[0];
-                if (!file) { resolve([]); return; }
+                if (!file) { resolve([]); return; } // Opsiyonel dosya seçilmediyse boş dizi döner, sistemi kitlemez.
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -79,7 +80,8 @@
             return foundKey ? row[foundKey] : null;
         };
 
-        window.processAndUpload = async () => {
+        // Tuş dinleyicisi modül içine entegre edildi
+        document.getElementById('btn-process').addEventListener('click', async () => {
             const btn = document.getElementById('btn-process');
             btn.disabled = true;
             btn.innerText = "İŞLENİYOR, LÜTFEN BEKLEYİN...";
@@ -109,7 +111,7 @@
 
                     if (rawCode && rawAdres) {
                         let code = String(rawCode).trim();
-                        let adres = String(rawAdres).replace(/^BDA/i, '').trim(); // BDA'yı temizle
+                        let adres = String(rawAdres).replace(/^BDA/i, '').trim(); 
                         
                         mergedData[code] = {
                             urunKodu: code,
@@ -150,7 +152,7 @@
                 });
 
                 log("2. Firebase Adres Haritası Çekiliyor...");
-                const adresDoc = await getDoc(doc(db, "kilitli_depo", "adresler")); // Merkez depodaki tanımlı raf ID'lerini bulmak için
+                const adresDoc = await getDoc(doc(db, "kilitli_depo", "adresler"));
                 const systemAddresses = adresDoc.exists() ? adresDoc.data() : {};
 
                 log("3. Veritabanına Yükleme Başladı (depo_ameliyathane)...");
@@ -158,9 +160,8 @@
 
                 for (let key in mergedData) {
                     let item = mergedData[key];
-                    if (item.qty <= 0) continue; // Stoğu 0 olanları aktarma
+                    if (item.qty <= 0) continue;
 
-                    // 12.01.01 gibi adresi sistemdeki shelf-1-1 gibi ID'ye çevir. Sistemde yoksa adresi kullan.
                     let targetShelfId = Object.keys(systemAddresses).find(k => systemAddresses[k] === item.adres) || ("UNKNOWN_" + item.adres);
                     
                     let docId = targetShelfId + '_' + item.urunKodu;
@@ -186,7 +187,7 @@
                 log("SİSTEM HATASI: Konsolu kontrol edin. " + err.message, "error");
                 btn.disabled = false; btn.innerText = "DOSYALARI BİRLEŞTİR VE AKTAR";
             }
-        };
+        });
     </script>
 </body>
 </html>
