@@ -1,6 +1,6 @@
 import { app, auth, db, onAuthStateChanged } from './core-auth.js';
 import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 
@@ -472,6 +472,8 @@ window.autoFetchCentral = async (data, barkod) => {
 
     const updateData = { utsGorseller: dbUrls };
     try {
+        await setDoc(doc(db, "global_katalog", data.urunKodu), updateData, { merge: true });
+
         let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
         if (activeLoc === 'tumu') activeLoc = 'bodrum';
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
