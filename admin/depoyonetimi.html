@@ -366,7 +366,16 @@
                         locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
                         const sel = document.getElementById('admin-loc-select');
                         sel.innerHTML = html;
+                        
+                        let savedLoc = localStorage.getItem('active_loc');
+                        if (savedLoc && Array.from(sel.options).some(opt => opt.value === savedLoc)) {
+                            sel.value = savedLoc;
+                        } else {
+                            localStorage.setItem('active_loc', sel.value);
+                        }
+
                         sel.onchange = () => {
+                            localStorage.setItem('active_loc', sel.value);
                             initMap();
                             loadData();
                         };
@@ -649,9 +658,17 @@
             document.getElementById('shelf-modal').style.display = 'flex';
         };
 
-        window.closeModal = (id) => {
-            document.getElementById(id).style.display = 'none';
-            if(id === 'shelf-modal') activeShelfId = null;
+        window.saveShelfAddress = async () => {
+            if(!activeShelfId) return;
+            const loc = getActiveLoc();
+            const col = loc === 'merkez' ? 'kilitli_depo' : 'kilitli_depo_' + loc;
+            
+            const val = document.getElementById('edit-shelf-address').value.trim();
+            const newAddresses = { ...addresses };
+            if(val) newAddresses[activeShelfId] = val; else delete newAddresses[activeShelfId];
+            
+            await setDoc(doc(db, col, "adresler"), newAddresses);
+            document.getElementById('shelf-modal-title').innerHTML = 'RAF: <span style="color:#00ccff;">' + (val || 'TANIMSIZ ADRES') + '</span>';
         };
 
         const renderShelfContents = (shelfId) => {
@@ -971,12 +988,6 @@
             document.getElementById('qr-modal').style.display = 'flex';
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if(user) {
-                initMap();
-                loadData();
-            }
-        });
     </script>
 </body>
 </html>
