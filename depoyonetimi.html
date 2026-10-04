@@ -62,7 +62,7 @@
         .legend-color { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #444; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px); padding: 15px; }
-        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
+        .modal-box { background: #0c0c0c; border: 1px solid #333; border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.9); margin: auto; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; gap: 15px; }
         .modal-title { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; }
         .btn-close { background: transparent; border: none; color: #888; font-size: 24px; cursor: pointer; line-height: 1; }
@@ -74,6 +74,8 @@
         .lot-row { display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #1a1a1a; flex-wrap: wrap; gap: 10px; }
         .lot-miat { font-size: 12px; font-weight: bold; font-family: monospace; }
         .lot-qty { font-size: 14px; font-weight: 900; color: #00ff00; }
+        .btn-remove { background: rgba(255,51,51,0.1); border: 1px solid rgba(255,51,51,0.3); color: #ff3333; padding: 6px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-remove:hover { background: #ff3333; color: #000; }
         .report-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .report-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .report-table th, .report-table td { padding: 12px; text-align: left; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
@@ -159,13 +161,77 @@
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
             </div>
+            <!-- Standard Users shouldn't redefine physical map addresses, so no shelf-address-control here -->
+            <div id="shelf-stock-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
+                <button class="btn-primary" style="width:100%; background:transparent; border:1px solid #00ff00; color:#00ff00; padding:10px; border-radius:6px; cursor:pointer;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+            </div>
             <div id="shelf-content-list"></div>
+        </div>
+    </div>
+
+    <div id="add-stock-modal" class="modal">
+        <div class="modal-box" id="add-stock-modal-box" style="max-width:600px; overflow:visible;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                <div style="font-size:18px; font-weight:900; color:#fff;">STOK EKLE</div>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('add-stock-modal')">×</button>
+            </div>
+            <div class="form-group" style="position:relative; text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">ÜRÜN ARA</label>
+                <input type="text" id="add-search" placeholder="Arama yapın veya ürün adı yazın..." style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+                <div id="add-autocomplete" class="autocomplete-dropdown"></div>
+            </div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">ÜRÜN KODU (ZORUNLU)</label>
+                <input type="text" id="add-selected-code" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <input type="hidden" id="add-selected-name">
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">MİAT TARİHİ</label>
+                <input type="date" id="add-miat" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">EKLENECEK MİKTAR</label>
+                <input type="number" id="add-qty" min="1" value="1" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <button class="btn-primary" style="margin-top:10px; width:100%; background:#00ff00; color:#000; padding:12px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;" onclick="executeAddStock()">STOĞA EKLE</button>
+        </div>
+    </div>
+
+    <div id="decrease-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:350px;" id="decrease-modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                <div style="font-size:18px; font-weight:900; color:#ff3333;">STOK EKSİLT</div>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('decrease-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="decrease-info"></div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">ÇIKARILACAK MİKTAR</label>
+                <input type="number" id="decrease-qty" min="1" value="1" style="width:100%; text-align:center; font-size:24px; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px;">
+            </div>
+            <input type="hidden" id="decrease-code"><input type="hidden" id="decrease-name"><input type="hidden" id="decrease-miat">
+            <button class="btn-primary" style="background:#ff3333; color:#fff; width:100%; margin-top:10px; padding:12px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;" onclick="executeDecreaseStock()">ÇIKART</button>
+        </div>
+    </div>
+
+    <div id="move-stock-modal" class="modal" style="z-index:25000;">
+        <div class="modal-box" style="max-width:400px;" id="move-modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                <div style="font-size:18px; font-weight:900; color:#9933ff;">ÜRÜNÜ TAŞI</div>
+                <button style="background:transparent; border:none; color:#888; font-size:24px; cursor:pointer;" onclick="closeModal('move-stock-modal')">×</button>
+            </div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px;" id="move-info"></div>
+            <div class="form-group" style="text-align:left; margin-bottom: 15px;">
+                <label style="display:block; font-size:12px; color:#ffbc00; font-weight:bold; margin-bottom:5px;">HEDEF RAF</label>
+                <select id="move-target-shelf" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:4px; font-family:monospace;"></select>
+            </div>
+            <input type="hidden" id="move-code"><input type="hidden" id="move-name">
+            <button class="btn-primary" style="background:#9933ff; color:#fff; width:100%; margin-top:10px; padding:12px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;" onclick="executeMoveStock()">TÜM STOĞU TAŞI</button>
         </div>
     </div>
 
     <div id="report-modal" class="modal">
         <div class="modal-box" style="max-width: 900px; width: 95%;">
-            <div class="modal-header">
+            <div class="modal-header" style="flex-wrap:wrap;">
                 <div class="modal-title" id="report-title" style="color:#ff3333;">RAPOR</div>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <div id="sort-btn-container" style="display:none; gap:5px; margin-right:15px; border-right:1px solid #333; padding-right:15px;">
@@ -193,9 +259,17 @@
         </div>
     </div>
 
+    <div id="custom-alert" class="modal" style="z-index:30000;">
+        <div class="modal-box" style="max-width:400px; text-align:center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</p>
+            <button class="btn-primary" style="background:#fff; color:#000; width:100%; padding:10px; font-weight:bold; cursor:pointer;" onclick="closeModal('custom-alert')">TAMAM</button>
+        </div>
+    </div>
+
     <script type="module">
         import { db, auth, onAuthStateChanged } from './core-auth.js';
-        import { collection, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { collection, onSnapshot, getDoc, getDocs, doc, setDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let catalog = {};
         let addresses = {};
@@ -219,6 +293,29 @@
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
             return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
+        };
+
+        const getActiveLogCollection = () => {
+            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+            if(activeLoc === 'tumu') activeLoc = 'bodrum';
+            return activeLoc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + activeLoc;
+        };
+
+        const logOperation = async (type, code, name, qty, miat, shelfId) => {
+            try {
+                const logCol = getActiveLogCollection();
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toLocaleTimeString('tr-TR');
+                const userEmail = auth.currentUser ? auth.currentUser.email : 'Bilinmeyen Kullanıcı';
+                
+                const logRef = doc(db, logCol, dateStr);
+                await setDoc(logRef, {
+                    kayitlar: arrayUnion({
+                        tip: type, urunKodu: code, urunAdi: name, miktar: qty, miat: miat, raf: addresses[shelfId] || shelfId, saat: timeStr, user: userEmail
+                    })
+                }, { merge: true });
+            } catch (e) { console.error("Log hatası:", e); }
         };
 
         const initMap = () => {
@@ -255,7 +352,6 @@
                 checkCriticalMiats();
                 if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
                 
-                // URL Parametre Kontrolü (QR Okutulduğunda Otomatik Açılış İçin)
                 if(!urlProcessed) {
                     const urlParams = new URLSearchParams(window.location.search);
                     const qrParam = urlParams.get('qr');
@@ -284,6 +380,7 @@
 
         const getDaysDiff = (dateStr) => {
             if(!dateStr || dateStr === '31.12.2099') return 9999;
+            
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
@@ -292,6 +389,7 @@
                     if(parts.length !== 3) return 9999;
                 }
             }
+            
             let formattedDateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
             return Math.ceil((new Date(formattedDateStr) - new Date()) / (1000 * 60 * 60 * 24));
         };
@@ -374,11 +472,151 @@
                     let displayMiat = m === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : m;
                     let displayDays = m === '31.12.2099' ? 'Süresiz' : days + ' gün';
                     
-                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + displayMiat + ' <span style="font-size:9px; color:#aaa;">(' + displayDays + ')</span></div><div class="lot-qty">' + item.lots[m] + ' ADET</div></div>';
+                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + displayMiat + ' <span style="font-size:9px; color:#aaa;">(' + displayDays + ')</span></div><div style="display:flex; align-items:center; gap:5px;"><div class="lot-qty" style="margin-right:10px;">' + item.lots[m] + ' ADET</div><button class="btn-remove" onclick="openDecreaseModal(\'' + item.urunKodu + '\', \'' + item.urunAdi.replace(/'/g, "\\'") + '\', \'' + m + '\', ' + item.lots[m] + ')">ÇIKART</button></div></div>';
                 });
-                html += '<div class="stock-item"><div class="stock-header"><div><div class="stock-name">' + item.urunAdi + '</div><div class="stock-code">' + item.urunKodu + '</div></div></div>' + lotsHtml + '</div>';
+                html += '<div class="stock-item"><div class="stock-header"><div><div class="stock-name">' + item.urunAdi + '</div><div class="stock-code">' + item.urunKodu + '</div></div><button class="btn-primary" style="background:#9933ff; padding:8px 12px; font-size:10px; cursor:pointer; color:#fff; border:none; border-radius:4px;" onclick="openMoveModal(\'' + item.urunKodu + '\', \'' + item.urunAdi.replace(/'/g, "\\'") + '\')">TAŞI</button></div>' + lotsHtml + '</div>';
             });
             container.innerHTML = html;
+        };
+
+        window.openAddStockModal = () => {
+            ['add-search','add-selected-code','add-selected-name','add-miat'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('add-qty').value = '1';
+            document.getElementById('add-stock-modal').style.display = 'flex';
+        };
+
+        document.getElementById('add-search').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            document.getElementById('add-selected-name').value = val; 
+            const ac = document.getElementById('add-autocomplete');
+            if(val.length < 3) { ac.style.display = 'none'; return; }
+            const terms = val.split(/\s+/);
+            
+            // Eğer catalog API'si yüklenmemişse getDocs ile Firebase'den o an çek
+            if (Object.keys(catalog).length === 0) {
+                const activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+                const colAna = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
+                getDocs(collection(db, colAna)).then(snap => {
+                    snap.forEach(d => { catalog[d.id] = { code: d.id, name: d.data().urunAdi || "İsimsiz" }; });
+                    processSearch(terms, ac);
+                });
+            } else {
+                processSearch(terms, ac);
+            }
+        });
+
+        const processSearch = (terms, ac) => {
+            let matches = Object.values(catalog).filter(c => terms.every(t => (c.name.toLowerCase().includes(t) || c.code.toLowerCase().includes(t)))).slice(0, 10);
+            if(matches.length > 0) {
+                ac.innerHTML = matches.map(m => '<div class="autocomplete-item" onclick="selectAddProduct(\'' + m.code + '\', \'' + m.name.replace(/'/g, "\\'") + '\')"><div class="ac-name">' + m.name + '</div><div class="ac-code">' + m.code + '</div></div>').join('');
+                ac.style.display = 'block';
+            } else { ac.style.display = 'none'; }
+        }
+
+        window.selectAddProduct = (code, name) => {
+            document.getElementById('add-selected-code').value = code;
+            document.getElementById('add-selected-name').value = name;
+            document.getElementById('add-search').value = name;
+            document.getElementById('add-autocomplete').style.display = 'none';
+        };
+
+        window.showCustomAlert = (title, desc) => {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            document.getElementById('custom-alert').style.display = 'flex';
+        };
+
+        window.executeAddStock = async () => {
+            if(!activeShelfId) return;
+            const code = document.getElementById('add-selected-code').value.trim();
+            const name = document.getElementById('add-selected-name').value.trim();
+            let miatRaw = document.getElementById('add-miat').value;
+            const qty = parseInt(document.getElementById('add-qty').value) || 0;
+            if(!code || !name || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen bilgileri eksiksiz girin.");
+
+            if (!miatRaw) miatRaw = '2099-12-31';
+
+            const col = getActiveCollection();
+
+            const parts = miatRaw.split('-');
+            const miat = parts[2] + '.' + parts[1] + '.' + parts[0];
+            const docId = activeShelfId + '_' + code;
+            const existing = roomStock[docId];
+            
+            let lots = existing ? existing.lots : {};
+            lots[miat] = (lots[miat] || 0) + qty;
+            
+            await setDoc(doc(db, col, docId), { shelfId: activeShelfId, urunKodu: code, urunAdi: name, adres: addresses[activeShelfId] || "", lots: lots });
+            await logOperation("EKLEME", code, name, qty, miat, activeShelfId);
+            
+            closeModal('add-stock-modal');
+            renderShelfContents(activeShelfId);
+        };
+
+        window.openDecreaseModal = (code, name, miat, currentQty) => {
+            document.getElementById('decrease-code').value = code; document.getElementById('decrease-name').value = name; document.getElementById('decrease-miat').value = miat;
+            document.getElementById('decrease-qty').value = "1"; document.getElementById('decrease-qty').max = currentQty;
+            let displayMiat = miat === '31.12.2099' ? 'BELİRTİLMEDİ' : miat;
+            document.getElementById('decrease-info').innerHTML = '<b style="color:#fff;">' + name + '</b><br>KOD: ' + code + ' | MİAT: <span style="color:#ffbc00;">' + displayMiat + '</span> | MEVCUT: <span style="color:#00ff00;">' + currentQty + '</span>';
+            document.getElementById('decrease-stock-modal').style.display = 'flex';
+        };
+
+        window.executeDecreaseStock = async () => {
+            if(!activeShelfId) return;
+            const code = document.getElementById('decrease-code').value;
+            const miat = document.getElementById('decrease-miat').value;
+            const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
+            if(isNaN(qtyToRemove) || qtyToRemove <= 0) return;
+
+            const col = getActiveCollection();
+
+            const docId = activeShelfId + '_' + code;
+            let lots = roomStock[docId].lots;
+            lots[miat] -= qtyToRemove;
+            if(lots[miat] <= 0) delete lots[miat];
+
+            if(Object.keys(lots).length === 0) await deleteDoc(doc(db, col, docId));
+            else await setDoc(doc(db, col, docId), { ...roomStock[docId], lots: lots });
+            
+            await logOperation("ÇIKARMA", code, document.getElementById('decrease-name').value, qtyToRemove, miat, activeShelfId);
+            
+            closeModal('decrease-stock-modal');
+            renderShelfContents(activeShelfId);
+        };
+
+        window.openMoveModal = (code, name) => {
+            document.getElementById('move-code').value = code; document.getElementById('move-name').value = name;
+            const sel = document.getElementById('move-target-shelf');
+            sel.innerHTML = '<option value="">Raf Seçiniz...</option>';
+            Object.keys(addresses).sort((a,b) => addresses[a].localeCompare(addresses[b])).forEach(sId => {
+                if(sId !== activeShelfId) sel.innerHTML += '<option value="' + sId + '">' + addresses[sId] + '</option>';
+            });
+            document.getElementById('move-stock-modal').style.display = 'flex';
+        };
+
+        window.executeMoveStock = async () => {
+            if(!activeShelfId) return;
+            const code = document.getElementById('move-code').value;
+            const targetShelfId = document.getElementById('move-target-shelf').value;
+            if(!targetShelfId) return showCustomAlert("HATA", "Hedef raf seçiniz.");
+
+            const col = getActiveCollection();
+
+            const sourceDocId = activeShelfId + '_' + code;
+            const targetDocId = targetShelfId + '_' + code;
+            let targetLots = roomStock[targetDocId] ? roomStock[targetDocId].lots : {};
+            let totalQtyMoved = 0;
+            for(let miat in roomStock[sourceDocId].lots) {
+                targetLots[miat] = (targetLots[miat] || 0) + roomStock[sourceDocId].lots[miat];
+                totalQtyMoved += roomStock[sourceDocId].lots[miat];
+            }
+            
+            await deleteDoc(doc(db, col, sourceDocId));
+            await setDoc(doc(db, col, targetDocId), { shelfId: targetShelfId, urunKodu: code, urunAdi: document.getElementById('move-name').value, adres: addresses[targetShelfId] || "", lots: targetLots });
+            await logOperation("TAŞIMA", code, document.getElementById('move-name').value, totalQtyMoved, "-", addresses[activeShelfId] + ' -> ' + addresses[targetShelfId]);
+            
+            closeModal('move-stock-modal');
+            renderShelfContents(activeShelfId);
         };
 
         document.getElementById('search-input').addEventListener('input', (e) => {
