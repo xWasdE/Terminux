@@ -108,7 +108,7 @@
     </div>
     
     <div class="main-content">
-        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
+        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ (AMELİYATHANE)</h2></div>
         <div class="content-area">
 
             <div class="admin-toolbar">
@@ -316,12 +316,12 @@
 
         const getActiveCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
         };
 
         const getActiveLogCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+            return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -580,12 +580,11 @@
                 checkCriticalMiats();
                 if (activeShelfId && document.getElementById('shelf-modal').style.display === 'flex') renderShelfContents(activeShelfId);
                 
-                // URL Parametre Kontrolü (QR Okutulduğunda Otomatik Açılış İçin)
                 if(!urlProcessed) {
                     const urlParams = new URLSearchParams(window.location.search);
                     const qrParam = urlParams.get('qr');
                     if (qrParam === 'master') {
-                        setTimeout(() => openReportModal('stock'), 500);
+                        setTimeout(() => window.openReportModal('stock'), 500);
                     } else if (qrParam && qrParam.startsWith('aisle_')) {
                         const aisleNum = qrParam.split('_')[1];
                         setTimeout(() => window.openReportModal('aisle', aisleNum), 500);
@@ -996,11 +995,11 @@
             doc.save("terminux_rapor.pdf");
         };
 
-        window.openMasterQR = () => { generateQR("https://terminux.com.tr/admin/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
+        window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
         
         window.generateAisleQR = (aisleNum, e) => { 
             e.stopPropagation(); 
-            generateQR("https://terminux.com.tr/admin/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
+            generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
         };
         
         const generateQR = (val, label) => {
@@ -1009,6 +1008,12 @@
             document.getElementById('qr-modal').style.display = 'flex';
         };
 
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                initMap();
+                loadData();
+            }
+        });
     </script>
 </body>
 </html>
