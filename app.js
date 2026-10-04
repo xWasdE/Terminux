@@ -433,7 +433,12 @@ window.autoFetchCentral = async (data, barkod) => {
     
     let dbUrls = []; 
     try {
-        const urlParams = new URLSearchParams({ barkod: barkod, urunKodu: data.urunKodu, urunAdi: data.urunAdi, refNo: data.refNo });
+        const urlParams = new URLSearchParams({ 
+            barkod: barkod, 
+            urunKodu: data.fetchUrunKodu || data.urunKodu, 
+            urunAdi: data.urunAdi, 
+            refNo: data.refNo 
+        });
         const response = await fetch(MERKEZ_API_ADRESI + '/api/uts?' + urlParams.toString(), { headers: { "Bypass-Tunnel-Reminder": "true", "ngrok-skip-browser-warning": "true" } });
         if (!response.body) throw new Error();
         const reader = response.body.getReader(); const decoder = new TextDecoder(); let partialChunk = "";
@@ -644,6 +649,8 @@ window.fetchAndDisplayProduct = async (code) => {
                 amDummy: amData ? (amData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", amReuse: amData ? (amData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL"
             };
 
+            mergedData.fetchUrunKodu = mergedData.urunKodu;
+
             let crossRefText = "";
             let exactName = trToLower(mergedData.urunAdi).trim();
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
@@ -653,12 +660,32 @@ window.fetchAndDisplayProduct = async (code) => {
                 if (sifirUrun) {
                     crossRefText = '<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">' + sifirUrun.urunKodu + '</b></div>';
                     
-                    let isReuseBarkodInvalid = !mergedData.barkod || invalidCodes.includes(mergedData.barkod) || mergedData.barkod === mergedData.urunKodu || mergedData.barkod.length === 8;
+                    mergedData.fetchUrunKodu = sifirUrun.urunKodu;
+
+                    let isReuseBarkodInvalid = !mergedData.barkod || invalidCodes.includes(mergedData.barkod) || mergedData.barkod === mergedData.urunKodu || mergedData.barkod.length <= 8;
                     let isSifirBarkodValid = sifirUrun.barkod && !invalidCodes.includes(sifirUrun.barkod) && sifirUrun.barkod !== sifirUrun.urunKodu && sifirUrun.barkod.length > 8;
                     
                     if (isReuseBarkodInvalid && isSifirBarkodValid) {
                         mergedData.barkod = sifirUrun.barkod;
-                        window.saveUpdate(mergedData.docId, 'b', sifirUrun.barkod, true);
+                        window.saveUpdate(mergedData.docId, 'b', sifirUrun.barkod, true, true);
+                    }
+
+                    if (mergedData.utsGorseller.length === 0 && sifirUrun.utsGorseller && sifirUrun.utsGorseller.length > 0) {
+                        const isValid = !sifirUrun.utsGorseller.some(url => url.includes("GÖRSEL BULUNAMADI") || url.includes("no-image") || url.includes("svg+xml"));
+                        if (isValid) {
+                            mergedData.utsGorseller = sifirUrun.utsGorseller;
+                            finalImages = sifirUrun.utsGorseller;
+                            
+                            const updateData = { utsGorseller: sifirUrun.utsGorseller };
+                            setDoc(doc(db, "global_katalog", mergedData.urunKodu), updateData, { merge: true }).catch(()=>{});
+                            
+                            let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+                            if (activeLoc === 'tumu') activeLoc = 'bodrum';
+                            const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
+                            const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
+                            updateDoc(doc(db, colAnaName, mergedData.docId), updateData).catch(()=>{});
+                            updateDoc(doc(db, colAmName, mergedData.docId), updateData).catch(()=>{});
+                        }
                     }
                 }
             } else {
@@ -701,7 +728,7 @@ function renderCard(data) {
 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     const hasValidBarcode = data.barkod && invalidCodes.indexOf(data.barkod) === -1;
-    const isKurumaOzel = hasValidBarcode && (data.barkod === data.urunKodu || data.barkod.length === 8);
+    const isKurumaOzel = hasValidBarcode && (data.barkod === data.urunKodu || data.barkod.length <= 8);
     const hasImage = data.utsGorseller && data.utsGorseller.length > 0 && !data.utsGorseller.includes(noImageSvg);
 
     const canEditBarkod = isSuperAdmin || (!hasImage || isKurumaOzel || !hasValidBarcode);
