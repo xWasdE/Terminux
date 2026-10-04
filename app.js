@@ -501,7 +501,10 @@ window.autoFetchCentral = async (data, barkod) => {
             }
             for (let idx = 0; idx < dbUrls.length; idx++) {
                 const imgEl = document.getElementById('img-fetch-' + id + '-' + idx);
-                if(imgEl) { await loadTelegramImage(imgEl, dbUrls[idx], idx); }
+                if(imgEl) { 
+                    await loadTelegramImage(imgEl, dbUrls[idx], idx); 
+                    await new Promise(r => setTimeout(r, 350));
+                }
             }
         }
     }
@@ -690,11 +693,14 @@ function renderCard(data) {
         });
         gorselHTML = '<div style="display: flex; gap: 15px; flex-wrap: wrap; width: 100%;">' + internalImgs + '</div>';
         
-        setTimeout(() => {
-            data.utsGorseller.forEach((url, index) => {
+        setTimeout(async () => {
+            for (let index = 0; index < data.utsGorseller.length; index++) {
                 const imgEl = document.getElementById('img-render-' + data.docId + '-' + index);
-                if(imgEl) loadTelegramImage(imgEl, url, index);
-            });
+                if(imgEl) {
+                    await loadTelegramImage(imgEl, data.utsGorseller[index], index);
+                    await new Promise(r => setTimeout(r, 350));
+                }
+            }
         }, 100);
     } else if (isKurumaOzel) {
         gorselHTML = '<div style="color:#ffbc00; font-size:13px; font-weight:bold; padding: 10px 0; width:100%;">BU ÜRÜN KURUMA ÖZELDİR, GÖRSEL BULUNMAMAKTADIR.</div>';
