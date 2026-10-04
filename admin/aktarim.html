@@ -24,6 +24,10 @@
     <div class="container">
         <h2>DEPO AMELİYATHANE<br><span style="font-size:14px; color:#aaa;">Geçici Veri Birleştirme & Aktarım Aracı</span></h2>
         
+        <div style="background: rgba(0,204,255,0.1); border: 1px solid #00ccff; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 12px; text-align: center; color: #00ccff; font-weight: bold;">
+            HEDEF LOKASYON: <span id="display-loc">Yükleniyor...</span>
+        </div>
+
         <div class="form-group">
             <label>1. ADRES DOSYASI (Ürün Kodu, Ürün Adı, Stok Adresi)</label>
             <input type="file" id="file-adres" accept=".xlsx, .xls">
@@ -47,6 +51,14 @@
     <script type="module">
         import { db } from './admin.js';
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+        if (activeLoc === 'tumu') activeLoc = 'bodrum';
+        
+        document.getElementById('display-loc').innerText = activeLoc.toUpperCase();
+
+        const dbAdreslerCol = activeLoc === 'merkez' ? 'kilitli_depo' : 'kilitli_depo_' + activeLoc;
+        const dbAmeliyatCol = activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
 
         const log = (msg, type = 'info') => {
             const area = document.getElementById('log-area');
@@ -155,24 +167,25 @@
                     }
                 });
 
-                log("2. Firebase Adres Haritası Çekiliyor...");
-                const adresDoc = await getDoc(doc(db, "kilitli_depo", "adresler"));
+                log(`2. Firebase Adres Haritası Çekiliyor (${activeLoc.toUpperCase()})...`);
+                const adresDoc = await getDoc(doc(db, dbAdreslerCol, "adresler"));
                 const systemAddresses = adresDoc.exists() ? adresDoc.data() : {};
 
-                log("3. Veritabanına Yükleme Başladı (depo_ameliyathane)...");
+                log(`3. Veritabanına Yükleme Başladı (${dbAmeliyatCol})...`);
                 let successCount = 0;
 
                 for (let key in mergedData) {
                     let item = mergedData[key];
                     if (item.qty <= 0) continue;
 
+                    // Adresi sistemdeki shelfId ile eşleştir (Örn: 12.01.01 -> shelf-1-1)
                     let targetShelfId = Object.keys(systemAddresses).find(k => systemAddresses[k] === item.adres) || ("UNKNOWN_" + item.adres);
                     
                     let docId = targetShelfId + '_' + item.urunKodu;
                     let lots = {};
                     lots[item.miat] = item.qty;
 
-                    await setDoc(doc(db, "depo_ameliyathane", docId), {
+                    await setDoc(doc(db, dbAmeliyatCol, docId), {
                         shelfId: targetShelfId,
                         urunKodu: item.urunKodu,
                         urunAdi: item.urunAdi,
