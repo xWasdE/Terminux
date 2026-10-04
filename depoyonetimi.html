@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminux | Kilitli Depo Yönetimi</title>
+    <title>Terminux | Depo Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -220,8 +220,6 @@
         const getActiveCollection = () => {
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
-            
-            // Kullanıcı paneli her zaman sadece Ana Depo koleksiyonuna bakar (Ameliyathane değil)
             return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
         };
 
@@ -234,7 +232,6 @@
                     const sId = 'shelf-' + i + '-' + j;
                     html += '<div class="shelf" id="' + sId + '" onclick="openShelf(\'' + sId + '\')"><span class="shelf-address" id="addr-' + sId + '"></span></div>';
                 }
-                // QR butonu reyonun hemen altına yerleştiriliyor
                 html += '<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(' + i + ', event)">QR</button></div></div>';
             }
             container.innerHTML = html;
@@ -276,13 +273,18 @@
 
         const getDaysDiff = (dateStr) => {
             if(!dateStr || dateStr === '31.12.2099') return 9999;
+            
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
-                if(parts.length !== 3) return 9999;
-                dateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
+                if(parts.length !== 3) {
+                    parts = dateStr.split('/');
+                    if(parts.length !== 3) return 9999;
+                }
             }
-            return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+            
+            let formattedDateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
+            return Math.ceil((new Date(formattedDateStr) - new Date()) / (1000 * 60 * 60 * 24));
         };
 
         const updateMapColors = () => {
@@ -346,7 +348,17 @@
             let html = '';
             items.forEach(item => {
                 let lotsHtml = '';
-                let sortedMiats = Object.keys(item.lots).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
+                
+                let sortedMiats = Object.keys(item.lots).sort((a,b) => {
+                    if (a === '31.12.2099') return 1;
+                    if (b === '31.12.2099') return -1;
+                    let da = a.split(a.includes('/') ? '/' : (a.includes('.') ? '.' : '-'));
+                    let db = b.split(b.includes('/') ? '/' : (b.includes('.') ? '.' : '-'));
+                    let dateA = new Date(da[2] + '-' + da[1] + '-' + da[0]);
+                    let dateB = new Date(db[2] + '-' + db[1] + '-' + db[0]);
+                    return dateA - dateB;
+                });
+
                 sortedMiats.forEach(m => {
                     const days = getDaysDiff(m);
                     let color = m === '31.12.2099' ? '#00ff00' : (days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00'));
