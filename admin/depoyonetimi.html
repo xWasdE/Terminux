@@ -112,9 +112,15 @@
         <div class="content-area">
 
             <div class="admin-toolbar">
-                <div style="display:flex; align-items:center; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <span style="color:#00ccff; font-size:11px; font-weight:900;">LOKASYON:</span>
-                    <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:180px;"></select>
+                    <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:120px;"></select>
+                    
+                    <span style="color:#00ff00; font-size:11px; font-weight:900; margin-left:10px;">DEPO:</span>
+                    <select id="admin-depo-tipi" style="background:#111; color:#00ff00; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:140px;">
+                        <option value="ana">ANA DEPO</option>
+                        <option value="am">AMELİYATHANE</option>
+                    </select>
                 </div>
                 <div class="search-wrapper">
                     <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
@@ -310,6 +316,26 @@
             return el ? (el.value || 'merkez') : 'merkez';
         };
 
+        const getActiveCollection = () => {
+            const loc = getActiveLoc();
+            const tip = document.getElementById('admin-depo-tipi') ? document.getElementById('admin-depo-tipi').value : 'ana';
+            if (tip === 'am') {
+                return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
+            } else {
+                return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            }
+        };
+
+        const getActiveLogCollection = () => {
+            const loc = getActiveLoc();
+            const tip = document.getElementById('admin-depo-tipi') ? document.getElementById('admin-depo-tipi').value : 'ana';
+            if (tip === 'am') {
+                return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
+            } else {
+                return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+            }
+        };
+
         onAuthStateChanged(auth, async (user) => {
             if(user) {
                 try {
@@ -345,6 +371,11 @@
                     }
 
                     document.getElementById('global-loader').style.display = 'none';
+
+                    document.getElementById('admin-depo-tipi').onchange = () => {
+                        initMap();
+                        loadData();
+                    };
 
                     onSnapshot(doc(db, "system", "locations"), (locSnap) => {
                         let locs = locSnap.exists() ? locSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
@@ -395,9 +426,7 @@
 
         const logOperation = async (type, code, name, qty, miat, shelfId) => {
             try {
-                const loc = getActiveLoc();
-                const logCol = loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
-                
+                const logCol = getActiveLogCollection();
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
                 const timeStr = now.toLocaleTimeString('tr-TR');
@@ -412,7 +441,7 @@
             } catch (e) { console.error("Log hatası:", e); }
         };
 
-        // EXCEL İLE TOPLU YÜKLEME FONKSİYONU
+        // EXCEL İLE TOPLU YÜKLEME FONKSİYONU (Aktif Depo Tipi İçin Geçerli)
         window.handleBulkExcel = async (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -427,28 +456,25 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    const loc = getActiveLoc();
-                    const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+                    const col = getActiveCollection();
                     
                     let successCount = 0;
                     let errorCount = 0;
                     
                     for(let row of rows) {
                         let rawAdres = String(row['Adres'] || row['adres'] || row['ADRES'] || '').trim();
-                        // Akıllı Adres Düzeltme (Baştaki Harfleri Siler: Örn: BDA12.01.01 -> 12.01.01)
                         let parsedAdres = rawAdres.replace(/^[a-zA-Z]+/g, '').trim(); 
                         
                         let code = String(row['Ürün Kodu'] || row['ürün kodu'] || row['urun kodu'] || row['Kod'] || '').trim();
                         let name = String(row['Ürün İsmi'] || row['ürün ismi'] || row['Ürün Adı'] || row['urun adi'] || '').trim();
                         let qty = parseInt(row['Stok'] || row['stok'] || row['Miktar'] || row['miktar']) || 0;
-                        let miat = String(row['Miat'] || row['miat'] || row['MİAT'] || '31.12.2099').trim(); // Miat yoksa varsayılan
+                        let miat = String(row['Miat'] || row['miat'] || row['MİAT'] || '31.12.2099').trim(); 
                         
                         if(!code || qty <= 0 || !parsedAdres) {
                             errorCount++;
                             continue;
                         }
                         
-                        // Sisteme kayıtlı raf id'sini adresten bul (Örn: "12.01.01" -> "shelf-1-1")
                         let targetShelfId = Object.keys(addresses).find(k => addresses[k] === parsedAdres);
                         if(!targetShelfId) {
                             targetShelfId = "UNKNOWN_" + parsedAdres; 
@@ -484,7 +510,6 @@
             reader.readAsArrayBuffer(file);
         };
 
-        // GÜNLÜK İŞLEM LOGLARI FONKSİYONU
         window.openLogsModal = () => {
             document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('logs-modal').style.display = 'flex';
@@ -494,8 +519,7 @@
         window.fetchLogs = async () => {
             const dateStr = document.getElementById('log-date').value;
             if(!dateStr) return;
-            const loc = getActiveLoc();
-            const logCol = loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
+            const logCol = getActiveLogCollection();
             const container = document.getElementById('logs-container');
             container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Yükleniyor...</div>';
             
@@ -548,7 +572,6 @@
             const loc = getActiveLoc();
             
             const docAdresler = loc === 'merkez' ? doc(db, "kilitli_depo", "adresler") : doc(db, "kilitli_depo_" + loc, "adresler");
-            const colStok = loc === 'merkez' ? collection(db, "kilitli_depo_stok") : collection(db, "kilitli_depo_stok_" + loc);
 
             if(unsubAdres) unsubAdres();
             unsubAdres = onSnapshot(docAdresler, (docSnap) => {
@@ -557,7 +580,7 @@
             });
 
             if(unsubStok) unsubStok();
-            unsubStok = onSnapshot(colStok, (snap) => {
+            unsubStok = onSnapshot(collection(db, getActiveCollection()), (snap) => {
                 roomStock = {};
                 snap.forEach(d => roomStock[d.id] = d.data());
                 updateMapColors();
@@ -698,8 +721,7 @@
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
             if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen bilgileri eksiksiz girin.");
 
-            const loc = getActiveLoc();
-            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            const col = getActiveCollection();
 
             const parts = miatRaw.split('-');
             const miat = parts[2] + '.' + parts[1] + '.' + parts[0];
@@ -730,8 +752,7 @@
             const qtyToRemove = parseInt(document.getElementById('decrease-qty').value);
             if(isNaN(qtyToRemove) || qtyToRemove <= 0) return;
 
-            const loc = getActiveLoc();
-            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            const col = getActiveCollection();
 
             const docId = activeShelfId + '_' + code;
             let lots = roomStock[docId].lots;
@@ -763,8 +784,7 @@
             const targetShelfId = document.getElementById('move-target-shelf').value;
             if(!targetShelfId) return showCustomAlert("HATA", "Hedef raf seçiniz.");
 
-            const loc = getActiveLoc();
-            const col = loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
+            const col = getActiveCollection();
 
             const sourceDocId = activeShelfId + '_' + code;
             const targetDocId = targetShelfId + '_' + code;
