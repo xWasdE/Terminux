@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Kilitli Depo Yönetimi</title>
+    <title>Terminux | Depo Yönetimi</title>
     <link rel="stylesheet" href="admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -108,13 +108,13 @@
     </div>
     
     <div class="main-content">
-        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ (AMELİYATHANE)</h2></div>
+        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
         <div class="content-area">
 
             <div class="admin-toolbar">
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:10px;">
                     <span style="color:#00ccff; font-size:11px; font-weight:900;">LOKASYON:</span>
-                    <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:120px;"></select>
+                    <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:180px;"></select>
                 </div>
                 <div class="search-wrapper">
                     <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
@@ -311,12 +311,12 @@
 
         const getActiveCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
+            return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
         };
 
         const getActiveLogCollection = () => {
             const loc = getActiveLoc();
-            return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
+            return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -582,13 +582,18 @@
 
         const getDaysDiff = (dateStr) => {
             if(!dateStr || dateStr === '31.12.2099') return 9999;
+            
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
-                if(parts.length !== 3) return 9999;
-                dateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
+                if(parts.length !== 3) {
+                    parts = dateStr.split('/');
+                    if(parts.length !== 3) return 9999;
+                }
             }
-            return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+            
+            let formattedDateStr = parts[2] + '-' + parts[1] + '-' + parts[0]; 
+            return Math.ceil((new Date(formattedDateStr) - new Date()) / (1000 * 60 * 60 * 24));
         };
 
         const updateMapColors = () => {
@@ -661,7 +666,17 @@
             let html = '';
             items.forEach(item => {
                 let lotsHtml = '';
-                let sortedMiats = Object.keys(item.lots).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
+                
+                let sortedMiats = Object.keys(item.lots).sort((a,b) => {
+                    if (a === '31.12.2099') return 1;
+                    if (b === '31.12.2099') return -1;
+                    let da = a.split(a.includes('/') ? '/' : (a.includes('.') ? '.' : '-'));
+                    let db = b.split(b.includes('/') ? '/' : (b.includes('.') ? '.' : '-'));
+                    let dateA = new Date(da[2] + '-' + da[1] + '-' + da[0]);
+                    let dateB = new Date(db[2] + '-' + db[1] + '-' + db[0]);
+                    return dateA - dateB;
+                });
+                
                 sortedMiats.forEach(m => {
                     const days = getDaysDiff(m);
                     let color = m === '31.12.2099' ? '#00ff00' : (days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00'));
@@ -911,19 +926,17 @@
         };
 
         window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
-        window.generateAisleQR = (aisleNum, e) => { e.stopPropagation(); generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); };
+        
+        window.generateAisleQR = (aisleNum, e) => { 
+            e.stopPropagation(); 
+            generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
+        };
+        
         const generateQR = (val, label) => {
             document.getElementById('qr-label').innerText = label;
             new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
             document.getElementById('qr-modal').style.display = 'flex';
         };
-
-        onAuthStateChanged(auth, (user) => {
-            if(user) {
-                initMap();
-                loadData();
-            }
-        });
     </script>
 </body>
 </html>
