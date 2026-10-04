@@ -111,23 +111,24 @@ const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3
 
 async function loadTelegramImage(imgElement, fileId, index) {
     if (fileId.startsWith('data:image')) {
-        imgElement.src = fileId; window.lightboxImages[index] = fileId;
-        imgElement.onclick = () => openLightbox(index); return;
+        imgElement.src = fileId; 
+        window.lightboxImages[index] = fileId;
+        imgElement.onclick = () => openLightbox(index); 
+        return;
     }
     
-    let fullUrl = 'https://terminux-cdn.u-keserbi.workers.dev/?file_id=' + fileId;
+    const WORKER_URL = "https://terminux-cdn.u-keserbi.workers.dev";
+    const fullUrl = WORKER_URL + '/?file_id=' + fileId;
     
-    try {
-        const response = await fetch(fullUrl);
-        if (!response.ok) throw new Error("Ağ Hatası");
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        imgElement.src = objectUrl; window.lightboxImages[index] = objectUrl;
-        imgElement.onclick = () => openLightbox(index);
-    } catch (error) {
-        imgElement.src = noImageSvg; window.lightboxImages[index] = noImageSvg;
-        imgElement.onclick = () => openLightbox(index);
-    }
+    imgElement.src = fullUrl;
+    window.lightboxImages[index] = fullUrl;
+    imgElement.onclick = () => openLightbox(index);
+
+    imgElement.onerror = () => {
+        imgElement.src = noImageSvg; 
+        window.lightboxImages[index] = noImageSvg;
+        imgElement.onerror = null; 
+    };
 }
 
 document.addEventListener('click', async (e) => {
@@ -411,6 +412,14 @@ window.executePrint = () => {
     closePrintModal(); setTimeout(() => { window.print(); }, 300);
 };
 
+window.forceFetchImages = () => {
+    if(window.currentRenderedProduct && window.currentRenderedProduct.barkod) {
+        const data = window.currentRenderedProduct;
+        data.utsGorseller = []; 
+        window.autoFetchCentral(data, data.barkod);
+    }
+};
+
 window.autoFetchCentral = async (data, barkod) => {
     const id = data.docId;
     const gorselContainer = document.getElementById('gorsel-container');
@@ -520,9 +529,9 @@ window.cancelEdit = (id, type) => {
     document.getElementById('edit-' + type + '-' + id).style.display = 'none';
 };
 
-window.saveUpdate = async (id, type) => {
+window.saveUpdate = async (id, type, forcedVal = null, silent = false) => {
     const inputEl = document.getElementById('man-' + type + '-' + id);
-    const newVal = inputEl ? inputEl.value.trim() : null;
+    const newVal = forcedVal || (inputEl ? inputEl.value.trim() : null);
     if (!newVal) return;
 
     const updateData = {};
@@ -545,22 +554,24 @@ window.saveUpdate = async (id, type) => {
         
         const catItem = productCatalog.find(m => m.docId === id);
         if (catItem) {
-            if (type === 'b') catItem.barkod = newVal;
+            if (type === 'b') { catItem.barkod = newVal; catItem.utsGorseller = []; }
             if (type === 'r') catItem.refNo = newVal;
             catItem.searchString = trToLower(catItem.urunAdi + ' ' + catItem.urunKodu + ' ' + catItem.barkod + ' ' + catItem.refNo + ' ' + catItem.altGrup);
             const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
             localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
         }
-        fetchAndDisplayProduct(id); 
+        if(!silent) fetchAndDisplayProduct(id); 
     } catch (err) {}
 };
 
-function createEditUI(id, type, val, placeholder, colorClass) {
+function createEditUI(id, type, val, placeholder, colorClass, canEdit) {
     const isSet = val && val !== "TANIMLI DEĞİL" && val !== "BULUNAMADI" && val !== "-" && val !== "TAM EŞLEŞME YOK" && val !== "SONUÇ YOK";
+    let editBtnHTML = canEdit ? '<button onclick="editField(\'' + id + '\', \'' + type + '\')" class="btn-edit">DÜZENLE</button>' : '';
+    
     if (isSet) {
         return '<div id="txt-container-' + type + '-' + id + '" class="flex-edit">' +
                '<span style="color: ' + colorClass + ';" class="value-text mobile-break">' + val + '</span>' +
-               '<button onclick="editField(\'' + id + '\', \'' + type + '\')" class="btn-edit">DÜZENLE</button>' +
+               editBtnHTML +
                '</div>' +
                '<div id="edit-' + type + '-' + id + '" class="flex-edit" style="display:none;">' +
                '<input type="text" id="man-' + type + '-' + id + '" value="' + val + '" class="input-style">' +
@@ -570,6 +581,7 @@ function createEditUI(id, type, val, placeholder, colorClass) {
                '</div>' +
                '</div>';
     } else {
+        if(!canEdit) return '<div class="value-text" style="color:#555;">YETKİ YOK</div>';
         return '<div class="flex-edit">' +
                '<input type="text" id="man-' + type + '-' + id + '" placeholder="' + placeholder + '" class="input-style">' +
                '<button onclick="saveUpdate(\'' + id + '\', \'' + type + '\')" class="btn-save">KAYDET</button>' +
@@ -632,9 +644,21 @@ window.fetchAndDisplayProduct = async (code) => {
 
             let crossRefText = "";
             let exactName = trToLower(mergedData.urunAdi).trim();
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+            
             if (mergedData.surecTipi === "R") {
                 const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
-                if (sifirUrun) crossRefText = '<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">' + sifirUrun.urunKodu + '</b></div>';
+                if (sifirUrun) {
+                    crossRefText = '<div style="font-size: 12px; color: #ffbc00; margin-top: 5px;">SIFIR KODU: <b style="color:#fff;">' + sifirUrun.urunKodu + '</b></div>';
+                    
+                    let isReuseBarkodInvalid = !mergedData.barkod || invalidCodes.includes(mergedData.barkod) || mergedData.barkod === mergedData.urunKodu || mergedData.barkod.length === 8;
+                    let isSifirBarkodValid = sifirUrun.barkod && !invalidCodes.includes(sifirUrun.barkod) && sifirUrun.barkod !== sifirUrun.urunKodu && sifirUrun.barkod.length > 8;
+                    
+                    if (isReuseBarkodInvalid && isSifirBarkodValid) {
+                        mergedData.barkod = sifirUrun.barkod;
+                        window.saveUpdate(mergedData.docId, 'b', sifirUrun.barkod, true);
+                    }
+                }
             } else {
                 const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
                 if (reuseUrun) crossRefText = '<div style="font-size: 12px; color: #ff3333; margin-top: 5px;">REUSE KODU: <b style="color:#fff;">' + reuseUrun.urunKodu + '</b></div>';
@@ -644,7 +668,6 @@ window.fetchAndDisplayProduct = async (code) => {
             renderCard(mergedData);
 
             let targetBarcode = mergedData.urunKodu;
-            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
 
             if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
@@ -664,6 +687,10 @@ window.fetchAndDisplayProduct = async (code) => {
 function renderCard(data) {
     window.currentRenderedProduct = data;
 
+    const userRole = localStorage.getItem('user_role') || 'user';
+    const isSuperAdmin = (userRole === 'superadmin');
+    const isAdmin = (userRole === 'admin' || userRole === 'superadmin');
+
     const min = parseInt(data.minAlert) || 0;
     const max = parseInt(data.max) || 0;
     const getS = (val, has) => (!has ? { c: '#fb0', t: 'TANIMSIZ' } : { c: val <= min ? '#ff3333' : '#fff', t: val });
@@ -672,13 +699,17 @@ function renderCard(data) {
 
     const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
     const hasValidBarcode = data.barkod && invalidCodes.indexOf(data.barkod) === -1;
-    const isKurumaOzel = hasValidBarcode && (data.barkod === data.urunKodu);
+    const isKurumaOzel = hasValidBarcode && (data.barkod === data.urunKodu || data.barkod.length === 8);
+    const hasImage = data.utsGorseller && data.utsGorseller.length > 0 && !data.utsGorseller.includes(noImageSvg);
 
-    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc');
+    const canEditBarkod = isSuperAdmin || (!hasImage || isKurumaOzel || !hasValidBarcode);
+    const canEditRef = isAdmin; 
+
+    const barkodUI = createEditUI(data.urunKodu, 'b', data.barkod, 'Barkod Girişi', '#ccc', canEditBarkod);
     const barkodEkSVG = hasValidBarcode ? `<div style="background: #fff; padding: 4px; border-radius: 4px; margin-top: 8px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><svg id="ui-barcode-real" style="max-height: 28px; width: auto;"></svg></div>` : ``;
 
-    const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref Numarası', '#fff');
-    const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333');
+    const refUI = createEditUI(data.urunKodu, 'r', data.refNo, 'Ref Numarası', '#fff', canEditRef);
+    const miatUI = createEditUI(data.urunKodu, 'm', data.miatTarihi, 'GG.AA.YYYY', '#ff3333', true);
 
     let gorselHTML = '';
 
@@ -738,6 +769,11 @@ function renderCard(data) {
                   '</div>';
     }
 
+    let reFetchBtnHTML = '';
+    if (isSuperAdmin && hasValidBarcode && !isKurumaOzel) {
+        reFetchBtnHTML = '<button onclick="window.forceFetchImages()" style="margin-left:15px; background:transparent; border:1px solid #ffbc00; color:#ffbc00; border-radius:6px; padding:3px 10px; font-size:10px; cursor:pointer; font-weight:bold;">YENİDEN TARA</button>';
+    }
+
     if(resultContainer) {
         resultContainer.innerHTML = '<div class="card-wrapper">' +
             '<div class="card-main">' +
@@ -763,7 +799,7 @@ function renderCard(data) {
             '<div><div class="label-text">SÜREÇ TİPİ</div><div class="value-text" style="color:#ccc;">' + data.surecTipi + '</div></div>' +
             '</div>' +
             '<div style="margin-top: 40px; border-top: 1px solid #1a1a1a; padding-top: 30px;">' +
-            '<div class="label-text" style="margin-bottom:15px;">ÜRÜN GÖRSELLERİ</div>' +
+            '<div class="label-text" style="margin-bottom:15px; display:flex; align-items:center;">ÜRÜN GÖRSELLERİ' + reFetchBtnHTML + '</div>' +
             '<div id="gorsel-container" style="min-height: 100px;">' +
             gorselHTML +
             '</div>' +
