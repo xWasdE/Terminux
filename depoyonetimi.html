@@ -188,6 +188,14 @@
         </div>
     </div>
 
+    <div id="custom-alert" class="modal" style="z-index:30000;">
+        <div class="modal-box" style="max-width:400px; text-align:center;">
+            <h3 id="alert-title" style="color:#ffbc00; margin-bottom:15px;">UYARI</h3>
+            <p id="alert-desc" style="font-size:14px; color:#aaa; margin-bottom:30px;">-</p>
+            <button class="btn-primary" style="background:#fff; color:#000; width:100%;" onclick="closeModal('custom-alert')">TAMAM</button>
+        </div>
+    </div>
+
     <script type="module">
         import { db, auth, onAuthStateChanged } from './core-auth.js';
         import { collection, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -213,8 +221,8 @@
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
             
-            // Kullanıcı paneli her zaman sadece Ameliyathane veritabanına bakar
-            return activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
+            // Kullanıcı paneli her zaman sadece Ana Depo koleksiyonuna bakar (Ameliyathane değil)
+            return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
         };
 
         const initMap = () => {
@@ -226,7 +234,8 @@
                     const sId = 'shelf-' + i + '-' + j;
                     html += '<div class="shelf" id="' + sId + '" onclick="openShelf(\'' + sId + '\')"><span class="shelf-address" id="addr-' + sId + '"></span></div>';
                 }
-                html += '</div>';
+                // QR butonu reyonun hemen altına yerleştiriliyor
+                html += '<div style="position:absolute; bottom:-25px; left:0; width:100%; text-align:center;"><button class="btn-action" style="padding:4px 8px; font-size:9px;" onclick="generateAisleQR(' + i + ', event)">QR</button></div></div>';
             }
             container.innerHTML = html;
         };
@@ -468,7 +477,12 @@
         };
 
         window.openMasterQR = () => { generateQR("https://terminux.com.tr/depoyonetimi.html?qr=master", "GENEL DEPO GÖRÜNÜMÜ"); };
-        window.generateAisleQR = (aisleNum, e) => { e.stopPropagation(); generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); };
+        
+        window.generateAisleQR = (aisleNum, e) => { 
+            e.stopPropagation(); 
+            generateQR("https://terminux.com.tr/depoyonetimi.html?qr=aisle_" + aisleNum, "REYON " + aisleNum); 
+        };
+        
         const generateQR = (val, label) => {
             document.getElementById('qr-label').innerText = label;
             new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
