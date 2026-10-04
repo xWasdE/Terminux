@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminux | Depo Yönetimi</title>
+    <title>Terminux | Depo Yönetimi (Ameliyathane)</title>
     <link rel="stylesheet" href="admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -108,19 +108,13 @@
     </div>
     
     <div class="main-content">
-        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ</h2></div>
+        <div class="topbar"><h2>GÖRSEL DEPO YÖNETİMİ (AMELİYATHANE)</h2></div>
         <div class="content-area">
 
             <div class="admin-toolbar">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <span style="color:#00ccff; font-size:11px; font-weight:900;">LOKASYON:</span>
                     <select id="admin-loc-select" style="background:#111; color:#00ccff; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:120px;"></select>
-                    
-                    <span style="color:#00ff00; font-size:11px; font-weight:900; margin-left:10px;">DEPO:</span>
-                    <select id="admin-depo-tipi" style="background:#111; color:#00ff00; border:1px solid #333; padding:8px 15px; font-size:13px; font-weight:bold; border-radius:6px; outline:none; min-width:140px;">
-                        <option value="ana">ANA DEPO</option>
-                        <option value="am">AMELİYATHANE</option>
-                    </select>
                 </div>
                 <div class="search-wrapper">
                     <input type="text" id="search-input" class="search-input" placeholder="İçerideki ürünlerde ara..." autocomplete="off">
@@ -172,7 +166,6 @@
                 <button class="btn-primary" style="padding:10px 20px;" onclick="fetchLogs()">GETİR</button>
             </div>
             <div style="max-height:400px; overflow-y:auto; background:#050505; border:1px solid #222; border-radius:6px; padding:10px;" id="logs-container">
-                <!-- Logs will be loaded here -->
             </div>
         </div>
     </div>
@@ -318,22 +311,12 @@
 
         const getActiveCollection = () => {
             const loc = getActiveLoc();
-            const tip = document.getElementById('admin-depo-tipi') ? document.getElementById('admin-depo-tipi').value : 'ana';
-            if (tip === 'am') {
-                return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
-            } else {
-                return loc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + loc;
-            }
+            return loc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + loc;
         };
 
         const getActiveLogCollection = () => {
             const loc = getActiveLoc();
-            const tip = document.getElementById('admin-depo-tipi') ? document.getElementById('admin-depo-tipi').value : 'ana';
-            if (tip === 'am') {
-                return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
-            } else {
-                return loc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + loc;
-            }
+            return loc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + loc;
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -371,11 +354,6 @@
                     }
 
                     document.getElementById('global-loader').style.display = 'none';
-
-                    document.getElementById('admin-depo-tipi').onchange = () => {
-                        initMap();
-                        loadData();
-                    };
 
                     onSnapshot(doc(db, "system", "locations"), (locSnap) => {
                         let locs = locSnap.exists() ? locSnap.data().list || [] : [{id:'merkez', name:'Merkez Depo'}];
@@ -441,7 +419,6 @@
             } catch (e) { console.error("Log hatası:", e); }
         };
 
-        // EXCEL İLE TOPLU YÜKLEME FONKSİYONU (Aktif Depo Tipi İçin Geçerli)
         window.handleBulkExcel = async (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -531,7 +508,9 @@
                         container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Bu tarihte işlem kaydı bulunmuyor.</div>';
                         return;
                     }
-                    container.innerHTML = logs.map(l => `
+                    container.innerHTML = logs.map(l => {
+                        let dMiat = l.miat === '31.12.2099' ? 'BELİRTİLMEDİ' : l.miat;
+                        return `
                         <div style="background:#111; border:1px solid #222; padding:10px; border-radius:6px; margin-bottom:8px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
                             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:4px;">
                                 <span style="color:#00ccff; font-weight:bold;">${l.tip}</span>
@@ -540,11 +519,11 @@
                             <div style="color:#fff;"><strong style="color:#ffbc00;">${l.urunKodu}</strong> - ${l.urunAdi}</div>
                             <div style="display:flex; gap:10px; color:#aaa; flex-wrap:wrap;">
                                 <span>Miktar: <strong style="color:#00ff00;">${l.miktar}</strong></span>
-                                <span>Miat: <strong style="color:#fff;">${l.miat}</strong></span>
+                                <span>Miat: <strong style="color:#fff;">${dMiat}</strong></span>
                                 <span>Raf Adresi: <strong style="color:#ff3333;">${l.raf}</strong></span>
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 } else {
                     container.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Bu tarihte işlem kaydı bulunmuyor.</div>';
                 }
@@ -602,7 +581,7 @@
         };
 
         const getDaysDiff = (dateStr) => {
-            if(!dateStr) return 9999;
+            if(!dateStr || dateStr === '31.12.2099') return 9999;
             let parts = dateStr.split('-');
             if(parts.length !== 3) {
                 parts = dateStr.split('.');
@@ -620,8 +599,10 @@
                 if(!sId) continue;
                 let worstDays = 9999;
                 for(let miat in roomStock[key].lots) {
-                    const days = getDaysDiff(miat);
-                    if(days < worstDays) worstDays = days;
+                    if (miat !== '31.12.2099') {
+                        const days = getDaysDiff(miat);
+                        if(days < worstDays) worstDays = days;
+                    }
                 }
                 if(!shelfWorstMiat[sId] || worstDays < shelfWorstMiat[sId]) shelfWorstMiat[sId] = worstDays;
             }
@@ -641,7 +622,11 @@
 
         const checkCriticalMiats = () => {
             let criticalCount = 0;
-            for(let key in roomStock) { for(let miat in roomStock[key].lots) { if(getDaysDiff(miat) <= 180) criticalCount++; } }
+            for(let key in roomStock) { 
+                for(let miat in roomStock[key].lots) { 
+                    if(miat !== '31.12.2099' && getDaysDiff(miat) <= 180) criticalCount++; 
+                } 
+            }
             const btn = document.getElementById('btn-critical-report');
             if(criticalCount > 0) { btn.style.animation = 'flashBtn 0.8s infinite alternate'; btn.innerText = 'YAKLAŞAN MİAT (' + criticalCount + ')'; }
             else { btn.style.animation = 'none'; btn.innerText = 'YAKLAŞAN MİAT'; }
@@ -679,8 +664,11 @@
                 let sortedMiats = Object.keys(item.lots).sort((a,b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
                 sortedMiats.forEach(m => {
                     const days = getDaysDiff(m);
-                    let color = days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00');
-                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + m + ' <span style="font-size:9px; color:#aaa;">(' + days + ' gün)</span></div><div style="display:flex; align-items:center; gap:5px;"><div class="lot-qty" style="margin-right:10px;">' + item.lots[m] + ' ADET</div><button class="btn-remove" onclick="openDecreaseModal(\'' + item.urunKodu + '\', \'' + item.urunAdi.replace(/'/g, "\\'") + '\', \'' + m + '\', ' + item.lots[m] + ')">ÇIKART</button></div></div>';
+                    let color = m === '31.12.2099' ? '#00ff00' : (days <= 60 ? '#ff0000' : (days <= 180 ? '#ffbc00' : '#00ff00'));
+                    let displayMiat = m === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : m;
+                    let displayDays = m === '31.12.2099' ? 'Süresiz' : days + ' gün';
+                    
+                    lotsHtml += '<div class="lot-row"><div class="lot-miat" style="color:' + color + ';">' + displayMiat + ' <span style="font-size:9px; color:#aaa;">(' + displayDays + ')</span></div><div style="display:flex; align-items:center; gap:5px;"><div class="lot-qty" style="margin-right:10px;">' + item.lots[m] + ' ADET</div><button class="btn-remove" onclick="openDecreaseModal(\'' + item.urunKodu + '\', \'' + item.urunAdi.replace(/'/g, "\\'") + '\', \'' + m + '\', ' + item.lots[m] + ')">ÇIKART</button></div></div>';
                 });
                 html += '<div class="stock-item"><div class="stock-header"><div><div class="stock-name">' + item.urunAdi + '</div><div class="stock-code">' + item.urunKodu + '</div></div><button class="btn-primary" style="background:#9933ff; padding:8px 12px; font-size:10px;" onclick="openMoveModal(\'' + item.urunKodu + '\', \'' + item.urunAdi.replace(/'/g, "\\'") + '\')">TAŞI</button></div>' + lotsHtml + '</div>';
             });
@@ -717,9 +705,11 @@
             if(!activeShelfId) return;
             const code = document.getElementById('add-selected-code').value.trim();
             const name = document.getElementById('add-selected-name').value.trim();
-            const miatRaw = document.getElementById('add-miat').value;
+            let miatRaw = document.getElementById('add-miat').value;
             const qty = parseInt(document.getElementById('add-qty').value) || 0;
-            if(!code || !name || !miatRaw || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen bilgileri eksiksiz girin.");
+            if(!code || !name || qty <= 0) return showCustomAlert("EKSİK BİLGİ", "Lütfen bilgileri eksiksiz girin.");
+
+            if (!miatRaw) miatRaw = '2099-12-31';
 
             const col = getActiveCollection();
 
@@ -741,7 +731,8 @@
         window.openDecreaseModal = (code, name, miat, currentQty) => {
             document.getElementById('decrease-code').value = code; document.getElementById('decrease-name').value = name; document.getElementById('decrease-miat').value = miat;
             document.getElementById('decrease-qty').value = "1"; document.getElementById('decrease-qty').max = currentQty;
-            document.getElementById('decrease-info').innerHTML = '<b style="color:#fff;">' + name + '</b><br>KOD: ' + code + ' | MİAT: <span style="color:#ffbc00;">' + miat + '</span> | MEVCUT: <span style="color:#00ff00;">' + currentQty + '</span>';
+            let displayMiat = miat === '31.12.2099' ? 'BELİRTİLMEDİ' : miat;
+            document.getElementById('decrease-info').innerHTML = '<b style="color:#fff;">' + name + '</b><br>KOD: ' + code + ' | MİAT: <span style="color:#ffbc00;">' + displayMiat + '</span> | MEVCUT: <span style="color:#00ff00;">' + currentQty + '</span>';
             document.getElementById('decrease-stock-modal').style.display = 'flex';
         };
 
@@ -849,13 +840,16 @@
                 for(let key in roomStock) {
                     for(let miat in roomStock[key].lots) {
                         const days = getDaysDiff(miat);
-                        if(type === 'all' || days <= 180) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
+                        if(type === 'all' || (miat !== '31.12.2099' && days <= 180)) rows.push({ code: roomStock[key].urunKodu, name: roomStock[key].urunAdi, addr: roomStock[key].adres, miat: miat, days: days, qty: roomStock[key].lots[miat] });
                     }
                 }
                 rows.sort((a,b) => a.code === b.code ? a.days - b.days : a.code.localeCompare(b.code));
                 tbody.innerHTML = rows.map(r => {
                     let c = r.days <= 30 ? '#ff0000' : (r.days <= 60 ? '#ff4500' : (r.days <= 90 ? '#ff8c00' : (r.days <= 180 ? '#ffbc00' : '#00ff00')));
-                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + r.miat + '</td><td style="font-weight:900; color:' + c + ';">' + r.days + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
+                    let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
+                    if(r.miat === '31.12.2099') c = '#00ff00';
+                    return '<tr><td style="font-family:monospace;">' + r.code + '</td><td style="font-weight:bold;">' + r.name + '</td><td style="font-family:monospace; color:#00ccff;">' + (r.addr || '-') + '</td><td style="font-family:monospace; color:' + c + ';">' + dMiat + '</td><td style="font-weight:900; color:' + c + ';">' + dDays + '</td><td style="font-weight:bold; color:#00ff00;">' + r.qty + '</td></tr>';
                 }).join('');
             } else if (type === 'stock') {
                 thead.innerHTML = '<tr><th>ÜRÜN KODU</th><th>ÜRÜN İSMİ</th><th>ADRES</th><th>TOPLAM MİKTAR</th></tr>';
@@ -878,7 +872,9 @@
                 if(window.currentReportType === 'stock') {
                     return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "TOPLAM MİKTAR": r.qty };
                 } else {
-                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "MİAT": r.miat, "KALAN GÜN": r.days, "MİKTAR": r.qty };
+                    let dMiat = r.miat === '31.12.2099' ? 'MİAT BELİRTİLMEDİ' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Süresiz' : r.days;
+                    return { "ÜRÜN KODU": r.code, "ÜRÜN İSMİ": r.name, "ADRES": r.addr || '-', "MİAT": dMiat, "KALAN GÜN": dDays, "MİKTAR": r.qty };
                 }
             });
             const ws = XLSX.utils.json_to_sheet(mappedData);
@@ -903,7 +899,9 @@
                 if(window.currentReportType === 'stock') {
                     return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.qty)];
                 } else {
-                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(r.miat), replaceTR(r.days), replaceTR(r.qty)];
+                    let dMiat = r.miat === '31.12.2099' ? 'BELIRTILMEDI' : r.miat;
+                    let dDays = r.miat === '31.12.2099' ? 'Suresiz' : r.days;
+                    return [replaceTR(r.code), replaceTR(r.name), replaceTR(r.addr), replaceTR(dMiat), replaceTR(dDays), replaceTR(r.qty)];
                 }
             });
 
@@ -919,6 +917,13 @@
             new QRious({ element: document.getElementById('qr-canvas'), value: val, size: 250, level: 'H' });
             document.getElementById('qr-modal').style.display = 'flex';
         };
+
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                initMap();
+                loadData();
+            }
+        });
     </script>
 </body>
 </html>
