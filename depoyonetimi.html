@@ -161,9 +161,9 @@
                 <div class="modal-title" id="shelf-modal-title">RAF BİLGİSİ</div>
                 <button class="btn-close" onclick="closeModal('shelf-modal')">×</button>
             </div>
-            <!-- Standard Users shouldn't redefine physical map addresses, so no shelf-address-control here -->
+            <!-- Standart Kullanıcılar Ekleme Yapabilir -->
             <div id="shelf-stock-control" style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #222;">
-                <button class="btn-primary" style="width:100%; background:transparent; border:1px solid #00ff00; color:#00ff00; padding:10px; border-radius:6px; cursor:pointer;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
+                <button class="btn-primary" style="width:100%; background:transparent; border:1px solid #00ff00; color:#00ff00; padding:10px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="openAddStockModal()">+ BU RAFA YENİ ÜRÜN EKLE</button>
             </div>
             <div id="shelf-content-list"></div>
         </div>
@@ -292,13 +292,13 @@
         const getActiveCollection = () => {
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
-            return activeLoc === 'merkez' ? 'kilitli_depo_stok' : 'kilitli_depo_stok_' + activeLoc;
+            return activeLoc === 'merkez' ? 'depo_ameliyathane' : 'depo_ameliyathane_' + activeLoc;
         };
 
         const getActiveLogCollection = () => {
             let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
             if(activeLoc === 'tumu') activeLoc = 'bodrum';
-            return activeLoc === 'merkez' ? 'kilitli_depo_logs' : 'kilitli_depo_logs_' + activeLoc;
+            return activeLoc === 'merkez' ? 'ameliyathane_logs' : 'ameliyathane_logs_' + activeLoc;
         };
 
         const logOperation = async (type, code, name, qty, miat, shelfId) => {
@@ -307,7 +307,7 @@
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
                 const timeStr = now.toLocaleTimeString('tr-TR');
-                const userEmail = auth.currentUser ? auth.currentUser.email : 'Bilinmeyen Kullanıcı';
+                const userEmail = auth.currentUser ? auth.currentUser.email : 'Standart Kullanıcı';
                 
                 const logRef = doc(db, logCol, dateStr);
                 await setDoc(logRef, {
@@ -492,7 +492,6 @@
             if(val.length < 3) { ac.style.display = 'none'; return; }
             const terms = val.split(/\s+/);
             
-            // Eğer catalog API'si yüklenmemişse getDocs ile Firebase'den o an çek
             if (Object.keys(catalog).length === 0) {
                 const activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
                 const colAna = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
