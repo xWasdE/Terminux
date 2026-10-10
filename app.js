@@ -458,6 +458,8 @@ window.getAiDescription = async (data) => {
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Sadece açıklamayı yaz: " + data.urunAdi;
+        
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
@@ -465,10 +467,9 @@ window.getAiDescription = async (data) => {
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
-                model: "llama3-70b-8192", 
+                model: "llama3-8b-8192", 
                 messages: [
-                    { role: "system", content: "Sen bir medikal ve cerrahi ürün uzmanısın. Verilen medikal ürünün cerrahi olarak ne işe yaradığını, hangi alanda (üroloji, genel cerrahi, ortopedi vb.) ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla giriş veya selamlama cümlesi kullanma, doğrudan ürünün ne olduğunu yaz." },
-                    { role: "user", content: "Ürün Adı: " + data.urunAdi }
+                    { role: "user", content: promptText }
                 ], 
                 temperature: 0.3, 
                 max_tokens: 150 
