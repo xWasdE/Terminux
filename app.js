@@ -153,6 +153,8 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
         const data = docSnap.data();
         if (data.aiDescriptionEnabled !== undefined) {
             window.aiDescriptionEnabled = data.aiDescriptionEnabled;
+        } else {
+            window.aiDescriptionEnabled = true;
         }
         if (data.groqApiKey) {
             window.GROQ_API_KEY = data.groqApiKey;
@@ -447,7 +449,11 @@ window.forceFetchImages = () => {
 
 window.getAiDescription = async (data) => {
     const descContainer = document.getElementById('ai-desc-container');
-    if (!descContainer || !window.GROQ_API_KEY) return;
+    if (!descContainer) return;
+    
+    if (!window.GROQ_API_KEY) {
+        return;
+    }
     
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">🤖 Yapay zeka ürün analizi yapılıyor...</div>';
     
