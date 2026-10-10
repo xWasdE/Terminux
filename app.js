@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/fir
 import { doc, getDoc, setDoc, collection, getDocs, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
+window.GROQ_API_KEY = null;
 
 const scannerScript = document.createElement('script');
 scannerScript.src = "https://unpkg.com/html5-qrcode";
@@ -14,6 +15,7 @@ document.head.appendChild(jsbScript);
 
 window.lightboxImages = [];
 window.lightboxIndex = 0;
+window.aiDescriptionEnabled = true;
 
 window.openLightbox = (index) => {
     if(!window.lightboxImages || window.lightboxImages.length === 0) return;
@@ -149,6 +151,13 @@ document.addEventListener('click', async (e) => {
 onSnapshot(doc(db, "system", "settings"), (docSnap) => {
     if(docSnap.exists()) {
         const data = docSnap.data();
+        if (data.aiDescriptionEnabled !== undefined) {
+            window.aiDescriptionEnabled = data.aiDescriptionEnabled;
+        }
+        if (data.groqApiKey) {
+            window.GROQ_API_KEY = data.groqApiKey;
+        }
+        
         const btnLens = document.getElementById('btn-lens-redirect');
         if (btnLens) btnLens.style.display = data.publicLensEnabled ? 'block' : 'none';
         
@@ -436,6 +445,28 @@ window.forceFetchImages = () => {
     }
 };
 
+window.getAiDescription = async (data) => {
+    const descContainer = document.getElementById('ai-desc-container');
+    if (!descContainer || !window.GROQ_API_KEY) return;
+    
+    descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">🤖 Yapay zeka ürün analizi yapılıyor...</div>';
+    
+    try {
+        const prompt = "Sen bir medikal ve cerrahi ürün uzmanısın. Aşağıdaki ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda (üroloji, genel cerrahi, ortopedi vb.) ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle anlaşılır şekilde açıkla. Sadece açıklamayı yaz, ekstra giriş cümlesi kullanma.\nÜrün Adı: " + data.urunAdi;
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + window.GROQ_API_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 150 })
+        });
+        const resData = await response.json();
+        if (resData.choices && resData.choices.length > 0) {
+            const aiText = resData.choices[0].message.content.trim();
+            await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
+            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">🤖 YAPAY ZEKA ÜRÜN ÖZETİ</div>' + aiText + '</div>';
+        } else { descContainer.innerHTML = ''; }
+    } catch(e) { descContainer.innerHTML = ''; }
+};
+
 window.autoFetchCentral = async (data, barkod) => {
     const id = data.docId;
     const gorselContainer = document.getElementById('gorsel-container');
@@ -669,6 +700,7 @@ window.fetchAndDisplayProduct = async (code) => {
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
                 surecTipi: baseData.surecTipi || "-", miatTarihi: baseData.miatTarihi || "-", 
                 utsGorseller: finalImages, 
+                aiAciklama: globalData ? globalData.aiAciklama : null,
                 minAlert: baseData.minAlert || 0, max: baseData.max || 0, hasAna: anaDoc.exists(), anaMiktar: anaData ? parseInt(anaData.miktar) : 0,
                 anaStokAdresi: anaData ? (anaData.stokAdresi || "-") : "-", anaDummy: anaData ? (anaData.dummy || "DUMMY DEĞİL") : "DUMMY DEĞİL", anaReuse: anaData ? (anaData.reuse || "REUSE DEĞİL") : "REUSE DEĞİL", 
                 hasAm: amDoc.exists(), amMiktar: amData ? parseInt(amData.miktar) : 0, amStokAdresi: amData ? (amData.stokAdresi || "-") : "-",
@@ -833,6 +865,8 @@ function renderCard(data) {
         reFetchBtnHTML = '<button onclick="window.forceFetchImages()" style="margin-left:15px; background:transparent; border:1px solid #ffbc00; color:#ffbc00; border-radius:6px; padding:3px 10px; font-size:10px; cursor:pointer; font-weight:bold;">YENİDEN TARA</button>';
     }
 
+    let aiContainerHTML = window.aiDescriptionEnabled ? '<div id="ai-desc-container" style="margin-top: 15px; width: 100%;"></div>' : '';
+
     if(resultContainer) {
         resultContainer.innerHTML = '<div class="card-wrapper">' +
             '<div class="card-main">' +
@@ -840,6 +874,7 @@ function renderCard(data) {
             '<div style="flex: 1; min-width: 250px;">' +
             '<div class="label-text">ÜRÜN BİLGİSİ</div>' +
             '<div class="title-text">' + data.urunAdi + '</div>' +
+            aiContainerHTML +
             '</div>' +
             '<button onclick="openPrintModal()" class="btn-save btn-print-mobile" style="background: #00ccff; color: #000; padding: 14px 28px; font-size: 13px; width: auto; white-space: nowrap; box-shadow: 0 4px 15px rgba(0,204,255,0.2);">ETİKET YAZDIR</button>' +
             '</div>' +
@@ -877,6 +912,17 @@ function renderCard(data) {
             '</div>' +
             '</div>' +
             '</div>';
+    }
+
+    if (window.aiDescriptionEnabled) {
+        if (!data.aiAciklama) {
+            window.getAiDescription(data);
+        } else {
+            const descContainer = document.getElementById('ai-desc-container');
+            if (descContainer) {
+                descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">🤖 YAPAY ZEKA ÜRÜN ÖZETİ</div>' + data.aiAciklama + '</div>';
+            }
+        }
     }
 
     setTimeout(() => {
