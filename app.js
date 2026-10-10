@@ -109,7 +109,7 @@ const trToLower = (text) => {
 
 const noImageSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23111' rx='8'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='11' font-weight='bold' fill='%23ff3333' text-anchor='middle'%3EGÖRSEL BULUNAMADI%3C/text%3E%3C/svg%3E";
 
-async function loadTelegramImage(imgElement, fileId, index) {
+async function loadTelegramImage(imgElement, fileId, index, retryCount = 0) {
     if (fileId.startsWith('data:image')) {
         imgElement.src = fileId; 
         window.lightboxImages[index] = fileId;
@@ -125,9 +125,15 @@ async function loadTelegramImage(imgElement, fileId, index) {
     imgElement.onclick = () => openLightbox(index);
 
     imgElement.onerror = () => {
-        imgElement.src = noImageSvg; 
-        window.lightboxImages[index] = noImageSvg;
-        imgElement.onerror = null; 
+        if (retryCount < 2) {
+            setTimeout(() => {
+                loadTelegramImage(imgElement, fileId, index, retryCount + 1);
+            }, 1500);
+        } else {
+            imgElement.src = noImageSvg; 
+            window.lightboxImages[index] = noImageSvg;
+            imgElement.onerror = null; 
+        }
     };
 }
 
@@ -202,7 +208,7 @@ onAuthStateChanged(auth, async (user) => {
                             locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
                             locSelector.innerHTML = html;
                             locSelector.value = localStorage.getItem('active_loc') || 'bodrum';
-                        } catch(err) { console.error(err); }
+                        } catch(err) {}
                     }
                     if(opLoc) opLoc.style.display = 'none';
                 } else {
@@ -236,7 +242,7 @@ onAuthStateChanged(auth, async (user) => {
                     }
                 }, (error) => {});
 
-                buildCatalog(true).then(() => { if(searchInput) searchInput.focus(); });
+                buildCatalog(false).then(() => { if(searchInput) searchInput.focus(); });
                 return;
             }
         } catch(e) {}
@@ -328,13 +334,23 @@ async function buildCatalog(forceUpdate = false) {
             }
         };
 
-        anaSnap.forEach(processDoc);
-        amSnap.forEach(processDoc);
+        let chunkCounter = 0;
+        for (const doc of anaSnap.docs) {
+            processDoc(doc);
+            if (++chunkCounter % 150 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+        for (const doc of amSnap.docs) {
+            processDoc(doc);
+            if (++chunkCounter % 150 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+
         productCatalog = Array.from(tempMap.values());
 
         if(productCatalog.length > 0) {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
-            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
+                localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+            } catch (storageErr) {}
         }
 
         if (forceUpdate && document.getElementById('main-search')) {
@@ -460,8 +476,18 @@ window.autoFetchCentral = async (data, barkod) => {
                 }
             }
         }
+        
+        if (partialChunk.trim()) {
+            const lines = partialChunk.split('\n\n');
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const resData = JSON.parse(line.substring(6));
+                    if (resData.type === "DONE") { dbUrls = resData.data; }
+                }
+            }
+        }
     } catch(e) {
-        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00; font-size:13px; font-weight:bold;">Görsel isteğiniz yöneticiye bildirildi, en kısa sürede eklenecektir. (Sunucu Kapalı)</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="color:#ffbc00; font-size:13px; font-weight:bold;">Görsel isteğiniz yöneticiye bildirildi, en kısa sürede eklenecektir. (Sunucu Kapalı veya Hata)</span>';
         return;
     }
 
@@ -495,7 +521,7 @@ window.autoFetchCentral = async (data, barkod) => {
         if(catItem) {
             catItem.utsGorseller = dbUrls;
             const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
-            localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog)); } catch(e) {}
         }
     } catch (dbError) {}
 
@@ -565,7 +591,7 @@ window.saveUpdate = async (id, type, forcedVal = null, silent = false) => {
             if (type === 'r') catItem.refNo = newVal;
             catItem.searchString = trToLower(catItem.urunAdi + ' ' + catItem.urunKodu + ' ' + catItem.barkod + ' ' + catItem.refNo + ' ' + catItem.altGrup);
             const CACHE_KEY = 'terminux_catalog_cache_' + activeLoc;
-            localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog));
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify(productCatalog)); } catch(e) {}
         }
         if(!silent) fetchAndDisplayProduct(id); 
     } catch (err) {}
@@ -710,7 +736,11 @@ window.fetchAndDisplayProduct = async (code) => {
                 resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">KAYIT BULUNAMADI</div><div style="color: #888; font-size: 16px; font-family: monospace;">Sorgulanan Parametre: <span style="color:#fff;">' + code + '</span></div></div>';
             }
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+        if(resultContainer) {
+            resultContainer.innerHTML = '<div style="color: #ff3333; font-size: 18px; text-align: center; padding: 20px;">Ağ hatası veya bağlantı problemi oluştu. Lütfen bağlantınızı kontrol edip tekrar deneyin.</div>';
+        }
+    }
 };
 
 function renderCard(data) {
