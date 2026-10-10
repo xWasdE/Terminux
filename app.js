@@ -462,15 +462,25 @@ window.getAiDescription = async (data) => {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { "Authorization": "Bearer " + window.GROQ_API_KEY, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 150 })
+            body: JSON.stringify({ model: "llama3-8b-8192", messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 150 })
         });
+        
+        if (!response.ok) {
+            descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">🤖 Yapay Zeka Servisine Bağlanılamadı (Hata: ' + response.status + ')</div>';
+            return;
+        }
+        
         const resData = await response.json();
         if (resData.choices && resData.choices.length > 0) {
             const aiText = resData.choices[0].message.content.trim();
             await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
             descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">🤖 YAPAY ZEKA ÜRÜN ÖZETİ</div>' + aiText + '</div>';
-        } else { descContainer.innerHTML = ''; }
-    } catch(e) { descContainer.innerHTML = ''; }
+        } else { 
+            descContainer.innerHTML = ''; 
+        }
+    } catch(e) { 
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">🤖 Yapay Zeka Ağ Hatası: İnternet bağlantınızı kontrol edin.</div>';
+    }
 };
 
 window.autoFetchCentral = async (data, barkod) => {
