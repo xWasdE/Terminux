@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, collection, getDocs, updateDoc, onSnapshot } from 
 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 window.GROQ_API_KEY = null;
+window.activeAiRequests = {}; 
 
 const scannerScript = document.createElement('script');
 scannerScript.src = "https://unpkg.com/html5-qrcode";
@@ -449,25 +450,26 @@ window.forceFetchImages = () => {
 
 window.getAiDescription = async (data) => {
     const descContainer = document.getElementById('ai-desc-container');
-    if (!descContainer) return;
+    if (!descContainer || !window.GROQ_API_KEY) return;
+
+    if (window.activeAiRequests && window.activeAiRequests[data.urunKodu]) return;
+    window.activeAiRequests = window.activeAiRequests || {};
+    window.activeAiRequests[data.urunKodu] = true;
     
-    if (!window.GROQ_API_KEY) {
-        return;
-    }
-    
+    const cleanApiKey = window.GROQ_API_KEY.replace(/['"]/g, '').trim();
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Sadece açıklamayı yaz: " + data.urunAdi;
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + (data.urunAdi || "Bilinmeyen Ürün");
         
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
-                "Authorization": "Bearer " + window.GROQ_API_KEY, 
+                "Authorization": "Bearer " + cleanApiKey, 
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
-                model: "llama3-8b-8192", 
+                model: "llama-3.1-8b-instant", 
                 messages: [
                     { role: "user", content: promptText }
                 ], 
@@ -476,12 +478,15 @@ window.getAiDescription = async (data) => {
             })
         });
         
+        const resData = await response.json();
+
         if (!response.ok) {
+            console.error("Groq API Hatası:", resData);
             descContainer.innerHTML = '';
+            delete window.activeAiRequests[data.urunKodu];
             return;
         }
         
-        const resData = await response.json();
         if (resData.choices && resData.choices.length > 0) {
             const aiText = resData.choices[0].message.content.trim();
             await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
@@ -490,7 +495,10 @@ window.getAiDescription = async (data) => {
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
+        console.error("AI Fetch Hatası:", e);
         descContainer.innerHTML = '';
+    } finally {
+        delete window.activeAiRequests[data.urunKodu];
     }
 };
 
