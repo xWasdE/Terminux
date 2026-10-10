@@ -940,3 +940,21 @@ document.addEventListener('input', (e) => {
         if (val !== cleaned) { e.target.value = cleaned; }
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const burgerBtn = document.getElementById('burger-menu-btn');
+    const navMenu = document.getElementById('header-nav-menu');
+
+    if (burgerBtn && navMenu) {
+        burgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navMenu.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (navMenu.classList.contains('active') && !navMenu.contains(e.target) && !burgerBtn.contains(e.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+    }
+});
