@@ -469,21 +469,18 @@ window.getAiDescription = async (data) => {
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
-                model: "llama-3.1-8b-instant", 
+                model: "llama3-8b-8192", 
                 messages: [
                     { role: "user", content: promptText }
-                ], 
-                temperature: 0.3, 
-                max_tokens: 150 
+                ]
             })
         });
         
         const resData = await response.json();
 
         if (!response.ok) {
-            console.error("Groq API Hatası:", resData);
+            console.error("Groq API 400 Hatası Detayı:", resData);
             descContainer.innerHTML = '';
-            delete window.activeAiRequests[data.urunKodu];
             return;
         }
         
