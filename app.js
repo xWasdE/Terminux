@@ -455,18 +455,28 @@ window.getAiDescription = async (data) => {
         return;
     }
     
-    descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">🤖 Yapay zeka ürün analizi yapılıyor...</div>';
+    descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const prompt = "Sen bir medikal ve cerrahi ürün uzmanısın. Aşağıdaki ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda (üroloji, genel cerrahi, ortopedi vb.) ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle anlaşılır şekilde açıkla. Sadece açıklamayı yaz, ekstra giriş cümlesi kullanma.\nÜrün Adı: " + data.urunAdi;
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
-            headers: { "Authorization": "Bearer " + window.GROQ_API_KEY, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "llama3-8b-8192", messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 150 })
+            headers: { 
+                "Authorization": "Bearer " + window.GROQ_API_KEY, 
+                "Content-Type": "application/json" 
+            },
+            body: JSON.stringify({ 
+                model: "llama3-70b-8192", 
+                messages: [
+                    { role: "system", content: "Sen bir medikal ve cerrahi ürün uzmanısın. Verilen medikal ürünün cerrahi olarak ne işe yaradığını, hangi alanda (üroloji, genel cerrahi, ortopedi vb.) ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla giriş veya selamlama cümlesi kullanma, doğrudan ürünün ne olduğunu yaz." },
+                    { role: "user", content: "Ürün Adı: " + data.urunAdi }
+                ], 
+                temperature: 0.3, 
+                max_tokens: 150 
+            })
         });
         
         if (!response.ok) {
-            descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">🤖 Yapay Zeka Servisine Bağlanılamadı (Hata: ' + response.status + ')</div>';
+            descContainer.innerHTML = '';
             return;
         }
         
@@ -474,12 +484,12 @@ window.getAiDescription = async (data) => {
         if (resData.choices && resData.choices.length > 0) {
             const aiText = resData.choices[0].message.content.trim();
             await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
-            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">🤖 YAPAY ZEKA ÜRÜN ÖZETİ</div>' + aiText + '</div>';
+            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + aiText + '</div>';
         } else { 
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
-        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">🤖 Yapay Zeka Ağ Hatası: İnternet bağlantınızı kontrol edin.</div>';
+        descContainer.innerHTML = '';
     }
 };
 
@@ -936,7 +946,7 @@ function renderCard(data) {
         } else {
             const descContainer = document.getElementById('ai-desc-container');
             if (descContainer) {
-                descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">🤖 YAPAY ZEKA ÜRÜN ÖZETİ</div>' + data.aiAciklama + '</div>';
+                descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + data.aiAciklama + '</div>';
             }
         }
     }
