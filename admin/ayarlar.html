@@ -53,6 +53,17 @@
                 <div id="loc-list" style="margin-top:20px; border:1px solid #222; border-radius:6px; overflow:hidden;"></div>
             </div>
 
+            <div class="card" style="border-color: #b026ff;">
+                <div class="card-header" style="color: #b026ff;">YAPAY ZEKA ÜRÜN ÖZETİ (GROQ AI)</div>
+                <div class="switch-container">
+                    <div class="switch-label">
+                        <div class="switch-title">Yapay Zeka Analiz Durumu</div>
+                        <div class="switch-desc">Aktif edildiğinde ürün detaylarında otomatik olarak medikal/cerrahi kullanım alanı açıklaması oluşturulur.</div>
+                    </div>
+                    <button id="btn-toggle-ai" class="switch-btn">KAPALI</button>
+                </div>
+            </div>
+
             <div class="card" style="border-color: #ffbc00;">
                 <div class="card-header" style="color: #ffbc00;">SİSTEM BAKIM MODU (MAINTENANCE)</div>
                 <div class="switch-container">
@@ -110,14 +121,19 @@
         onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             const btnMaint = document.getElementById('btn-toggle-maintenance');
             const btnLens = document.getElementById('btn-toggle-public-lens');
+            const btnAi = document.getElementById('btn-toggle-ai');
             
             if(docSnap.exists()) {
                 const data = docSnap.data();
+                
                 if(data.maintenanceMode === true) { btnMaint.innerText = "AÇIK (AKTİF)"; btnMaint.classList.add("active"); } 
                 else { btnMaint.innerText = "KAPALI"; btnMaint.classList.remove("active"); }
                 
                 if(data.publicLensEnabled === true) { btnLens.innerText = "GÖRÜNÜR (AKTİF)"; btnLens.classList.add("active"); } 
                 else { btnLens.innerText = "GİZLİ"; btnLens.classList.remove("active"); }
+
+                if(data.aiDescriptionEnabled !== false) { btnAi.innerText = "AÇIK (AKTİF)"; btnAi.classList.add("active"); } 
+                else { btnAi.innerText = "KAPALI"; btnAi.classList.remove("active"); }
             }
         });
 
@@ -129,6 +145,11 @@
         document.getElementById('btn-toggle-public-lens').addEventListener('click', async () => {
             const isActive = document.getElementById('btn-toggle-public-lens').classList.contains("active");
             try { await setDoc(doc(db, "system", "settings"), { publicLensEnabled: !isActive }, { merge: true }); } catch(e) {}
+        });
+
+        document.getElementById('btn-toggle-ai').addEventListener('click', async () => {
+            const isActive = document.getElementById('btn-toggle-ai').classList.contains("active");
+            try { await setDoc(doc(db, "system", "settings"), { aiDescriptionEnabled: !isActive }, { merge: true }); } catch(e) {}
         });
 
         document.getElementById('btn-sync-global').addEventListener('click', async () => {
