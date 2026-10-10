@@ -127,18 +127,176 @@
             font-weight: bold !important; 
         }
 
+        .terminux-header {
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #080808;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 12px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .header-logo {
+            color: #fff;
+            font-size: 22px;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .header-logo .logo-bold {
+            font-weight: 900;
+        }
+
+        .header-logo .logo-light {
+            font-weight: 400;
+            font-size: 13px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            background: #111;
+            color: #aaa;
+            border: 1px solid #222;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: #00ccff;
+            color: #000;
+            border-color: #00ccff;
+        }
+
+        .nav-select {
+            background: #111;
+            color: #00ff00;
+            border: 1px solid #222;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 900;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-select:hover {
+            border-color: #00ff00;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 24px;
+            background: #222;
+            margin: 0 10px;
+        }
+
+        .operator-info {
+            font-size: 11px;
+            color: #666;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .operator-info span {
+            color: #00ff00;
+        }
+
+        .btn-logout {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: 10px;
+        }
+
+        .btn-logout:hover {
+            background: #ff3333;
+            color: #fff;
+        }
+
+        .burger-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        @media (max-width: 1200px) {
+            .burger-btn {
+                display: block;
+            }
+
+            .header-nav {
+                position: fixed;
+                top: 60px;
+                right: -100%;
+                width: 260px;
+                height: calc(100vh - 60px);
+                background: #080808;
+                border-left: 1px solid #1a1a1a;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 20px;
+                gap: 12px;
+                transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: -10px 0 30px rgba(0,0,0,0.9);
+                overflow-y: auto;
+            }
+
+            .header-nav.active {
+                right: 0;
+            }
+
+            .nav-divider {
+                width: 100%;
+                height: 1px;
+                margin: 10px 0;
+            }
+
+            .operator-info {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .btn-logout {
+                margin-left: 0;
+                padding: 12px;
+            }
+            
+            .nav-link {
+                text-align: center;
+                padding: 12px;
+            }
+        }
+
         @media (max-width: 900px) {
             .search-wrapper { flex-direction: column !important; height: auto !important; gap: 15px !important; }
             #main-search { font-size: 16px !important; height: 55px !important; padding: 10px 15px !important; border-radius: 8px !important; width: 100% !important; }
             .btn-scan-mobile { display: flex !important; align-items: center; justify-content: center; font-size: 16px !important; height: 55px !important; padding: 0 !important; border-radius: 8px !important; width: 100% !important; }
             
-            #app-screen > header { display: flex !important; flex-direction: column !important; align-items: center !important; padding: 20px 15px !important; gap: 15px !important; }
-            #app-screen > header > div:nth-child(1) { text-align: center !important; }
-            #app-screen > header > div:nth-child(2) { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; width: 100% !important; gap: 10px !important; }
-            #app-screen > header > div:nth-child(2) > a { order: 1 !important; flex: 1 !important; text-align: center !important; font-size: 11px !important; padding: 12px 10px !important; white-space: nowrap !important; display: flex; align-items: center; justify-content: center; }
-            #btn-logout { order: 2 !important; flex: 1 !important; font-size: 11px !important; padding: 12px 10px !important; white-space: nowrap !important; }
-            #app-screen > header > div:nth-child(2) > span { order: 3 !important; width: 100% !important; text-align: center !important; margin-top: 5px !important; font-size: 12px !important; }
-            #loc-selector { order: 4 !important; width: 100% !important; margin-top: 5px !important; }
             #login-screen:not(.hidden) { display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: #050505 !important; padding: 20px !important; min-height: 100vh !important; width: 100vw !important; overflow: hidden !important; }
             #login-screen:not(.hidden) > div:not(:has(#login-form)) { display: none !important; }
             #login-screen:not(.hidden) > div:has(#login-form) { width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; }
@@ -236,20 +394,38 @@
     </div>
 
     <div id="app-screen" class="hidden" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-        <header style="padding: 25px 50px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; background: #050505; flex-wrap: wrap; gap: 15px;">
-            <div style="font-weight: 800; font-size: 28px; letter-spacing: -1px; color: #fff;">TERMINUX <span style="color:#444; font-size:14px; font-weight: 600;">WMS TERMINAL</span></div>
-            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <select id="loc-selector" style="display:none; background:#111; color:#00ff00; border:1px solid #333; padding:8px; border-radius:4px; font-size:12px; font-weight:bold; margin-right:10px;"></select>
-                <a href="admin/index.html" id="btn-admin-panel" style="display: none; background: #ffbc00; color: #000; padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">YÖNETİCİ PANELİ</a>
-                <a href="depoyonetimi.html" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#ff3333'; this.style.color='#000'" onmouseout="this.style.background='rgba(255, 51, 51, 0.1)'; this.style.color='#ff3333'">DEPO YÖNETİMİ</a>
-                <a href="sevkiyat.html" style="background: rgba(0, 204, 255, 0.1); color: #00ccff; border: 1px solid rgba(0, 204, 255, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ccff'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 204, 255, 0.1)'; this.style.color='#00ccff'">SEVKİYAT KONTROL</a>
-                <a href="sayim.html" style="background: rgba(255, 188, 0, 0.1); color: #ffbc00; border: 1px solid rgba(255, 188, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#ffbc00'; this.style.color='#000'" onmouseout="this.style.background='rgba(255, 188, 0, 0.1)'; this.style.color='#ffbc00'">SAYIM MODÜLÜ</a>
-                <a href="lens.html" style="background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid rgba(0, 255, 0, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#00ff00'; this.style.color='#000'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'; this.style.color='#00ff00'">LENS MERKEZİ</a>
-                <a href="adres.html" style="background: rgba(153, 51, 255, 0.1); color: #9933ff; border: 1px solid rgba(153, 51, 255, 0.3); padding: 10px 20px; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='#9933ff'; this.style.color='#000'" onmouseout="this.style.background='rgba(153, 51, 255, 0.1)'; this.style.color='#9933ff'">ADRES BULUCU</a>
-                <span style="font-size: 13px; color: #666; letter-spacing: 1px;">OPERATÖR: <b id="operator-name" style="color: #00ff00;"></b> <span id="operator-loc" style="color:#ffbc00; font-size:10px; margin-left:5px; padding:2px 6px; border:1px solid #ffbc00; border-radius:4px; display:none;"></span></span>
-                <button id="btn-logout" style="background: #ffffff; color: #000000; border: none; padding: 10px 25px; cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 4px; transition: 0.2s;">GÜVENLİ ÇIKIŞ</button>
+        <header class="terminux-header">
+            <div class="header-logo">
+                <span class="logo-bold">TERMINUX</span>
+                <span class="logo-light">WMS TERMINAL</span>
             </div>
+
+            <button class="burger-btn" id="burger-menu-btn">
+                <svg viewBox="0 0 24 24" width="28" height="28" stroke="#fff" stroke-width="2" fill="none">
+                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                </svg>
+            </button>
+
+            <nav class="header-nav" id="header-nav-menu">
+                <select id="loc-selector" class="nav-select" style="display:none;"></select>
+                
+                <a href="admin/index.html" class="nav-link" id="btn-admin-panel" style="display:none;">YÖNETİCİ PANELİ</a>
+                <a href="depoyonetimi.html" class="nav-link">DEPO YÖNETİMİ</a>
+                <a href="sevkiyat.html" class="nav-link">SEVKİYAT KONTROL</a>
+                <a href="sayim.html" class="nav-link">SAYIM MODÜLÜ</a>
+                <a href="lens.html" class="nav-link" id="btn-lens-redirect">LENS MERKEZİ</a>
+                <a href="adres.html" class="nav-link">ADRES BULUCU</a>
+                
+                <div class="nav-divider"></div>
+                
+                <div class="operator-info">
+                    OPERATÖR: <span id="operator-name">BEKLENİYOR</span> <span id="operator-loc" style="display:none;"></span>
+                </div>
+                
+                <button class="btn-logout" id="btn-logout">GÜVENLİ ÇIKIŞ</button>
+            </nav>
         </header>
+
         <main style="flex: 1; padding: 50px; max-width: 1400px; margin: 0 auto; width: 100%; background: #000; overflow-y: auto;">
             <div style="margin-bottom: 50px; position: relative;">
                 <div class="search-wrapper" style="display: flex; gap: 15px; width: 100%;">
@@ -291,6 +467,6 @@
         <button onclick="closeScanner()" style="margin-top: 30px; padding: 15px 40px; background: #ff3333; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">İPTAL / KAPAT</button>
     </div>
 
-    <script type="module" src="app.js?v=3"></script>
+    <script type="module" src="app.js?v=4"></script>
 </body>
 </html>
