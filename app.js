@@ -158,7 +158,7 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             window.aiDescriptionEnabled = true;
         }
         if (data.groqApiKey) {
-            window.GROQ_API_KEY = String(data.groqApiKey).replace(/['"]/g, '').trim();
+            window.GROQ_API_KEY = data.groqApiKey;
         }
         
         const btnLens = document.getElementById('btn-lens-redirect');
@@ -346,8 +346,15 @@ async function buildCatalog(forceUpdate = false) {
             }
         };
 
-        anaSnap.forEach(processDoc);
-        amSnap.forEach(processDoc);
+        let chunkCounter = 0;
+        for (const doc of anaSnap.docs) {
+            processDoc(doc);
+            if (++chunkCounter % 150 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+        for (const doc of amSnap.docs) {
+            processDoc(doc);
+            if (++chunkCounter % 150 === 0) await new Promise(r => setTimeout(r, 0));
+        }
 
         productCatalog = Array.from(tempMap.values());
 
@@ -446,7 +453,16 @@ window.getAiDescription = async (data) => {
     if (!descContainer) return;
 
     if (!window.GROQ_API_KEY) {
-        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Sistem Hatası: API Anahtarı Yüklenemedi</div>';
+        try {
+            const settingsDoc = await getDoc(doc(db, "system", "settings"));
+            if (settingsDoc.exists() && settingsDoc.data().groqApiKey) {
+                window.GROQ_API_KEY = settingsDoc.data().groqApiKey;
+            }
+        } catch(e) {}
+    }
+    
+    if (!window.GROQ_API_KEY) {
+        descContainer.innerHTML = '<div style="color:#666; font-size:11px; padding:10px 0;">Yapay Zeka API Anahtarı Bulunamadı.</div>';
         return;
     }
 
@@ -454,27 +470,28 @@ window.getAiDescription = async (data) => {
     window.activeAiRequests = window.activeAiRequests || {};
     window.activeAiRequests[data.urunKodu] = true;
     
+    const cleanApiKey = window.GROQ_API_KEY.replace(/['"]/g, '').trim();
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const safeName = String(data.urunAdi || "Ürün").replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, ' ').trim();
+        const safeProductName = String(data.urunAdi || "Bilinmeyen Ürün").replace(/[\r\n\t"]/g, ' ').trim();
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + safeProductName;
         
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
-                "Authorization": "Bearer " + window.GROQ_API_KEY, 
+                "Authorization": "Bearer " + cleanApiKey, 
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
                 model: "llama3-8b-8192", 
-                messages: [
-                    { role: "system", content: "Sen bir medikal ve cerrahi ürün uzmanısın. Kullanıcının verdiği ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz." },
-                    { role: "user", content: safeName }
-                ]
+                messages: [{ role: "user", content: promptText }] 
             })
         });
         
         if (!response.ok) {
+            const errText = await response.text();
+            console.error("Groq API Hata Detayı:", errText);
             descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Bağlantı Hatası: HTTP ' + response.status + '</div>';
             return;
         }
@@ -488,7 +505,8 @@ window.getAiDescription = async (data) => {
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
-        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Ağ Hatası: Sunucuya bağlanılamadı.</div>';
+        console.error("Yapay Zeka Fetch Hatası:", e);
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Yapay Zeka Ağ Hatası. İnternet bağlantınızı kontrol edin.</div>';
     } finally {
         delete window.activeAiRequests[data.urunKodu];
     }
@@ -892,7 +910,7 @@ function renderCard(data) {
         reFetchBtnHTML = '<button onclick="window.forceFetchImages()" style="margin-left:15px; background:transparent; border:1px solid #ffbc00; color:#ffbc00; border-radius:6px; padding:3px 10px; font-size:10px; cursor:pointer; font-weight:bold;">YENİDEN TARA</button>';
     }
 
-    let aiContainerHTML = window.aiDescriptionEnabled ? '<div id="ai-desc-container" style="margin-top: 15px; width: 100%;"></div>' : '';
+    let aiContainerHTML = '<div id="ai-desc-container" style="margin-top: 15px; width: 100%;"></div>';
 
     if(resultContainer) {
         resultContainer.innerHTML = '<div class="card-wrapper">' +
