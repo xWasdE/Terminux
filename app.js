@@ -450,7 +450,21 @@ window.forceFetchImages = () => {
 
 window.getAiDescription = async (data) => {
     const descContainer = document.getElementById('ai-desc-container');
-    if (!descContainer || !window.GROQ_API_KEY) return;
+    if (!descContainer) return;
+
+    if (!window.GROQ_API_KEY) {
+        try {
+            const settingsDoc = await getDoc(doc(db, "system", "settings"));
+            if (settingsDoc.exists() && settingsDoc.data().groqApiKey) {
+                window.GROQ_API_KEY = settingsDoc.data().groqApiKey;
+            }
+        } catch(e) {}
+    }
+    
+    if (!window.GROQ_API_KEY) {
+        descContainer.innerHTML = '<div style="color:#666; font-size:11px; padding:10px 0;">Yapay Zeka API Anahtarı Bulunamadı.</div>';
+        return;
+    }
 
     if (window.activeAiRequests && window.activeAiRequests[data.urunKodu]) return;
     window.activeAiRequests = window.activeAiRequests || {};
@@ -460,7 +474,8 @@ window.getAiDescription = async (data) => {
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + (data.urunAdi || "Bilinmeyen Ürün");
+        const safeProductName = String(data.urunAdi || "Bilinmeyen Ürün").replace(/[\r\n\t"]/g, ' ').trim();
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + safeProductName;
         
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -470,20 +485,18 @@ window.getAiDescription = async (data) => {
             },
             body: JSON.stringify({ 
                 model: "llama3-8b-8192", 
-                messages: [
-                    { role: "user", content: promptText }
-                ]
+                messages: [{ role: "user", content: promptText }] 
             })
         });
         
-        const resData = await response.json();
-
         if (!response.ok) {
-            console.error("Groq API 400 Hatası Detayı:", resData);
-            descContainer.innerHTML = '';
+            const errText = await response.text();
+            console.error("Groq API Hata Detayı:", errText);
+            descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Bağlantı Hatası: HTTP ' + response.status + '</div>';
             return;
         }
-        
+
+        const resData = await response.json();
         if (resData.choices && resData.choices.length > 0) {
             const aiText = resData.choices[0].message.content.trim();
             await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
@@ -492,8 +505,8 @@ window.getAiDescription = async (data) => {
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
-        console.error("AI Fetch Hatası:", e);
-        descContainer.innerHTML = '';
+        console.error("Yapay Zeka Fetch Hatası:", e);
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Yapay Zeka Ağ Hatası. İnternet bağlantınızı kontrol edin.</div>';
     } finally {
         delete window.activeAiRequests[data.urunKodu];
     }
@@ -897,7 +910,7 @@ function renderCard(data) {
         reFetchBtnHTML = '<button onclick="window.forceFetchImages()" style="margin-left:15px; background:transparent; border:1px solid #ffbc00; color:#ffbc00; border-radius:6px; padding:3px 10px; font-size:10px; cursor:pointer; font-weight:bold;">YENİDEN TARA</button>';
     }
 
-    let aiContainerHTML = window.aiDescriptionEnabled ? '<div id="ai-desc-container" style="margin-top: 15px; width: 100%;"></div>' : '';
+    let aiContainerHTML = '<div id="ai-desc-container" style="margin-top: 15px; width: 100%;"></div>';
 
     if(resultContainer) {
         resultContainer.innerHTML = '<div class="card-wrapper">' +
@@ -946,15 +959,17 @@ function renderCard(data) {
             '</div>';
     }
 
-    if (window.aiDescriptionEnabled) {
-        if (!data.aiAciklama) {
-            window.getAiDescription(data);
-        } else {
-            const descContainer = document.getElementById('ai-desc-container');
-            if (descContainer) {
-                descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + data.aiAciklama + '</div>';
+    if (window.aiDescriptionEnabled !== false) {
+        setTimeout(() => {
+            if (!data.aiAciklama) {
+                window.getAiDescription(data);
+            } else {
+                const descContainer = document.getElementById('ai-desc-container');
+                if (descContainer) {
+                    descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + data.aiAciklama + '</div>';
+                }
             }
-        }
+        }, 100); 
     }
 
     setTimeout(() => {
