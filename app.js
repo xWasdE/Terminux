@@ -6,6 +6,13 @@ const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev";
 window.GROQ_API_KEY = null;
 window.activeAiRequests = {}; 
 
+const fetchWithTimeout = (promise, ms = 8000) => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Bağlantı zaman aşımına uğradı.")), ms))
+    ]);
+};
+
 const scannerScript = document.createElement('script');
 scannerScript.src = "https://unpkg.com/html5-qrcode";
 document.head.appendChild(scannerScript);
@@ -185,7 +192,7 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         if(operatorName) operatorName.textContent = user.email.split('@')[0].toUpperCase();
         try {
-            const uDoc = await getDoc(doc(db, "users", user.uid));
+            const uDoc = await fetchWithTimeout(getDoc(doc(db, "users", user.uid)), 8000);
             if (uDoc.exists()) {
                 const ud = uDoc.data();
                 if(ud.status !== 'active') { await signOut(auth); return window.location.replace('/index.html'); }
@@ -214,7 +221,7 @@ onAuthStateChanged(auth, async (user) => {
                     if(locSelector) {
                         locSelector.style.display = 'inline-block';
                         try {
-                            const docSnap = await getDoc(doc(db, "system", "locations"));
+                            const docSnap = await fetchWithTimeout(getDoc(doc(db, "system", "locations")), 8000);
                             let locs = docSnap.exists() ? docSnap.data().list || [{id:'bodrum', name:'Bodrum Depo'}] : [{id:'bodrum', name:'Bodrum Depo'}];
                             let html = '';
                             locs.forEach(l => html += '<option value="' + l.id + '">' + l.name.toUpperCase() + '</option>');
@@ -228,7 +235,7 @@ onAuthStateChanged(auth, async (user) => {
                     localStorage.setItem('active_loc', ud.location || 'bodrum');
                     if(opLoc) {
                         try {
-                            const snap = await getDoc(doc(db, "system", "locations"));
+                            const snap = await fetchWithTimeout(getDoc(doc(db, "system", "locations")), 8000);
                             let locName = (ud.location || 'BODRUM').toUpperCase();
                             if(snap.exists()) {
                                 const list = snap.data().list || [];
@@ -257,15 +264,17 @@ onAuthStateChanged(auth, async (user) => {
                 buildCatalog(false).then(() => { if(searchInput) searchInput.focus(); });
                 return;
             }
-        } catch(e) {}
-        await signOut(auth); window.location.replace('/index.html');
+        } catch(e) {
+            await signOut(auth);
+            window.location.replace('/index.html');
+        }
     } else {
         const isRoot = path === '/' || path === '' || path.includes('index.html') || path.includes('bakim.html');
         if(!isRoot) {
             let allowPublicLens = false;
             if(path.includes('lens.html')) {
                 try {
-                    const settingsSnap = await getDoc(doc(db, "system", "settings"));
+                    const settingsSnap = await fetchWithTimeout(getDoc(doc(db, "system", "settings")), 5000);
                     if(settingsSnap.exists() && settingsSnap.data().publicLensEnabled === true) allowPublicLens = true;
                 } catch(e) {}
             }
@@ -294,15 +303,8 @@ if(loginForm) {
 
         try { 
             await signInWithEmailAndPassword(auth, finalEmail, passwordInput.value);
-            if (loginBtn) {
-                loginBtn.textContent = "BAŞARILI...";
-                setTimeout(() => {
-                    loginBtn.textContent = "Giriş Yap";
-                    loginBtn.classList.remove('btn-loading');
-                    loginBtn.disabled = false;
-                    loginForm.reset();
-                }, 1000);
-            }
+            if (loginBtn) loginBtn.textContent = "GİRİŞ BAŞARILI, YÜKLENİYOR...";
+            setScreen('app');
         } 
         catch (error) { 
             alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz.");
@@ -337,7 +339,7 @@ async function buildCatalog(forceUpdate = false) {
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
-        const [anaSnap, amSnap] = await Promise.all([getDocs(collection(db, colAnaName)), getDocs(collection(db, colAmName))]);
+        const [anaSnap, amSnap] = await fetchWithTimeout(Promise.all([getDocs(collection(db, colAnaName)), getDocs(collection(db, colAmName))]), 15000);
         const tempMap = new Map();
         
         const processDocsAsync = async (docs) => {
@@ -465,7 +467,7 @@ window.getAiDescription = async (data) => {
 
     if (!window.GROQ_API_KEY) {
         try {
-            const settingsDoc = await getDoc(doc(db, "system", "settings"));
+            const settingsDoc = await fetchWithTimeout(getDoc(doc(db, "system", "settings")), 5000);
             if (settingsDoc.exists() && settingsDoc.data().groqApiKey) {
                 window.GROQ_API_KEY = settingsDoc.data().groqApiKey;
             }
@@ -473,7 +475,7 @@ window.getAiDescription = async (data) => {
     }
     
     if (!window.GROQ_API_KEY) {
-        descContainer.innerHTML = '';
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Sistem Hatası: API Anahtarı Bulunamadı</div>';
         return;
     }
 
@@ -481,13 +483,13 @@ window.getAiDescription = async (data) => {
     window.activeAiRequests = window.activeAiRequests || {};
     window.activeAiRequests[data.urunKodu] = true;
     
-    const cleanApiKey = String(window.GROQ_API_KEY).replace(/['"]/g, '').trim();
+    const cleanApiKey = String(window.GROQ_API_KEY).replace(/[^a-zA-Z0-9_-]/g, '').trim();
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
         const safeName = String(data.urunAdi || "Tıbbi Ürün").replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, ' ').trim();
-        const prompt = `Şu cerrahi/medikal ürünün ne işe yaradığını ve nerede kullanıldığını 2 kısa cümleyle açıkla: ${safeName}`;
-
+        const promptText = `Şu cerrahi/medikal ürünün ne işe yaradığını ve nerede kullanıldığını 2 kısa cümleyle açıkla: ${safeName}`;
+        
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
@@ -496,15 +498,14 @@ window.getAiDescription = async (data) => {
                 "Accept": "application/json"
             },
             body: JSON.stringify({ 
-                model: "llama-3.1-8b-instant", 
-                messages: [{ role: "user", content: prompt }]
+                model: "llama-3.3-70b-versatile",
+                messages: [{ role: "user", content: promptText }]
             })
         });
         
         if (!response.ok) {
-            let errMsg = response.status;
-            try { const errObj = await response.json(); errMsg = errObj.error?.message || errMsg; } catch(e){}
-            descContainer.innerHTML = `<div style="color:#ff3333; font-size:10px; padding:10px; border: 1px solid #ff3333; border-radius: 4px;"><b>Groq API Hatası (${response.status}):</b><br>${errMsg}</div>`;
+            const errorText = await response.text();
+            descContainer.innerHTML = `<div style="color:#ff3333; font-size:10px; padding:10px; border: 1px solid #ff3333; border-radius: 4px; line-height: 1.2;"><b>Groq API Hatası (${response.status})</b><br><span style="color:#888; word-break: break-all;">${errorText.substring(0, 150)}</span></div>`;
             return;
         }
 
@@ -517,7 +518,7 @@ window.getAiDescription = async (data) => {
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
-        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Yapay Zeka Ağ Hatası. Cihazınız istek atamadı.</div>';
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Ağ Hatası: Sunucuya bağlanılamadı.</div>';
     } finally {
         delete window.activeAiRequests[data.urunKodu];
     }
@@ -599,7 +600,7 @@ window.autoFetchCentral = async (data, barkod) => {
 
         const anaRef = doc(db, colAnaName, id);
         const amRef = doc(db, colAmName, id);
-        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        const [anaSnap, amSnap] = await fetchWithTimeout(Promise.all([getDoc(anaRef), getDoc(amRef)]), 8000);
         
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
@@ -667,7 +668,7 @@ window.saveUpdate = async (id, type, forcedVal = null, silent = false) => {
 
         const anaRef = doc(db, colAnaName, id);
         const amRef = doc(db, colAmName, id);
-        const [anaSnap, amSnap] = await Promise.all([getDoc(anaRef), getDoc(amRef)]);
+        const [anaSnap, amSnap] = await fetchWithTimeout(Promise.all([getDoc(anaRef), getDoc(amRef)]), 8000);
         
         if(anaSnap.exists()) await updateDoc(anaRef, updateData);
         if(amSnap.exists()) await updateDoc(amRef, updateData);
@@ -721,10 +722,10 @@ window.fetchAndDisplayProduct = async (code) => {
         const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
         const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
 
-        const [anaDoc, amDoc] = await Promise.all([
+        const [anaDoc, amDoc] = await fetchWithTimeout(Promise.all([
             getDoc(doc(db, colAnaName, code)), 
             getDoc(doc(db, colAmName, code))
-        ]);
+        ]), 8000);
 
         const anaData = anaDoc.exists() ? anaDoc.data() : null;
         const amData = amDoc.exists() ? amDoc.data() : null;
@@ -738,23 +739,33 @@ window.fetchAndDisplayProduct = async (code) => {
         }
 
         let targetCode = baseData.urunKodu || code;
-        let globalDoc = await getDoc(doc(db, "global_katalog", targetCode));
+        let globalDoc = await fetchWithTimeout(getDoc(doc(db, "global_katalog", targetCode)), 5000);
         
         if (!globalDoc.exists() && targetCode !== code) {
-            globalDoc = await getDoc(doc(db, "global_katalog", code));
+            globalDoc = await fetchWithTimeout(getDoc(doc(db, "global_katalog", code)), 5000);
         }
         
         const globalData = globalDoc.exists() ? globalDoc.data() : null;
+        
         let finalImages = [];
-        
-        if (globalData && globalData.utsGorseller && globalData.utsGorseller.length > 0) {
-            const isValid = !globalData.utsGorseller.some(url => url.includes("GÖRSEL BULUNAMADI") || url.includes("no-image") || url.includes("svg+xml"));
-            if (isValid) finalImages = globalData.utsGorseller;
+        const isValidImg = (arr) => arr && arr.length > 0 && !arr.includes(noImageSvg) && !arr.some(u => u.includes("svg+xml"));
+
+        if (isValidImg(globalData?.utsGorseller)) finalImages = globalData.utsGorseller;
+        else if (isValidImg(baseData?.utsGorseller)) finalImages = baseData.utsGorseller;
+
+        const currentBarcode = String(baseData.barkod || "").trim();
+        const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
+        const isValidBc = currentBarcode && !invalidCodes.includes(currentBarcode) && currentBarcode.length > 5;
+
+        if (!isValidImg(finalImages) && isValidBc) {
+            const bMatch = productCatalog.find(p => p.barkod === currentBarcode && p.docId !== code && isValidImg(p.utsGorseller));
+            if (bMatch) finalImages = bMatch.utsGorseller;
         }
-        
-        if (finalImages.length === 0 && baseData.utsGorseller && baseData.utsGorseller.length > 0) {
-            const isValid = !baseData.utsGorseller.some(url => url.includes("GÖRSEL BULUNAMADI") || url.includes("no-image") || url.includes("svg+xml"));
-            if (isValid) finalImages = baseData.utsGorseller;
+
+        const exactName = trToLower(baseData.urunAdi).trim();
+        if (!isValidImg(finalImages) && baseData.surecTipi === "R") {
+            const nMatch = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R" && isValidImg(p.utsGorseller));
+            if (nMatch) finalImages = nMatch.utsGorseller;
         }
 
         const mergedData = {
@@ -772,8 +783,6 @@ window.fetchAndDisplayProduct = async (code) => {
         mergedData.fetchUrunKodu = mergedData.urunKodu;
 
         let crossRefText = "";
-        let exactName = trToLower(mergedData.urunAdi).trim();
-        const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
         
         if (mergedData.surecTipi === "R") {
             const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
@@ -788,24 +797,6 @@ window.fetchAndDisplayProduct = async (code) => {
                 if (isReuseBarkodInvalid && isSifirBarkodValid) {
                     mergedData.barkod = sifirUrun.barkod;
                     window.saveUpdate(mergedData.docId, 'b', sifirUrun.barkod, true, true);
-                }
-
-                const hasValidSifirImages = sifirUrun.utsGorseller && sifirUrun.utsGorseller.length > 0 && !sifirUrun.utsGorseller.includes(noImageSvg);
-                const hasNoReuseImages = finalImages.length === 0 || finalImages.includes(noImageSvg);
-
-                if (hasNoReuseImages && hasValidSifirImages) {
-                    mergedData.utsGorseller = sifirUrun.utsGorseller;
-                    finalImages = sifirUrun.utsGorseller;
-                    
-                    const updateData = { utsGorseller: finalImages };
-                    setDoc(doc(db, "global_katalog", mergedData.urunKodu), updateData, { merge: true }).catch(()=>{});
-                    
-                    let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
-                    if (activeLoc === 'tumu') activeLoc = 'bodrum';
-                    const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
-                    const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
-                    updateDoc(doc(db, colAnaName, mergedData.docId), updateData).catch(()=>{});
-                    updateDoc(doc(db, colAmName, mergedData.docId), updateData).catch(()=>{});
                 }
             }
         } else {
@@ -826,7 +817,7 @@ window.fetchAndDisplayProduct = async (code) => {
         if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
 
         if (targetBarcode && targetBarcode !== mergedData.urunKodu) {
-            if (finalImages.length === 0 || finalImages.includes(noImageSvg)) {
+            if (!isValidImg(finalImages)) {
                 setTimeout(() => {
                     window.autoFetchCentral(mergedData, targetBarcode);
                 }, 500); 
@@ -835,7 +826,7 @@ window.fetchAndDisplayProduct = async (code) => {
 
     } catch (err) { 
         if(resultContainer) {
-            resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 20px; font-weight: 800; margin-bottom: 10px;">AĞ HATASI VEYA BAĞLANTI KOPTU</div><div style="color: #888; font-size: 14px; font-family: monospace;">' + err.message + '</div></div>';
+            resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 20px; font-weight: 800; margin-bottom: 10px;">AĞ HATASI VEYA BAĞLANTI KOPTU</div><div style="color: #888; font-size: 14px; font-family: monospace;">Zaman Aşımı: İnternet bağlantınızı kontrol edin.</div></div>';
         }
     }
 };
