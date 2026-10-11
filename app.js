@@ -292,7 +292,18 @@ if(loginForm) {
         
         if (loginBtn) { loginBtn.textContent = "GİRİŞ YAPILIYOR..."; loginBtn.classList.add('btn-loading'); loginBtn.disabled = true; }
 
-        try { await signInWithEmailAndPassword(auth, finalEmail, passwordInput.value); } 
+        try { 
+            await signInWithEmailAndPassword(auth, finalEmail, passwordInput.value);
+            if (loginBtn) {
+                loginBtn.textContent = "BAŞARILI...";
+                setTimeout(() => {
+                    loginBtn.textContent = "Giriş Yap";
+                    loginBtn.classList.remove('btn-loading');
+                    loginBtn.disabled = false;
+                    loginForm.reset();
+                }, 1000);
+            }
+        } 
         catch (error) { 
             alert("Yetkilendirme Hatası: Kullanıcı adı veya şifre geçersiz.");
             if (window.turnstile) window.turnstile.reset();
@@ -467,9 +478,9 @@ window.getAiDescription = async (data) => {
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const cleanName = String(data.urunAdi || "Tıbbi Ürün").replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, ' ').trim();
-        const prompt = `Sen bir medikal uzmansın. Lütfen şu cerrahi/medikal ürünün ne işe yaradığını ve nerede kullanıldığını 2 kısa cümleyle açıkla (Giriş cümlesi kullanma): ${cleanName}`;
-
+        const safeName = String(data.urunAdi || "Bilinmeyen Ürün").replace(/[\r\n\t]/g, ' ').replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, '').trim();
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece doğrudan açıklamayı yaz. Ürün: " + safeName;
+        
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
@@ -477,14 +488,17 @@ window.getAiDescription = async (data) => {
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
-                model: "llama3-8b-8192", 
-                messages: [{ role: "user", content: prompt }]
+                model: "llama-3.1-8b-instant",
+                messages: [
+                    { role: "user", content: promptText }
+                ],
+                temperature: 0.3
             })
         });
         
         if (!response.ok) {
             const errorText = await response.text();
-            descContainer.innerHTML = `<div style="color:#ff3333; font-size:10px; padding:10px; border: 1px solid #ff3333; border-radius: 4px; line-height: 1.2;"><b>Groq API Reddedildi (Hata 400)</b><br>Lütfen bu hatanın ekran görüntüsünü alın:<br><br><span style="color:#888; word-break: break-all;">${errorText.substring(0, 150)}</span></div>`;
+            descContainer.innerHTML = `<div style="color:#ff3333; font-size:10px; padding:10px; border: 1px solid #ff3333; border-radius: 4px; line-height: 1.2;"><b>Groq API Reddedildi (Hata ${response.status})</b><br>Lütfen bu hatanın ekran görüntüsünü alın:<br><br><span style="color:#888; word-break: break-all;">${errorText.substring(0, 150)}</span></div>`;
             return;
         }
 
@@ -692,7 +706,7 @@ function createEditUI(id, type, val, placeholder, colorClass, canEdit) {
 window.fetchAndDisplayProduct = async (code) => {
     if(resultContainer) {
         resultContainer.style.display = 'block';
-        resultContainer.innerHTML = '<div style="color: #666; font-size: 24px;">Kayıtlar Senkronize Ediliyor...</div>';
+        resultContainer.innerHTML = '<div style="color: #666; font-size: 20px; text-align: center; padding: 40px;">Kayıtlar Senkronize Ediliyor...</div>';
     }
 
     try {
@@ -731,16 +745,6 @@ window.fetchAndDisplayProduct = async (code) => {
                 if (isValid) finalImages = baseData.utsGorseller;
             }
 
-            const currentBarcode = String(baseData.barkod || "").trim();
-            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
-            
-            if ((!finalImages || finalImages.length === 0 || finalImages.includes(noImageSvg)) && currentBarcode && !invalidCodes.includes(currentBarcode)) {
-                const matchingProduct = productCatalog.find(p => p.barkod === currentBarcode && p.docId !== code && p.utsGorseller && p.utsGorseller.length > 0 && !p.utsGorseller.includes(noImageSvg));
-                if (matchingProduct) {
-                    finalImages = matchingProduct.utsGorseller;
-                }
-            }
-
             const mergedData = {
                 docId: code, urunKodu: targetCode, barkod: baseData.barkod || "", urunAdi: baseData.urunAdi || "-", refNo: baseData.refNo || "BULUNAMADI",
                 altGrup: (anaData && anaData.altGrup) ? anaData.altGrup : ((amData && amData.altGrup) ? amData.altGrup : "-"),
@@ -757,6 +761,7 @@ window.fetchAndDisplayProduct = async (code) => {
 
             let crossRefText = "";
             let exactName = trToLower(mergedData.urunAdi).trim();
+            const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             
             if (mergedData.surecTipi === "R") {
                 const sifirUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi !== "R");
@@ -772,6 +777,24 @@ window.fetchAndDisplayProduct = async (code) => {
                         mergedData.barkod = sifirUrun.barkod;
                         window.saveUpdate(mergedData.docId, 'b', sifirUrun.barkod, true, true);
                     }
+
+                    const hasValidSifirImages = sifirUrun.utsGorseller && sifirUrun.utsGorseller.length > 0 && !sifirUrun.utsGorseller.includes(noImageSvg);
+                    const hasNoReuseImages = finalImages.length === 0 || finalImages.includes(noImageSvg);
+
+                    if (hasNoReuseImages && hasValidSifirImages) {
+                        mergedData.utsGorseller = sifirUrun.utsGorseller;
+                        finalImages = sifirUrun.utsGorseller;
+                        
+                        const updateData = { utsGorseller: finalImages };
+                        setDoc(doc(db, "global_katalog", mergedData.urunKodu), updateData, { merge: true }).catch(()=>{});
+                        
+                        let activeLoc = localStorage.getItem('active_loc') || localStorage.getItem('user_loc') || 'bodrum';
+                        if (activeLoc === 'tumu') activeLoc = 'bodrum';
+                        const colAnaName = activeLoc === 'merkez' ? 'ana_depo' : 'ana_depo_' + activeLoc;
+                        const colAmName = activeLoc === 'merkez' ? 'ameliyathane' : 'ameliyathane_' + activeLoc;
+                        updateDoc(doc(db, colAnaName, mergedData.docId), updateData).catch(()=>{});
+                        updateDoc(doc(db, colAmName, mergedData.docId), updateData).catch(()=>{});
+                    }
                 }
             } else {
                 const reuseUrun = productCatalog.find(p => trToLower(p.urunAdi).trim() === exactName && p.surecTipi === "R");
@@ -779,7 +802,13 @@ window.fetchAndDisplayProduct = async (code) => {
             }
             mergedData.crossRefText = crossRefText;
 
-            renderCard(mergedData);
+            try {
+                renderCard(mergedData);
+            } catch(renderErr) {
+                if(resultContainer) {
+                    resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 20px; font-weight: 800; margin-bottom: 10px;">GÖRSELLEŞTİRME HATASI</div><div style="color: #888; font-size: 14px; font-family: monospace;">' + renderErr.message + '</div></div>';
+                }
+            }
 
             let targetBarcode = mergedData.urunKodu;
             if (mergedData.barkod && invalidCodes.indexOf(mergedData.barkod) === -1) targetBarcode = mergedData.barkod;
@@ -797,7 +826,7 @@ window.fetchAndDisplayProduct = async (code) => {
         }
     } catch (err) { 
         if(resultContainer) {
-            resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 28px; font-weight: 800; margin-bottom: 10px;">AĞ HATASI VEYA BAĞLANTI KOPTU</div><div style="color: #888; font-size: 16px; font-family: monospace;">Lütfen internet bağlantınızı kontrol edip tekrar deneyin.</div></div>';
+            resultContainer.innerHTML = '<div class="card-main" style="text-align:center; border-color:#330000; background:#110000;"><div style="color: #ff3333; font-size: 20px; font-weight: 800; margin-bottom: 10px;">AĞ HATASI VEYA BAĞLANTI KOPTU</div><div style="color: #888; font-size: 14px; font-family: monospace;">' + err.message + '</div></div>';
         }
     }
 };
