@@ -463,30 +463,28 @@ window.getAiDescription = async (data) => {
     window.activeAiRequests = window.activeAiRequests || {};
     window.activeAiRequests[data.urunKodu] = true;
     
-    const cleanApiKey = window.GROQ_API_KEY.replace(/['"]/g, '').trim();
+    const cleanApiKey = String(window.GROQ_API_KEY).replace(/['"]/g, '').trim();
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
-        const safeName = String(data.urunAdi || "Bilinmeyen Ürün").replace(/[\r\n\t]/g, ' ').replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, '').trim();
-        
+        const cleanName = String(data.urunAdi || "Tıbbi Ürün").replace(/[^a-zA-Z0-9 ğüşöçİĞÜŞÖÇ.,-]/g, ' ').trim();
+        const prompt = `Sen bir medikal uzmansın. Lütfen şu cerrahi/medikal ürünün ne işe yaradığını ve nerede kullanıldığını 2 kısa cümleyle açıkla (Giriş cümlesi kullanma): ${cleanName}`;
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { 
-                "Authorization": "Bearer " + cleanApiKey, 
+                "Authorization": `Bearer ${cleanApiKey}`, 
                 "Content-Type": "application/json" 
             },
             body: JSON.stringify({ 
                 model: "llama3-8b-8192", 
-                messages: [
-                    { role: "user", content: "Medikal ürün açıklaması (en fazla 2 cümle): " + safeName }
-                ],
-                temperature: 0.3,
-                max_tokens: 100
+                messages: [{ role: "user", content: prompt }]
             })
         });
         
         if (!response.ok) {
-            descContainer.innerHTML = '';
+            const errorText = await response.text();
+            descContainer.innerHTML = `<div style="color:#ff3333; font-size:10px; padding:10px; border: 1px solid #ff3333; border-radius: 4px; line-height: 1.2;"><b>Groq API Reddedildi (Hata 400)</b><br>Lütfen bu hatanın ekran görüntüsünü alın:<br><br><span style="color:#888; word-break: break-all;">${errorText.substring(0, 150)}</span></div>`;
             return;
         }
 
@@ -494,12 +492,12 @@ window.getAiDescription = async (data) => {
         if (resData.choices && resData.choices.length > 0) {
             const aiText = resData.choices[0].message.content.trim();
             await setDoc(doc(db, "global_katalog", data.urunKodu), { aiAciklama: aiText }, { merge: true });
-            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + aiText + '</div>';
+            descContainer.innerHTML = `<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>${aiText}</div>`;
         } else { 
             descContainer.innerHTML = ''; 
         }
     } catch(e) { 
-        descContainer.innerHTML = '';
+        descContainer.innerHTML = '<div style="color:#ff3333; font-size:11px; padding:10px 0;">Ağ Hatası: Sunucuya bağlanılamadı.</div>';
     } finally {
         delete window.activeAiRequests[data.urunKodu];
     }
@@ -733,7 +731,6 @@ window.fetchAndDisplayProduct = async (code) => {
                 if (isValid) finalImages = baseData.utsGorseller;
             }
 
-            // BARKOD TABANLI GÖRSEL PAYLAŞIM MANTIĞI (Aynı barkoda sahip diğer ürünlerden görsel çekme)
             const currentBarcode = String(baseData.barkod || "").trim();
             const invalidCodes = ["TANIMLI DEĞİL", "EŞLEŞME YOK", "REF BULUNAMADI", "TAM EŞLEŞME YOK", "SONUÇ YOK", "-"];
             
