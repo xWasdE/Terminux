@@ -5,6 +5,8 @@ import { doc, getDoc, setDoc, collection, getDocs, updateDoc, onSnapshot } from 
 const MERKEZ_API_ADRESI = "https://anchor-crushing-constant.ngrok-free.dev"; 
 window.GROQ_API_KEY = null;
 window.activeAiRequests = {}; 
+window.workingGroqModel = null;
+window.availableGroqModels = null;
 
 const scannerScript = document.createElement('script');
 scannerScript.src = "https://unpkg.com/html5-qrcode";
@@ -158,7 +160,7 @@ onSnapshot(doc(db, "system", "settings"), (docSnap) => {
             window.aiDescriptionEnabled = true;
         }
         if (data.groqApiKey) {
-            window.GROQ_API_KEY = String(data.groqApiKey).replace(/['"]/g, '').trim();
+            window.GROQ_API_KEY = String(data.groqApiKey).replace(/['"\s]/g, '').trim();
         }
         
         const btnLens = document.getElementById('btn-lens-redirect');
@@ -450,6 +452,48 @@ window.forceFetchImages = () => {
     }
 };
 
+async function resolveGroqModels(apiKey) {
+    if (window.workingGroqModel) {
+        return [window.workingGroqModel];
+    }
+    if (window.availableGroqModels && window.availableGroqModels.length > 0) {
+        return window.availableGroqModels;
+    }
+    try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + apiKey,
+                "Accept": "application/json"
+            }
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json && Array.isArray(json.data)) {
+                const excluded = /whisper|tts|guard|embed|audio|playai|orpheus|moderation|vision/i;
+                let models = json.data
+                    .filter(m => m && m.id && m.active !== false && !excluded.test(m.id))
+                    .map(m => m.id);
+
+                const preferredOrder = ["llama", "qwen", "gemma", "mixtral", "gpt-oss", "deepseek", "kimi", "compound"];
+                models.sort((a, b) => {
+                    const aIdx = preferredOrder.findIndex(p => a.toLowerCase().includes(p));
+                    const bIdx = preferredOrder.findIndex(p => b.toLowerCase().includes(p));
+                    const scoreA = aIdx === -1 ? 99 : aIdx;
+                    const scoreB = bIdx === -1 ? 99 : bIdx;
+                    return scoreA - scoreB;
+                });
+
+                if (models.length > 0) {
+                    window.availableGroqModels = models;
+                    return models;
+                }
+            }
+        }
+    } catch (e) {}
+    return ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it", "mixtral-8x7b-32768"];
+}
+
 window.getAiDescription = async (data) => {
     const descContainer = document.getElementById('ai-desc-container');
     if (!descContainer) return;
@@ -458,7 +502,7 @@ window.getAiDescription = async (data) => {
         try {
             const settingsDoc = await getDoc(doc(db, "system", "settings"));
             if (settingsDoc.exists() && settingsDoc.data().groqApiKey) {
-                window.GROQ_API_KEY = String(settingsDoc.data().groqApiKey).replace(/['"]/g, '').trim();
+                window.GROQ_API_KEY = String(settingsDoc.data().groqApiKey).replace(/['"\s]/g, '').trim();
             }
         } catch(e) {}
     }
@@ -470,47 +514,53 @@ window.getAiDescription = async (data) => {
     window.activeAiRequests = window.activeAiRequests || {};
     window.activeAiRequests[reqKey] = true;
     
-    const cleanApiKey = String(window.GROQ_API_KEY).replace(/['"]/g, '').trim();
+    const cleanApiKey = String(window.GROQ_API_KEY).replace(/['"\s]/g, '').trim();
     descContainer.innerHTML = '<div style="color:#888; font-size:12px; font-style:italic; padding:10px 0;">Ürün analizi yapılıyor...</div>';
     
     try {
         const cleanProductName = String(data.urunAdi || "Medikal Ürün").replace(/[\r\n\t"]/g, ' ').trim();
-        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + cleanProductName;
+        const promptText = "Sen bir medikal ve cerrahi ürün uzmanısın. Şu ürünün cerrahi/medikal olarak ne işe yaradığını, hangi alanda ve ne amaçla kullanıldığını en fazla 2 kısa cümleyle Türkçe olarak açıkla. Asla selamlama veya giriş kullanma, sadece açıklamayı yaz: " + cleanProductName;
         
-        const callGroq = async (modelName) => {
-            return await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: { 
-                    "Authorization": "Bearer " + cleanApiKey, 
-                    "Content-Type": "application/json" 
-                },
-                body: JSON.stringify({ 
-                    model: modelName, 
-                    messages: [
-                        { role: "user", content: promptText }
-                    ],
-                    temperature: 0.3,
-                    max_tokens: 180
-                })
-            });
-        };
+        const candidateModels = await resolveGroqModels(cleanApiKey);
+        let successText = null;
 
-        let response = await callGroq("llama-3.3-70b-versatile");
-        if (!response.ok) {
-            response = await callGroq("llama-3.1-8b-instant");
+        for (let i = 0; i < Math.min(candidateModels.length, 4); i++) {
+            const modelId = candidateModels[i];
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": "Bearer " + cleanApiKey, 
+                        "Content-Type": "application/json" 
+                    },
+                    body: JSON.stringify({ 
+                        model: modelId, 
+                        messages: [
+                            { role: "user", content: promptText }
+                        ],
+                        temperature: 0.3
+                    })
+                });
+
+                if (response.ok) {
+                    const resData = await response.json();
+                    if (resData.choices && resData.choices.length > 0 && resData.choices[0].message && resData.choices[0].message.content) {
+                        let rawContent = resData.choices[0].message.content;
+                        rawContent = rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+                        if (rawContent) {
+                            successText = rawContent;
+                            window.workingGroqModel = modelId;
+                            break;
+                        }
+                    }
+                }
+            } catch (innerErr) {}
         }
 
-        if (!response.ok) {
-            descContainer.innerHTML = '';
-            return;
-        }
-        
-        const resData = await response.json();
-        if (resData.choices && resData.choices.length > 0) {
-            const aiText = resData.choices[0].message.content.trim();
-            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + aiText + '</div>';
+        if (successText) {
+            descContainer.innerHTML = '<div style="background:#1a1a1a; padding:15px; border-radius:8px; border-left:4px solid #b026ff; color:#ddd; font-size:13px; line-height:1.5; box-shadow: 0 4px 10px rgba(0,0,0,0.2);"><div style="color:#b026ff; font-weight:bold; margin-bottom:5px; font-size:11px; letter-spacing:1px;">ÜRÜN ÖZETİ</div>' + successText + '</div>';
             if (data.urunKodu) {
-                setDoc(doc(db, "global_katalog", String(data.urunKodu)), { aiAciklama: aiText }, { merge: true }).catch(() => {});
+                setDoc(doc(db, "global_katalog", String(data.urunKodu)), { aiAciklama: successText }, { merge: true }).catch(() => {});
             }
         } else { 
             descContainer.innerHTML = ''; 
