@@ -1,39 +1,47 @@
 import { db, auth } from './core-auth.js';
-import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const daysTR = ['PAZAR', 'PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ'];
+const hourSlots = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00+"];
 let currentTasks = [];
 
-const checkMesaiDisi = (dateStr, timeStr) => {
-    const d = new Date(dateStr);
-    const day = d.getDay(); 
-    const [hour, minute] = timeStr.split(':').map(Number);
+const toYMD = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
 
-    if (day === 0) return true; 
-    if (day >= 1 && day <= 5) {
-        if (hour < 8 || hour >= 18) return true;
-    }
-    if (day === 6) {
-        if (hour < 8 || hour >= 14) return true;
-    }
+const mapTimeToBlock = (timeStr) => {
+    if (!timeStr) return "18:00+";
+    const h = parseInt(timeStr.split(':')[0]);
+    if (h < 8 || h >= 18) return "18:00+";
+    return (h < 10 ? '0' + h : h) + ":00";
+};
+
+const checkMesaiDisi = (dayIdx, timeStr) => {
+    const [hour] = timeStr.split(':').map(Number);
+    if (dayIdx === 0) return true; // Pazar her saat mesai dışı
+    if (dayIdx >= 1 && dayIdx <= 5 && (hour < 8 || hour >= 18)) return true; // H.içi 08-18 dışı
+    if (dayIdx === 6 && (hour < 8 || hour >= 14)) return true; // C.tesi 08-14 dışı
     return false;
 };
 
-const getRelativeDateInfo = () => {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    return {
-        todayStr: today.toISOString().split('T')[0],
-        tomorrowStr: tomorrow.toISOString().split('T')[0]
-    };
-};
-
-window.openTaskModal = () => {
+window.openTaskModal = (forcedDate = null, forcedTime = null) => {
     document.getElementById('task-form').reset();
-    document.getElementById('task-date').value = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('task-date');
+    const timeInput = document.getElementById('task-time');
+    
+    dateInput.value = forcedDate || toYMD(new Date());
+    
+    if (forcedTime && forcedTime !== "18:00+") {
+        timeInput.value = forcedTime;
+    } else if (forcedTime === "18:00+") {
+        timeInput.value = "18:30";
+    } else {
+        timeInput.value = "09:00";
+    }
+
     document.getElementById('task-modal').style.display = 'flex';
     document.getElementById('task-title').focus();
 };
@@ -42,10 +50,20 @@ window.closeTaskModal = () => {
     document.getElementById('task-modal').style.display = 'none';
 };
 
+document.getElementById('task-fixed').addEventListener('change', (e) => {
+    const isFixed = e.target.checked;
+    const dateLabel = document.getElementById('label-date');
+    if (isFixed) {
+        dateLabel.innerHTML = 'BAŞLANGIÇ / REFERANS TARİHİ <span style="color:#ffbc00; font-size:9px;">(Sadece günü baz alınır)</span>';
+    } else {
+        dateLabel.innerHTML = 'TARİH';
+    }
+});
+
 document.getElementById('task-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const saveBtn = document.querySelector('.btn-save');
-    saveBtn.innerText = 'KAYDEDİLİYOR...';
+    saveBtn.innerText = 'İŞLENİYOR...';
     saveBtn.disabled = true;
     
     const title = document.getElementById('task-title').value.trim();
@@ -53,11 +71,17 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     const time = document.getElementById('task-time').value;
     const notes = document.getElementById('task-notes').value.trim();
     const reminder = document.getElementById('task-reminder').checked;
-    const isMesai = checkMesaiDisi(date, time);
+    const isFixed = document.getElementById('task-fixed').checked;
+    
+    const dateObj = new Date(date);
+    const dayOfWeek = dateObj.getDay();
+    const isMesai = checkMesaiDisi(dayOfWeek, time);
 
     const taskData = {
-        title, date, time, notes, reminder, isMesaiDisi: isMesai,
+        title, date, time, notes, reminder, isFixed, dayOfWeek,
+        isMesaiDisi: isMesai,
         status: 'pending',
+        completedDates: [],
         createdAt: new Date().toISOString()
     };
 
@@ -67,20 +91,33 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     } catch (error) {
         alert("Kayıt başarısız oldu. Ağ bağlantınızı kontrol edin.");
     } finally {
-        saveBtn.innerText = 'KAYDET';
+        saveBtn.innerText = 'SİSTEME İŞLE';
         saveBtn.disabled = false;
     }
 });
 
-window.toggleTaskStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+window.toggleTaskStatus = async (id, isFixed, currentDateStr, currentStatus) => {
     try {
-        await updateDoc(doc(db, "work_plans", id), { status: newStatus });
+        const task = currentTasks.find(t => t.id === id);
+        if(!task) return;
+
+        if (isFixed) {
+            let completedDates = task.completedDates || [];
+            if (completedDates.includes(currentDateStr)) {
+                completedDates = completedDates.filter(d => d !== currentDateStr);
+            } else {
+                completedDates.push(currentDateStr);
+            }
+            await updateDoc(doc(db, "work_plans", id), { completedDates });
+        } else {
+            const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+            await updateDoc(doc(db, "work_plans", id), { status: newStatus });
+        }
     } catch (error) {}
 };
 
 window.deleteTask = async (id) => {
-    if(confirm('Kayıtlı operasyon planını sistemden kalıcı olarak silmek istediğinize emin misiniz?')) {
+    if(confirm('Kayıtlı operasyon planını sistemden kalıcı olarak SİLMEK istediğinize emin misiniz?')) {
         try {
             await deleteDoc(doc(db, "work_plans", id));
         } catch (error) {}
@@ -93,44 +130,67 @@ const renderGrid = () => {
     
     const targetDates = [];
     const curr = new Date();
-    const todayStr = curr.toISOString().split('T')[0];
+    const todayStr = toYMD(curr);
     
     const dayOfWeek = curr.getDay();
     const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
     
     for(let i=0; i<7; i++) {
         const d = new Date(curr.setDate(diffToMonday + i));
-        targetDates.push(d.toISOString().split('T')[0]);
+        targetDates.push({ dateStr: toYMD(d), dayIdx: d.getDay() });
     }
 
-    targetDates.forEach(dateStr => {
-        const dateObj = new Date(dateStr);
-        const dayIdx = dateObj.getDay();
+    targetDates.forEach(({dateStr, dayIdx}) => {
         const isWeekend = dayIdx === 0 || dayIdx === 6;
         const isToday = dateStr === todayStr;
         
-        const dayTasks = currentTasks.filter(t => t.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
-        
-        let tasksHTML = '';
-        dayTasks.forEach(t => {
-            const mesaiBadge = t.isMesaiDisi ? '<span class="badge badge-mesai">MESAİ DIŞI</span>' : '';
-            const reminderBadge = (t.reminder && t.status === 'pending') ? '<span class="badge badge-reminder">ÖNEMLİ</span>' : '';
-            const statusClass = t.status === 'completed' ? 'completed' : (t.isMesaiDisi ? 'mesai-disi' : '');
+        // Bu güne ait işleri bul (Normal veya Sabit)
+        const dayTasks = currentTasks.filter(t => {
+            if (t.isFixed) return t.dayOfWeek === dayIdx;
+            return t.date === dateStr;
+        });
 
-            tasksHTML += `
-                <div class="task-card ${statusClass}">
-                    <div class="task-header">
-                        <span class="task-time">${t.time}</span>
-                        <div class="task-badges">${reminderBadge}${mesaiBadge}</div>
-                    </div>
-                    <div class="task-title">${t.title}</div>
-                    ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
-                    <div class="task-controls">
-                        <button class="btn-action complete" onclick="toggleTaskStatus('${t.id}', '${t.status}')">
-                            ${t.status === 'completed' ? 'GERİ AL' : 'TAMAMLA'}
-                        </button>
-                        <button class="btn-action delete" onclick="deleteTask('${t.id}')">SİL</button>
-                    </div>
+        let timelineHTML = '';
+        
+        hourSlots.forEach(slotHour => {
+            const tasksInSlot = dayTasks.filter(t => mapTimeToBlock(t.time) === slotHour).sort((a, b) => a.time.localeCompare(b.time));
+            
+            let slotContentHTML = '';
+            
+            if (tasksInSlot.length > 0) {
+                tasksInSlot.forEach(t => {
+                    const isCompleted = t.isFixed ? (t.completedDates || []).includes(dateStr) : (t.status === 'completed');
+                    const statusClass = isCompleted ? 'completed' : (t.isMesaiDisi ? 'mesai-disi' : (t.isFixed ? 'fixed-task' : ''));
+                    
+                    const mesaiBadge = t.isMesaiDisi ? '<span class="badge badge-fixed" style="background:var(--accent-red); color:#fff;">MESAİ DIŞI</span>' : '';
+                    const fixedBadge = t.isFixed ? '<span class="badge badge-fixed">SABİT OPRS.</span>' : '';
+                    const reminderBadge = (t.reminder && !isCompleted) ? '<span class="badge badge-reminder">ÖNEMLİ</span>' : '';
+
+                    slotContentHTML += `
+                        <div class="task-card ${statusClass}">
+                            <div class="task-header">
+                                <span class="task-time">${t.time}</span>
+                                <div class="task-badges">${fixedBadge}${reminderBadge}${mesaiBadge}</div>
+                            </div>
+                            <div class="task-title">${t.title}</div>
+                            ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
+                            <div class="task-controls">
+                                <button class="btn-action complete" onclick="toggleTaskStatus('${t.id}', ${t.isFixed}, '${dateStr}', '${t.status}')">
+                                    ${isCompleted ? 'GERİ AL' : 'TAMAMLA'}
+                                </button>
+                                <button class="btn-action delete" onclick="deleteTask('${t.id}')">SİL</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                slotContentHTML = `<div class="empty-slot" onclick="openTaskModal('${dateStr}', '${slotHour}')">+ PLANLA (${slotHour})</div>`;
+            }
+
+            timelineHTML += `
+                <div class="hour-block">
+                    <div class="hour-label">${slotHour}</div>
+                    <div class="hour-content">${slotContentHTML}</div>
                 </div>
             `;
         });
@@ -143,43 +203,67 @@ const renderGrid = () => {
                     <span class="day-name ${isWeekend ? 'weekend' : ''}">${daysTR[dayIdx]}</span>
                     <span class="day-date">${formattedDate}</span>
                 </div>
-                <div class="task-list">
-                    ${tasksHTML || '<div style="color:#555; font-size:12px; font-family:monospace; text-align:center; margin-top:20px;">[ BOŞ ]</div>'}
+                <div class="timeline-container">
+                    ${timelineHTML}
                 </div>
             </div>
         `;
         grid.insertAdjacentHTML('beforeend', colHTML);
     });
 
+    // Otomatik olarak bugünün sütununa scroll yap
     setTimeout(() => {
         const todayCol = document.querySelector('.day-column.today');
         if (todayCol && window.innerWidth < 768) {
             todayCol.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
-    }, 100);
+    }, 150);
 };
 
 const evaluateReminders = () => {
-    const { todayStr, tomorrowStr } = getRelativeDateInfo();
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayStr = toYMD(today);
+    const tomorrowStr = toYMD(tomorrow);
+    
+    const alertTasks = currentTasks.filter(t => {
+        if (!t.reminder) return false;
+        
+        let appliesToToday = false;
+        let appliesToTomorrow = false;
+        
+        if (t.isFixed) {
+            appliesToToday = (t.dayOfWeek === today.getDay()) && !(t.completedDates || []).includes(todayStr);
+            appliesToTomorrow = (t.dayOfWeek === tomorrow.getDay()) && !(t.completedDates || []).includes(tomorrowStr);
+        } else {
+            appliesToToday = (t.date === todayStr) && (t.status === 'pending');
+            appliesToTomorrow = (t.date === tomorrowStr) && (t.status === 'pending');
+        }
+        
+        return appliesToToday || appliesToTomorrow;
+    });
+    
     const banner = document.getElementById('reminder-banner');
     const textEl = document.getElementById('reminder-text');
     
-    const alertTasks = currentTasks.filter(t => t.reminder && t.status === 'pending' && (t.date === todayStr || t.date === tomorrowStr));
-    
     if(alertTasks.length > 0) {
-        textEl.innerHTML = `Sisteme kayıtlı <b>bugün veya yarına ait ${alertTasks.length} adet yüksek öncelikli</b> operasyon göreviniz bulunmaktadır.`;
+        textEl.innerHTML = `SİSTEM UYARISI: Bugün veya yarına ait tamamlanmamış ${alertTasks.length} adet yüksek öncelikli operasyon görevi bulunmaktadır!`;
         banner.classList.add('active');
     } else {
         banner.classList.remove('active');
     }
 };
 
-const q = query(collection(db, "work_plans"), orderBy("date", "asc"), orderBy("time", "asc"));
-onSnapshot(q, (snapshot) => {
+// Bileşik indeks hatasından kaçınmak için sıralama parametrelerini kaldırdık
+onSnapshot(collection(db, "work_plans"), (snapshot) => {
     currentTasks = [];
     snapshot.forEach(doc => {
         currentTasks.push({ id: doc.id, ...doc.data() });
     });
     renderGrid();
     evaluateReminders();
+}, (error) => {
+    console.error("Firestore Bağlantı Hatası:", error);
 });
