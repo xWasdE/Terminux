@@ -1,9 +1,10 @@
-import { db, auth } from './core-auth.js';
+import { db, auth, onAuthStateChanged } from './core-auth.js';
 import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const daysTR = ['PAZAR', 'PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ'];
 const hourSlots = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00+"];
 let currentTasks = [];
+let isDbListenerActive = false;
 
 const toYMD = (dateObj) => {
     const y = dateObj.getFullYear();
@@ -21,9 +22,9 @@ const mapTimeToBlock = (timeStr) => {
 
 const checkMesaiDisi = (dayIdx, timeStr) => {
     const [hour] = timeStr.split(':').map(Number);
-    if (dayIdx === 0) return true; // Pazar her saat mesai dışı
-    if (dayIdx >= 1 && dayIdx <= 5 && (hour < 8 || hour >= 18)) return true; // H.içi 08-18 dışı
-    if (dayIdx === 6 && (hour < 8 || hour >= 14)) return true; // C.tesi 08-14 dışı
+    if (dayIdx === 0) return true; 
+    if (dayIdx >= 1 && dayIdx <= 5 && (hour < 8 || hour >= 18)) return true; 
+    if (dayIdx === 6 && (hour < 8 || hour >= 14)) return true; 
     return false;
 };
 
@@ -73,7 +74,8 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     const reminder = document.getElementById('task-reminder').checked;
     const isFixed = document.getElementById('task-fixed').checked;
     
-    const dateObj = new Date(date);
+    // Saat farkı hatalarını önlemek için T12:00:00 eklendi
+    const dateObj = new Date(date + 'T12:00:00');
     const dayOfWeek = dateObj.getDay();
     const isMesai = checkMesaiDisi(dayOfWeek, time);
 
@@ -89,7 +91,8 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
         await addDoc(collection(db, "work_plans"), taskData);
         closeTaskModal();
     } catch (error) {
-        alert("Kayıt başarısız oldu. Ağ bağlantınızı kontrol edin.");
+        console.error("Yazma Hatası: ", error);
+        alert("Yetki Hatası! Kayıt başarısız oldu. Hata: " + error.message);
     } finally {
         saveBtn.innerText = 'SİSTEME İŞLE';
         saveBtn.disabled = false;
@@ -113,14 +116,18 @@ window.toggleTaskStatus = async (id, isFixed, currentDateStr, currentStatus) => 
             const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
             await updateDoc(doc(db, "work_plans", id), { status: newStatus });
         }
-    } catch (error) {}
+    } catch (error) {
+        alert("Güncelleme hatası: " + error.message);
+    }
 };
 
 window.deleteTask = async (id) => {
     if(confirm('Kayıtlı operasyon planını sistemden kalıcı olarak SİLMEK istediğinize emin misiniz?')) {
         try {
             await deleteDoc(doc(db, "work_plans", id));
-        } catch (error) {}
+        } catch (error) {
+            alert("Silme hatası: " + error.message);
+        }
     }
 };
 
@@ -144,7 +151,6 @@ const renderGrid = () => {
         const isWeekend = dayIdx === 0 || dayIdx === 6;
         const isToday = dateStr === todayStr;
         
-        // Bu güne ait işleri bul (Normal veya Sabit)
         const dayTasks = currentTasks.filter(t => {
             if (t.isFixed) return t.dayOfWeek === dayIdx;
             return t.date === dateStr;
@@ -211,7 +217,6 @@ const renderGrid = () => {
         grid.insertAdjacentHTML('beforeend', colHTML);
     });
 
-    // Otomatik olarak bugünün sütununa scroll yap
     setTimeout(() => {
         const todayCol = document.querySelector('.day-column.today');
         if (todayCol && window.innerWidth < 768) {
@@ -256,14 +261,26 @@ const evaluateReminders = () => {
     }
 };
 
-// Bileşik indeks hatasından kaçınmak için sıralama parametrelerini kaldırdık
-onSnapshot(collection(db, "work_plans"), (snapshot) => {
-    currentTasks = [];
-    snapshot.forEach(doc => {
-        currentTasks.push({ id: doc.id, ...doc.data() });
-    });
-    renderGrid();
-    evaluateReminders();
-}, (error) => {
-    console.error("Firestore Bağlantı Hatası:", error);
+// OTURUM (AUTH) KONTROLÜ
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // Kullanıcı yetkisi doğrulandıktan sonra veritabanını dinlemeye başla
+        if(!isDbListenerActive) {
+            isDbListenerActive = true;
+            onSnapshot(collection(db, "work_plans"), (snapshot) => {
+                currentTasks = [];
+                snapshot.forEach(doc => {
+                    currentTasks.push({ id: doc.id, ...doc.data() });
+                });
+                renderGrid();
+                evaluateReminders();
+            }, (error) => {
+                console.error("Firestore Bağlantı/Yetki Hatası:", error);
+                alert("UYARI: Firebase 'work_plans' tablosuna okuma yetkiniz yok. Lütfen Firebase Rules kısmını kontrol edin.\n\nHata Mesajı: " + error.message);
+            });
+        }
+    } else {
+        // Kullanıcı giriş yapmamışsa ana sayfaya at
+        window.location.replace('/index.html');
+    }
 });
