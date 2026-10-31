@@ -4,88 +4,374 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TERMINUX - İş Planı</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        .plan-container { padding: 20px; max-width: 1200px; margin: 0 auto; color: #fff; }
-        .notification-banner { display: none; background: #ffbc00; color: #000; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 188, 0, 0.3); align-items: center; justify-content: space-between; }
+        :root {
+            --bg-main: #050505;
+            --bg-panel: #0a0a0a;
+            --bg-card: #111111;
+            --border-color: #1a1a1a;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-cyan: #00ccff;
+            --accent-green: #00ff00;
+            --accent-red: #ff3333;
+            --accent-yellow: #ffbc00;
+            --accent-purple: #b026ff;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand-title {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            color: var(--accent-green);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:active { transform: scale(0.98); }
+
+        .notification-banner {
+            display: none;
+            background: rgba(255, 51, 51, 0.1);
+            border-left: 4px solid var(--accent-red);
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .notification-banner.active { display: flex; }
-        .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
-        .btn-add-task { background: #00ccff; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 204, 255, 0.2); }
-        .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .day-col { background: #111; border: 1px solid #1a1a1a; border-radius: 8px; padding: 15px; min-height: 400px; }
-        .day-title { color: #b026ff; font-size: 14px; font-weight: 800; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .day-title.weekend { color: #ff3333; }
-        .task-card { background: #1a1a1a; border-left: 4px solid #00ccff; padding: 15px; border-radius: 6px; margin-bottom: 12px; position: relative; }
-        .task-card.completed { opacity: 0.5; border-left-color: #00ff00; }
-        .task-card.completed .task-title { text-decoration: line-through; color: #888; }
-        .task-card.mesai-disi { border-left-color: #ffbc00; }
-        .task-time { font-size: 11px; color: #888; margin-bottom: 5px; font-family: monospace; }
-        .task-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-        .task-notes { font-size: 12px; color: #ccc; margin-bottom: 10px; line-height: 1.4; }
-        .task-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .badge-mesai { background: #ffbc00; color: #000; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; position: absolute; top: 10px; right: 10px; }
-        .badge-reminder { background: #ff3333; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; position: absolute; top: 10px; right: 85px; }
+
+        .schedule-scroller {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+            scroll-snap-type: x mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-main);
+        }
+
+        .schedule-scroller::-webkit-scrollbar { height: 6px; }
+        .schedule-scroller::-webkit-scrollbar-track { background: var(--bg-main); }
+        .schedule-scroller::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+        .day-column {
+            flex: 0 0 320px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            scroll-snap-align: start;
+        }
+
+        .day-column.today {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 20px rgba(176, 38, 255, 0.05);
+        }
+
+        .day-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0d0d0d;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .day-name {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .day-column.today .day-name { color: var(--accent-purple); }
+        .day-name.weekend { color: var(--accent-red); }
+
+        .day-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .task-list {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 6px 0 0 6px;
+            background: var(--accent-cyan);
+        }
+
+        .task-card.mesai-disi::before { background: var(--accent-yellow); }
+        .task-card.completed::before { background: var(--accent-green); }
+        .task-card.completed { opacity: 0.5; }
+        .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .task-time {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--accent-cyan);
+            background: rgba(0, 204, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .task-card.mesai-disi .task-time { color: var(--accent-yellow); background: rgba(255, 188, 0, 0.1); }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #111; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; border: 1px solid #333; }
+        .task-badges { display: flex; gap: 5px; }
+
+        .badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-reminder { background: var(--accent-red); color: #fff; }
+        .badge-mesai { background: var(--accent-yellow); color: #000; }
+
+        .task-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            color: #ddd;
+        }
+
+        .task-notes {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.5;
+            background: #000;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px dashed #333;
+        }
+
+        .task-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-action.complete { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-action.delete { border-color: var(--accent-red); color: var(--accent-red); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: var(--bg-panel);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; color: #888; font-size: 12px; margin-bottom: 5px; }
-        .form-control { width: 100%; background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; box-sizing: border-box; }
-        .form-control:focus { outline: none; border-color: #00ccff; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
-        .checkbox-group input { width: 18px; height: 18px; accent-color: #00ccff; }
-        .modal-actions { display: flex; gap: 15px; margin-top: 25px; }
-        .btn-save { flex: 1; background: #00ff00; color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { flex: 1; background: #333; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .form-label { display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .form-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-cyan); }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+        .btn-save { background: var(--accent-green); color: #000; }
+        .btn-cancel { background: #333; color: #fff; }
+
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; align-items: flex-start; }
+            .btn-primary { width: 100%; }
+            .day-column { flex: 0 0 85vw; }
+        }
     </style>
 </head>
 <body>
-    <div class="plan-container">
-        <div id="reminder-banner" class="notification-banner">
-            <div id="reminder-text">Önemli Hatırlatma: Bugün veya yarına ait bekleyen işleriniz var!</div>
-            <button onclick="document.getElementById('reminder-banner').classList.remove('active')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#000;">×</button>
-        </div>
 
-        <div class="plan-header">
-            <div>
-                <div style="font-size: 24px; font-weight: 900; letter-spacing: 1px;">HAFTALIK İŞ PLANI</div>
-                <div style="color: #0f0; font-size: 12px; letter-spacing: 2px;">OPERASYON TAKVİMİ</div>
-            </div>
-            <button class="btn-add-task" onclick="openTaskModal()">+ YENİ İŞ EKLE</button>
+    <div id="reminder-banner" class="notification-banner">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <div id="reminder-text" style="font-size: 13px;"></div>
         </div>
+        <button onclick="document.getElementById('reminder-banner').classList.remove('active')" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer;">×</button>
+    </div>
 
-        <div class="week-grid" id="week-grid"></div>
+    <div class="header-container">
+        <div>
+            <div class="brand-title">TERMINUX PLANI</div>
+            <div class="brand-subtitle">Operasyon ve Mesai Çizelgesi</div>
+        </div>
+        <button class="btn-primary" onclick="openTaskModal()">+ YENİ İŞ GİRİŞİ</button>
+    </div>
+
+    <div class="schedule-scroller" id="week-grid">
+
     </div>
 
     <div id="task-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div style="font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 20px;">YENİ İŞ PLANI</div>
+        <div class="modal-box">
+            <div class="modal-title">YENİ OPERASYON PLANI</div>
             <form id="task-form">
                 <div class="form-group">
-                    <label>GÖREV BAŞLIĞI</label>
-                    <input type="text" id="task-title" class="form-control" required>
+                    <label class="form-label">İŞ/GÖREV BAŞLIĞI</label>
+                    <input type="text" id="task-title" class="form-input" placeholder="Örn: Bodrum Depo Sayımı" required>
                 </div>
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
-                        <label>TARİH</label>
-                        <input type="date" id="task-date" class="form-control" required>
+                        <label class="form-label">TARİH</label>
+                        <input type="date" id="task-date" class="form-input" required>
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>SAAT</label>
-                        <input type="time" id="task-time" class="form-control" required>
+                        <label class="form-label">SAAT</label>
+                        <input type="time" id="task-time" class="form-input" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>NOTLAR / DETAYLAR</label>
-                    <textarea id="task-notes" class="form-control" rows="3"></textarea>
+                    <label class="form-label">OPERASYON NOTLARI</label>
+                    <textarea id="task-notes" class="form-input" rows="3" placeholder="Detayları buraya girin..."></textarea>
                 </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="task-reminder">
-                    <label style="margin:0; color:#fff;">Önemli - Bildirim Hatırlatıcısı Kur</label>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
+                    <input type="checkbox" id="task-reminder" style="width: 18px; height: 18px; accent-color: var(--accent-cyan);">
+                    <label style="color: #fff; font-size: 12px; margin: 0; cursor: pointer;" for="task-reminder">Yüksek Öncelik (Sistem Hatırlatıcısı Kur)</label>
                 </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn-save">KAYDET</button>
-                    <button type="button" class="btn-cancel" onclick="closeTaskModal()">İPTAL</button>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-modal btn-save">KAYDET</button>
+                    <button type="button" class="btn-modal btn-cancel" onclick="closeTaskModal()">İPTAL</button>
                 </div>
             </form>
         </div>
