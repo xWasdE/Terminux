@@ -55,7 +55,7 @@ document.getElementById('task-fixed').addEventListener('change', (e) => {
     const isFixed = e.target.checked;
     const dateLabel = document.getElementById('label-date');
     if (isFixed) {
-        dateLabel.innerHTML = 'BAŞLANGIÇ / REFERANS TARİHİ <span style="color:#ffbc00; font-size:9px;">(Sadece günü baz alınır)</span>';
+        dateLabel.innerHTML = 'BAŞLANGIÇ GÜNÜ <span style="color:#ffbc00; font-size:9px;">(Sabit)</span>';
     } else {
         dateLabel.innerHTML = 'TARİH';
     }
@@ -74,7 +74,6 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     const reminder = document.getElementById('task-reminder').checked;
     const isFixed = document.getElementById('task-fixed').checked;
     
-    // Saat farkı hatalarını önlemek için T12:00:00 eklendi
     const dateObj = new Date(date + 'T12:00:00');
     const dayOfWeek = dateObj.getDay();
     const isMesai = checkMesaiDisi(dayOfWeek, time);
@@ -122,7 +121,7 @@ window.toggleTaskStatus = async (id, isFixed, currentDateStr, currentStatus) => 
 };
 
 window.deleteTask = async (id) => {
-    if(confirm('Kayıtlı operasyon planını sistemden kalıcı olarak SİLMEK istediğinize emin misiniz?')) {
+    if(confirm('Bu operasyon planını sistemden kalıcı olarak SİLMEK istediğinize emin misiniz?')) {
         try {
             await deleteDoc(doc(db, "work_plans", id));
         } catch (error) {
@@ -168,17 +167,16 @@ const renderGrid = () => {
                     const isCompleted = t.isFixed ? (t.completedDates || []).includes(dateStr) : (t.status === 'completed');
                     const statusClass = isCompleted ? 'completed' : (t.isMesaiDisi ? 'mesai-disi' : (t.isFixed ? 'fixed-task' : ''));
                     
-                    const mesaiBadge = t.isMesaiDisi ? '<span class="badge badge-fixed" style="background:var(--accent-red); color:#fff;">MESAİ DIŞI</span>' : '';
-                    const fixedBadge = t.isFixed ? '<span class="badge badge-fixed">SABİT OPRS.</span>' : '';
+                    const mesaiBadge = t.isMesaiDisi ? '<span class="badge badge-fixed" style="background:var(--accent-red); color:#fff;">M. DIŞI</span>' : '';
+                    const fixedBadge = t.isFixed ? '<span class="badge badge-fixed">SABİT</span>' : '';
                     const reminderBadge = (t.reminder && !isCompleted) ? '<span class="badge badge-reminder">ÖNEMLİ</span>' : '';
 
                     slotContentHTML += `
                         <div class="task-card ${statusClass}">
                             <div class="task-header">
-                                <span class="task-time">${t.time}</span>
                                 <div class="task-badges">${fixedBadge}${reminderBadge}${mesaiBadge}</div>
                             </div>
-                            <div class="task-title">${t.title}</div>
+                            <div class="task-title">${t.time} - ${t.title}</div>
                             ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
                             <div class="task-controls">
                                 <button class="btn-action complete" onclick="toggleTaskStatus('${t.id}', ${t.isFixed}, '${dateStr}', '${t.status}')">
@@ -190,7 +188,11 @@ const renderGrid = () => {
                     `;
                 });
             } else {
-                slotContentHTML = `<div class="empty-slot" onclick="openTaskModal('${dateStr}', '${slotHour}')">+ PLANLA (${slotHour})</div>`;
+                // Görünmez, sadece üzerine gelince "+" işareti çıkaran tertemiz slot
+                slotContentHTML = `
+                    <div class="empty-slot" onclick="openTaskModal('${dateStr}', '${slotHour}')">
+                        <div class="add-icon">+</div>
+                    </div>`;
             }
 
             timelineHTML += `
@@ -216,13 +218,6 @@ const renderGrid = () => {
         `;
         grid.insertAdjacentHTML('beforeend', colHTML);
     });
-
-    setTimeout(() => {
-        const todayCol = document.querySelector('.day-column.today');
-        if (todayCol && window.innerWidth < 768) {
-            todayCol.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-        }
-    }, 150);
 };
 
 const evaluateReminders = () => {
@@ -261,10 +256,8 @@ const evaluateReminders = () => {
     }
 };
 
-// OTURUM (AUTH) KONTROLÜ
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Kullanıcı yetkisi doğrulandıktan sonra veritabanını dinlemeye başla
         if(!isDbListenerActive) {
             isDbListenerActive = true;
             onSnapshot(collection(db, "work_plans"), (snapshot) => {
@@ -275,12 +268,10 @@ onAuthStateChanged(auth, (user) => {
                 renderGrid();
                 evaluateReminders();
             }, (error) => {
-                console.error("Firestore Bağlantı/Yetki Hatası:", error);
-                alert("UYARI: Firebase 'work_plans' tablosuna okuma yetkiniz yok. Lütfen Firebase Rules kısmını kontrol edin.\n\nHata Mesajı: " + error.message);
+                console.error("Firestore Bağlantı Hatası:", error);
             });
         }
     } else {
-        // Kullanıcı giriş yapmamışsa ana sayfaya at
         window.location.replace('/index.html');
     }
 });
