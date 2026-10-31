@@ -11,7 +11,7 @@
             --bg-card: #111111;
             --border-color: #1a1a1a;
             --text-main: #ffffff;
-            --text-muted: #888888;
+            --text-muted: #666666;
             --accent-cyan: #00ccff;
             --accent-green: #00ff00;
             --accent-red: #ff3333;
@@ -32,28 +32,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
             flex-wrap: wrap;
             gap: 15px;
         }
 
-        .brand-title {
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            color: #fff;
-            line-height: 1.2;
-        }
-
-        .brand-subtitle {
-            color: var(--accent-green);
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
+        .brand-title { font-size: 28px; font-weight: 900; letter-spacing: 2px; color: #fff; line-height: 1.2; }
+        .brand-subtitle { color: var(--accent-green); font-size: 11px; font-weight: bold; letter-spacing: 4px; text-transform: uppercase; }
 
         .btn-primary {
             background: var(--accent-cyan);
@@ -68,7 +55,6 @@
             box-shadow: 0 0 15px rgba(0, 204, 255, 0.2);
             transition: all 0.2s;
         }
-
         .btn-primary:active { transform: scale(0.98); }
 
         .notification-banner {
@@ -82,7 +68,6 @@
             align-items: center;
             justify-content: space-between;
         }
-
         .notification-banner.active { display: flex; }
 
         .schedule-scroller {
@@ -95,13 +80,12 @@
             scrollbar-width: thin;
             scrollbar-color: var(--border-color) var(--bg-main);
         }
-
-        .schedule-scroller::-webkit-scrollbar { height: 6px; }
+        .schedule-scroller::-webkit-scrollbar { height: 8px; }
         .schedule-scroller::-webkit-scrollbar-track { background: var(--bg-main); }
-        .schedule-scroller::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .schedule-scroller::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
         .day-column {
-            flex: 0 0 320px;
+            flex: 0 0 340px;
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -111,8 +95,8 @@
         }
 
         .day-column.today {
-            border-color: var(--accent-purple);
-            box-shadow: 0 0 20px rgba(176, 38, 255, 0.05);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.05);
         }
 
         .day-header {
@@ -123,32 +107,80 @@
             align-items: center;
             background: #0d0d0d;
             border-radius: 8px 8px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .day-name {
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #fff;
-        }
-
-        .day-column.today .day-name { color: var(--accent-purple); }
+        .day-name { font-size: 14px; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
+        .day-column.today .day-name { color: var(--accent-cyan); }
         .day-name.weekend { color: var(--accent-red); }
+        .day-date { font-size: 12px; color: var(--text-muted); font-family: monospace; }
 
-        .day-date {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-family: monospace;
-        }
-
-        .task-list {
+        .timeline-container {
             padding: 15px;
             flex: 1;
             overflow-y: auto;
-            min-height: 400px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+        }
+
+        .hour-block {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .hour-label {
+            width: 45px;
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-muted);
+            text-align: right;
+            padding-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .hour-content {
+            flex: 1;
+            border-left: 1px dashed var(--border-color);
+            padding-left: 15px;
+            padding-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .hour-content::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 6px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--border-color);
+        }
+
+        .empty-slot {
+            background: transparent;
+            border: 1px dashed #222;
+            color: #444;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+        .empty-slot:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(0, 204, 255, 0.05);
         }
 
         .task-card {
@@ -163,69 +195,26 @@
         .task-card::before {
             content: '';
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
+            left: -1px; top: -1px; bottom: -1px; width: 4px;
             border-radius: 6px 0 0 6px;
-            background: var(--accent-cyan);
+            background: var(--accent-purple);
         }
-
-        .task-card.mesai-disi::before { background: var(--accent-yellow); }
+        
+        .task-card.fixed-task::before { background: var(--accent-yellow); }
+        .task-card.mesai-disi::before { background: var(--accent-red); }
         .task-card.completed::before { background: var(--accent-green); }
-        .task-card.completed { opacity: 0.5; }
+        .task-card.completed { opacity: 0.4; }
         .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
 
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .task-time {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--accent-cyan);
-            background: rgba(0, 204, 255, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .task-card.mesai-disi .task-time { color: var(--accent-yellow); background: rgba(255, 188, 0, 0.1); }
-        
-        .task-badges { display: flex; gap: 5px; }
-
-        .badge {
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .task-time { font-family: monospace; font-size: 11px; color: #fff; background: #222; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .task-badges { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end;}
+        .badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: bold; letter-spacing: 0.5px; }
         .badge-reminder { background: var(--accent-red); color: #fff; }
-        .badge-mesai { background: var(--accent-yellow); color: #000; }
+        .badge-fixed { background: var(--accent-yellow); color: #000; }
 
-        .task-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            line-height: 1.4;
-            color: #ddd;
-        }
-
-        .task-notes {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            line-height: 1.5;
-            background: #000;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px dashed #333;
-        }
+        .task-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; color: #eee; }
+        .task-notes { font-size: 11px; color: #999; margin-bottom: 12px; line-height: 1.5; background: #080808; padding: 8px; border-radius: 4px; border: 1px dashed #222; }
 
         .task-controls {
             display: flex;
@@ -239,85 +228,53 @@
             background: transparent;
             border: 1px solid var(--text-muted);
             color: var(--text-muted);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 4px;
             font-size: 10px;
             font-weight: bold;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         .btn-action.complete { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-action.complete:hover { background: rgba(0, 255, 0, 0.1); }
         .btn-action.delete { border-color: var(--accent-red); color: var(--accent-red); }
+        .btn-action.delete:hover { background: rgba(255, 51, 51, 0.1); }
 
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); z-index: 1000;
+            justify-content: center; align-items: center;
         }
 
         .modal-box {
-            background: var(--bg-panel);
-            width: 100%;
-            max-width: 450px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--bg-panel); width: 100%; max-width: 450px;
+            border-radius: 8px; border: 1px solid var(--border-color); padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
 
         .modal-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 20px;
+            letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
         }
 
         .form-group { margin-bottom: 15px; }
         .form-label { display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; letter-spacing: 0.5px; }
         .form-input {
-            width: 100%;
-            background: #000;
-            border: 1px solid var(--border-color);
-            color: #fff;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: inherit;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
+            width: 100%; background: #000; border: 1px solid var(--border-color); color: #fff;
+            padding: 12px; border-radius: 4px; font-family: inherit; box-sizing: border-box; transition: border-color 0.2s;
         }
         .form-input:focus { outline: none; border-color: var(--accent-cyan); }
         
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-
-        .btn-modal {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            letter-spacing: 1px;
-        }
+        .modal-footer { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; letter-spacing: 1px; }
         .btn-save { background: var(--accent-green); color: #000; }
         .btn-cancel { background: #333; color: #fff; }
 
         @media (max-width: 768px) {
             .header-container { flex-direction: column; align-items: flex-start; }
             .btn-primary { width: 100%; }
-            .day-column { flex: 0 0 85vw; }
+            .day-column { flex: 0 0 90vw; }
         }
     </style>
 </head>
@@ -326,34 +283,43 @@
     <div id="reminder-banner" class="notification-banner">
         <div style="display: flex; align-items: center; gap: 15px;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            <div id="reminder-text" style="font-size: 13px;"></div>
+            <div id="reminder-text" style="font-size: 13px; font-weight:bold;"></div>
         </div>
         <button onclick="document.getElementById('reminder-banner').classList.remove('active')" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer;">×</button>
     </div>
 
     <div class="header-container">
         <div>
-            <div class="brand-title">TERMINUX PLANI</div>
-            <div class="brand-subtitle">Operasyon ve Mesai Çizelgesi</div>
+            <div class="brand-title">TERMINUX KROKİ</div>
+            <div class="brand-subtitle">Zaman ve Operasyon Çizelgesi</div>
         </div>
-        <button class="btn-primary" onclick="openTaskModal()">+ YENİ İŞ GİRİŞİ</button>
+        <button class="btn-primary" onclick="openTaskModal(null, null)">+ MANUEL İŞ GİRİŞİ</button>
     </div>
 
     <div class="schedule-scroller" id="week-grid">
-
+        <!-- JS Dolduracak -->
     </div>
 
     <div id="task-modal" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-title">YENİ OPERASYON PLANI</div>
+            <div class="modal-title" id="modal-title-text">YENİ OPERASYON PLANI</div>
             <form id="task-form">
                 <div class="form-group">
                     <label class="form-label">İŞ/GÖREV BAŞLIĞI</label>
                     <input type="text" id="task-title" class="form-input" placeholder="Örn: Bodrum Depo Sayımı" required>
                 </div>
+                
+                <div class="form-group" style="background: #111; padding: 12px; border-radius: 6px; border: 1px solid #222;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="task-fixed" style="width: 18px; height: 18px; accent-color: var(--accent-yellow);">
+                        <label style="color: var(--accent-yellow); font-size: 12px; font-weight: bold; margin: 0; cursor: pointer;" for="task-fixed">SABİT OPERASYON (Her Hafta Tekrarlar)</label>
+                    </div>
+                    <div style="font-size: 10px; color: #666; margin-top: 5px; margin-left: 28px;">Seçilen gün ve saatte kalıcı olarak çizelgede yer alır.</div>
+                </div>
+
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex: 1;">
-                        <label class="form-label">TARİH</label>
+                        <label class="form-label" id="label-date">TARİH</label>
                         <input type="date" id="task-date" class="form-input" required>
                     </div>
                     <div class="form-group" style="flex: 1;">
@@ -366,11 +332,11 @@
                     <textarea id="task-notes" class="form-input" rows="3" placeholder="Detayları buraya girin..."></textarea>
                 </div>
                 <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
-                    <input type="checkbox" id="task-reminder" style="width: 18px; height: 18px; accent-color: var(--accent-cyan);">
-                    <label style="color: #fff; font-size: 12px; margin: 0; cursor: pointer;" for="task-reminder">Yüksek Öncelik (Sistem Hatırlatıcısı Kur)</label>
+                    <input type="checkbox" id="task-reminder" style="width: 18px; height: 18px; accent-color: var(--accent-red);">
+                    <label style="color: #fff; font-size: 12px; margin: 0; cursor: pointer;" for="task-reminder">Yüksek Öncelik (Hatırlatıcı Banner'da Göster)</label>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn-modal btn-save">KAYDET</button>
+                    <button type="submit" class="btn-modal btn-save">SİSTEME İŞLE</button>
                     <button type="button" class="btn-modal btn-cancel" onclick="closeTaskModal()">İPTAL</button>
                 </div>
             </form>
