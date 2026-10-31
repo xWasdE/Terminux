@@ -55,6 +55,7 @@
             box-shadow: 0 0 15px rgba(0, 204, 255, 0.2);
             transition: all 0.2s;
         }
+        .btn-primary:hover { background: #33d6ff; box-shadow: 0 0 20px rgba(0, 204, 255, 0.4); }
         .btn-primary:active { transform: scale(0.98); }
 
         .notification-banner {
@@ -70,211 +71,180 @@
         }
         .notification-banner.active { display: flex; }
 
+        /* GRID YAPISI - EKRANA TAM SIĞDIRMA */
         .schedule-scroller {
-            display: flex;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(220px, 1fr)); /* Ekrana göre otomatik daralır/genişler */
+            gap: 10px;
             overflow-x: auto;
-            padding-bottom: 20px;
-            scroll-snap-type: x mandatory;
-            -ms-overflow-style: none;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border-color) var(--bg-main);
+            padding-bottom: 10px;
+            min-height: 75vh;
         }
         .schedule-scroller::-webkit-scrollbar { height: 8px; }
         .schedule-scroller::-webkit-scrollbar-track { background: var(--bg-main); }
-        .schedule-scroller::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .schedule-scroller::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 
         .day-column {
-            flex: 0 0 340px;
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
-            scroll-snap-align: start;
         }
 
         .day-column.today {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 20px rgba(0, 204, 255, 0.05);
+            border-color: rgba(0, 204, 255, 0.4);
+            background: #080c11; /* Çok hafif mavimsi karanlık arka plan */
         }
 
         .day-header {
-            padding: 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #0d0d0d;
-            border-radius: 8px 8px 0 0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            border-radius: 6px 6px 0 0;
         }
 
-        .day-name { font-size: 14px; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
+        .day-column.today .day-header { border-bottom-color: rgba(0, 204, 255, 0.3); }
+
+        .day-name { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
         .day-column.today .day-name { color: var(--accent-cyan); }
         .day-name.weekend { color: var(--accent-red); }
-        .day-date { font-size: 12px; color: var(--text-muted); font-family: monospace; }
+        .day-date { font-size: 11px; color: var(--text-muted); font-family: monospace; }
 
         .timeline-container {
-            padding: 15px;
             flex: 1;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
+            padding-bottom: 15px;
         }
 
+        /* ÇİZELGE SAAT SATIRLARI */
         .hour-block {
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            position: relative;
+            border-bottom: 1px solid #141414;
+            min-height: 45px;
         }
+        .hour-block:last-child { border-bottom: none; }
 
         .hour-label {
-            width: 45px;
-            font-size: 11px;
-            font-family: monospace;
-            color: var(--text-muted);
+            width: 40px;
+            font-size: 10px;
+            color: #555;
+            padding: 6px 5px 0 0;
             text-align: right;
-            padding-top: 5px;
+            font-family: monospace;
+            border-right: 1px solid #1a1a1a;
             flex-shrink: 0;
         }
 
         .hour-content {
             flex: 1;
-            border-left: 1px dashed var(--border-color);
-            padding-left: 15px;
-            padding-bottom: 15px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            position: relative;
+            gap: 4px;
         }
 
-        .hour-content::before {
-            content: '';
-            position: absolute;
-            left: -4px;
-            top: 6px;
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--border-color);
-        }
-
+        /* BOŞ ALAN (HOVER İLE ÇIKAN ARTI) */
         .empty-slot {
-            background: transparent;
-            border: 1px dashed #222;
-            color: #444;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
+            flex: 1;
+            min-height: 35px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: all 0.2s;
-            letter-spacing: 1px;
         }
-        .empty-slot:hover {
-            border-color: var(--accent-cyan);
+        .empty-slot .add-icon {
+            opacity: 0; /* Normalde gizli */
             color: var(--accent-cyan);
-            background: rgba(0, 204, 255, 0.05);
+            font-size: 18px;
+            font-weight: bold;
+            transition: opacity 0.2s, transform 0.2s;
         }
+        .empty-slot:hover { background: rgba(0, 204, 255, 0.05); }
+        .empty-slot:hover .add-icon { opacity: 1; transform: scale(1.2); }
 
+        /* GÖREV KARTLARI */
         .task-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 12px;
-            position: relative;
+            background: #111;
+            border-left: 2px solid var(--accent-purple);
+            border-radius: 4px;
+            padding: 8px 10px;
             transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-
-        .task-card::before {
-            content: '';
-            position: absolute;
-            left: -1px; top: -1px; bottom: -1px; width: 4px;
-            border-radius: 6px 0 0 6px;
-            background: var(--accent-purple);
-        }
+        .task-card:hover { filter: brightness(1.2); }
+        .task-card.fixed-task { border-left-color: var(--accent-yellow); }
+        .task-card.mesai-disi { border-left-color: var(--accent-red); }
         
-        .task-card.fixed-task::before { background: var(--accent-yellow); }
-        .task-card.mesai-disi::before { background: var(--accent-red); }
-        .task-card.completed::before { background: var(--accent-green); }
-        .task-card.completed { opacity: 0.4; }
-        .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
+        .task-card.completed { opacity: 0.4; border-left-color: var(--accent-green); }
+        .task-card.completed .task-title { text-decoration: line-through; color: #666; }
 
-        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .task-time { font-family: monospace; font-size: 11px; color: #fff; background: #222; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .task-badges { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end;}
-        .badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: bold; letter-spacing: 0.5px; }
+        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        
+        .task-badges { display: flex; gap: 4px; }
+        .badge { font-size: 8px; padding: 2px 4px; border-radius: 2px; font-weight: bold; letter-spacing: 0.5px; }
         .badge-reminder { background: var(--accent-red); color: #fff; }
         .badge-fixed { background: var(--accent-yellow); color: #000; }
 
-        .task-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; color: #eee; }
-        .task-notes { font-size: 11px; color: #999; margin-bottom: 12px; line-height: 1.5; background: #080808; padding: 8px; border-radius: 4px; border: 1px dashed #222; }
+        .task-title { font-size: 12px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; color: #ddd; }
+        .task-notes { font-size: 10px; color: #888; background: #080808; padding: 5px; border-radius: 2px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .task-controls {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            border-top: 1px solid var(--border-color);
-            padding-top: 10px;
-        }
-
+        .task-controls { display: flex; gap: 5px; }
         .btn-action {
-            background: transparent;
-            border: 1px solid var(--text-muted);
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 10px;
+            flex: 1;
+            background: #1a1a1a;
+            border: none;
+            color: #888;
+            padding: 4px;
+            border-radius: 2px;
+            font-size: 9px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
         }
+        .btn-action.complete:hover { background: rgba(0, 255, 0, 0.15); color: var(--accent-green); }
+        .btn-action.delete:hover { background: rgba(255, 51, 51, 0.15); color: var(--accent-red); }
 
-        .btn-action.complete { border-color: var(--accent-green); color: var(--accent-green); }
-        .btn-action.complete:hover { background: rgba(0, 255, 0, 0.1); }
-        .btn-action.delete { border-color: var(--accent-red); color: var(--accent-red); }
-        .btn-action.delete:hover { background: rgba(255, 51, 51, 0.1); }
-
+        /* MODAL (YENİ İŞ EKLEME) */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); z-index: 1000;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 1000;
             justify-content: center; align-items: center;
         }
 
         .modal-box {
-            background: var(--bg-panel); width: 100%; max-width: 450px;
-            border-radius: 8px; border: 1px solid var(--border-color); padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            background: var(--bg-panel); width: 100%; max-width: 420px;
+            border-radius: 8px; border: 1px solid #222; padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
         }
 
         .modal-title {
-            font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 20px;
-            letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
+            font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 20px;
+            letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 10px;
         }
 
         .form-group { margin-bottom: 15px; }
-        .form-label { display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .form-label { display: block; font-size: 10px; color: #888; font-weight: bold; margin-bottom: 5px; letter-spacing: 0.5px; }
         .form-input {
-            width: 100%; background: #000; border: 1px solid var(--border-color); color: #fff;
-            padding: 12px; border-radius: 4px; font-family: inherit; box-sizing: border-box; transition: border-color 0.2s;
+            width: 100%; background: #000; border: 1px solid #222; color: #fff;
+            padding: 10px; border-radius: 4px; font-family: inherit; font-size: 13px; box-sizing: border-box; transition: border-color 0.2s;
         }
         .form-input:focus { outline: none; border-color: var(--accent-cyan); }
         
         .modal-footer { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; letter-spacing: 1px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; letter-spacing: 1px; }
         .btn-save { background: var(--accent-green); color: #000; }
-        .btn-cancel { background: #333; color: #fff; }
+        .btn-cancel { background: #222; color: #888; }
+        .btn-cancel:hover { background: #333; color: #fff; }
 
-        @media (max-width: 768px) {
-            .header-container { flex-direction: column; align-items: flex-start; }
-            .btn-primary { width: 100%; }
-            .day-column { flex: 0 0 90vw; }
+        @media (max-width: 1200px) {
+            .schedule-scroller { grid-template-columns: repeat(7, minmax(260px, 1fr)); }
         }
     </style>
 </head>
@@ -283,7 +253,7 @@
     <div id="reminder-banner" class="notification-banner">
         <div style="display: flex; align-items: center; gap: 15px;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            <div id="reminder-text" style="font-size: 13px; font-weight:bold;"></div>
+            <div id="reminder-text" style="font-size: 12px; font-weight:bold;"></div>
         </div>
         <button onclick="document.getElementById('reminder-banner').classList.remove('active')" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer;">×</button>
     </div>
@@ -297,7 +267,7 @@
     </div>
 
     <div class="schedule-scroller" id="week-grid">
-        <!-- JS Dolduracak -->
+        <!-- JS Tarafından Doldurulacak -->
     </div>
 
     <div id="task-modal" class="modal-overlay">
@@ -309,12 +279,12 @@
                     <input type="text" id="task-title" class="form-input" placeholder="Örn: Bodrum Depo Sayımı" required>
                 </div>
                 
-                <div class="form-group" style="background: #111; padding: 12px; border-radius: 6px; border: 1px solid #222;">
+                <div class="form-group" style="background: #0d0d0d; padding: 12px; border-radius: 4px; border: 1px dashed #333;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="task-fixed" style="width: 18px; height: 18px; accent-color: var(--accent-yellow);">
-                        <label style="color: var(--accent-yellow); font-size: 12px; font-weight: bold; margin: 0; cursor: pointer;" for="task-fixed">SABİT OPERASYON (Her Hafta Tekrarlar)</label>
+                        <input type="checkbox" id="task-fixed" style="width: 16px; height: 16px; accent-color: var(--accent-yellow);">
+                        <label style="color: var(--accent-yellow); font-size: 11px; font-weight: bold; margin: 0; cursor: pointer;" for="task-fixed">SABİT OPERASYON (Her Hafta Tekrarlar)</label>
                     </div>
-                    <div style="font-size: 10px; color: #666; margin-top: 5px; margin-left: 28px;">Seçilen gün ve saatte kalıcı olarak çizelgede yer alır.</div>
+                    <div style="font-size: 9px; color: #555; margin-top: 4px; margin-left: 26px;">Sadece seçilen gün ve saat baz alınır, tarihten bağımsız kalıcıdır.</div>
                 </div>
 
                 <div style="display: flex; gap: 10px;">
@@ -328,12 +298,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">OPERASYON NOTLARI</label>
-                    <textarea id="task-notes" class="form-input" rows="3" placeholder="Detayları buraya girin..."></textarea>
+                    <label class="form-label">OPERASYON NOTLARI (İsteğe Bağlı)</label>
+                    <textarea id="task-notes" class="form-input" rows="2" placeholder="Kısa notlar eklenebilir..."></textarea>
                 </div>
-                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
-                    <input type="checkbox" id="task-reminder" style="width: 18px; height: 18px; accent-color: var(--accent-red);">
-                    <label style="color: #fff; font-size: 12px; margin: 0; cursor: pointer;" for="task-reminder">Yüksek Öncelik (Hatırlatıcı Banner'da Göster)</label>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+                    <input type="checkbox" id="task-reminder" style="width: 16px; height: 16px; accent-color: var(--accent-red);">
+                    <label style="color: #ccc; font-size: 11px; margin: 0; cursor: pointer;" for="task-reminder">Yüksek Öncelik (Hatırlatıcı Banner'da Göster)</label>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn-modal btn-save">SİSTEME İŞLE</button>
