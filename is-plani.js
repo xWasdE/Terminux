@@ -35,6 +35,7 @@ window.openTaskModal = () => {
     document.getElementById('task-form').reset();
     document.getElementById('task-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('task-modal').style.display = 'flex';
+    document.getElementById('task-title').focus();
 };
 
 window.closeTaskModal = () => {
@@ -43,6 +44,9 @@ window.closeTaskModal = () => {
 
 document.getElementById('task-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = document.querySelector('.btn-save');
+    saveBtn.innerText = 'KAYDEDİLİYOR...';
+    saveBtn.disabled = true;
     
     const title = document.getElementById('task-title').value.trim();
     const date = document.getElementById('task-date').value;
@@ -60,7 +64,12 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
     try {
         await addDoc(collection(db, "work_plans"), taskData);
         closeTaskModal();
-    } catch (error) {}
+    } catch (error) {
+        alert("Kayıt başarısız oldu. Ağ bağlantınızı kontrol edin.");
+    } finally {
+        saveBtn.innerText = 'KAYDET';
+        saveBtn.disabled = false;
+    }
 });
 
 window.toggleTaskStatus = async (id, currentStatus) => {
@@ -71,7 +80,7 @@ window.toggleTaskStatus = async (id, currentStatus) => {
 };
 
 window.deleteTask = async (id) => {
-    if(confirm('Bu iş planını silmek istediğinize emin misiniz?')) {
+    if(confirm('Kayıtlı operasyon planını sistemden kalıcı olarak silmek istediğinize emin misiniz?')) {
         try {
             await deleteDoc(doc(db, "work_plans", id));
         } catch (error) {}
@@ -84,10 +93,13 @@ const renderGrid = () => {
     
     const targetDates = [];
     const curr = new Date();
-    const first = curr.getDate() - curr.getDay() + 1; 
+    const todayStr = curr.toISOString().split('T')[0];
+    
+    const dayOfWeek = curr.getDay();
+    const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
     
     for(let i=0; i<7; i++) {
-        const d = new Date(curr.setDate(first + i));
+        const d = new Date(curr.setDate(diffToMonday + i));
         targetDates.push(d.toISOString().split('T')[0]);
     }
 
@@ -95,39 +107,56 @@ const renderGrid = () => {
         const dateObj = new Date(dateStr);
         const dayIdx = dateObj.getDay();
         const isWeekend = dayIdx === 0 || dayIdx === 6;
+        const isToday = dateStr === todayStr;
         
         const dayTasks = currentTasks.filter(t => t.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
         
         let tasksHTML = '';
         dayTasks.forEach(t => {
-            const mesaiBadge = t.isMesaiDisi ? '<div class="badge-mesai">MESAİ DIŞI</div>' : '';
-            const reminderBadge = (t.reminder && t.status === 'pending') ? '<div class="badge-reminder">🔔 HATIRLATICI</div>' : '';
+            const mesaiBadge = t.isMesaiDisi ? '<span class="badge badge-mesai">MESAİ DIŞI</span>' : '';
+            const reminderBadge = (t.reminder && t.status === 'pending') ? '<span class="badge badge-reminder">ÖNEMLİ</span>' : '';
             const statusClass = t.status === 'completed' ? 'completed' : (t.isMesaiDisi ? 'mesai-disi' : '');
-            const checkColor = t.status === 'completed' ? '#00ff00' : '#888';
 
             tasksHTML += `
                 <div class="task-card ${statusClass}">
-                    ${mesaiBadge}
-                    ${reminderBadge}
-                    <div class="task-time">${t.time}</div>
+                    <div class="task-header">
+                        <span class="task-time">${t.time}</span>
+                        <div class="task-badges">${reminderBadge}${mesaiBadge}</div>
+                    </div>
                     <div class="task-title">${t.title}</div>
                     ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
-                    <div class="task-actions">
-                        <button onclick="toggleTaskStatus('${t.id}', '${t.status}')" style="background:transparent; border:1px solid ${checkColor}; color:${checkColor}; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer;">${t.status === 'completed' ? 'GERİ AL' : 'TAMAMLANDI'}</button>
-                        <button onclick="deleteTask('${t.id}')" style="background:transparent; border:1px solid #ff3333; color:#ff3333; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer;">SİL</button>
+                    <div class="task-controls">
+                        <button class="btn-action complete" onclick="toggleTaskStatus('${t.id}', '${t.status}')">
+                            ${t.status === 'completed' ? 'GERİ AL' : 'TAMAMLA'}
+                        </button>
+                        <button class="btn-action delete" onclick="deleteTask('${t.id}')">SİL</button>
                     </div>
                 </div>
             `;
         });
 
+        const formattedDate = dateStr.split('-').reverse().join('.');
+        
         const colHTML = `
-            <div class="day-col">
-                <div class="day-title ${isWeekend ? 'weekend' : ''}">${daysTR[dayIdx]} <span style="color:#555; font-size:10px; float:right;">${dateStr.split('-').reverse().join('.')}</span></div>
-                ${tasksHTML || '<div style="color:#555; font-size:12px; font-style:italic;">Planlanmış iş yok.</div>'}
+            <div class="day-column ${isToday ? 'today' : ''}">
+                <div class="day-header">
+                    <span class="day-name ${isWeekend ? 'weekend' : ''}">${daysTR[dayIdx]}</span>
+                    <span class="day-date">${formattedDate}</span>
+                </div>
+                <div class="task-list">
+                    ${tasksHTML || '<div style="color:#555; font-size:12px; font-family:monospace; text-align:center; margin-top:20px;">[ BOŞ ]</div>'}
+                </div>
             </div>
         `;
         grid.insertAdjacentHTML('beforeend', colHTML);
     });
+
+    setTimeout(() => {
+        const todayCol = document.querySelector('.day-column.today');
+        if (todayCol && window.innerWidth < 768) {
+            todayCol.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+    }, 100);
 };
 
 const evaluateReminders = () => {
@@ -138,7 +167,7 @@ const evaluateReminders = () => {
     const alertTasks = currentTasks.filter(t => t.reminder && t.status === 'pending' && (t.date === todayStr || t.date === tomorrowStr));
     
     if(alertTasks.length > 0) {
-        textEl.innerHTML = `🔔 <b>DİKKAT:</b> Bugün veya yarına ait <b>${alertTasks.length} adet</b> önemli bekleyen işiniz bulunmaktadır!`;
+        textEl.innerHTML = `Sisteme kayıtlı <b>bugün veya yarına ait ${alertTasks.length} adet yüksek öncelikli</b> operasyon göreviniz bulunmaktadır.`;
         banner.classList.add('active');
     } else {
         banner.classList.remove('active');
