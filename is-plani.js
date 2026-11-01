@@ -55,7 +55,7 @@ document.getElementById('task-fixed').addEventListener('change', (e) => {
     const isFixed = e.target.checked;
     const dateLabel = document.getElementById('label-date');
     if (isFixed) {
-        dateLabel.innerHTML = 'BAŞLANGIÇ GÜNÜ <span style="color:#ffbc00; font-size:9px;">(Sabit)</span>';
+        dateLabel.innerHTML = 'BAŞLANGIÇ GÜNÜ <span style="color:var(--accent-yellow); font-size:9px;">(Sabit)</span>';
     } else {
         dateLabel.innerHTML = 'TARİH';
     }
@@ -90,7 +90,6 @@ document.getElementById('task-form').addEventListener('submit', async (e) => {
         await addDoc(collection(db, "work_plans"), taskData);
         closeTaskModal();
     } catch (error) {
-        console.error("Yazma Hatası: ", error);
         alert("Yetki Hatası! Kayıt başarısız oldu. Hata: " + error.message);
     } finally {
         saveBtn.innerText = 'SİSTEME İŞLE';
@@ -135,15 +134,20 @@ const renderGrid = () => {
     grid.innerHTML = '';
     
     const targetDates = [];
-    const curr = new Date();
-    const todayStr = toYMD(curr);
+    const today = new Date();
+    const todayStr = toYMD(today);
     
-    const dayOfWeek = curr.getDay();
-    const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
+    // KUSURSUZ TARİH HESAPLAMA (MUTASYON HATASI GİDERİLDİ)
+    const currentDayOfWeek = today.getDay();
+    const distanceToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
     
-    for(let i=0; i<7; i++) {
-        const d = new Date(curr.setDate(diffToMonday + i));
-        targetDates.push({ dateStr: toYMD(d), dayIdx: d.getDay() });
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - distanceToMonday);
+    
+    for (let i = 0; i < 7; i++) {
+        const currentDayDate = new Date(startOfWeek);
+        currentDayDate.setDate(startOfWeek.getDate() + i);
+        targetDates.push({ dateStr: toYMD(currentDayDate), dayIdx: currentDayDate.getDay() });
     }
 
     targetDates.forEach(({dateStr, dayIdx}) => {
@@ -188,7 +192,6 @@ const renderGrid = () => {
                     `;
                 });
             } else {
-                // Görünmez, sadece üzerine gelince "+" işareti çıkaran tertemiz slot
                 slotContentHTML = `
                     <div class="empty-slot" onclick="openTaskModal('${dateStr}', '${slotHour}')">
                         <div class="add-icon">+</div>
@@ -206,7 +209,7 @@ const renderGrid = () => {
         const formattedDate = dateStr.split('-').reverse().join('.');
         
         const colHTML = `
-            <div class="day-column ${isToday ? 'today' : ''}">
+            <div class="day-column ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}">
                 <div class="day-header">
                     <span class="day-name ${isWeekend ? 'weekend' : ''}">${daysTR[dayIdx]}</span>
                     <span class="day-date">${formattedDate}</span>
@@ -249,7 +252,7 @@ const evaluateReminders = () => {
     const textEl = document.getElementById('reminder-text');
     
     if(alertTasks.length > 0) {
-        textEl.innerHTML = `SİSTEM UYARISI: Bugün veya yarına ait tamamlanmamış ${alertTasks.length} adet yüksek öncelikli operasyon görevi bulunmaktadır!`;
+        textEl.innerHTML = `DİKKAT: Bugün veya yarına ait tamamlanmamış ${alertTasks.length} adet kritik operasyon görevi bulunmaktadır!`;
         banner.classList.add('active');
     } else {
         banner.classList.remove('active');
